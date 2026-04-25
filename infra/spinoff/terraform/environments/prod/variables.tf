@@ -26,3 +26,9 @@ variable "server_name" {
   type        = string
   default     = "minecraft-server"
 }
+
+variable "ssh_private_key_path" {
+  description = "SSH private key for the server"
+  type        = string
+  default     = "~/.ssh/id_rsa"
+}

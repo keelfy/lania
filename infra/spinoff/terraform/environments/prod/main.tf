@@ -41,7 +41,7 @@ resource "null_resource" "update_modpack" {
   connection {
     type        = "ssh"
     user        = "minecraft"
-    private_key = file("~/.ssh/id_ed25519")
+    private_key = file(var.ssh_private_key_path)
     host        = hcloud_server.minecraft.ipv4_address
   }
   
@@ -56,7 +56,7 @@ resource "null_resource" "update_modpack" {
       "while [ ! -f /var/log/minecraft-setup-done ]; do sleep 5; done",
       "chmod +x /opt/minecraft/update.sh",
       "chown minecraft:minecraft /opt/minecraft/update.sh",
-      "/opt/minecraft/update.sh '${var.mrpack_url}'"
+      "/opt/minecraft/update.sh '${var.mrpack_url}' '${var.neoforge_version}'"
     ]
   }
 

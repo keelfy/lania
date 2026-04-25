@@ -30,10 +30,10 @@ echo ">>> Creating user $MC_USER..."
 useradd -m -s /bin/bash "$MC_USER"
 
 # --- Add minecraft user to sudoers ---
-echo ">>> Adding $MC_USER user to sudoers..."
-echo "$MC_USER ALL=(ALL) NOPASSWD: /opt/$MC_USER/update.sh, /usr/bin/systemctl start minecraft, /usr/bin/systemctl stop minecraft, /usr/bin/systemctl restart minecraft" \
-  > /etc/sudoers.d/$MC_USER
-chmod 440 /etc/sudoers.d/"$MC_USER"
+cat > /etc/sudoers.d/$MC_USER << 'EOF'
+minecraft ALL=(ALL) NOPASSWD: ALL
+EOF
+chmod 440 /etc/sudoers.d/$MC_USER
 
 # --- Copy authorized_keys to minecraft user ---
 echo ">>> Copying authorized_keys to $MC_USER user..."
@@ -49,10 +49,10 @@ chown "$MC_USER":"$MC_USER" "$MC_DIR"
 
 # --- Install mrpack-install ---
 echo ">>> Installing mrpack-install..."
-MRPACK_INSTALL_VERSION="0.6.0"
-wget -q "https://github.com/nothub/mrpack-install/releases/download/v$${MRPACK_INSTALL_VERSION}/mrpack-install-linux-amd64" \
-  -O /usr/local/bin/mrpack-install
-chmod +x /usr/local/bin/mrpack-install
+MRPACK_INSTALL_VERSION="0.21.0-beta"
+wget "https://github.com/nothub/mrpack-install/releases/download/v$${MRPACK_INSTALL_VERSION}/mrpack-install_$${MRPACK_INSTALL_VERSION}_linux_amd64.deb"
+sudo apt install ./mrpack-install_$${MRPACK_INSTALL_VERSION}_linux_amd64.deb
+rm mrpack-install_$${MRPACK_INSTALL_VERSION}_linux_amd64.deb
 
 # --- Accept EULA ---
 echo "eula=true" > "$MC_DIR/eula.txt"
@@ -132,7 +132,6 @@ EOF
 
 systemctl daemon-reload
 systemctl enable minecraft
-systemctl start minecraft
 
 echo "=== Setup complete ==="
 touch /var/log/minecraft-setup-done
