@@ -6,14 +6,13 @@ exec > >(tee -a "$LOG") 2>&1
 
 echo "=== Starting Minecraft server setup ==="
 
-# --- Переменные из Terraform ---
+# --- Variables from Terraform ---
 NEOFORGE_VERSION="${neoforge_version}"
-MRPACK_URL="${mrpack_url}"
 MC_USER="minecraft"
 MC_DIR="/opt/minecraft"
 JAVA_VERSION="21"
 
-# --- Обновление системы ---
+# --- Update system ---
 echo ">>> Updating system..."
 apt-get update -y
 apt-get upgrade -y
@@ -26,29 +25,36 @@ apt-get install -y \
   ufw \
   openjdk-$${JAVA_VERSION}-jre-headless
 
-# --- Создание пользователя ---
+# --- Create user ---
 echo ">>> Creating user $MC_USER..."
 useradd -m -s /bin/bash "$MC_USER"
 
-# --- Создание директории ---
+# --- Add minecraft user to sudoers ---
+echo ">>> Adding $MC_USER user to sudoers..."
+echo "$MC_USER ALL=(ALL) NOPASSWD: /opt/$MC_USER/update.sh, /usr/bin/systemctl start minecraft, /usr/bin/systemctl stop minecraft, /usr/bin/systemctl restart minecraft" \
+  > /etc/sudoers.d/$MC_USER
+chmod 440 /etc/sudoers.d/"$MC_USER"
+
+# --- Copy authorized_keys to minecraft user ---
+echo ">>> Copying authorized_keys to $MC_USER user..."
+mkdir -p /home/"$MC_USER"/.ssh
+cp /root/.ssh/authorized_keys /home/"$MC_USER"/.ssh/authorized_keys
+chown -R "$MC_USER":"$MC_USER" /home/"$MC_USER"/.ssh
+chmod 700 /home/"$MC_USER"/.ssh
+chmod 600 /home/"$MC_USER"/.ssh/authorized_keys
+
+# --- Create directory ---
 mkdir -p "$MC_DIR"
 chown "$MC_USER":"$MC_USER" "$MC_DIR"
 
-# --- Установка mrpack-install ---
+# --- Install mrpack-install ---
 echo ">>> Installing mrpack-install..."
 MRPACK_INSTALL_VERSION="0.6.0"
 wget -q "https://github.com/nothub/mrpack-install/releases/download/v$${MRPACK_INSTALL_VERSION}/mrpack-install-linux-amd64" \
   -O /usr/local/bin/mrpack-install
 chmod +x /usr/local/bin/mrpack-install
 
-# --- Установка NeoForge через mrpack-install ---
-echo ">>> Installing modpack from $MRPACK_URL..."
-sudo -u "$MC_USER" mrpack-install \
-  --server-dir "$MC_DIR" \
-  --server-file server.jar \
-  "$MRPACK_URL"
-
-# --- Принятие EULA ---
+# --- Accept EULA ---
 echo "eula=true" > "$MC_DIR/eula.txt"
 chown "$MC_USER":"$MC_USER" "$MC_DIR/eula.txt"
 
@@ -74,7 +80,7 @@ wget -q "https://raw.githubusercontent.com/keelfy/lania/refs/heads/main/public/s
   -O "$MC_DIR/server-icon.png"
 chown "$MC_USER":"$MC_USER" "$MC_DIR/server-icon.png"
 
-# --- Скрипт запуска ---
+# --- Write start.sh ---
 echo ">>> Writing start.sh..."
 cat > "$MC_DIR/start.sh" << 'EOF'
 #!/bin/bash
@@ -104,7 +110,7 @@ EOF
 chmod +x "$MC_DIR/start.sh"
 chown "$MC_USER":"$MC_USER" "$MC_DIR/start.sh"
 
-# --- Systemd сервис ---
+# --- Systemd service ---
 echo ">>> Creating systemd service..."
 cat > /etc/systemd/system/minecraft.service << EOF
 [Unit]
@@ -129,5 +135,6 @@ systemctl enable minecraft
 systemctl start minecraft
 
 echo "=== Setup complete ==="
+touch /var/log/minecraft-setup-done
 echo "Server IP will be available in Terraform output"
 echo "Logs: journalctl -u minecraft -f"

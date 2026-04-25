@@ -12,6 +12,7 @@ variable "ssh_key_name" {
 variable "mrpack_url" {
   description = "Direct URL to the .mrpack file (raw GitHub)"
   type        = string
+  default     = ""
 }
 
 variable "neoforge_version" {

@@ -26,7 +26,6 @@ resource "hcloud_server" "minecraft" {
 
   user_data = templatefile("${path.module}/scripts/setup.sh", {
     neoforge_version = var.neoforge_version
-    mrpack_url       = var.mrpack_url
   })
 
   labels = {
@@ -42,13 +41,22 @@ resource "null_resource" "update_modpack" {
   connection {
     type        = "ssh"
     user        = "minecraft"
-    private_key = file("~/.ssh/id_rsa")
+    private_key = file("~/.ssh/id_ed25519")
     host        = hcloud_server.minecraft.ipv4_address
+  }
+  
+  provisioner "file" {
+    source      = "${path.module}/scripts/update.sh"
+    destination = "/opt/minecraft/update.sh"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "sudo /opt/minecraft/update.sh '${var.mrpack_url}'"
+      "echo 'Waiting for setup.sh to finish...'",
+      "while [ ! -f /var/log/minecraft-setup-done ]; do sleep 5; done",
+      "chmod +x /opt/minecraft/update.sh",
+      "chown minecraft:minecraft /opt/minecraft/update.sh",
+      "/opt/minecraft/update.sh '${var.mrpack_url}'"
     ]
   }
 

@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+MC_USER="minecraft"
 MC_DIR="/opt/minecraft"
 MRPACK_URL="$1"
 
@@ -9,22 +10,22 @@ if [ -z "$MRPACK_URL" ]; then
   exit 1
 fi
 
-echo ">>> Stopping server..."
-systemctl stop minecraft
+echo ">>> Stopping server if running..."
+sudo systemctl is-active --quiet minecraft && sudo systemctl stop minecraft || true
 
 echo ">>> Backing up world..."
 cp -r "$MC_DIR/world" "$MC_DIR/world_backup_$(date +%Y%m%d_%H%M%S)"
 
 echo ">>> Updating modpack..."
-mrpack-install \
+sudo mrpack-install \
   --server-dir "$MC_DIR" \
   --server-file server.jar \
   "$MRPACK_URL"
 
-chown -R minecraft:minecraft "$MC_DIR"
+sudo chown -R "$MC_USER":"$MC_USER" "$MC_DIR"
 
 echo ">>> Starting server..."
-systemctl start minecraft
+sudo systemctl start "$MC_USER"
 
 echo ">>> Done! Logs:"
-journalctl -u minecraft -f
+sudo journalctl -u "$MC_USER" -f
