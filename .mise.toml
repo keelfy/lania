@@ -2,6 +2,11 @@
 go = "1.24"
 bun = "latest"
 
+[env]
+_.file = ".env.json"
+AWS_ACCESS_KEY_ID = { required = true }
+AWS_SECRET_ACCESS_KEY = { required = true }
+
 [tasks.api-install-tools]
 description = "Install Go developer tools"
 dir = "monolith/apps/api"

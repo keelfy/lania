@@ -1,14 +1,17 @@
-# backend.tf
 terraform {
   backend "s3" {
-    endpoint = "https://fsn1.your-objectstorage.com"
-    bucket   = "minecraft-tfstate"
-    key      = "spinoff/terraform/environments/prod/terraform.tfstate"
-    region   = "fsn1"
+    endpoints = {
+      s3 = "https://fsn1.your-objectstorage.com"
+    }
 
-    skip_credentials_validation = true
-    skip_metadata_api_check     = true
-    skip_region_validation      = true
-    force_path_style            = true
+    bucket = "lania"
+    key    = "minecraft/terraform.tfstate"
+    region = "fsn1"
+
+    skip_credentials_validation  = true
+    skip_metadata_api_check      = true
+    skip_region_validation       = true
+    use_path_style             = true
+    skip_requesting_account_id   = true
   }
 }

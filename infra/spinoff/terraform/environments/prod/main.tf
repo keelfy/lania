@@ -1,8 +1,8 @@
 terraform {
   required_providers {
-    hetznercloud = {
+    hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "~> 1.47"
+      version = "1.61.0"
     }
   }
 }
@@ -22,7 +22,7 @@ resource "hcloud_server" "minecraft" {
   location    = "fsn1"
   ssh_keys    = [data.hcloud_ssh_key.key.id]
 
-  firewall_ids = [hetznercloud_firewall.minecraft.id]
+  firewall_ids = [hcloud_firewall.minecraft.id]
 
   user_data = templatefile("${path.module}/scripts/setup.sh", {
     neoforge_version = var.neoforge_version
@@ -32,4 +32,25 @@ resource "hcloud_server" "minecraft" {
   labels = {
     role = "minecraft"
   }
+}
+
+resource "null_resource" "update_modpack" {
+  triggers = {
+    mrpack_url = var.mrpack_url
+  }
+
+  connection {
+    type        = "ssh"
+    user        = "minecraft"
+    private_key = file("~/.ssh/id_rsa")
+    host        = hcloud_server.minecraft.ipv4_address
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo /opt/minecraft/update.sh '${var.mrpack_url}'"
+    ]
+  }
+
+  depends_on = [hcloud_server.minecraft]
 }

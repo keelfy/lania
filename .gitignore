@@ -1,4 +1,6 @@
 .DS_Store
+*.env*.json
+!example.env*.json
 
 # IDE
 .idea/
@@ -29,7 +31,7 @@ front/.env*
 
 # Terraform
 infra/**/.terraform/
-infra/**/.tfvars
+infra/**/*.tfvars
 infra/**/*.tfstate
 infra/**/*.tfstate.*
 infra/**/.terraform.lock.hcl

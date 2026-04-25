@@ -1,4 +1,4 @@
-resource "hetzner_firewall" "minecraft" {
+resource "hcloud_firewall" "minecraft" {
   name = "minecraft-firewall"
 
   # SSH
