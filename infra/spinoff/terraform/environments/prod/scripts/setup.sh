@@ -56,14 +56,14 @@ chown "$MC_USER":"$MC_USER" "$MC_DIR/eula.txt"
 echo ">>> Writing server.properties..."
 cat > "$MC_DIR/server.properties" << 'EOF'
 server-port=25565
-motd=YOUR_MOTD_HERE
+motd=❤️ \u00A75\u00A7lʟᴀɴɪᴀ \u00A77- \u00A76sᴘɪɴᴏғғ sᴇrᴠᴇr
 white-list=true
 enforce-whitelist=true
 online-mode=false
 max-players=20
-view-distance=10
+view-distance=8
 simulation-distance=8
-difficulty=normal
+difficulty=hard
 gamemode=survival
 EOF
 chown "$MC_USER":"$MC_USER" "$MC_DIR/server.properties"
@@ -74,7 +74,7 @@ cat > "$MC_DIR/start.sh" << 'EOF'
 #!/bin/bash
 cd /opt/minecraft
 exec java \
-  -Xms10G -Xmx12G \
+  -Xms10G -Xmx16G \
   -XX:+UseG1GC \
   -XX:+ParallelRefProcEnabled \
   -XX:MaxGCPauseMillis=200 \
