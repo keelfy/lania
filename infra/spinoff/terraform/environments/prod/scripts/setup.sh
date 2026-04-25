@@ -68,6 +68,12 @@ gamemode=survival
 EOF
 chown "$MC_USER":"$MC_USER" "$MC_DIR/server.properties"
 
+# --- Server icon ---
+echo ">>> Downloading server-icon.png..."
+wget -q "https://raw.githubusercontent.com/keelfy/lania/refs/heads/main/public/server-icon.png" \
+  -O "$MC_DIR/server-icon.png"
+chown "$MC_USER":"$MC_USER" "$MC_DIR/server-icon.png"
+
 # --- Скрипт запуска ---
 echo ">>> Writing start.sh..."
 cat > "$MC_DIR/start.sh" << 'EOF'
