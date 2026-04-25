@@ -35,7 +35,8 @@ resource "hcloud_server" "minecraft" {
 
 resource "null_resource" "update_modpack" {
   triggers = {
-    mrpack_url = var.mrpack_url
+    mrpack_url      = var.mrpack_url
+    bootstrap_force = var.bootstrap_force
   }
 
   connection {

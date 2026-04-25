@@ -32,3 +32,9 @@ variable "ssh_private_key_path" {
   type        = string
   default     = "~/.ssh/id_rsa"
 }
+
+variable "bootstrap_force" {
+  description = "Forces server to be updated to the latest version"
+  type        = string
+  default     = "0"
+}

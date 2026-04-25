@@ -17,6 +17,20 @@ resource "hcloud_firewall" "minecraft" {
     source_ips = ["0.0.0.0/0", "::/0"]
   }
 
+  rule {
+    direction = "in"
+    protocol  = "udp"
+    port      = "25565"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
+
+  rule {
+    direction = "in"
+    protocol  = "udp"
+    port      = "25570"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
+
   # ICMP (ping)
   rule {
     direction = "in"
