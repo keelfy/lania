@@ -1,0 +1,208 @@
+import { Callout } from 'nextra/components/callout'
+import { Table } from 'nextra/components'
+
+# Модпак от keelfy
+
+<Callout type='important'>
+  Для установки модпака вам потребуется лаунчер [ModRinth](https://modrinth.com/app) и лицензия Minecraft.
+</Callout>
+
+Модпак от создателя сервера &mdash; **keelfy**, сильно улучшающий все аспекты игры от оптимизации до звуковых эффектов. Все изменения исключительно клиентские (без нового контента или механик).
+
+## Системные требования
+
+- Рекомендуется выделить минимум 6 ГБ оперативной памяти на игру.
+
+## Установка
+
+1. Установите [лаунчер ModRinth](https://modrinth.com/app);
+2. [Скачайте модпак для лаунчера ModRinth](https://czx1jtlf2o.ufs.sh/f/0UHiIrRo6i8c7ZLxRKkBi3Sy1gbhFoGkCTlIQmcY6Eq9OZeH);
+3. Импортируйте модпак в лаунчер ModRinth;
+4. Запустите игру;
+5. Включите [желаемые ресурс-паки](#ресурс-паки) в настройках игры;
+6. Настройте остальные настройки под себя;
+7. Прочитайте [часто используемые сочетания клавиш](#часто-используемые-сочетания-клавиш) и [рекомендации](#рекомендации);
+8. Приятной игры 🩶
+
+## Обобщенный список нововведений
+
+- Улучшенная **оптимизация**
+- **Звук**: 
+  * Звуковые эффекты окружения;
+  * Эмбиент;
+  * Физика звуков;
+  * Звуки шагов;
+  * Звуки взаимодействия с интерфейсом;
+  * Новые звуки блоков;
+- **Графика**: 
+  * Шейдеры: [Complementary Shaders](https://modrinth.com/shader/complementary-reimagined), [Photon](https://modrinth.com/shader/photon-shader), [Bliss](https://modrinth.com/shader/bliss-shader);
+  * LOD-ы чанков ([Distant Horizons](https://modrinth.com/mod/distanthorizons)),
+  * Новые облака;
+  * Улучшение частиц;
+  * Новые эффекты окружения;
+  * Улучшенная отрисовка скинов, плащей и анимаций игроков;
+- **Инструментарий**:
+  * Просмотр рецептов ([REI](https://modrinth.com/mod/rei));
+  * Отображение возможных мест спавна мобов ([Ligthy](https://https://modrinth.com/mod/lighty));
+  * Отображение насыщения едой ([AppleSkin](https://modrinth.com/mod/appleskin));
+  * Карта ([Xaero's World Map](https://modrinth.com/mod/xaeros-world-map));
+- **Строительство**: 
+  * [Litematica](https://modrinth.com/mod/litematica);
+  * [Axiom](https://modrinth.com/mod/axiom);
+  * Рандомизация блока в руке из хотбара ([HotbarShuffler](https://modrinth.com/mod/hotbarshuffler));
+  * [WorldEdit](https://modrinth.com/mod/worldedit);
+- **Управление**: 
+  * Взаимодействие с блоками сквозь таблички и рамки;
+  * Сортировка предметов в хранилищах ([ClientSort](https://modrinth.com/mod/clientsort));
+  * Бинды для мыши в сундуках;
+  * Приблежение ([Zoomify](https://modrinth.com/mod/zoomify));
+  * Упрощенное выделение текста в интерфейсах;
+  * Кинемотаграфичное управление элитрой ([Do a Barrel Roll](https://modrinth.com/mod/do-a-barrel-roll));
+  * Выкидывание всего стака из руки на `CTRL+Q`;
+- **Интерфейс**:
+  * Темная тема (опционально &mdash; [UniqueDark](https://modrinth.com/resourcepack/unique-dark));
+  * Головы игроков около ников в чате;
+  * Плавная прокрутка интерфейсов;
+  * Улучшенное меню статистики;
+  * Размытие заднего плана интерфейсов;
+  * Отображение состояния инструментов в интерфейсе;
+  * Отображение содержимого шалкеров при наведении на них в инвентаре;
+  * Улучшенное третье лицо;
+- **Текстуры**:
+  * Исправления от VanillaTweaks;
+  * Разные текстуры для каждого вида зачарованных книг;
+- **Взаимодействие**:
+  * Голосовой чат ([PlasmoVoice](https://modrinth.com/plugin/plasmo-voice));
+  * Эмоции ([Emotecraft](https://modrinth.com/mod/emotecraft));
+  * Переключение отображения брони на персонажах;
+  * Сбор урожая кнопкой ПКМ;
+  * Смайлики 7TV в чате ([Streamotes](../gameplay/streamotes));
+  * Открытие двойных дверей кнопкой ПКМ;
+- **Дополнительно**: 
+  * Безрамочный режим работы игры;
+  * Русификация [новых достижений](../gameplay/bacap);
+  * Отображение статуса игры в Discord;
+
+## Ресурс-паки
+
+<Callout type='important'>
+  Вы можете игнорировать предупреждения о несовместимости версии игры с ресурс-паками (ресурс-паки с красным фоном в списке). Все ресурс-паки рабочие.
+</Callout>
+
+В модпаке предустановлены следующие ресурс-паки, вы можете включить только необходимые вам:
+
+- [BACAP Language Pack](https://modrinth.com/resourcepack/bacap-language-pack) - локализация новых достижений на русский язык;
+- [BACAP Better RU](https://modrinth.com/resourcepack/bacap-better-ru) - улучшенная локализация новых достижений на русский язык;
+- [UniqueDark](https://modrinth.com/resourcepack/unique-dark) - тёмная тема для всего интерфейса;
+- `ClientSort Dark Mode` - небольшое дополнение к моду ClientSort для тёмной темы;
+- [VanillaTweaks](https://vanillatweaks.net) - исправления ошибок в текстурах от VanillaTweaks;
+- [Totem Da Capoeira](https://modrinth.com/mod/totem-da-capoeira) - новый забавный внешний вид тотема;
+- [FreshAnimations](https://modrinth.com/mod/fresh-animations) - улучшенные анимации мобов;
+- [xali's Enchanted Books](https://modrinth.com/mod/xalis-enchanted-books) - текстуры зачарованных книг, зависящие от зачарования;
+- [xali's Enchanted Books Addon](https://modrinth.com/mod/xalis-enchanted-books-addon) - дополнительные текстуры зачарованных книг;
+- [Fancy Crops](https://modrinth.com/mod/fancy-crops) - улучшенные текстуры урожая;
+- [Low On Fire](https://modrinth.com/resourcepack/low-on-fire) - если вы горите, то огонь будет отображаться ниже на экране;
+- [Better Flame Particles](https://modrinth.com/mod/better-flame-particles) - улучшенные частицы огня;
+- [DoorTweak](https://modrinth.com/resourcepack/door-tweaks) - улучшенный визуал дверей;
+- [RAY's 3D Rails](https://modrinth.com/resourcepack/rays-3d-rails) & [RAY's 3D Ladders](https://modrinth.com/resourcepack/rays-3d-ladders) - 3D модели для лестниц и рельс;
+- [Better Boat](https://modrinth.com/resourcepack/better-boat) - улучшенный визуал лодки;
+- [SodiumTranslations](https://modrinth.com/resourcepack/translations-for-sodium) - локализация новых настроек графики на русский язык;
+- [BetterSnowCoverage](https://modrinth.com/mod/better-snow-coverage) - снежный покров под блоками, если они окружены снегом. Например, снег под цветком, если вокруг него блоки снега;
+- [Borderless Glass](https://modrinth.com/mod/borderless-glass) - безрамочные стеклянные блоки;
+- `BetterBeds` - кровати выглядят лучше и могут соединяться;
+
+**Я рекомендую _включить_ все ресурс-паки, за исключением:**
+
+- `Totem Da Capoeira` (Вкусовщина)
+- `BetterSnowCoverage` (Полезно для тех, кто живет в зимних биомах, что редкость)
+- `Borderless Glass` (ИМХО ломает внешний вид многих построек)
+- `Констрастный` (UniqueDark выглядит лучше)
+- `Highlight Extended` (Излишество)
+- `Классический` (Не нужен)
+
+## Часто используемые сочетания клавиш
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Сочетание клавиш</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td>`C`</Table.Td>
+      <Table.Td>Приближение</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`B`</Table.Td>
+      <Table.Td>Колесо выбора эмоций</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`V`</Table.Td>
+      <Table.Td>Настройки голосового чата</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`M`</Table.Td>
+      <Table.Td>Карта игрового мира</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`J`</Table.Td>
+      <Table.Td>
+        Переключение отображения брони на персонажах. 
+        Важно, что это только то, как вы видите броню, если вы хотите, чтобы другие игроки не видели вашу броню, 
+        то используйте специальную команду из [списка команд](../commands).
+      </Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`I`</Table.Td>
+      <Table.Td>Переключение киномотографического управления элитрой</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`CTRL+Q`</Table.Td>
+      <Table.Td>Выкидывание всего стака из руки</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`F8`</Table.Td>
+      <Table.Td>Переключение отображения мест, где могут спавниться мобы</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Готовые LOD'ы чанков для Distant Horizons
+
+Distant Horizons на сервере не прогружает мир автоматически, в нормальной ситуации вы видите дальние чанки только там, где побывали.
+Мы предоставляем вам готовые LOD'ы чанков для Distant Horizons, которые позволят вам видеть дальние чанки на всех расстояниях.
+
+- Скачать для сервера [Выживание](https://drive.google.com/file/d/1TgeJC5T_txxErIY4rK35jUzroYKPV7bO/view?usp=sharing)
+
+### Установка
+
+Если у вас отсутствует какая-либо из указанных в инструкции папок, то вы можете создать её, скопировав имя из инструкции.
+
+1. Зайдите на сервер хотя бы один раз и выйдите с сервера;
+2. Откройте папку игры;
+3. Перейдите в папку `Distant_Horizons_server_data` (или создайте её);
+4. Откройте папку, которая называется так же, как сервер Lania в вашем списке серверов;
+   Например, если в списке серверов Lania у вас называется как `Lania 4`, то откройте папку `lania+4`;
+5. Вы увидите несколько папок формата `xxxx@minecraft@@overworld`, вам нужно закинуть скачанный файл в одну, в зависимости от того, LOD'ы для какого мира вы хотите установить;
+
+  - Выживание: `ok6nqi7ukhgkq@minecraft@@overworld`;
+  - Фермы: &mdash;
+
+6. Переместите скачанный `DistantHorizons.sqlite` в эту папку с заменой;
+7. Готово. Зайдя на сервер, вы должны увидеть, что дальние чанки стали доступны на всех расстояниях.
+
+
+## Рекомендации
+
+1. Если ПК не тянет модпак, то сначала попробуйте выключить `Distant Horizons` (в меню настроек слева от поля зрения) и шейдеры.
+2. В сборке есть Безрамочный режим игры, его можно включить в настройках графики, переключив пункт `Fullscreen`.
+3. В шейдерах `Complementary Unbound` светятся руды - очень удобно копаться в пещерах с этой фичей.
+4. Если вам нужно сделать зарандомить устанавливаемые блоки, то изучите мод [HotbarShuffler](https://modrinth.com/mod/hotbarshuffler), установленный в сборке.
+5. Если у вас на клавиатуре нет функциональных клавиш, либо вас не устраивают кнопки, к которым привязаны сочетания клавиш для дебага, в настройках управления можно изменить эти сочетания клавиш.
+
+### Арахнофобия
+
+Если вы страдаете арахнофобией, то обязательно выключайте ресурс-пак `FreshAnimations`.

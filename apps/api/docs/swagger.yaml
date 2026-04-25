@@ -1,0 +1,48 @@
+basePath: /v1
+definitions:
+  github_com_lania-smp_backend_internal_transport_http_responses.StatusRes:
+    properties:
+      api:
+        type: string
+      authentication:
+        type: string
+      cache:
+        type: string
+      database:
+        type: string
+    type: object
+host: api.lania.gg
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a Lania backend.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Lania API
+  version: "1.0"
+paths:
+  /v1/health:
+    get:
+      consumes:
+      - application/json
+      description: Get the health status of all system components including API, Database,
+        Search, and Cache
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_lania-smp_backend_internal_transport_http_responses.StatusRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_lania-smp_backend_internal_transport_http_responses.StatusRes'
+      summary: Get system health status
+      tags:
+      - status
+swagger: "2.0"

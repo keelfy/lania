@@ -1,0 +1,15 @@
+dev.lania.keelfy.dev {
+	handle_path /ory/* {
+		reverse_proxy localhost:4433
+	}
+
+	handle_path /ory-admin/* {
+		reverse_proxy localhost:4434
+	}
+
+	handle_path /api/* {
+		reverse_proxy localhost:8080
+	}
+
+	reverse_proxy localhost:3000
+}

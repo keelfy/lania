@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS profile_violations;
+DROP TABLE IF EXISTS profile_playtimes;
+DROP TABLE IF EXISTS profile_accesses;
+DROP TABLE IF EXISTS game_profiles;
+DROP TABLE IF EXISTS server_seasons;
+DROP INDEX IF EXISTS idx_profiles_mc_uuid;
+DROP INDEX IF EXISTS idx_profiles_mc_username;
+DROP INDEX IF EXISTS idx_profiles_owner_user_id;
+DROP TABLE IF EXISTS profiles;

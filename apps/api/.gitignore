@@ -1,0 +1,8 @@
+# vscode
+.vscode
+
+# environment
+.env
+
+bin
+artifacts

@@ -1,0 +1,360 @@
+{
+  "common": {
+    "theme": {
+      "dark": "Dark",
+      "light": "Light",
+      "system": "System"
+    }
+  },
+  "cookieConsent": {
+    "title": "We use cookies",
+    "description": "We use cookies to ensure you get the best experience on our website.",
+    "byClicking": "By clicking <b>\"Accept\"</b>, you agree to our use of cookies.",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "metadata": {
+    "title": "Lania Network - Minecraft Servers",
+    "description": "Private server for comfortable game in vanilla Minecraft."
+  },
+  "landing": {
+    "description": "The best place for your expression in <b>Minecraft</b>.",
+    "version": "Game version: <b>1.21.8</b>",
+    "copyIP": "Copy IP address",
+    "getAccess": "Get access",
+    "becomePartner": "Become a partner",
+    "seeMore": "Scroll down to see more",
+    "section1": {
+      "seeMore": "See more"
+    },
+    "section2": {
+      "title": "Community",
+      "description1": "We host players who enjoy all possible gaming styles.",
+      "description2": "Whether it's <b>architecture</b>, <b>lorax exploration</b>, <b>events</b>, <b>farm construction</b> or even <b>computer design in Minecraft</b> - any of your interests can be implemented on the <b>Lania</b> servers.",
+      "seeMore": "Why Lania?"
+    },
+    "section3": {
+      "title": "Why <b>Lania</b>?",
+      "description": "In the world there are so many private Minecraft servers, why choose us?",
+      "features": {
+        "vanilla": {
+          "title": "Clean vanilla",
+          "description": "Our server runs on the original version of Minecraft without modifications. However, we have <features>some quality-of-life features</features> that will help you in survival and creativity.",
+          "description2": "The version of the game required to enter the server can be found <requirements>here</requirements>."
+        },
+        "noLicense": {
+          "title": "No license required",
+          "description": "We strive to make the server as accessible as possible to all players, without requiring a license to enter the server.",
+          "description2": "* However, the administration does not approve of piracy. Therefore, as good Samaritans Mojang, we recommend that you purchase a Minecraft license as soon as possible, in order to not break the laws and not expose yourself to risk."
+        },
+        "staff": {
+          "title": "Our staff",
+          "description": "Our staff is professionals with a huge amount of experience, who are always ready to help you. We have been creating Minecraft servers for more than 10 years.",
+          "description2": "The list of our administrators can be found <staff>here</staff>."
+        },
+        "optimization": {
+          "title": "Quality and optimization",
+          "description": "We strive to make the server as high-quality and optimized as possible, so that you can comfortably immerse yourself in the game world.",
+          "description2": "We have our own backend, plugins, powerful servers and much more."
+        },
+        "noPayToWin": {
+          "title": "No pay-to-win",
+          "description": "We do not modify the game in any way, violating the balance of the game, including <hover>visual balance</hover>, so that players do not feel dissonance and can comfortably immerse themselves in the game world.",
+          "balanceHover": " <b>Visual balance</b> in games is a harmonious combination of all visual elements, creating a pleasant and whole perception of the game. It is not just a beautiful art, but a consistency between characters, environment, interface and other elements, so that the player does not feel dissonance and can comfortably immerse themselves in the game world."
+        },
+        "promotionOfCreativity": {
+          "title": "Promotion of creativity and self-expression",
+          "description": "We encourage creativity and provide players with the opportunity to express themselves and receive recognition in our community."
+        },
+        "partnershipProgram": {
+          "title": "Partnership program",
+          "element1": "If you are part of the audience of any content creator, then this is an opportunity for you to play together with him in Minecraft.",
+          "element2": "If you are a content creator, you can start earning on selling passes, as well as have additional benefits.",
+          "seeMore": "Learn more about the partnership program."
+        }
+      },
+      "seeMore": "Get access now!"
+    },
+    "section4": {
+      "title": "Get access now!",
+      "description": "Get access to the Lania servers and start your adventure."
+    }
+  },
+  "worlds": {
+    "metadata": {
+      "title": "Worlds - Lania Network",
+      "description": "Worlds for the Lania Network."
+    },
+    "status": {
+      "title": "Server status",
+      "error": "Failed to get server status"
+    },
+    "mapsTitle": "World maps",
+    "openMap": "Open map",
+    "elements": {
+      "survival": {
+        "title": "Survival",
+        "description": "World with all the possible conveniences for construction and self-expression. Here the most beautiful buildings are created by players of the entire network of servers."
+      },
+      "farms": {
+        "title": "Farms",
+        "description": "Farms world is intended for the construction of personal and common farms, but living here is not prohibited."
+      }
+    },
+    "maps": {
+      "metadata": {
+        "title": "Map of <world/> - Lania Network",
+        "description": "Map for the <world/> server of Lania Network."
+      },
+      "title": "Map of <world/>",
+      "mapNames": {
+        "survival": "Survival",
+        "farms": "Farms"
+      },
+      "breadcrumbs": {
+        "title": "World maps"
+      }
+    }
+  },
+  "wiki": {
+    "metadata": {
+      "title": "Wiki - Lania Network",
+      "description": "Wiki for the Lania Network."
+    },
+    "description": "Wiki for the Lania Network.",
+    "backToTop": "Back to top"
+  },
+  "products": {
+    "metadata": {
+      "title": "Shop - Lania Network",
+      "description": "Shop for the Lania Network."
+    },
+    "title": "Shop",
+    "categorySelectionTitle": "Category",
+    "categories": {
+      "all": "All products",
+      "upgrade": "Upgrades",
+      "name-color": "Username colors",
+      "name-prefix": "Glyths"
+    }
+  },
+  "basket": {
+    "title": "Your basket",
+    "error": "Failed to create order",
+    "empty": "<p>Your basket is empty.</p><p>Find something to your liking in the <store>store</store></p>",
+    "clearBasket": "Clear basket",
+    "total": "Total",
+    "createOrder": "Donate",
+    "orderConditions": "By purchasing the product, you agree to the <paymentConditions>payment conditions</paymentConditions> and <refundConditions>refund conditions</refundConditions>.",
+    "attention": "Attention!",
+    "attentionDescription": "The validity period of products on the Lania server is <b>1 season</b>. The minimum duration of the season is <b>3 months</b>.",
+    "failedToAddToBasket": "Failed to add product to basket",
+    "needToCreateProfile": "Create a profile and try again",
+    "inTheBasket": "In the basket",
+    "buy": "Buy",
+    "paymentMethod": {
+      "easyDonate": "By card",
+      "donationAlerts": "Donation",
+      "freekassa": "Crypto"
+    },
+    "items": {
+      "delete": "Delete",
+      "recipient": "Recipient",
+      "quantity": "1 pc.",
+      "purchased": "Already in stock for this profile"
+    }
+  },
+  "currencies": {
+    "names": {
+      "RUB": "Russian Ruble",
+      "USD": "US Dollar",
+      "EUR": "Euro",
+      "BRL": "Brazilian Real",
+      "TRY": "Turkish Lira",
+      "PLN": "Polish Zloty"
+    }
+  },
+  "orders": {
+    "status" :{
+      "created": "Created",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed"
+    }
+  },
+  "profiles": {
+    "title": "Your game profiles",
+    "selectProfile": "Select a profile to view its information <br></br> --- or --- <br></br> <obtainAccess>obtain access for the game profile</obtainAccess>",
+    "accessStatus": {
+      "title": "Access",
+      "description": "Information about the access to this game profile",
+      "status": "Status",
+      "names": {
+        "active": "Access active",
+        "inactive": "Access inactive",
+        "expired": "Access expired"
+      },
+      "obtain": "Obtain access"
+    },
+    "violations": {
+      "title": "Violations",
+      "description": "List of violations marked by moderation on the servers",
+      "status": "Status",
+      "noViolations": "No violations"
+    },
+    "cosmetics": {
+      "title": "Cosmetics",
+      "description": "List of cosmetics belonging to this game profile",
+      "nameColor": {
+        "title": "Name color",
+        "select": "Select name color",
+        "changed": "Name color for <username></username> successfully changed",
+        "changedDescription": "For the changes to take effect, please log in again to the server",
+        "error": "Failed to change name color for <username></username>"
+      },
+      "glyth": {
+        "title": "Glyth (prefix)",
+        "select": "Select glyth",
+        "none": "None",
+        "changed": "Glyth for <username></username> successfully changed",
+        "changedDescription": "For the changes to take effect, please log in again to the server",
+        "error": "Failed to change glyth for <username></username>"
+      },
+      "wantToStandOut": "Do you want your game profile to stand out?",
+      "buyInStore": "buy cosmetics in the store"
+    }
+  },
+  "playerCard": {
+    "noProfile": "Failed to load profile information",
+    "status": "Status",
+    "statuses": {
+      "online": "Online",
+      "offline": "Offline",
+      "banned": "Banned"
+    },
+    "playtime": {
+      "title": "Playtime",
+      "hours": "h.",
+      "minutes": "min.",
+      "seconds": "sec."
+    },
+    "lastSeenAt": {
+      "title": "Last seen",
+      "now": "Now"
+    },
+    "firstSeenAt": {
+      "title": "First seen",
+      "now": "Now"
+    },
+    "roles": {
+      "admin": "Admin",
+      "player": "Player",
+      "mod": "Moderator",
+      "owner": "Owner"
+    }
+  },
+  "community": {
+    "title": "Community"
+  },
+  "navbar": { 
+    "title": "Menu",
+    "items": {
+      "worlds": "Worlds",
+      "wiki": "Wiki",
+      "products": "Shop",
+      "community": "Community",
+      "seasons": "Seasons"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "noNotifications": "No notifications"
+    },
+    "signIn": "Sign in",
+    "userDropdown": {
+      "profiles": "Game profiles",
+      "settings": "Settings",
+      "orders": "My orders",
+      "support": "Support",
+      "signOut": "Sign out",
+      "signOutFailed": "Failed to sign out"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Notifications"
+  },
+  "obtainAccess": {
+    "title": "Obtain access",
+    "description": "Obtain access to the Lania servers and start your adventure.",
+    "success": "Access obtained",
+    "error": "Failed to obtain access",
+    "steps": {
+      "step1": {
+        "title": "Authorization on the site",
+        "description": "Authorize or register on the website."
+      },
+      "step2": {
+        "title": "Specify the name in the game",
+        "description": "Specify the name of the player for which you are obtaining access to the server.",
+        "deleteProfile": "Delete",
+        "checking": "Checking...",
+        "available": "Available"
+      },
+      "step3": {
+        "title": "Create a profile and proceed to payment",
+        "description": "You will be ready to start playing on the <b>Lania</b> server.",
+        "action": "Proceed to payment"
+      }
+    },
+    "validation": {
+      "username": {
+        "minLength": "The player's name must be at least 3 characters",
+        "maxLength": "The player's name must be at most 16 characters",
+        "taken": "The player's name is taken",
+        "already_has_access": "Already has access",
+        "failed_to_check": "Failed to check the name. Please try again later",
+        "regex": "The player's name can only contain Latin letters, numbers and underscores"
+      },
+      "terms": {
+        "required": "You must agree to the terms"
+      }
+    }
+  },
+  "seasons": {
+    "1": {
+      "title": "ʟᴀɴɪᴀ ɪ",
+      "length": "3 months 2 days",
+      "description": "The first season was launched for the audience of keelfy."
+    },
+    "2": {
+      "title": "ʟᴀɴɪᴀ ɪɪ",
+      "length": "2 months 23 days",
+      "description": "The server began to acquire a periodic character, plans for development appeared."
+    },
+    "3": {
+      "title": "ʟᴀɴɪᴀ ɪɪɪ",
+      "length": "3 months 10 days",
+      "description": "A strong jump in technical execution - the appearance of the lobby and the farm world."
+    },
+    "readMore": "Read more"
+  },
+  "footer": {
+    "madeBy": {
+      "text": "made by",
+      "name": "keelfy"
+    },
+    "socialLinks": {
+      "telegram": "Telegram",
+      "discord": "Discord",
+      "support": "Support"
+    },
+    "legalLinks": {
+      "contacts": "Contacts",
+      "oferta": "Public offer",
+      "tos": "Terms of service",
+      "privacy": "Privacy policy",
+      "payments": "Payment conditions",
+      "refund": "Refund policy"
+    }
+  }
+}

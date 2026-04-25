@@ -1,0 +1,87 @@
+[tools]
+go = "1.24"
+bun = "latest"
+
+[tasks.api-install-tools]
+description = "Install Go developer tools"
+dir = "monolith/apps/api"
+run = [
+  "go install github.com/rubenv/sql-migrate/...@latest",
+  "go install github.com/google/wire/cmd/wire@latest",
+  "go install github.com/swaggo/swag/cmd/swag@latest",
+]
+
+[tasks.api-deps]
+description = "Download API dependencies"
+dir = "monolith/apps/api"
+run = "go mod download"
+
+[tasks.api-add-migration]
+description = "Create SQL migration file (usage: mise run api-add-migration -- name=init_users)"
+dir = "apps/api"
+run = "migrate create -ext sql -dir ./db/migration \"$name\""
+
+[tasks.api-migrate-up]
+description = "Run API migrations up (requires DATABASE_URL)"
+dir = "apps/api"
+run = "migrate -database \"$DATABASE_URL\" -path ./db/migration up"
+
+[tasks.api-migrate-down]
+description = "Run API migrations down (requires DATABASE_URL)"
+dir = "apps/api"
+run = "migrate -database \"$DATABASE_URL\" -path ./db/migration down"
+
+[tasks.api-generate]
+description = "Generate wire + swagger artifacts"
+dir = "apps/api"
+run = "wire ./cmd && swag init -g ./cmd/main.go --parseDependency --parseInternal"
+
+[tasks.api-build]
+description = "Build API binary"
+dir = "apps/api"
+run = "mkdir -p artifacts && rm -rf artifacts/* && GOOS=${GOOS:-$(go env GOOS)} GOARCH=${GOARCH:-$(go env GOARCH)} CGO_ENABLED=${CGO_ENABLED:-0} go build -ldflags='-s' -o ./artifacts/bin ./cmd"
+
+[tasks.api-run]
+description = "Run API"
+dir = "apps/api"
+run = "go run ./cmd"
+
+[tasks.api-test]
+description = "Run API tests"
+dir = "apps/api"
+run = "go test -v ./..."
+
+[tasks.front-install]
+description = "Install frontend dependencies with Bun"
+dir = "front"
+run = "bun install"
+
+[tasks.front-dev]
+description = "Run frontend development server"
+dir = "front"
+run = "bun run dev"
+
+[tasks.front-build]
+description = "Build frontend with Bun"
+dir = "front"
+run = "bun run build"
+
+[tasks.front-lint]
+description = "Lint frontend with Bun"
+dir = "front"
+run = "bun run lint"
+
+[tasks.spinoff-terraform-prod-init]
+description = "Initialize Terraform"
+dir = "infra/spinoff/terraform/environments/prod"
+run = "terraform init"
+
+[tasks.spinoff-terraform-prod-plan]
+description = "Plan Terraform"
+dir = "infra/spinoff/terraform/environments/prod"
+run = "terraform plan"
+
+[tasks.spinoff-terraform-prod-apply]
+description = "Apply Terraform"
+dir = "infra/spinoff/terraform/environments/prod"
+run = "terraform apply"

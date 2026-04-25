@@ -1,0 +1,10 @@
+/bin/
+/target/
+/.project
+/.settings/
+
+*.xml
+
+#IntelliJ
+.idea
+*.iml

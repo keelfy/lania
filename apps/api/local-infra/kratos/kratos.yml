@@ -1,0 +1,182 @@
+version: v1.3.0
+
+dsn: memory
+dev: true
+
+serve:
+  public:
+    base_url: https://dev.lania.gg/ory
+    cors:
+      enabled: true
+      allowed_origins:
+        - https://dev.lania.gg
+      allowed_methods:
+        - POST
+        - GET
+        - PUT
+        - PATCH
+        - DELETE
+      allowed_headers:
+        - Authorization
+        - Cookie
+        - Content-Type
+      exposed_headers:
+        - Content-Type
+        - Set-Cookie
+  admin:
+    base_url: https://dev.lania.gg/ory-admin
+
+selfservice:
+  default_browser_return_url: https://dev.lania.gg/welcome
+  allowed_return_urls:
+    - https://dev.lania.gg
+    - https://localhost:19006/Callback
+    - exp://localhost:8081/--/Callback
+
+  methods:
+    password:
+      enabled: false
+    totp:
+      config:
+        issuer: Kratos
+      enabled: false
+    lookup_secret:
+      enabled: false
+    link:
+      enabled: false
+    code:
+      enabled: false
+    oidc:
+      enabled: true
+      config:
+        providers:
+          - client_id: PLACEHOLDER
+            client_secret: PLACEHOLDER
+            id: google
+            label: Google
+            mapper_url: file:///etc/config/kratos/oidc.google.jsonnet
+            provider: google
+            scope:
+              - email
+              - profile
+          - client_id: PLACEHOLDER
+            client_secret: PLACEHOLDER
+            id: discord
+            label: Discord
+            mapper_url: https://storage.googleapis.com/bac-gcs-production/f4050876f4ade70a09574bd0825d2a298fc4666f8b87325c5f1d321a08cdc0f3624eddb0dbe2dfdd100deb096c2dd6faaa239363d0b4d299149fb8ad3000b47c.jsonnet
+            provider: discord
+            scope:
+              - identify
+              - email
+          - client_id: PLACEHOLDER
+            client_secret: PLACEHOLDER
+            id: yandex
+            label: Yandex
+            mapper_url: https://storage.googleapis.com/bac-gcs-production/3b91f24ba04eabe87654c7b16951f94e365f348fae2ff2fc6d8883443c3d6d2e354a12821549e658a44dc49854ca50bce3de19691ac5757eb7210980ffafec56.jsonnet
+            provider: yandex
+            scope: []
+          - client_id: PLACEHOLDER
+            client_secret: PLACEHOLDER
+            id: twitch-basic
+            issuer_url: https://id.twitch.tv/oauth2
+            label: Twitch
+            mapper_url: file:///etc/config/kratos/oidc.twitch.jsonnet
+            provider: generic
+            scope:
+              - openid
+              - user:read:email
+            requested_claims: # explicitly request email and email_verified claims because twitch doesn't add them by default
+              id_token:
+                email:
+                  essential: true
+                email_verified:
+                  essential: true
+
+  flows:
+    error:
+      ui_url: https://dev.lania.gg/auth/error
+
+    settings:
+      ui_url: https://dev.lania.gg/settings
+      privileged_session_max_age: 15m
+      required_aal: highest_available
+    recovery:
+      enabled: true
+      ui_url: https://dev.lania.gg/auth/recovery
+      use: code
+
+    verification:
+      enabled: true
+      ui_url: https://dev.lania.gg/auth/verification
+      use: code
+      after:
+        default_browser_return_url: https://dev.lania.gg/
+
+    logout:
+      after:
+        default_browser_return_url: https://dev.lania.gg/
+
+    login:
+      ui_url: https://dev.lania.gg/auth/login
+      after:
+        hooks: []
+        oidc:
+          hooks: []
+        password:
+          hooks: []
+        webauthn:
+          hooks: []
+      before:
+        hooks: []
+      lifespan: 30m0s
+
+    registration:
+      lifespan: 10m
+      ui_url: https://dev.lania.gg/auth/registration
+      after:
+        password:
+          hooks:
+            - hook: session
+            - hook: show_verification_ui
+
+oauth2_provider:
+  override_return_to: true
+
+session:
+  lifespan: 72h
+  cookie:
+    domain: dev.lania.gg
+    path: /
+    same_site: Lax
+
+log:
+  level: debug
+  format: text
+  leak_sensitive_values: true
+
+secrets:
+  cookie:
+    - PLEASE-CHANGE-ME-I-AM-VERY-INSECURE
+  cipher:
+    - 32-LONG-SECRET-NOT-SECURE-AT-ALL
+
+ciphers:
+  algorithm: xchacha20-poly1305
+
+hashers:
+  algorithm: bcrypt
+  bcrypt:
+    cost: 8
+
+identity:
+  default_schema_id: default
+  schemas:
+    - id: default
+      url: file:///etc/config/kratos/identity.schema.json
+
+courier:
+  smtp:
+    connection_uri: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true
+
+feature_flags:
+  use_continue_with_transitions: true

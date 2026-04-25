@@ -1,0 +1,39 @@
+name: ${name}
+version: ${version}
+description: ${description}
+author: ${author}
+website: ${url}
+softdepend: [PremiumVanish, LuckPerms, PAPIProxyBridge]
+api-version: 1.21
+
+main: ${mainClass}
+
+commands:
+    fakemessage:
+        description: Send a fake join or leave message from the proxy
+        permission: networkjoinmessages.fakemessage
+        usage: /<command>
+        aliases: [fm]
+    networkjoinreload:
+        description: reloads the configuration file
+        permission: networkjoinmessages.reload
+        usage: /<command>
+        aliases: [njoinreload]
+    togglejoinmessage:
+        description: Toggles incoming join messages.
+        permission: networkjoinmessages.togglemessage
+        usage: /<command>
+        aliases: [njointoggle]
+permissions:
+    networkjoinmessages.fakemessage:
+        description: "Allows the use of the fakemessage command."
+        default: op
+    networkjoinmessages.reload:
+        description: "Allows the use of the reload command."
+        default: op
+    networkjoinmessages.togglemessage:
+        description: "Allows the use of the togglemessage command."
+        default: op
+    networkjoinmessages.silent:
+        description: "lets you join the server without notifications."
+        default: false
