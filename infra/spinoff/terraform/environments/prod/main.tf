@@ -57,7 +57,7 @@ resource "null_resource" "update_modpack" {
       "while [ ! -f /var/log/minecraft-setup-done ]; do sleep 5; done",
       "chmod +x /opt/minecraft/update.sh",
       "chown minecraft:minecraft /opt/minecraft/update.sh",
-      "/opt/minecraft/update.sh '${var.mrpack_url}' '${var.neoforge_version}'"
+      "/opt/minecraft/update.sh '${var.mrpack_url}' '${var.neoforge_version}' '${var.rcon_port}' '${var.rcon_password}'"
     ]
   }
 

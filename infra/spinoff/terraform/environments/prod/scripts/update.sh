@@ -6,9 +6,11 @@ MC_DIR="/opt/minecraft"
 MRPACK_FILE="server.mrpack"
 MRPACK_URL="$1"
 NEOFORGE_VERSION="$2"
+RCON_PORT="$3"
+RCON_PASSWORD="$4"
 
 if [ -z "$MRPACK_URL" ]; then
-  echo "Usage: ./update.sh <mrpack_url> <neoforge version>"
+  echo "Usage: ./update.sh <mrpack_url> <neoforge version> <rcon port> <rcon password>"
   exit 1
 fi
 
@@ -35,7 +37,7 @@ chown "$MC_USER":"$MC_USER" "$MC_DIR/eula.txt"
 
 # --- server.properties ---
 echo ">>> Writing server.properties..."
-cat > "$MC_DIR/server.properties" << 'EOF'
+cat > "$MC_DIR/server.properties" << EOF
 accepts-transfers=false
 allow-flight=false
 broadcast-console-to-ops=true
@@ -46,7 +48,7 @@ difficulty=hard
 enable-code-of-conduct=false
 enable-jmx-monitoring=false
 enable-query=false
-enable-rcon=false
+enable-rcon=true
 enable-status=true
 enforce-secure-profile=true
 enforce-whitelist=true
@@ -85,8 +87,8 @@ player-idle-timeout=0
 prevent-proxy-connections=false
 query.port=25565
 rate-limit=0
-rcon.password=
-rcon.port=25575
+rcon.password=$RCON_PASSWORD
+rcon.port=$RCON_PORT
 region-file-compression=deflate
 require-resource-pack=false
 resource-pack=

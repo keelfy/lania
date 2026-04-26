@@ -38,3 +38,15 @@ variable "bootstrap_force" {
   type        = string
   default     = "0"
 }
+
+variable "rcon_port" {
+  description = "Port for RCON connection to the server"
+  type        = string
+  default     = "25575"
+}
+
+variable "rcon_password" {
+  description = "Password for RCON connection to the server"
+  type        = string
+  default     = "CHANGEME"
+}
