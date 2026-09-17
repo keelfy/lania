@@ -18,8 +18,10 @@ jobs:
         with:
           filters: |
             api:
+              - '.github/workflows/**'
               - 'apps/api/**'
             front:
+              - '.github/workflows/**'
               - 'apps/front/**'
 
   build-backend:
