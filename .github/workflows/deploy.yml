@@ -43,8 +43,8 @@ jobs:
           context: apps/api
           push: true
           tags: |
-            ghcr.io/lania-smp/backend:latest
-            ghcr.io/lania-smp/backend:${{ github.sha }}
+            ghcr.io/keelfy/lania:latest-backend
+            ghcr.io/keelfy/lania:backend-${{ github.sha }}
 
   build-frontend:
     needs: changes
@@ -77,8 +77,8 @@ jobs:
             NEXT_PUBLIC_TELEGRAM_CHANNEL_URL=https://t.me/laniamc
             NEXT_PUBLIC_DISCORD_SERVER_URL=https://discord.gg/laniamc
           tags: |
-            ghcr.io/lania-smp/frontend:latest
-            ghcr.io/lania-smp/frontend:${{ github.sha }}
+            ghcr.io/keelfy/lania:latest-frontend
+            ghcr.io/keelfy/lania:frontend-${{ github.sha }}
 
   deploy:
     needs: [changes, build-backend, build-frontend]
