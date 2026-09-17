@@ -16,7 +16,7 @@ export default function CopyIPButton({ className, ...props }: Props) {
 
   const copyLink = React.useCallback(() => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(`play.lania.gg`)
+      navigator.clipboard.writeText(`play.lania.network`)
       setCopied(true)
       setTimeout(() => {
         setCopied(false)

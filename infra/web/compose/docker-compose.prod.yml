@@ -1,0 +1,142 @@
+name: lania-web
+
+networks:
+  lania-web-net:
+    name: lania-web-net
+  edge:
+    name: edge
+    external: true
+
+volumes:
+  lania-mariadb-data:
+  lania-postgres-data:
+  lania-redis-data:
+
+services:
+  front:
+    image: ghcr.io/lania-smp/frontend:${IMAGE_TAG:-latest}
+    container_name: lania-front
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - lania-web-net
+      - edge
+    mem_limit: 512m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=edge"
+      - "traefik.http.services.lania-front.loadbalancer.server.port=3000"
+
+      - "traefik.http.routers.lania-front.rule=Host(`www.lania.network`)"
+      - "traefik.http.routers.lania-front.entrypoints=websecure"
+      - "traefik.http.routers.lania-front.tls.certresolver=letsencrypt"
+
+      - "traefik.http.routers.lania-apex.rule=Host(`lania.network`)"
+      - "traefik.http.routers.lania-apex.entrypoints=websecure"
+      - "traefik.http.routers.lania-apex.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.lania-apex.middlewares=lania-redirect-www"
+      - "traefik.http.middlewares.lania-redirect-www.redirectregex.regex=^https://lania.network/(.*)"
+      - "traefik.http.middlewares.lania-redirect-www.redirectregex.replacement=https://www.lania.network/$${1}"
+      - "traefik.http.middlewares.lania-redirect-www.redirectregex.permanent=true"
+
+  api:
+    image: ghcr.io/lania-smp/backend:${IMAGE_TAG:-latest}
+    container_name: lania-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - lania-web-net
+      - edge
+    depends_on:
+      - mariadb
+      - redis
+      - kratos
+    mem_limit: 512m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=edge"
+      - "traefik.http.routers.lania-api.rule=Host(`api.lania.network`)"
+      - "traefik.http.routers.lania-api.entrypoints=websecure"
+      - "traefik.http.routers.lania-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lania-api.loadbalancer.server.port=8080"
+
+  mariadb:
+    image: mariadb:12
+    container_name: lania-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_FLECTONE_NAME: ${DATABASE_FLECTONE_NAME}
+      DATABASE_PLAN_NAME: ${DATABASE_PLAN_NAME}
+    volumes:
+      - lania-mariadb-data:/var/lib/mysql
+      - ./mariadb-init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    networks:
+      - lania-web-net
+    mem_limit: 1g
+
+  redis:
+    image: redis:6
+    container_name: lania-redis
+    restart: unless-stopped
+    volumes:
+      - lania-redis-data:/data
+    networks:
+      - lania-web-net
+    mem_limit: 256m
+
+  postgres:
+    image: postgres:16
+    container_name: lania-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - lania-postgres-data:/var/lib/postgresql/data
+    networks:
+      - lania-web-net
+    mem_limit: 512m
+
+  kratos-migrate:
+    image: oryd/kratos:v1.3.1
+    container_name: lania-kratos-migrate
+    environment:
+      - DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+    depends_on:
+      - postgres
+    volumes:
+      - ./kratos:/etc/config/kratos:ro
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    networks:
+      - lania-web-net
+    restart: on-failure
+
+  kratos:
+    image: oryd/kratos:v1.3.1
+    container_name: lania-kratos
+    restart: unless-stopped
+    depends_on:
+      - kratos-migrate
+    env_file:
+      - .env
+    environment:
+      - DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+    command: serve -c /etc/config/kratos/kratos.yml --watch-courier
+    volumes:
+      - ./kratos:/etc/config/kratos:ro
+    networks:
+      - lania-web-net
+      - edge
+    mem_limit: 256m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=edge"
+      - "traefik.http.routers.lania-accounts.rule=Host(`accounts.lania.network`)"
+      - "traefik.http.routers.lania-accounts.entrypoints=websecure"
+      - "traefik.http.routers.lania-accounts.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lania-accounts.loadbalancer.server.port=4433"

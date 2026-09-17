@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: t('description'),
     openGraph: {
       type: 'website',
-      url: 'https://lania.gg',
+      url: 'https://lania.network',
       title: t('title'),
       description: t('description'),
       siteName: 'Lania Network',

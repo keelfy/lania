@@ -1,0 +1,51 @@
+# Copy to terraform.tfvars (gitignored) and fill in real values.
+# Never commit terraform.tfvars.
+
+server_ipv4           = "203.0.113.10"
+ssh_user              = "root"
+ssh_private_key_path  = "~/.ssh/id_ed25519"
+deploy_path           = "/opt/lania-web"
+image_tag             = "latest"
+
+cloudflare_api_token = "CHANGEME"
+cloudflare_zone_id   = "CHANGEME"
+domain               = "lania.network"
+cloudflare_proxied   = false
+
+api_key    = "CHANGEME"
+jwt_secret = "CHANGEME"
+
+database_password = "CHANGEME"
+mariadb_root_password = "CHANGEME" # same value as database_password
+
+active_season_id      = "00000000-0000-0000-0000-000000000000"
+default_name_color_id = "00000000-0000-0000-0000-000000000000"
+
+postgres_password = "CHANGEME"
+
+kratos_secrets_cookie       = "CHANGEME"
+kratos_secrets_cipher       = "CHANGEME-32-BYTES-LONG-SECRET!!"
+courier_smtp_connection_uri = "smtps://user:pass@smtp.example.com:465/"
+
+# Optional — leave blank to disable a provider
+oidc_google_client_id      = ""
+oidc_google_client_secret  = ""
+oidc_discord_client_id     = ""
+oidc_discord_client_secret = ""
+oidc_yandex_client_id      = ""
+oidc_yandex_client_secret  = ""
+oidc_twitch_client_id      = ""
+oidc_twitch_client_secret  = ""
+
+freekassa_base_payment_url    = ""
+freekassa_merchant_id         = ""
+freekassa_merchant_password_1 = ""
+freekassa_merchant_password_2 = ""
+
+donation_alerts_client_id               = ""
+donation_alerts_client_secret           = ""
+donation_alerts_socket_connection_token = ""
+donation_alerts_user_id                 = ""
+
+twitch_client_id     = ""
+twitch_client_secret = ""

@@ -90,3 +90,33 @@ run = "terraform plan"
 description = "Apply Terraform"
 dir = "infra/spinoff/terraform/environments/prod"
 run = "terraform apply"
+
+[tasks.web-terraform-prod-init]
+description = "Initialize Terraform"
+dir = "infra/web/terraform/environments/prod"
+run = "terraform init"
+
+[tasks.web-terraform-prod-plan]
+description = "Plan Terraform"
+dir = "infra/web/terraform/environments/prod"
+run = "terraform plan"
+
+[tasks.web-terraform-prod-apply]
+description = "Apply Terraform"
+dir = "infra/web/terraform/environments/prod"
+run = "terraform apply"
+
+[tasks.edge-terraform-prod-init]
+description = "Initialize Terraform"
+dir = "infra/edge/terraform/environments/prod"
+run = "terraform init"
+
+[tasks.edge-terraform-prod-plan]
+description = "Plan Terraform"
+dir = "infra/edge/terraform/environments/prod"
+run = "terraform plan"
+
+[tasks.edge-terraform-prod-apply]
+description = "Apply Terraform"
+dir = "infra/edge/terraform/environments/prod"
+run = "terraform apply"

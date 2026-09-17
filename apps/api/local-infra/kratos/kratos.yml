@@ -5,11 +5,11 @@ dev: true
 
 serve:
   public:
-    base_url: https://dev.lania.gg/ory
+    base_url: https://dev.lania.network/ory
     cors:
       enabled: true
       allowed_origins:
-        - https://dev.lania.gg
+        - https://dev.lania.network
       allowed_methods:
         - POST
         - GET
@@ -24,12 +24,12 @@ serve:
         - Content-Type
         - Set-Cookie
   admin:
-    base_url: https://dev.lania.gg/ory-admin
+    base_url: https://dev.lania.network/ory-admin
 
 selfservice:
-  default_browser_return_url: https://dev.lania.gg/welcome
+  default_browser_return_url: https://dev.lania.network/welcome
   allowed_return_urls:
-    - https://dev.lania.gg
+    - https://dev.lania.network
     - https://localhost:19006/Callback
     - exp://localhost:8081/--/Callback
 
@@ -94,30 +94,30 @@ selfservice:
 
   flows:
     error:
-      ui_url: https://dev.lania.gg/auth/error
+      ui_url: https://dev.lania.network/auth/error
 
     settings:
-      ui_url: https://dev.lania.gg/settings
+      ui_url: https://dev.lania.network/settings
       privileged_session_max_age: 15m
       required_aal: highest_available
     recovery:
       enabled: true
-      ui_url: https://dev.lania.gg/auth/recovery
+      ui_url: https://dev.lania.network/auth/recovery
       use: code
 
     verification:
       enabled: true
-      ui_url: https://dev.lania.gg/auth/verification
+      ui_url: https://dev.lania.network/auth/verification
       use: code
       after:
-        default_browser_return_url: https://dev.lania.gg/
+        default_browser_return_url: https://dev.lania.network/
 
     logout:
       after:
-        default_browser_return_url: https://dev.lania.gg/
+        default_browser_return_url: https://dev.lania.network/
 
     login:
-      ui_url: https://dev.lania.gg/auth/login
+      ui_url: https://dev.lania.network/auth/login
       after:
         hooks: []
         oidc:
@@ -132,7 +132,7 @@ selfservice:
 
     registration:
       lifespan: 10m
-      ui_url: https://dev.lania.gg/auth/registration
+      ui_url: https://dev.lania.network/auth/registration
       after:
         password:
           hooks:
@@ -145,7 +145,7 @@ oauth2_provider:
 session:
   lifespan: 72h
   cookie:
-    domain: dev.lania.gg
+    domain: dev.lania.network
     path: /
     same_site: Lax
 

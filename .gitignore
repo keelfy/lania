@@ -34,3 +34,9 @@ infra/**/.terraform/
 infra/**/*.tfvars
 infra/**/*.tfstate
 infra/**/*.tfstate.*
+infra/**/generated/
+
+# Deploy compose env files
+infra/**/.env
+infra/**/.env.*
+!infra/**/.env.example

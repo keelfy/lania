@@ -11,7 +11,7 @@ definitions:
       database:
         type: string
     type: object
-host: api.lania.gg
+host: api.lania.network
 info:
   contact:
     email: support@swagger.io

@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: t('description'),
     openGraph: {
       type: 'website',
-      url: 'https://lania.gg/worlds',
+      url: 'https://lania.network/worlds',
       title: t('title'),
       description: t('description'),
       siteName: 'Lania Network',
@@ -51,7 +51,7 @@ export default async function WorldPage({ params }: Props) {
 
   try {
     status = await Promise.race([
-      pinger.pingPromise('play.lania.gg', 25565),
+      pinger.pingPromise('play.lania.network', 25565),
       new Promise<void>((_, reject) => setTimeout(reject, 1000)),
     ])
   } catch (error) {

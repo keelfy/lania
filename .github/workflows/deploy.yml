@@ -1,0 +1,101 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      front: ${{ steps.filter.outputs.front }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'apps/api/**'
+            front:
+              - 'apps/front/**'
+
+  build-backend:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          push: true
+          tags: |
+            ghcr.io/lania-smp/backend:latest
+            ghcr.io/lania-smp/backend:${{ github.sha }}
+
+  build-frontend:
+    needs: changes
+    if: needs.changes.outputs.front == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/front
+          push: true
+          build-args: |
+            NEXT_PUBLIC_PREREGISTRATION=${{ vars.NEXT_PUBLIC_PREREGISTRATION }}
+            NEXT_PUBLIC_ACTIVE_SEASON_ID=${{ vars.NEXT_PUBLIC_ACTIVE_SEASON_ID }}
+            NEXT_PUBLIC_DOMAIN=https://www.lania.network
+            NEXT_PUBLIC_BACKEND_URL=https://api.lania.network
+            NEXT_PUBLIC_ORY_SDK_URL=https://accounts.lania.network
+            NEXT_PUBLIC_SUPPORT_EMAIL=contact@lania.network
+            NEXT_PUBLIC_SUPPORT_URL=/support
+            NEXT_PUBLIC_TELEGRAM_CHANNEL_URL=https://t.me/laniamc
+            NEXT_PUBLIC_DISCORD_SERVER_URL=https://discord.gg/laniamc
+          tags: |
+            ghcr.io/lania-smp/frontend:latest
+            ghcr.io/lania-smp/frontend:${{ github.sha }}
+
+  deploy:
+    needs: [changes, build-backend, build-frontend]
+    if: |
+      always() &&
+      (needs.build-backend.result == 'success' || needs.build-backend.result == 'skipped') &&
+      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
+      (needs.changes.outputs.api == 'true' || needs.changes.outputs.front == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and restart the stack
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/lania-web/compose
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans

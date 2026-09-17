@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: t('metadata.description').replace('<world/>', mapTitle),
     openGraph: {
       type: 'website',
-      url: 'https://lania.gg/worlds',
+      url: 'https://lania.network/worlds',
       title: t('metadata.title').replace('<world/>', mapTitle),
       description: t('metadata.description').replace('<world/>', mapTitle),
       siteName: 'Lania Network',

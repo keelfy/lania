@@ -21,7 +21,7 @@ export default async function MapsPage({ params }: Props) {
   return (
     <iframe
       title={t('title').replace('<world/>', t('mapNames.' + world))}
-      src={`https://maps.lania.gg/${world}/1/`}
+      src={`https://maps.lania.network/${world}/1/`}
       style={{ border: 'none', width: '100%', height: '100%' }}
       allowFullScreen
     />

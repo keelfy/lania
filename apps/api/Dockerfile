@@ -28,6 +28,10 @@ WORKDIR /app
 # Install ca-certificates
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
+# Run as a non-root user
+RUN useradd --system --no-create-home --uid 10001 backend
+USER backend
+
 # Copy binary from buildx
 COPY --from=buildx /app/backend .
 

@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (gitignored) and fill in real values.
+# Never commit terraform.tfvars.
+
+server_ipv4          = "203.0.113.10"
+ssh_user             = "root"
+ssh_private_key_path = "~/.ssh/id_ed25519"
+deploy_path          = "/opt/lania-edge"
+
+acme_email = "you@example.com"
