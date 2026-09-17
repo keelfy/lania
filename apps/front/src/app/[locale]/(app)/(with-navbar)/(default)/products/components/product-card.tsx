@@ -20,7 +20,10 @@ export default function ProductCard({
   currency,
   ...props
 }: React.PropsWithChildren<Props>) {
+  // Server Component: Date.now() reflects the current request time, not a
+  // memoized render — the purity rule targets client render idempotency.
   const isNew =
+    // eslint-disable-next-line react-hooks/purity
     new Date(item.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 7)
 
   return (

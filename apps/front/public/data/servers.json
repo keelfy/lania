@@ -1,0 +1,27 @@
+{
+  "servers": [
+    {
+      "name": "ʟᴀɴɪᴀ ᴠ",
+      "domain": "play.lania.network",
+      "port": 25565,
+      "maps": [
+        {
+          "id": "survival",
+          "icon": "house",
+          "image": "s3://lania-web-134312503254-eu-central-1-an/2025-08-19_11.15.29.png"
+        },
+        {
+          "id": "farms",
+          "icon": "pickaxe",
+          "image": "s3://lania-web-134312503254-eu-central-1-an/2025-08-29_21.30.10.png"
+        }
+      ]
+    },
+    {
+      "name": "ʟᴀɴɪᴀ ꜱᴘɪɴᴏꜰꜰ ɪ",
+      "domain": "spinoff.lania.network",
+      "port": 25565,
+      "maps": []
+    }
+  ]
+}

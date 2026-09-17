@@ -39,6 +39,7 @@ export default function SwirlBackground({
   const particlePropsRef = useRef<Float32Array | null>(null)
   const animationFrameRef = useRef<number | null>(null)
   const noise3DRef = useRef<ReturnType<typeof createNoise3D> | null>(null)
+  const drawRef = useRef<() => void>(() => {})
   const [powerSavingMode, setPowerSavingMode] = React.useState<boolean>()
 
   // Constants
@@ -58,11 +59,6 @@ export default function SwirlBackground({
   const xOff = 0.00125
   const yOff = 0.00125
   const zOff = 0.0002 // Reduced from 0.0005
-
-  // Initialize noise3D once
-  if (!noise3DRef.current) {
-    noise3DRef.current = createNoise3D(Math.random)
-  }
 
   const backgroundColor = React.useMemo(
     () =>
@@ -314,8 +310,14 @@ export default function SwirlBackground({
     renderGlow()
     renderToScreen()
 
-    animationFrameRef.current = window.requestAnimationFrame(draw)
+    animationFrameRef.current = window.requestAnimationFrame(() =>
+      drawRef.current(),
+    )
   }, [drawParticles, renderGlow, renderToScreen, backgroundColor])
+
+  useEffect(() => {
+    drawRef.current = draw
+  }, [draw])
 
   const setup = useCallback(() => {
     noise3DRef.current = createNoise3D(Math.random) // re-init on setup (like original)

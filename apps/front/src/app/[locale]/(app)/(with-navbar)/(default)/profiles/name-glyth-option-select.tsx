@@ -28,9 +28,11 @@ export default function NameGlythOptionSelect({
   selectedProfile,
   cosmeticOptions,
 }: Props) {
-  const [selectedNamePrefixId, setSelectedNamePrefixId] = React.useState(
-    selectedProfile?.cosmetics.name?.glythPrefix?.id ?? 'none',
-  )
+  const [optimisticNamePrefixId, setOptimisticNamePrefixId] =
+    React.useOptimistic(
+      selectedProfile.cosmetics.name?.glythPrefix?.id ?? 'none',
+      (_state, namePrefixId: string) => namePrefixId,
+    )
   const [isPending, startTransition] = React.useTransition()
   const router = useRouter()
   const t = useTranslations('profiles.cosmetics.glyth')
@@ -43,10 +45,9 @@ export default function NameGlythOptionSelect({
     )
     if (!option && namePrefixId !== 'none') return
 
-    const previousNamePrefixId = selectedNamePrefixId
-    setSelectedNamePrefixId(namePrefixId)
-
     startTransition(async () => {
+      setOptimisticNamePrefixId(namePrefixId)
+
       try {
         await updateProfileNamePrefix(
           clientApiFetcher,
@@ -72,21 +73,14 @@ export default function NameGlythOptionSelect({
           }),
           error,
         )
-        setSelectedNamePrefixId(previousNamePrefixId)
       }
     })
   }
 
-  React.useEffect(() => {
-    setSelectedNamePrefixId(
-      selectedProfile.cosmetics.name?.glythPrefix?.id ?? 'none',
-    )
-  }, [selectedProfile.cosmetics.name?.glythPrefix?.id])
-
   return (
     <>
       <Select
-        value={selectedNamePrefixId}
+        value={optimisticNamePrefixId}
         onValueChange={handleSelectProfileNamePrefix}
       >
         <SelectTrigger className="w-full">

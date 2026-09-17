@@ -3,10 +3,10 @@ import { Button } from '@/components/ui/button'
 import {
   NavigationMenu,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
-  navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu'
+import { navigationMenuTriggerStyle } from '@/components/ui/navigation-menu-trigger-style'
+import NavItemLink from './nav-item-link'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetTrigger } from '@/components/ui/sheet'
 import { Currency, CURRENCY_COOKIE, DEFAULT_CURRENCY } from '@/lib/currency'
@@ -109,25 +109,24 @@ export default async function Navbar({
             <NavigationMenuList>
               {navItems.map((item) => (
                 <NavigationMenuItem key={item.href}>
-                  <Link href={`/${currentLocale}${item.href}`} legacyBehavior>
-                    <NavigationMenuLink
+                  <NavItemLink
+                    href={`/${currentLocale}${item.href}`}
+                    className={cn(
+                      navigationMenuTriggerStyle(),
+                      'hover:border-accent cursor-pointer border-1 border-transparent bg-transparent transition-all hover:bg-transparent',
+                      item.disabled && 'pointer-events-none opacity-70',
+                    )}
+                  >
+                    <div
                       className={cn(
-                        navigationMenuTriggerStyle(),
-                        'hover:border-accent cursor-pointer border-1 border-transparent bg-transparent transition-all hover:bg-transparent',
-                        item.disabled && 'pointer-events-none opacity-70',
+                        'relative z-10 flex items-center gap-2',
+                        // 'px-4 py-2 bg-gradient-to-r from-white to-teal-400/90 bg-[length:200%_100%] bg-clip-text bg-[position:0%_50%] text-transparent transition-all duration-300 hover:bg-[position:70%_50%]',
                       )}
                     >
-                      <div
-                        className={cn(
-                          'relative z-10 flex items-center gap-2',
-                          // 'px-4 py-2 bg-gradient-to-r from-white to-teal-400/90 bg-[length:200%_100%] bg-clip-text bg-[position:0%_50%] text-transparent transition-all duration-300 hover:bg-[position:70%_50%]',
-                        )}
-                      >
-                        <item.icon className="size-4" />
-                        <p>{t(`navbar.items.${item.labelKey}`)}</p>
-                      </div>
-                    </NavigationMenuLink>
-                  </Link>
+                      <item.icon className="size-4" />
+                      <p>{t(`navbar.items.${item.labelKey}`)}</p>
+                    </div>
+                  </NavItemLink>
                   <NavbarHighlighter href={item.href} />
                 </NavigationMenuItem>
               ))}

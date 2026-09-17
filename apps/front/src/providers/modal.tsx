@@ -30,7 +30,7 @@ export default function ModalStoreProvider({
 
   const [modalParamsQuery] = useQueryState('mps', parseAsString.withDefault(''))
 
-  const storeRef = React.useRef<ModalStoreApi>(
+  const [store] = React.useState<ModalStoreApi>(() =>
     createModalStore({
       currentModal: modalQuery,
       modalParams: modalParamsQuery ? qs.parse(modalParamsQuery) : {},
@@ -38,7 +38,7 @@ export default function ModalStoreProvider({
   )
 
   return (
-    <ModalStoreContext.Provider value={storeRef.current}>
+    <ModalStoreContext.Provider value={store}>
       {children}
       <ModalQuerySync />
     </ModalStoreContext.Provider>

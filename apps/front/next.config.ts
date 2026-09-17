@@ -14,7 +14,13 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'czx1jtlf2o.ufs.sh',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.keelfy.dev',
+      },
     ],
+    loader: "custom",
+    loaderFile: "./src/lib/imgproxyImageLoader.tsx",
   },
   /* config options here */
   i18n: {

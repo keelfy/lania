@@ -1,20 +1,19 @@
-import { FlatCompat } from '@eslint/eslintrc'
+import { defineConfig, globalIgnores } from 'eslint/config'
+import nextVitals from 'eslint-config-next/core-web-vitals'
+import nextTs from 'eslint-config-next/typescript'
+import jsxA11y from 'eslint-plugin-jsx-a11y'
+import prettierRecommended from 'eslint-plugin-prettier/recommended'
 
-const compat = new FlatCompat({
-  // import.meta.dirname is available after Node.js v20.11.0
-  baseDirectory: import.meta.dirname,
-})
-
-const eslintConfig = [
-  ...compat.config({
-    extends: [
-      'next',
-      'next/core-web-vitals',
-      'next/typescript',
-      'plugin:prettier/recommended',
-      'plugin:jsx-a11y/recommended',
-    ],
-    plugins: ['prettier', 'jsx-a11y'],
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // eslint-config-next already registers the jsx-a11y plugin; only add its
+  // recommended rules here to avoid redefining the plugin instance.
+  {
+    rules: jsxA11y.flatConfigs.recommended.rules,
+  },
+  prettierRecommended,
+  {
     rules: {
       'prettier/prettier': [
         'error',
@@ -40,7 +39,8 @@ const eslintConfig = [
       'jsx-a11y/role-has-required-aria-props': 'warn',
       'jsx-a11y/role-supports-aria-props': 'warn',
     },
-  }),
-]
+  },
+  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
+])
 
 export default eslintConfig

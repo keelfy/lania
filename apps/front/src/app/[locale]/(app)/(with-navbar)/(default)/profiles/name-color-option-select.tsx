@@ -26,8 +26,9 @@ export default function NameColorOptionSelect({
   selectedProfile,
   cosmeticOptions,
 }: Props) {
-  const [selectedNameColorId, setSelectedNameColorId] = React.useState(
-    selectedProfile?.cosmetics.name.colors.id,
+  const [optimisticNameColorId, setOptimisticNameColorId] = React.useOptimistic(
+    selectedProfile.cosmetics.name.colors.id,
+    (_state, nameColorId: string) => nameColorId,
   )
   const [isPending, startTransition] = React.useTransition()
   const router = useRouter()
@@ -39,10 +40,9 @@ export default function NameColorOptionSelect({
     )
     if (!option || !selectedProfile || isPending) return
 
-    const previousNameColorId = selectedNameColorId
-    setSelectedNameColorId(nameColorId)
-
     startTransition(async () => {
+      setOptimisticNameColorId(nameColorId)
+
       try {
         await updateProfileNameColor(clientApiFetcher, selectedProfile.id, {
           optionId: option.id,
@@ -63,19 +63,14 @@ export default function NameColorOptionSelect({
           }),
           error,
         )
-        setSelectedNameColorId(previousNameColorId)
       }
     })
   }
 
-  React.useEffect(() => {
-    setSelectedNameColorId(selectedProfile.cosmetics.name.colors.id)
-  }, [selectedProfile.cosmetics.name.colors.id])
-
   return (
     <>
       <Select
-        value={selectedNameColorId}
+        value={optimisticNameColorId}
         onValueChange={handleSelectProfileNameColor}
       >
         <SelectTrigger className="w-full">

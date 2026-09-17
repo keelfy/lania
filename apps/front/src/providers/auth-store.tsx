@@ -20,10 +20,10 @@ export default function AuthStoreProvider({
   children,
   ...props
 }: AuthStoreProviderProps) {
-  const storeRef = React.useRef<AuthStoreApi>(createAuthStore(props))
+  const [store] = React.useState<AuthStoreApi>(() => createAuthStore(props))
 
   return (
-    <AuthStoreContext.Provider value={storeRef.current}>
+    <AuthStoreContext.Provider value={store}>
       {children}
     </AuthStoreContext.Provider>
   )

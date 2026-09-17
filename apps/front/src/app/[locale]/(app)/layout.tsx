@@ -16,6 +16,7 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import React, { Suspense } from 'react'
 import { Toaster } from 'sonner'
 import './globals.css'
+import './typeset.css'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

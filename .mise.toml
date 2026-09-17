@@ -58,22 +58,22 @@ run = "go test -v ./..."
 
 [tasks.front-install]
 description = "Install frontend dependencies with Bun"
-dir = "front"
+dir = "apps/front"
 run = "bun install"
 
 [tasks.front-dev]
 description = "Run frontend development server"
-dir = "front"
+dir = "apps/front"
 run = "bun run dev"
 
 [tasks.front-build]
 description = "Build frontend with Bun"
-dir = "front"
+dir = "apps/front"
 run = "bun run build"
 
 [tasks.front-lint]
 description = "Lint frontend with Bun"
-dir = "front"
+dir = "apps/front"
 run = "bun run lint"
 
 [tasks.spinoff-terraform-prod-init]
