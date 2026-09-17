@@ -46,7 +46,6 @@ export default function LandingCommunityCarousel({
                     alt={item.alt}
                     fill
                     className="rounded-2xl object-cover"
-                    unoptimized
                   />
                   <div className="bg-accent/50 absolute right-0 bottom-0 m-2 rounded-sm px-2 py-1">
                     <Label className="-translate-y-0.5 text-sm font-semibold">
@@ -66,7 +65,6 @@ export default function LandingCommunityCarousel({
                   alt={item.alt}
                   fill
                   className="rounded-2xl object-cover"
-                  unoptimized
                 />
                 <div className="bg-accent/50 absolute right-0 bottom-0 m-4 rounded-sm px-3 py-1">
                   <Label className="text-md -translate-y-0.5 font-bold">

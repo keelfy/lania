@@ -10,22 +10,19 @@ const seasons = [
     seasonNumber: 3,
     startDate: '2025-04-01',
     endDate: '2025-06-10',
-    image:
-      'https://czx1jtlf2o.ufs.sh/f/0UHiIrRo6i8cktZkcgLExFzSaI68v4fT1c3yn0Zstg9ojGXm',
+    image: 's3://lania-web-134312503254-eu-central-1-an/2025-08-19_11.15.21.png',
   },
   {
     seasonNumber: 2,
     startDate: '2024-07-12',
     endDate: '2024-09-03',
-    image:
-      'https://czx1jtlf2o.ufs.sh/f/0UHiIrRo6i8cxucvXLJjowQqVUy7ZDtGeB9iHgs1vTAchKzW',
+    image: 's3://lania-web-134312503254-eu-central-1-an/2025-08-29_21.23.23.png',
   },
   {
     seasonNumber: 1,
     startDate: '2023-12-23',
     endDate: '2024-02-23',
-    image:
-      'https://czx1jtlf2o.ufs.sh/f/0UHiIrRo6i8cW1Jd4BC0b8RNXgu7hPxajkedqcOpDJMwf3Cv',
+    image: 's3://lania-web-134312503254-eu-central-1-an/2025-08-29_21.26.21.png',
   },
 ]
 

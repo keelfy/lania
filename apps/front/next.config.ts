@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'images.keelfy.dev',
+        hostname: 'images.lania.network',
       },
     ],
     loader: "custom",
