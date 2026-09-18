@@ -111,7 +111,7 @@ INSERT INTO products (id, category, price_name, metadata) VALUES
     ('383c4fc1-5f92-4bae-a4b4-b743922f1eba', 'name-color', 'name_color', '{"colors": ["#800080", "#ffc0cb"], "nameColorId": "d55d6881-918b-4f5a-86be-f7b82db3473f"}'),
     ('bdd07172-ea5f-4a0a-b82a-16776a6b4b5c', 'name-color', 'name_color', '{"colors": ["#c0c0aa", "#1cefff"], "nameColorId": "69323f24-ecbe-4fea-a4e1-0ce8b1608d68"}'),
     ('9765c31a-c5d9-4d0a-9eb7-3c10aec6e66c', 'name-color', 'name_color', '{"colors": ["#2C3E50", "#FD746C"], "nameColorId": "a977667b-7272-406e-a9ec-7d0cf513ec67"}'),
-    ('68a560a1-878b-4cee-b79d-465aea06862b', 'name-color', 'name_color', '{"colors": ["#8360c3", "#2ebf91"], "nameColorId": "d21f754e-fa5b-4010-8889-2a98bc796a63"}')
+    ('68a560a1-878b-4cee-b79d-465aea06862b', 'name-color', 'name_color', '{"colors": ["#8360c3", "#2ebf91"], "nameColorId": "d21f754e-fa5b-4010-8889-2a98bc796a63"}'),
     ('69c9ef9e-f66a-4df7-9b3b-bdb2dbf97834', 'name-color', 'name_color', '{"colors": ["#e1eec3", "#f05053"], "nameColorId": "35a55540-a996-4e4d-b3b8-85495b525799"}'),
     ('66678f14-e431-41d1-a172-d301564deba0', 'name-color', 'name_color', '{"colors": ["#1c92d2", "#f2fcfe"], "nameColorId": "61839696-171e-4488-9b19-903647b0525b"}'),
     ('3189113f-9253-4bef-9ce4-0374aff2df7c', 'name-color', 'name_color', '{"colors": ["#B993D6", "#8CA6DB"], "nameColorId": "672b7493-d05b-4171-874b-2312b08813a0"}'),
