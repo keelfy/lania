@@ -33,6 +33,19 @@ services:
       - lania-postgres-data:/var/lib/postgresql/data
     restart: always
 
+  lania-migrate:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: lania-backend:local
+    container_name: lania-migrate
+    environment:
+      DATABASE_PUBLIC_URL: mysql://${MARIADB_USER}:${MARIADB_PASSWORD}@tcp(lania-mariadb:3306)/${MARIADB_DB}
+    depends_on:
+      - lania-mariadb
+    entrypoint: ["./db/migrate_sql.sh"]
+    restart: on-failure
+
   lania-kratos-migrate:
     image: oryd/kratos:v1.3.1
     container_name: lania-kratos-migrate
