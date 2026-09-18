@@ -1,5 +1,5 @@
 [tools]
-go = "1.24"
+go = "1.27"
 bun = "latest"
 
 [env]
@@ -9,7 +9,7 @@ AWS_SECRET_ACCESS_KEY = { required = true }
 
 [tasks.api-install-tools]
 description = "Install Go developer tools"
-dir = "monolith/apps/api"
+dir = "apps/api"
 run = [
   "go install github.com/rubenv/sql-migrate/...@latest",
   "go install github.com/google/wire/cmd/wire@latest",
@@ -18,7 +18,7 @@ run = [
 
 [tasks.api-deps]
 description = "Download API dependencies"
-dir = "monolith/apps/api"
+dir = "apps/api"
 run = "go mod download"
 
 [tasks.api-add-migration]

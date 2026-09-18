@@ -145,19 +145,19 @@ type eventHandler struct {
 	integrationService IntegrationService
 }
 
-func (h *eventHandler) OnConnect(c *centrifuge.Client, e centrifuge.ConnectEvent) {
+func (h *eventHandler) OnConnect(e centrifuge.ConnectedEvent) {
 	logger.Debugf(context.Background(), "Connected: %s", e.ClientID)
 }
 
-func (h *eventHandler) OnError(_ *centrifuge.Client, e centrifuge.ErrorEvent) {
-	logger.Debugf(context.Background(), "Error: %s", e.Message)
+func (h *eventHandler) OnError(e centrifuge.ErrorEvent) {
+	logger.Debugf(context.Background(), "Error: %s", e.Error.Error())
 }
 
-func (h *eventHandler) OnDisconnect(_ *centrifuge.Client, e centrifuge.DisconnectEvent) {
+func (h *eventHandler) OnDisconnect(e centrifuge.DisconnectedEvent) {
 	logger.Debugf(context.Background(), "Disconnected: %s", e.Reason)
 }
 
-func (h *eventHandler) OnPrivateSub(c *centrifuge.Client, e centrifuge.PrivateSubEvent) (string, error) {
+func (h *eventHandler) OnPrivateSub(e centrifuge.ServerJoinEvent) {
 	/*
 			curl \
 		    -X POST https://www.donationalerts.com/api/v1/centrifuge/subscribe \
@@ -168,7 +168,6 @@ func (h *eventHandler) OnPrivateSub(c *centrifuge.Client, e centrifuge.PrivateSu
 	integration, err := h.integrationService.GetOAuth2IntegrationByServiceName(context.Background(), domain.IntegrationServiceDonationAlert)
 	if err != nil {
 		logger.Errorf(context.Background(), "DA centrifugo failed to get integration: %v", err)
-		return "", err
 	}
 
 	httpClient := &http.Client{
@@ -180,17 +179,15 @@ func (h *eventHandler) OnPrivateSub(c *centrifuge.Client, e centrifuge.PrivateSu
 		Client   string   `json:"client"`
 	}{
 		Channels: []string{fmt.Sprintf("$alerts:donation_%d", config.GetDonationAlertsUserID())},
-		Client:   e.ClientID,
+		Client:   e.Client,
 	}
 	reqBody, err := json.Marshal(body)
 	if err != nil {
 		logger.Errorf(context.Background(), "DA centrifugo failed to marshal body: %v", err)
-		return "", err
 	}
 	req, err := http.NewRequest("POST", "https://www.donationalerts.com/api/v1/centrifuge/subscribe", bytes.NewReader(reqBody))
 	if err != nil {
 		logger.Errorf(context.Background(), "DA centrifugo failed to create subscribe request: %v", err)
-		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", integration.AccessToken))
@@ -198,7 +195,6 @@ func (h *eventHandler) OnPrivateSub(c *centrifuge.Client, e centrifuge.PrivateSu
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		logger.Errorf(context.Background(), "DA centrifugo failed to subscribe: %v", err)
-		return "", err
 	}
 	defer resp.Body.Close()
 
@@ -211,36 +207,31 @@ func (h *eventHandler) OnPrivateSub(c *centrifuge.Client, e centrifuge.PrivateSu
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		logger.Errorf(context.Background(), "DA centrifugo failed to decode response: %v", err)
-		return "", err
 	}
 
 	if resp.StatusCode >= 300 || resp.StatusCode < 200 {
 		logger.Errorf(context.Background(), "DA centrifugo failed to subscribe: %s", resp.Status)
-		return "", fmt.Errorf("failed to subscribe: %s", resp.Status)
 	}
 
 	if len(response.Channels) == 0 {
 		logger.Errorf(context.Background(), "DA centrifugo failed to subscribe: no channels in response")
-		return "", fmt.Errorf("no channels in response")
 	}
-
-	return response.Channels[0].Token, nil
 }
 
 type subEventHandler struct {
 	orderService OrderService
 }
 
-func (h *subEventHandler) OnSubscribeSuccess(sub *centrifuge.Subscription, _ centrifuge.SubscribeSuccessEvent) {
-	logger.Debugf(context.Background(), "Successfully subscribed to private channel %s", sub.Channel())
+func (h *subEventHandler) OnSubscribeSuccess(event centrifuge.SubscribedEvent) {
+	logger.Debugf(context.Background(), "Successfully subscribed to private channel")
 }
 
-func (h *subEventHandler) OnSubscribeError(sub *centrifuge.Subscription, e centrifuge.SubscribeErrorEvent) {
-	logger.Debugf(context.Background(), "Error subscribing to private channel %s: %v", sub.Channel(), e.Error)
+func (h *subEventHandler) OnSubscribeError(e centrifuge.SubscriptionErrorEvent) {
+	logger.Debugf(context.Background(), "Error subscribing to private channel: %v", e.Error.Error())
 }
 
-func (h *subEventHandler) OnUnsubscribe(sub *centrifuge.Subscription, _ centrifuge.UnsubscribeEvent) {
-	logger.Debugf(context.Background(), "Unsubscribed from private channel %s", sub.Channel())
+func (h *subEventHandler) OnUnsubscribe(e centrifuge.UnsubscribedEvent) {
+	logger.Debugf(context.Background(), "Unsubscribed from private channel")
 }
 
 type DonationMessage struct {
@@ -256,7 +247,7 @@ type DonationMessage struct {
 	CreatedAt            string  `json:"created_at"`
 }
 
-func (h *subEventHandler) OnPublish(sub *centrifuge.Subscription, e centrifuge.PublishEvent) {
+func (h *subEventHandler) OnPublish(e centrifuge.PublicationEvent) {
 	var donationMessage DonationMessage
 	err := json.Unmarshal(e.Data, &donationMessage)
 	if err != nil {
@@ -313,17 +304,17 @@ func (h *subEventHandler) OnPublish(sub *centrifuge.Subscription, e centrifuge.P
 
 func (s *integrationService) ConnectToCentrifugo(ctx context.Context, accessToken string) (string, error) {
 	url := "wss://centrifugo.donationalerts.com/connection/websocket"
-	c := centrifuge.NewJsonClient(url, centrifuge.DefaultConfig())
-
-	c.SetToken(config.GetDonationAlertSocketConnectionToken())
+	c := centrifuge.NewJsonClient(url, centrifuge.Config{
+		Token: config.GetDonationAlertSocketConnectionToken(),
+	})
 
 	handler := &eventHandler{
 		integrationService: s,
 	}
-	c.OnDisconnect(handler)
-	c.OnConnect(handler)
-	c.OnError(handler)
-	c.OnPrivateSub(handler)
+	c.OnDisconnected(handler.OnDisconnect)
+	c.OnConnected(handler.OnConnect)
+	c.OnError(handler.OnError)
+	c.OnJoin(handler.OnPrivateSub)
 
 	if err := c.Connect(); err != nil {
 		logger.Errorf(ctx, "DA centrifugo failed to connect: %v", err)
@@ -338,10 +329,10 @@ func (s *integrationService) ConnectToCentrifugo(ctx context.Context, accessToke
 	subEventHandler := &subEventHandler{
 		orderService: s.orderService,
 	}
-	sub.OnSubscribeSuccess(subEventHandler)
-	sub.OnSubscribeError(subEventHandler)
-	sub.OnUnsubscribe(subEventHandler)
-	sub.OnPublish(subEventHandler)
+	sub.OnSubscribed(subEventHandler.OnSubscribeSuccess)
+	sub.OnError(subEventHandler.OnSubscribeError)
+	sub.OnUnsubscribed(subEventHandler.OnUnsubscribe)
+	sub.OnPublication(subEventHandler.OnPublish)
 
 	// Subscribe on private channel.
 	err = sub.Subscribe()

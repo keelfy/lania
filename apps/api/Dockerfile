@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Build stage
-FROM golang:1.24-bullseye AS buildx
+FROM golang:1.27-alpine AS buildx
 WORKDIR /app
 
 # Download dependencies
