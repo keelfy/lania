@@ -72,6 +72,7 @@ jobs:
             NEXT_PUBLIC_PREREGISTRATION=${{ vars.NEXT_PUBLIC_PREREGISTRATION }}
             NEXT_PUBLIC_ACTIVE_SEASON_ID=${{ vars.NEXT_PUBLIC_ACTIVE_SEASON_ID }}
             NEXT_PUBLIC_DOMAIN=https://www.lania.network
+            NEXT_PUBLIC_IMGPROXY_ENDPOINT=https://images.lania.network
             NEXT_PUBLIC_BACKEND_URL=https://api.lania.network
             NEXT_PUBLIC_ORY_SDK_URL=https://accounts.lania.network
             NEXT_PUBLIC_SUPPORT_EMAIL=contact@lania.network

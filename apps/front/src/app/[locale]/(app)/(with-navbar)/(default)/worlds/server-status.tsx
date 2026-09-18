@@ -104,7 +104,7 @@ async function ServerMap({ params }: ServerMapProps) {
   return (
     <MapButton 
       mapId={map.id}
-      className="bg-card group relative flex w-full flex-col border-1 border-red-500 items-start justify-between gap-4 justify-self-center overflow-hidden rounded-md p-6 text-start shadow-md"
+      className="bg-card group relative flex w-full flex-col items-start justify-between gap-4 justify-self-center overflow-hidden rounded-md p-6 text-start shadow-md"
     >
       <h2 className="z-10 flex w-fit items-center gap-2 rounded-xs bg-black/20 px-2 text-2xl font-bold">
         {React.createElement(ICON_MAP[map.icon] || HouseIcon, {
