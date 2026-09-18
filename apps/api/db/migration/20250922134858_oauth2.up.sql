@@ -76,10 +76,6 @@ UPDATE products SET price_name = 'name_color' WHERE id = '2a65d174-8896-411a-a6d
 -- make price_name not nullable
 ALTER TABLE products MODIFY COLUMN price_name tinytext NOT NULL;
 
--- temporary drop order_item_id from profile_name_color_options
-ALTER TABLE profile_name_color_options DROP FOREIGN KEY profile_name_color_options_ibfk_3;
-ALTER TABLE profile_name_color_options DROP COLUMN order_item_id;
-
 -- drop old order items and orders tables
 DROP TABLE IF EXISTS order_items CASCADE;
 DROP TABLE IF EXISTS orders CASCADE;

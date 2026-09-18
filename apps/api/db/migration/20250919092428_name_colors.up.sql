@@ -181,20 +181,3 @@ SET name_color_id = '2628bf9d-5b7c-438b-900a-67753261a823';
 
 ALTER TABLE profiles MODIFY COLUMN name_color_id uuid NOT NULL;
 ALTER TABLE profiles ALTER COLUMN name_color_id SET DEFAULT '2628bf9d-5b7c-438b-900a-67753261a823';
-
--- add order item id to profile access
-ALTER TABLE profile_accesses 
-ADD COLUMN order_item_id bigint;
-
-ALTER TABLE profile_accesses 
-ADD CONSTRAINT profile_name_color_options_ibfk_3 
-FOREIGN KEY (order_item_id) REFERENCES order_items(id);
-
--- add all name colors for profile
--- INSERT INTO profile_name_color_options (profile_id, name_color_id)
--- SELECT DISTINCT 'ea48eec6-ed89-4437-b3b0-07355139bad0' as profile_id, nc.id
--- FROM name_colors nc
--- LEFT JOIN profile_name_color_options pnco 
---     ON pnco.name_color_id = nc.id 
---     AND pnco.profile_id <> 'ea48eec6-ed89-4437-b3b0-07355139bad0'
--- WHERE pnco.id IS NOT NULL;
