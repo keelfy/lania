@@ -1,3 +1,18 @@
+DROP TABLE IF EXISTS oauth2_integrations;
+DROP INDEX IF EXISTS idx_basket_items_user_id_product_id_profile_id;
+DROP INDEX IF EXISTS idx_basket_items_user_id;
+DROP TABLE IF EXISTS basket_items;
+DROP INDEX IF EXISTS idx_pnco_profile_id_name_color_id_for_season_id;
+DROP TABLE IF EXISTS profile_name_color_options;
+DROP INDEX IF EXISTS idx_order_items_order_id;
+DROP INDEX IF EXISTS idx_orders_user_id;
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP INDEX IF EXISTS idx_products_category;
+DROP INDEX IF EXISTS idx_product_localizations_locale;
+DROP TABLE IF EXISTS product_localizations;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS product_prices;
 DROP TABLE IF EXISTS profile_violations;
 DROP TABLE IF EXISTS profile_playtimes;
 DROP TABLE IF EXISTS profile_accesses;
@@ -7,3 +22,6 @@ DROP INDEX IF EXISTS idx_profiles_mc_uuid;
 DROP INDEX IF EXISTS idx_profiles_mc_username;
 DROP INDEX IF EXISTS idx_profiles_owner_user_id;
 DROP TABLE IF EXISTS profiles;
+DROP INDEX IF EXISTS idx_name_colors_name;
+DROP TABLE IF EXISTS name_colors;
+
