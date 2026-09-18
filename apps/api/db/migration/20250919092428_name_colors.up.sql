@@ -183,9 +183,12 @@ ALTER TABLE profiles MODIFY COLUMN name_color_id uuid NOT NULL;
 ALTER TABLE profiles ALTER COLUMN name_color_id SET DEFAULT '2628bf9d-5b7c-438b-900a-67753261a823';
 
 -- add order item id to profile access
-ALTER TABLE profile_accesses ADD COLUMN order_item_id bigint;
-ALTER TABLE profile_accesses ADD FOREIGN KEY (order_item_id) REFERENCES order_items(id);
+ALTER TABLE profile_accesses 
+ADD COLUMN order_item_id bigint;
 
+ALTER TABLE profile_accesses 
+ADD CONSTRAINT profile_name_color_options_ibfk_3 
+FOREIGN KEY (order_item_id) REFERENCES order_items(id);
 
 -- add all name colors for profile
 -- INSERT INTO profile_name_color_options (profile_id, name_color_id)
