@@ -80,6 +80,12 @@ type ProfilePlaytime struct {
 	Season  *Season
 }
 
+// MojangLookupTarget is a profile whose Mojang UUID has to be looked up by username.
+type MojangLookupTarget struct {
+	MinecraftUUID     uuid.UUID
+	MinecraftUsername string
+}
+
 type ProfileViolation struct {
 	MinecraftUUID uuid.UUID
 	SeasonID      uuid.UUID

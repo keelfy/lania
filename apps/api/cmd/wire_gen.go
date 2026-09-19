@@ -66,7 +66,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	purchaseHandler := handlers.NewPurchaseHandler(profileService, accessService, productService, profileCosmeticsService, purchaseService)
 	basketHandler := handlers.NewBasketHandler(basketService, mainStorage)
 	integrationService := services.NewIntegrationService(mainStorage, orderService)
-	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, integrationService, oryAPI)
+	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, integrationService, mojangService, oryAPI)
 	return laniaAPI, func() {
 		cleanup2()
 		cleanup()

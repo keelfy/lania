@@ -33,6 +33,7 @@ type laniaAPI struct {
 	purchaseHandler         handlers.PurchaseHandler
 	basketHandler           handlers.BasketHandler
 	integrationService      services.IntegrationService
+	mojangService           services.MojangService
 	tokenAuth               *jwtAuth.JWTAuth
 	oryAPI                  clients.OryAPI
 }
@@ -48,6 +49,7 @@ func NewLaniaAPI(
 	purchaseHandler handlers.PurchaseHandler,
 	basketHandler handlers.BasketHandler,
 	integrationService services.IntegrationService,
+	mojangService services.MojangService,
 	oryAPI clients.OryAPI,
 ) LaniaAPI {
 	return &laniaAPI{
@@ -61,6 +63,7 @@ func NewLaniaAPI(
 		purchaseHandler:         purchaseHandler,
 		basketHandler:           basketHandler,
 		integrationService:      integrationService,
+		mojangService:           mojangService,
 		oryAPI:                  oryAPI,
 		tokenAuth:               jwtAuth.New("HS256", config.GetJWTSecret(), nil),
 	}
@@ -79,6 +82,9 @@ func (api *laniaAPI) BuildAPI(ctx context.Context) (*chi.Mux, error) {
 	go func() {
 		api.integrationService.ConnectToCentrifugo(ctx, integration.AccessToken)
 	}()
+
+	// look up mojang uuids of profiles in background to stay within the mojang rate limit
+	go api.mojangService.RunProfileSync(ctx)
 
 	// middlewares
 	r.Use(chiMiddleware.RequestID)
