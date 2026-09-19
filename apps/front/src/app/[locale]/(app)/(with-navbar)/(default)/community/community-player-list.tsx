@@ -8,9 +8,14 @@ import { Button } from '@/components/ui/button'
 
 type Props = React.ComponentProps<'div'> & {
   profiles: PublicProfile[]
+  locale: string
 }
 
-export default function CommunityPlayerList({ profiles, ...props }: Props) {
+export default function CommunityPlayerList({
+  profiles,
+  locale,
+  ...props
+}: Props) {
   return (
     <div
       className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
@@ -22,7 +27,7 @@ export default function CommunityPlayerList({ profiles, ...props }: Props) {
             className="flex h-fit flex-col items-start gap-1 border p-4"
             variant="outline"
           >
-            <CommunityPlayerItemTrigger profile={profile} />
+            <CommunityPlayerItemTrigger profile={profile} locale={locale} />
           </Button>
         </CommunityPlayerItem>
       ))}

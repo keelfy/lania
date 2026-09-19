@@ -18,6 +18,8 @@ export type Profile = {
 export type PublicProfile = Profile & {
   role: ProfileRole
   isOnline: boolean
+  playtime: number
+  lastSeenAt?: number
 }
 
 export type ProfileDetails = Profile & {

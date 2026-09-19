@@ -62,6 +62,8 @@ func PresentPublicProfile(
 	mojangUUID *uuid.UUID,
 	cosmetics *responses.ProfileCosmetics,
 	isOnline bool,
+	// playtime is summed over all seasons, in milliseconds.
+	playtime int64,
 ) *responses.PublicProfile {
 	return &responses.PublicProfile{
 		ID:            profile.ID,
@@ -70,6 +72,8 @@ func PresentPublicProfile(
 		Cosmetics:     cosmetics,
 		Role:          string(profile.Role),
 		IsOnline:      isOnline,
+		Playtime:      playtime,
+		LastSeenAt:    timeToMillis(profile.LastSeenAt),
 		MojangUUID:    mojangUUID,
 	}
 }

@@ -135,7 +135,10 @@ export default async function CommunityPage({ params, searchParams }: Props) {
         </div>
       </div>
       {paginatedProfiles.content.length > 0 ? (
-        <CommunityPlayerList profiles={paginatedProfiles.content} />
+        <CommunityPlayerList
+          profiles={paginatedProfiles.content}
+          locale={locale}
+        />
       ) : (
         <p className="text-muted-foreground py-10 text-center">
           {t('noResults')}

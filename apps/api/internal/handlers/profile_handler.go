@@ -81,6 +81,12 @@ func (h *profileHandler) GetPublicProfiles(w http.ResponseWriter, r *http.Reques
 		onlineMap = make(map[uuid.UUID]bool)
 	}
 
+	seasonsPlaytimes, err := h.profileService.GetSeasonsPlaytimeByMinecraftUUIDs(ctx, mcUUIDs)
+	if err != nil {
+		logger.Errorf(ctx, "[PROFILE] Failed to sum seasons playtime by minecraft uuid: %v", err)
+		seasonsPlaytimes = make(map[uuid.UUID]int64)
+	}
+
 	mojangUUIDs, err := h.mojangService.GetMojangUUIDsByMinecraftUUIDs(ctx, mcUUIDs)
 	if err != nil {
 		logger.Errorf(ctx, "[MOJANG] Failed to get mojang uuids by minecraft uuids: %v", err)
@@ -106,7 +112,7 @@ func (h *profileHandler) GetPublicProfiles(w http.ResponseWriter, r *http.Reques
 		}
 
 		cosmetics := presenter.PresentProfileCosmetics(profile.NameColor, nil, nil)
-		res[i] = presenter.PresentPublicProfile(profile, nullableMojangUUID, cosmetics, isOnline)
+		res[i] = presenter.PresentPublicProfile(profile, nullableMojangUUID, cosmetics, isOnline, seasonsPlaytimes[profile.MinecraftUUID])
 	}
 
 	paginated := presenter.PresentPaginatedResponse(pagination, count, res)

@@ -20,6 +20,8 @@ type PublicProfile struct {
 	Cosmetics     *ProfileCosmetics `json:"cosmetics"`
 	Role          string            `json:"role"`
 	IsOnline      bool              `json:"isOnline"`
+	Playtime      int64             `json:"playtime"`
+	LastSeenAt    *int64            `json:"lastSeenAt,omitempty"`
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`
 }
 
