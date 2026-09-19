@@ -1,5 +1,6 @@
 import McUsername from '@/components/ui/mc-username'
 import PlayerFace from '@/components/ui/player-face'
+import ScrollFade from '@/components/ui/scroll-fade'
 import { getProfiles } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
@@ -31,12 +32,7 @@ export default async function CommunityOnlineNow({ locale }: Props) {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-2xl font-bold tracking-tight">
-          {t('title')}{' '}
-          <span className="text-muted-foreground text-lg tabular-nums">
-            {online.totalElements}
-          </span>
-        </h2>
+        <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
         {online.totalElements > online.content.length && (
           <Link
             href={communityHref({ locale, online: true })}
@@ -46,23 +42,25 @@ export default async function CommunityOnlineNow({ locale }: Props) {
           </Link>
         )}
       </div>
-      <ul className="flex gap-3 overflow-x-auto pb-2">
-        {online.content.map((profile) => (
-          <li key={profile.id} className="shrink-0">
-            <Link
-              href={`/${locale}/community/${encodeURIComponent(profile.username)}`}
-              className="hover:bg-accent flex w-20 flex-col items-center gap-1 rounded-md p-2 transition-colors"
-            >
-              <PlayerFace player={profile} className="size-10" />
-              <McUsername
-                username={profile.username}
-                colors={profile.cosmetics.name.colors.colors}
-                className="w-full truncate text-center text-xs"
-              />
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <ScrollFade className="pb-2">
+        <ul className="flex w-max gap-3">
+          {online.content.map((profile) => (
+            <li key={profile.id} className="shrink-0">
+              <Link
+                href={`/${locale}/community/${encodeURIComponent(profile.username)}`}
+                className="hover:bg-accent flex w-24 flex-col items-center gap-1 rounded-md p-2 transition-colors"
+              >
+                <PlayerFace player={profile} className="size-10" />
+                <McUsername
+                  username={profile.username}
+                  colors={profile.cosmetics.name.colors.colors}
+                  className="w-full truncate text-center text-xs"
+                />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </ScrollFade>
     </section>
   )
 }

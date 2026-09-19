@@ -12,6 +12,9 @@ type Props = {
   locale: string
 }
 
+// On phones the list is one column, so only the first places are shown to keep it short.
+const PHONE_VISIBLE_PLACES = 5
+
 const PODIUM_COLORS = [
   'text-yellow-500', // gold
   'text-zinc-400', // silver
@@ -39,7 +42,10 @@ export default async function CommunityTopPlayers({ locale }: Props) {
         {profiles.map((profile, index) => {
           const playtime = formatPlaytime(profile.playtime)
           return (
-            <li key={profile.id}>
+            <li
+              key={profile.id}
+              className={cn(index >= PHONE_VISIBLE_PLACES && 'hidden sm:block')}
+            >
               <Link
                 href={`/${locale}/community/${encodeURIComponent(profile.username)}`}
                 className="hover:bg-accent flex items-center gap-3 rounded-md border p-3 transition-colors"

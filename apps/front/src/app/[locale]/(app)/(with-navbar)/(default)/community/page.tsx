@@ -142,8 +142,18 @@ export default async function CommunityPage({ params, searchParams }: Props) {
   })
   return (
     <div className="flex flex-col gap-4">
+      <h1 className="text-4xl font-extrabold tracking-tight">{t('title')}</h1>
+      <CommunityStats locale={locale} />
+      {isDefaultView && <CommunityOnlineNow locale={locale} />}
+      {isDefaultView && <CommunityTopPlayers locale={locale} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-4xl font-extrabold tracking-tight">{t('title')}</h1>
+        <CommunityFilters
+          sort={sort}
+          search={search}
+          locale={locale}
+          online={online}
+          staff={staff}
+        />
         <div className="flex w-full items-center gap-2 sm:w-auto">
           <CommunitySearch
             defaultValue={search}
@@ -161,16 +171,6 @@ export default async function CommunityPage({ params, searchParams }: Props) {
           />
         </div>
       </div>
-      <CommunityStats locale={locale} />
-      {isDefaultView && <CommunityOnlineNow locale={locale} />}
-      {isDefaultView && <CommunityTopPlayers locale={locale} />}
-      <CommunityFilters
-        sort={sort}
-        search={search}
-        locale={locale}
-        online={online}
-        staff={staff}
-      />
       {paginatedProfiles.content.length > 0 ? (
         <CommunityPlayerList
           profiles={paginatedProfiles.content}
