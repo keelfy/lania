@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
@@ -80,4 +81,38 @@ func (q *queries) SumProfilePlaytimesByMinecraftUUIDs(ctx context.Context, mcUUI
 		totals[mcUUID] = total
 	}
 	return totals, rows.Err()
+}
+
+// Profiles unknown to the API are skipped, so players outside of the API never break the sync.
+// updated_at goes first because MySQL applies assignments left to right.
+const upsertProfilePlaytime = `
+INSERT INTO profile_playtimes (mc_uuid, season_id, playtime, updated_at)
+SELECT mc_uuid, ?, ?, now()
+FROM profiles
+WHERE mc_uuid = ?
+ON DUPLICATE KEY UPDATE
+	updated_at = IF(playtime <> VALUES(playtime), VALUES(updated_at), updated_at),
+	playtime = VALUES(playtime)
+`
+
+// UpsertProfilePlaytime stores playtime of the profile in the season, in milliseconds.
+func (q *queries) UpsertProfilePlaytime(ctx context.Context, mcUUID, seasonID uuid.UUID, playtime int64) error {
+	_, err := q.x.ExecContext(ctx, upsertProfilePlaytime, seasonID, playtime, mcUUID)
+	return err
+}
+
+// first_seen_at is only filled when empty, so dates imported from earlier seasons are kept.
+// last_seen_at never moves back.
+const updateProfileSeenAt = `
+UPDATE profiles
+SET
+	first_seen_at = COALESCE(first_seen_at, ?),
+	last_seen_at = GREATEST(COALESCE(last_seen_at, ?), COALESCE(?, last_seen_at))
+WHERE mc_uuid = ?
+`
+
+// UpdateProfileSeenAt merges seen dates from the Minecraft server into the profile. Nil dates are ignored.
+func (q *queries) UpdateProfileSeenAt(ctx context.Context, mcUUID uuid.UUID, firstSeenAt, lastSeenAt *time.Time) error {
+	_, err := q.x.ExecContext(ctx, updateProfileSeenAt, firstSeenAt, lastSeenAt, lastSeenAt, mcUUID)
+	return err
 }

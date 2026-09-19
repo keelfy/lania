@@ -207,12 +207,6 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 		accesses = make(map[uuid.UUID][]*domain.ProfileAccess)
 	}
 
-	playtimes, err := h.minecraftService.GetPlaytimeByMinecraftUUIDs(ctx, mcUUIDs)
-	if err != nil {
-		logger.Errorf(ctx, "[SHELL] Failed to get playtime by minecraft uuid: %v", err)
-		playtimes = make(map[uuid.UUID]*domain.Playtime)
-	}
-
 	seasonsPlaytimes, err := h.profileService.GetSeasonsPlaytimeByMinecraftUUIDs(ctx, mcUUIDs)
 	if err != nil {
 		logger.Errorf(ctx, "[PROFILE] Failed to sum seasons playtime by minecraft uuid: %v", err)
@@ -257,15 +251,6 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 		isOnline = false
 	}
 
-	playtime := playtimes[profile.MinecraftUUID]
-	if playtime == nil {
-		playtime = &domain.Playtime{
-			TotalPlaytime:     0,
-			FirstSessionStart: nil,
-			LastSessionEnd:    nil,
-		}
-	}
-
 	profilePrefixes, err := h.cosmeticsService.GetProfilePrefixes(ctx, profile.ID)
 	if err != nil {
 		logger.Errorf(ctx, "[PROFILE COSMETICS] Failed to get profile prefixes: %v", err)
@@ -291,6 +276,6 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 	profile.Role = role
 
 	cosmetics := presenter.PresentProfileCosmetics(profile.NameColor, glythPrefix, specialPrefix)
-	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, playtime, seasonsPlaytimes[profile.MinecraftUUID], isOnline, isModelSlim, cosmetics)
+	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, seasonsPlaytimes[profile.MinecraftUUID], isOnline, isModelSlim, cosmetics)
 	utils.WriteHttpJsonResponse(ctx, w, res)
 }

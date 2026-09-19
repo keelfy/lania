@@ -13,6 +13,8 @@ type PlayerService interface {
 	GetOnlineStatus(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
 	// GetPlaytime returns an entry for every requested player.
 	GetPlaytime(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error)
+	// ListChangedPlaytimes returns playtime of players whose last session ended at or after sinceMs.
+	ListChangedPlaytimes(ctx context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error)
 }
 
 type playerService struct {
@@ -51,4 +53,8 @@ func (s *playerService) GetPlaytime(ctx context.Context, mcUUIDs uuid.UUIDs) (ma
 		}
 	}
 	return playtimes, nil
+}
+
+func (s *playerService) ListChangedPlaytimes(ctx context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error) {
+	return s.planStorage.FindPlaytimesChangedSince(ctx, sinceMs)
 }

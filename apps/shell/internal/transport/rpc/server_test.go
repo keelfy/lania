@@ -25,6 +25,16 @@ func (s *fakePlanStorage) FindPlaytimes(_ context.Context, _ uuid.UUIDs) (map[uu
 	return s.playtimes, nil
 }
 
+func (s *fakePlanStorage) FindPlaytimesChangedSince(_ context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error) {
+	changed := make(map[uuid.UUID]*domain.Playtime)
+	for mcUUID, playtime := range s.playtimes {
+		if playtime.LastSeenMs != nil && *playtime.LastSeenMs >= sinceMs {
+			changed[mcUUID] = playtime
+		}
+	}
+	return changed, nil
+}
+
 type fakeFlectoneStorage struct {
 	online map[uuid.UUID]bool
 }
@@ -151,6 +161,22 @@ func TestPlayerService(t *testing.T) {
 	unknown, ok := playtimes.GetPlaytimes()[unknownUUID.String()]
 	if !ok || unknown.GetTotalMs() != 0 || unknown.FirstSeenMs != nil || unknown.LastSeenMs != nil {
 		t.Errorf("unknown player must have empty playtime, got %v", unknown)
+	}
+
+	changed, err := client.ListChangedPlaytimes(ctx, &shellv1.ListChangedPlaytimesRequest{SinceMs: 5000})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := changed.GetPlaytimes()[knownUUID.String()]; len(changed.GetPlaytimes()) != 1 || got.GetTotalMs() != 3000 {
+		t.Errorf("unexpected changed playtimes: %v", changed.GetPlaytimes())
+	}
+
+	changed, err = client.ListChangedPlaytimes(ctx, &shellv1.ListChangedPlaytimesRequest{SinceMs: 5001})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(changed.GetPlaytimes()) != 0 {
+		t.Errorf("players seen before since must be skipped, got %v", changed.GetPlaytimes())
 	}
 }
 

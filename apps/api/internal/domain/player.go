@@ -1,6 +1,6 @@
 package domain
 
-// Playtime is live playtime on the current Minecraft server, in milliseconds.
+// Playtime is playtime on the current Minecraft server as reported by shell, in milliseconds.
 type Playtime struct {
 	TotalPlaytime     int64
 	FirstSessionStart *int64

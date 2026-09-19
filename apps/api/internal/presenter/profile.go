@@ -74,33 +74,20 @@ func PresentPublicProfile(
 	}
 }
 
-// firstSeenMillis prefers the imported profile date (earlier seasons), falling back to PLAN (current server).
-func firstSeenMillis(planMillis *int64, profileTime *time.Time) *int64 {
-	if profileTime == nil {
-		return planMillis
+func timeToMillis(t *time.Time) *int64 {
+	if t == nil {
+		return nil
 	}
-	profileMillis := profileTime.UnixMilli()
-	return &profileMillis
-}
-
-// lastSeenMillis returns the latest of the imported profile date and PLAN.
-func lastSeenMillis(planMillis *int64, profileTime *time.Time) *int64 {
-	if profileTime == nil {
-		return planMillis
-	}
-	profileMillis := profileTime.UnixMilli()
-	if planMillis == nil || profileMillis > *planMillis {
-		return &profileMillis
-	}
-	return planMillis
+	millis := t.UnixMilli()
+	return &millis
 }
 
 func PresentProfileDetails(
 	profile *domain.Profile,
 	mojangUUID *uuid.UUID,
 	accessStatus domain.AccessStatus,
-	playtime *domain.Playtime,
-	seasonsPlaytime int64,
+	// playtime is summed over all seasons, the current one is synced from the Minecraft server in background.
+	playtime int64,
 	isOnline bool,
 	isModelSlim bool,
 	cosmetics *responses.ProfileCosmetics,
@@ -111,11 +98,11 @@ func PresentProfileDetails(
 		Username:      profile.MinecraftUsername,
 		Cosmetics:     cosmetics,
 		IsSlimModel:   isModelSlim,
-		FirstSeenAt:   firstSeenMillis(playtime.FirstSessionStart, profile.FirstSeenAt),
-		LastSeenAt:    lastSeenMillis(playtime.LastSessionEnd, profile.LastSeenAt),
+		FirstSeenAt:   timeToMillis(profile.FirstSeenAt),
+		LastSeenAt:    timeToMillis(profile.LastSeenAt),
 		Role:          string(profile.Role),
 		AccessStatus:  string(accessStatus),
-		Playtime:      seasonsPlaytime + playtime.TotalPlaytime,
+		Playtime:      playtime,
 		IsOnline:      isOnline,
 		MojangUUID:    mojangUUID,
 	}

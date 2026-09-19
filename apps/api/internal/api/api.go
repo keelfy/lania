@@ -34,6 +34,7 @@ type laniaAPI struct {
 	basketHandler           handlers.BasketHandler
 	integrationService      services.IntegrationService
 	mojangService           services.MojangService
+	playerSyncService       services.PlayerSyncService
 	tokenAuth               *jwtAuth.JWTAuth
 	oryAPI                  clients.OryAPI
 }
@@ -50,6 +51,7 @@ func NewLaniaAPI(
 	basketHandler handlers.BasketHandler,
 	integrationService services.IntegrationService,
 	mojangService services.MojangService,
+	playerSyncService services.PlayerSyncService,
 	oryAPI clients.OryAPI,
 ) LaniaAPI {
 	return &laniaAPI{
@@ -64,6 +66,7 @@ func NewLaniaAPI(
 		basketHandler:           basketHandler,
 		integrationService:      integrationService,
 		mojangService:           mojangService,
+		playerSyncService:       playerSyncService,
 		oryAPI:                  oryAPI,
 		tokenAuth:               jwtAuth.New("HS256", config.GetJWTSecret(), nil),
 	}
@@ -85,6 +88,9 @@ func (api *laniaAPI) BuildAPI(ctx context.Context) (*chi.Mux, error) {
 
 	// look up mojang uuids of profiles in background to stay within the mojang rate limit
 	go api.mojangService.RunProfileSync(ctx)
+
+	// copy playtime and seen dates from the minecraft server so profile pages never wait for shell
+	go api.playerSyncService.RunPlayerSync(ctx)
 
 	// middlewares
 	r.Use(chiMiddleware.RequestID)

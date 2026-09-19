@@ -200,6 +200,96 @@ func (x *GetPlaytimeResponse) GetPlaytimes() map[string]*Playtime {
 	return nil
 }
 
+type ListChangedPlaytimesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Unix epoch milliseconds. Zero returns every player that ever played.
+	SinceMs       int64 `protobuf:"varint,1,opt,name=since_ms,json=sinceMs,proto3" json:"since_ms,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListChangedPlaytimesRequest) Reset() {
+	*x = ListChangedPlaytimesRequest{}
+	mi := &file_lania_shell_v1_player_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListChangedPlaytimesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListChangedPlaytimesRequest) ProtoMessage() {}
+
+func (x *ListChangedPlaytimesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_lania_shell_v1_player_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListChangedPlaytimesRequest.ProtoReflect.Descriptor instead.
+func (*ListChangedPlaytimesRequest) Descriptor() ([]byte, []int) {
+	return file_lania_shell_v1_player_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ListChangedPlaytimesRequest) GetSinceMs() int64 {
+	if x != nil {
+		return x.SinceMs
+	}
+	return 0
+}
+
+type ListChangedPlaytimesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Keyed by Minecraft UUID. Only players with sessions are present, so last_seen_ms is always set.
+	Playtimes     map[string]*Playtime `protobuf:"bytes,1,rep,name=playtimes,proto3" json:"playtimes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListChangedPlaytimesResponse) Reset() {
+	*x = ListChangedPlaytimesResponse{}
+	mi := &file_lania_shell_v1_player_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListChangedPlaytimesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListChangedPlaytimesResponse) ProtoMessage() {}
+
+func (x *ListChangedPlaytimesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_lania_shell_v1_player_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListChangedPlaytimesResponse.ProtoReflect.Descriptor instead.
+func (*ListChangedPlaytimesResponse) Descriptor() ([]byte, []int) {
+	return file_lania_shell_v1_player_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListChangedPlaytimesResponse) GetPlaytimes() map[string]*Playtime {
+	if x != nil {
+		return x.Playtimes
+	}
+	return nil
+}
+
 type Playtime struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Active playtime in milliseconds, AFK time excluded.
@@ -214,7 +304,7 @@ type Playtime struct {
 
 func (x *Playtime) Reset() {
 	*x = Playtime{}
-	mi := &file_lania_shell_v1_player_proto_msgTypes[4]
+	mi := &file_lania_shell_v1_player_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -226,7 +316,7 @@ func (x *Playtime) String() string {
 func (*Playtime) ProtoMessage() {}
 
 func (x *Playtime) ProtoReflect() protoreflect.Message {
-	mi := &file_lania_shell_v1_player_proto_msgTypes[4]
+	mi := &file_lania_shell_v1_player_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -239,7 +329,7 @@ func (x *Playtime) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Playtime.ProtoReflect.Descriptor instead.
 func (*Playtime) Descriptor() ([]byte, []int) {
-	return file_lania_shell_v1_player_proto_rawDescGZIP(), []int{4}
+	return file_lania_shell_v1_player_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Playtime) GetTotalMs() int64 {
@@ -281,6 +371,13 @@ const file_lania_shell_v1_player_proto_rawDesc = "" +
 	"\tplaytimes\x18\x01 \x03(\v22.lania.shell.v1.GetPlaytimeResponse.PlaytimesEntryR\tplaytimes\x1aV\n" +
 	"\x0ePlaytimesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12.\n" +
+	"\x05value\x18\x02 \x01(\v2\x18.lania.shell.v1.PlaytimeR\x05value:\x028\x01\"8\n" +
+	"\x1bListChangedPlaytimesRequest\x12\x19\n" +
+	"\bsince_ms\x18\x01 \x01(\x03R\asinceMs\"\xd1\x01\n" +
+	"\x1cListChangedPlaytimesResponse\x12Y\n" +
+	"\tplaytimes\x18\x01 \x03(\v2;.lania.shell.v1.ListChangedPlaytimesResponse.PlaytimesEntryR\tplaytimes\x1aV\n" +
+	"\x0ePlaytimesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12.\n" +
 	"\x05value\x18\x02 \x01(\v2\x18.lania.shell.v1.PlaytimeR\x05value:\x028\x01\"\x98\x01\n" +
 	"\bPlaytime\x12\x19\n" +
 	"\btotal_ms\x18\x01 \x01(\x03R\atotalMs\x12'\n" +
@@ -288,10 +385,11 @@ const file_lania_shell_v1_player_proto_rawDesc = "" +
 	"\flast_seen_ms\x18\x03 \x01(\x03H\x01R\n" +
 	"lastSeenMs\x88\x01\x01B\x10\n" +
 	"\x0e_first_seen_msB\x0f\n" +
-	"\r_last_seen_ms2\xcb\x01\n" +
+	"\r_last_seen_ms2\xbe\x02\n" +
 	"\rPlayerService\x12b\n" +
 	"\x0fGetOnlineStatus\x12&.lania.shell.v1.GetOnlineStatusRequest\x1a'.lania.shell.v1.GetOnlineStatusResponse\x12V\n" +
-	"\vGetPlaytime\x12\".lania.shell.v1.GetPlaytimeRequest\x1a#.lania.shell.v1.GetPlaytimeResponseB\xbb\x01\n" +
+	"\vGetPlaytime\x12\".lania.shell.v1.GetPlaytimeRequest\x1a#.lania.shell.v1.GetPlaytimeResponse\x12q\n" +
+	"\x14ListChangedPlaytimes\x12+.lania.shell.v1.ListChangedPlaytimesRequest\x1a,.lania.shell.v1.ListChangedPlaytimesResponseB\xbb\x01\n" +
 	"\x12com.lania.shell.v1B\vPlayerProtoP\x01Z>github.com/lania-smp/shell/internal/gen/lania/shell/v1;shellv1\xa2\x02\x03LSX\xaa\x02\x0eLania.Shell.V1\xca\x02\x0eLania\\Shell\\V1\xe2\x02\x1aLania\\Shell\\V1\\GPBMetadata\xea\x02\x10Lania::Shell::V1b\x06proto3"
 
 var (
@@ -306,29 +404,36 @@ func file_lania_shell_v1_player_proto_rawDescGZIP() []byte {
 	return file_lania_shell_v1_player_proto_rawDescData
 }
 
-var file_lania_shell_v1_player_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_lania_shell_v1_player_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_lania_shell_v1_player_proto_goTypes = []any{
-	(*GetOnlineStatusRequest)(nil),  // 0: lania.shell.v1.GetOnlineStatusRequest
-	(*GetOnlineStatusResponse)(nil), // 1: lania.shell.v1.GetOnlineStatusResponse
-	(*GetPlaytimeRequest)(nil),      // 2: lania.shell.v1.GetPlaytimeRequest
-	(*GetPlaytimeResponse)(nil),     // 3: lania.shell.v1.GetPlaytimeResponse
-	(*Playtime)(nil),                // 4: lania.shell.v1.Playtime
-	nil,                             // 5: lania.shell.v1.GetOnlineStatusResponse.OnlineEntry
-	nil,                             // 6: lania.shell.v1.GetPlaytimeResponse.PlaytimesEntry
+	(*GetOnlineStatusRequest)(nil),       // 0: lania.shell.v1.GetOnlineStatusRequest
+	(*GetOnlineStatusResponse)(nil),      // 1: lania.shell.v1.GetOnlineStatusResponse
+	(*GetPlaytimeRequest)(nil),           // 2: lania.shell.v1.GetPlaytimeRequest
+	(*GetPlaytimeResponse)(nil),          // 3: lania.shell.v1.GetPlaytimeResponse
+	(*ListChangedPlaytimesRequest)(nil),  // 4: lania.shell.v1.ListChangedPlaytimesRequest
+	(*ListChangedPlaytimesResponse)(nil), // 5: lania.shell.v1.ListChangedPlaytimesResponse
+	(*Playtime)(nil),                     // 6: lania.shell.v1.Playtime
+	nil,                                  // 7: lania.shell.v1.GetOnlineStatusResponse.OnlineEntry
+	nil,                                  // 8: lania.shell.v1.GetPlaytimeResponse.PlaytimesEntry
+	nil,                                  // 9: lania.shell.v1.ListChangedPlaytimesResponse.PlaytimesEntry
 }
 var file_lania_shell_v1_player_proto_depIdxs = []int32{
-	5, // 0: lania.shell.v1.GetOnlineStatusResponse.online:type_name -> lania.shell.v1.GetOnlineStatusResponse.OnlineEntry
-	6, // 1: lania.shell.v1.GetPlaytimeResponse.playtimes:type_name -> lania.shell.v1.GetPlaytimeResponse.PlaytimesEntry
-	4, // 2: lania.shell.v1.GetPlaytimeResponse.PlaytimesEntry.value:type_name -> lania.shell.v1.Playtime
-	0, // 3: lania.shell.v1.PlayerService.GetOnlineStatus:input_type -> lania.shell.v1.GetOnlineStatusRequest
-	2, // 4: lania.shell.v1.PlayerService.GetPlaytime:input_type -> lania.shell.v1.GetPlaytimeRequest
-	1, // 5: lania.shell.v1.PlayerService.GetOnlineStatus:output_type -> lania.shell.v1.GetOnlineStatusResponse
-	3, // 6: lania.shell.v1.PlayerService.GetPlaytime:output_type -> lania.shell.v1.GetPlaytimeResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	7, // 0: lania.shell.v1.GetOnlineStatusResponse.online:type_name -> lania.shell.v1.GetOnlineStatusResponse.OnlineEntry
+	8, // 1: lania.shell.v1.GetPlaytimeResponse.playtimes:type_name -> lania.shell.v1.GetPlaytimeResponse.PlaytimesEntry
+	9, // 2: lania.shell.v1.ListChangedPlaytimesResponse.playtimes:type_name -> lania.shell.v1.ListChangedPlaytimesResponse.PlaytimesEntry
+	6, // 3: lania.shell.v1.GetPlaytimeResponse.PlaytimesEntry.value:type_name -> lania.shell.v1.Playtime
+	6, // 4: lania.shell.v1.ListChangedPlaytimesResponse.PlaytimesEntry.value:type_name -> lania.shell.v1.Playtime
+	0, // 5: lania.shell.v1.PlayerService.GetOnlineStatus:input_type -> lania.shell.v1.GetOnlineStatusRequest
+	2, // 6: lania.shell.v1.PlayerService.GetPlaytime:input_type -> lania.shell.v1.GetPlaytimeRequest
+	4, // 7: lania.shell.v1.PlayerService.ListChangedPlaytimes:input_type -> lania.shell.v1.ListChangedPlaytimesRequest
+	1, // 8: lania.shell.v1.PlayerService.GetOnlineStatus:output_type -> lania.shell.v1.GetOnlineStatusResponse
+	3, // 9: lania.shell.v1.PlayerService.GetPlaytime:output_type -> lania.shell.v1.GetPlaytimeResponse
+	5, // 10: lania.shell.v1.PlayerService.ListChangedPlaytimes:output_type -> lania.shell.v1.ListChangedPlaytimesResponse
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_lania_shell_v1_player_proto_init() }
@@ -336,14 +441,14 @@ func file_lania_shell_v1_player_proto_init() {
 	if File_lania_shell_v1_player_proto != nil {
 		return
 	}
-	file_lania_shell_v1_player_proto_msgTypes[4].OneofWrappers = []any{}
+	file_lania_shell_v1_player_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_lania_shell_v1_player_proto_rawDesc), len(file_lania_shell_v1_player_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

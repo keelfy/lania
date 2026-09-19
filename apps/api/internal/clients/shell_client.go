@@ -16,7 +16,8 @@ import (
 // ShellAPI is the only way the API reaches the Minecraft server and its plugins.
 type ShellAPI interface {
 	GetOnlineStatus(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
-	GetPlaytime(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error)
+	// ListChangedPlaytimes returns playtime of players whose last session ended at or after sinceMs.
+	ListChangedPlaytimes(ctx context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error)
 	GetPlayerGroups(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error)
 	SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error
 	AddToWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error
@@ -80,8 +81,8 @@ func (api *shellAPI) GetOnlineStatus(ctx context.Context, mcUUIDs uuid.UUIDs) (m
 	return online, nil
 }
 
-func (api *shellAPI) GetPlaytime(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
-	res, err := api.player.GetPlaytime(ctx, &shellv1.GetPlaytimeRequest{MinecraftUuids: mcUUIDs.Strings()})
+func (api *shellAPI) ListChangedPlaytimes(ctx context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error) {
+	res, err := api.player.ListChangedPlaytimes(ctx, &shellv1.ListChangedPlaytimesRequest{SinceMs: sinceMs})
 	if err != nil {
 		return nil, err
 	}

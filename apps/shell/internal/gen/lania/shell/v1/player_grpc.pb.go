@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PlayerService_GetOnlineStatus_FullMethodName = "/lania.shell.v1.PlayerService/GetOnlineStatus"
-	PlayerService_GetPlaytime_FullMethodName     = "/lania.shell.v1.PlayerService/GetPlaytime"
+	PlayerService_GetOnlineStatus_FullMethodName      = "/lania.shell.v1.PlayerService/GetOnlineStatus"
+	PlayerService_GetPlaytime_FullMethodName          = "/lania.shell.v1.PlayerService/GetPlaytime"
+	PlayerService_ListChangedPlaytimes_FullMethodName = "/lania.shell.v1.PlayerService/ListChangedPlaytimes"
 )
 
 // PlayerServiceClient is the client API for PlayerService service.
@@ -33,6 +34,9 @@ type PlayerServiceClient interface {
 	GetOnlineStatus(ctx context.Context, in *GetOnlineStatusRequest, opts ...grpc.CallOption) (*GetOnlineStatusResponse, error)
 	// GetPlaytime returns playtime on the current server for each player.
 	GetPlaytime(ctx context.Context, in *GetPlaytimeRequest, opts ...grpc.CallOption) (*GetPlaytimeResponse, error)
+	// ListChangedPlaytimes returns playtime of every player whose last session ended at or after since_ms.
+	// Used for periodic sync, so the caller does not need to know player UUIDs in advance.
+	ListChangedPlaytimes(ctx context.Context, in *ListChangedPlaytimesRequest, opts ...grpc.CallOption) (*ListChangedPlaytimesResponse, error)
 }
 
 type playerServiceClient struct {
@@ -63,6 +67,16 @@ func (c *playerServiceClient) GetPlaytime(ctx context.Context, in *GetPlaytimeRe
 	return out, nil
 }
 
+func (c *playerServiceClient) ListChangedPlaytimes(ctx context.Context, in *ListChangedPlaytimesRequest, opts ...grpc.CallOption) (*ListChangedPlaytimesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListChangedPlaytimesResponse)
+	err := c.cc.Invoke(ctx, PlayerService_ListChangedPlaytimes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PlayerServiceServer is the server API for PlayerService service.
 // All implementations must embed UnimplementedPlayerServiceServer
 // for forward compatibility.
@@ -73,6 +87,9 @@ type PlayerServiceServer interface {
 	GetOnlineStatus(context.Context, *GetOnlineStatusRequest) (*GetOnlineStatusResponse, error)
 	// GetPlaytime returns playtime on the current server for each player.
 	GetPlaytime(context.Context, *GetPlaytimeRequest) (*GetPlaytimeResponse, error)
+	// ListChangedPlaytimes returns playtime of every player whose last session ended at or after since_ms.
+	// Used for periodic sync, so the caller does not need to know player UUIDs in advance.
+	ListChangedPlaytimes(context.Context, *ListChangedPlaytimesRequest) (*ListChangedPlaytimesResponse, error)
 	mustEmbedUnimplementedPlayerServiceServer()
 }
 
@@ -88,6 +105,9 @@ func (UnimplementedPlayerServiceServer) GetOnlineStatus(context.Context, *GetOnl
 }
 func (UnimplementedPlayerServiceServer) GetPlaytime(context.Context, *GetPlaytimeRequest) (*GetPlaytimeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPlaytime not implemented")
+}
+func (UnimplementedPlayerServiceServer) ListChangedPlaytimes(context.Context, *ListChangedPlaytimesRequest) (*ListChangedPlaytimesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListChangedPlaytimes not implemented")
 }
 func (UnimplementedPlayerServiceServer) mustEmbedUnimplementedPlayerServiceServer() {}
 func (UnimplementedPlayerServiceServer) testEmbeddedByValue()                       {}
@@ -146,6 +166,24 @@ func _PlayerService_GetPlaytime_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PlayerService_ListChangedPlaytimes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListChangedPlaytimesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerServiceServer).ListChangedPlaytimes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerService_ListChangedPlaytimes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerServiceServer).ListChangedPlaytimes(ctx, req.(*ListChangedPlaytimesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PlayerService_ServiceDesc is the grpc.ServiceDesc for PlayerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -160,6 +198,10 @@ var PlayerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPlaytime",
 			Handler:    _PlayerService_GetPlaytime_Handler,
+		},
+		{
+			MethodName: "ListChangedPlaytimes",
+			Handler:    _PlayerService_ListChangedPlaytimes_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
