@@ -16,9 +16,13 @@ import {
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React from 'react'
-import { communityHref, DEFAULT_COMMUNITY_SORT } from './community-href'
+import {
+  CommunityFilters,
+  communityHref,
+  DEFAULT_COMMUNITY_SORT,
+} from './community-href'
 
-type Props = {
+type Props = CommunityFilters & {
   defaultValue?: string
   search?: string
   locale: string
@@ -81,6 +85,8 @@ export default function SelectCommunitySort({
   defaultValue,
   search,
   locale,
+  online,
+  staff,
 }: Props) {
   const t = useTranslations('community.sort')
   const [sort, setSort] = React.useState(defaultValue ?? DEFAULT_COMMUNITY_SORT)
@@ -90,7 +96,7 @@ export default function SelectCommunitySort({
   const onSortChange = (value: string) => {
     setSort(value)
     startSortChange(() => {
-      router.push(communityHref({ locale, sort: value, search }))
+      router.push(communityHref({ locale, sort: value, search, online, staff }))
     })
   }
 

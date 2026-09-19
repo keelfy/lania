@@ -37,6 +37,19 @@ const (
 	RolePriorityPlayer    = 4
 )
 
+// StaffRoles are the roles that make a profile part of the server staff.
+var StaffRoles = []Role{RoleOwner, RoleAdmin, RoleModerator}
+
+// ProfileFilter narrows down the public profile list.
+type ProfileFilter struct {
+	// Search matches usernames by prefix.
+	Search string
+	// OnlineOnly keeps only players that are online right now.
+	OnlineOnly bool
+	// StaffOnly keeps only players with one of the StaffRoles.
+	StaffOnly bool
+}
+
 type Profile struct {
 	ID                uuid.UUID
 	MinecraftUUID     uuid.UUID

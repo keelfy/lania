@@ -123,8 +123,8 @@ SELECT COUNT(p.id) FROM profiles p
 %s
 `
 
-func (q *queries) CountPublicProfiles(ctx context.Context, search string) (int64, error) {
-	where, args := profileSearchClause(search)
+func (q *queries) CountPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs) (int64, error) {
+	where, args := profileWhereClause(search, only)
 	row := q.x.QueryRowContext(ctx, fmt.Sprintf(countPublicProfiles, where), args...)
 	var count int64
 	err := row.Scan(&count)
@@ -165,12 +165,31 @@ LEFT JOIN (
 
 var profileSearchEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 
-// profileSearchClause matches usernames by prefix, so the mc_username index is used.
-func profileSearchClause(search string) (string, []any) {
-	if search == "" {
+// profileWhereClause matches usernames by prefix, so the mc_username index is used.
+// A non-nil only keeps just those players, and an empty one matches nobody.
+func profileWhereClause(search string, only *uuid.UUIDs) (string, []any) {
+	conditions := make([]string, 0, 2)
+	args := make([]any, 0)
+	if search != "" {
+		conditions = append(conditions, "p.mc_username LIKE ?")
+		args = append(args, profileSearchEscaper.Replace(search)+"%")
+	}
+	if only != nil {
+		if len(*only) == 0 {
+			conditions = append(conditions, "1 = 0")
+		} else {
+			placeholders := make([]string, len(*only))
+			for i, mcUUID := range *only {
+				placeholders[i] = "?"
+				args = append(args, mcUUID.String())
+			}
+			conditions = append(conditions, "p.mc_uuid IN ("+strings.Join(placeholders, ", ")+")")
+		}
+	}
+	if len(conditions) == 0 {
 		return "", nil
 	}
-	return "WHERE p.mc_username LIKE ?", []any{profileSearchEscaper.Replace(search) + "%"}
+	return "WHERE " + strings.Join(conditions, " AND "), args
 }
 
 func getProfileSortDirection(direction string) string {
@@ -200,9 +219,9 @@ func profileOrderBy(sortCol, direction string) (join string, orderBy string) {
 	}
 }
 
-func (q *queries) FindPublicProfiles(ctx context.Context, search, sortCol, direction string, size, from int) ([]*domain.Profile, error) {
+func (q *queries) FindPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, size, from int) ([]*domain.Profile, error) {
 	join, orderBy := profileOrderBy(sortCol, direction)
-	where, args := profileSearchClause(search)
+	where, args := profileWhereClause(search, only)
 	query := fmt.Sprintf(findPublicProfiles, join, where, orderBy)
 	args = append(args, size, from)
 	rows, err := q.x.QueryContext(ctx, query, args...)

@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PermissionService_GetPlayerGroups_FullMethodName = "/lania.shell.v1.PermissionService/GetPlayerGroups"
-	PermissionService_SetPlayerPrefix_FullMethodName = "/lania.shell.v1.PermissionService/SetPlayerPrefix"
+	PermissionService_GetPlayerGroups_FullMethodName     = "/lania.shell.v1.PermissionService/GetPlayerGroups"
+	PermissionService_ListPlayersByGroups_FullMethodName = "/lania.shell.v1.PermissionService/ListPlayersByGroups"
+	PermissionService_SetPlayerPrefix_FullMethodName     = "/lania.shell.v1.PermissionService/SetPlayerPrefix"
 )
 
 // PermissionServiceClient is the client API for PermissionService service.
@@ -31,6 +32,8 @@ const (
 type PermissionServiceClient interface {
 	// GetPlayerGroups returns the permission groups assigned to each player.
 	GetPlayerGroups(ctx context.Context, in *GetPlayerGroupsRequest, opts ...grpc.CallOption) (*GetPlayerGroupsResponse, error)
+	// ListPlayersByGroups returns players that belong to at least one of the groups.
+	ListPlayersByGroups(ctx context.Context, in *ListPlayersByGroupsRequest, opts ...grpc.CallOption) (*ListPlayersByGroupsResponse, error)
 	// SetPlayerPrefix replaces the player's chat prefix. Idempotent.
 	SetPlayerPrefix(ctx context.Context, in *SetPlayerPrefixRequest, opts ...grpc.CallOption) (*SetPlayerPrefixResponse, error)
 }
@@ -47,6 +50,16 @@ func (c *permissionServiceClient) GetPlayerGroups(ctx context.Context, in *GetPl
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetPlayerGroupsResponse)
 	err := c.cc.Invoke(ctx, PermissionService_GetPlayerGroups_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *permissionServiceClient) ListPlayersByGroups(ctx context.Context, in *ListPlayersByGroupsRequest, opts ...grpc.CallOption) (*ListPlayersByGroupsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPlayersByGroupsResponse)
+	err := c.cc.Invoke(ctx, PermissionService_ListPlayersByGroups_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +84,8 @@ func (c *permissionServiceClient) SetPlayerPrefix(ctx context.Context, in *SetPl
 type PermissionServiceServer interface {
 	// GetPlayerGroups returns the permission groups assigned to each player.
 	GetPlayerGroups(context.Context, *GetPlayerGroupsRequest) (*GetPlayerGroupsResponse, error)
+	// ListPlayersByGroups returns players that belong to at least one of the groups.
+	ListPlayersByGroups(context.Context, *ListPlayersByGroupsRequest) (*ListPlayersByGroupsResponse, error)
 	// SetPlayerPrefix replaces the player's chat prefix. Idempotent.
 	SetPlayerPrefix(context.Context, *SetPlayerPrefixRequest) (*SetPlayerPrefixResponse, error)
 	mustEmbedUnimplementedPermissionServiceServer()
@@ -85,6 +100,9 @@ type UnimplementedPermissionServiceServer struct{}
 
 func (UnimplementedPermissionServiceServer) GetPlayerGroups(context.Context, *GetPlayerGroupsRequest) (*GetPlayerGroupsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPlayerGroups not implemented")
+}
+func (UnimplementedPermissionServiceServer) ListPlayersByGroups(context.Context, *ListPlayersByGroupsRequest) (*ListPlayersByGroupsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPlayersByGroups not implemented")
 }
 func (UnimplementedPermissionServiceServer) SetPlayerPrefix(context.Context, *SetPlayerPrefixRequest) (*SetPlayerPrefixResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetPlayerPrefix not implemented")
@@ -128,6 +146,24 @@ func _PermissionService_GetPlayerGroups_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PermissionService_ListPlayersByGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPlayersByGroupsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PermissionServiceServer).ListPlayersByGroups(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PermissionService_ListPlayersByGroups_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PermissionServiceServer).ListPlayersByGroups(ctx, req.(*ListPlayersByGroupsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PermissionService_SetPlayerPrefix_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetPlayerPrefixRequest)
 	if err := dec(in); err != nil {
@@ -156,6 +192,10 @@ var PermissionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPlayerGroups",
 			Handler:    _PermissionService_GetPlayerGroups_Handler,
+		},
+		{
+			MethodName: "ListPlayersByGroups",
+			Handler:    _PermissionService_ListPlayersByGroups_Handler,
 		},
 		{
 			MethodName: "SetPlayerPrefix",

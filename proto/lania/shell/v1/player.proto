@@ -11,6 +11,9 @@ service PlayerService {
   // ListChangedPlaytimes returns playtime of every player whose last session ended at or after since_ms.
   // Used for periodic sync, so the caller does not need to know player UUIDs in advance.
   rpc ListChangedPlaytimes(ListChangedPlaytimesRequest) returns (ListChangedPlaytimesResponse);
+  // ListOnlinePlayers returns every player that is online right now.
+  // Used to filter player lists by status, so the caller does not need to know player UUIDs in advance.
+  rpc ListOnlinePlayers(ListOnlinePlayersRequest) returns (ListOnlinePlayersResponse);
 }
 
 message GetOnlineStatusRequest {
@@ -40,6 +43,13 @@ message ListChangedPlaytimesRequest {
 message ListChangedPlaytimesResponse {
   // Keyed by Minecraft UUID. Only players with sessions are present, so last_seen_ms is always set.
   map<string, Playtime> playtimes = 1;
+}
+
+message ListOnlinePlayersRequest {}
+
+message ListOnlinePlayersResponse {
+  // Minecraft UUIDs in canonical string form.
+  repeated string minecraft_uuids = 1;
 }
 
 message Playtime {

@@ -18,6 +18,10 @@ func (s *stubLuckpermsStorage) FindPermissionsWithPrefix(context.Context, uuid.U
 	return nil, nil
 }
 
+func (s *stubLuckpermsStorage) FindPlayersWithPermissions(context.Context, []string) (uuid.UUIDs, error) {
+	return nil, nil
+}
+
 func (s *stubLuckpermsStorage) ReplacePermissionsWithPrefix(context.Context, uuid.UUID, string, string) error {
 	if s.err != nil {
 		return s.err

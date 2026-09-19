@@ -16,9 +16,13 @@ import (
 // ShellAPI is the only way the API reaches the Minecraft server and its plugins.
 type ShellAPI interface {
 	GetOnlineStatus(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
+	// ListOnlinePlayers returns every player that is online right now.
+	ListOnlinePlayers(ctx context.Context) (uuid.UUIDs, error)
 	// ListChangedPlaytimes returns playtime of players whose last session ended at or after sinceMs.
 	ListChangedPlaytimes(ctx context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error)
 	GetPlayerGroups(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error)
+	// ListPlayersByGroups returns players that belong to at least one of the groups.
+	ListPlayersByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error)
 	SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error
 	AddToWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error
 }
@@ -79,6 +83,34 @@ func (api *shellAPI) GetOnlineStatus(ctx context.Context, mcUUIDs uuid.UUIDs) (m
 		online[mcUUID] = isOnline
 	}
 	return online, nil
+}
+
+func (api *shellAPI) ListOnlinePlayers(ctx context.Context) (uuid.UUIDs, error) {
+	res, err := api.player.ListOnlinePlayers(ctx, &shellv1.ListOnlinePlayersRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return parseUUIDs(res.GetMinecraftUuids())
+}
+
+func (api *shellAPI) ListPlayersByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error) {
+	res, err := api.permission.ListPlayersByGroups(ctx, &shellv1.ListPlayersByGroupsRequest{Groups: groups})
+	if err != nil {
+		return nil, err
+	}
+	return parseUUIDs(res.GetMinecraftUuids())
+}
+
+func parseUUIDs(values []string) (uuid.UUIDs, error) {
+	mcUUIDs := make(uuid.UUIDs, len(values))
+	for i, value := range values {
+		mcUUID, err := uuid.Parse(value)
+		if err != nil {
+			return nil, err
+		}
+		mcUUIDs[i] = mcUUID
+	}
+	return mcUUIDs, nil
 }
 
 func (api *shellAPI) ListChangedPlaytimes(ctx context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error) {

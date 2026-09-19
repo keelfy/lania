@@ -4,6 +4,7 @@ import (
 	"context"
 	stdsql "database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/shell/internal/config"
@@ -13,6 +14,8 @@ import (
 type LuckpermsStorage interface {
 	// FindPermissionsWithPrefix returns permission nodes starting with nodePrefix, keyed by player.
 	FindPermissionsWithPrefix(ctx context.Context, mcUUIDs uuid.UUIDs, nodePrefix string) (map[uuid.UUID][]string, error)
+	// FindPlayersWithPermissions returns players that have at least one of the permission nodes.
+	FindPlayersWithPermissions(ctx context.Context, permissions []string) (uuid.UUIDs, error)
 	// ReplacePermissionsWithPrefix deletes the player's nodes starting with nodePrefix and inserts node.
 	ReplacePermissionsWithPrefix(ctx context.Context, mcUUID uuid.UUID, nodePrefix string, node string) error
 }
@@ -59,6 +62,41 @@ func (s *luckpermsStorage) FindPermissionsWithPrefix(ctx context.Context, mcUUID
 		permissions[mcUUID] = append(permissions[mcUUID], permission)
 	}
 	return permissions, rows.Err()
+}
+
+const findPlayersWithPermissions = `
+SELECT DISTINCT uuid
+FROM %s
+WHERE permission IN (%s)
+`
+
+func (s *luckpermsStorage) FindPlayersWithPermissions(ctx context.Context, permissions []string) (uuid.UUIDs, error) {
+	mcUUIDs := make(uuid.UUIDs, 0)
+	if len(permissions) == 0 {
+		return mcUUIDs, nil
+	}
+
+	placeholders := make([]string, len(permissions))
+	args := make([]any, len(permissions))
+	for i, permission := range permissions {
+		placeholders[i] = "?"
+		args[i] = permission
+	}
+	query := fmt.Sprintf(findPlayersWithPermissions, config.GetLuckpermsUserPermissionsTableName(), strings.Join(placeholders, ", "))
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var mcUUID uuid.UUID
+		if err := rows.Scan(&mcUUID); err != nil {
+			return nil, err
+		}
+		mcUUIDs = append(mcUUIDs, mcUUID)
+	}
+	return mcUUIDs, rows.Err()
 }
 
 const deletePermissionsWithPrefix = `

@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"net"
+	"slices"
 	"testing"
 
 	"github.com/google/uuid"
@@ -43,14 +44,39 @@ func (s *fakeFlectoneStorage) FindOnline(_ context.Context, _ uuid.UUIDs) (map[u
 	return s.online, nil
 }
 
+func (s *fakeFlectoneStorage) FindOnlineUUIDs(_ context.Context) (uuid.UUIDs, error) {
+	online := uuid.UUIDs{}
+	for mcUUID, isOnline := range s.online {
+		if isOnline {
+			online = append(online, mcUUID)
+		}
+	}
+	return online, nil
+}
+
 type fakeLuckpermsStorage struct {
-	nodes      map[uuid.UUID][]string
-	lastPrefix string
-	lastNode   string
+	nodes           map[uuid.UUID][]string
+	lastPrefix      string
+	lastNode        string
+	lastPermissions []string
 }
 
 func (s *fakeLuckpermsStorage) FindPermissionsWithPrefix(_ context.Context, _ uuid.UUIDs, _ string) (map[uuid.UUID][]string, error) {
 	return s.nodes, nil
+}
+
+func (s *fakeLuckpermsStorage) FindPlayersWithPermissions(_ context.Context, permissions []string) (uuid.UUIDs, error) {
+	s.lastPermissions = permissions
+	mcUUIDs := uuid.UUIDs{}
+	for mcUUID, nodes := range s.nodes {
+		for _, node := range nodes {
+			if slices.Contains(permissions, node) {
+				mcUUIDs = append(mcUUIDs, mcUUID)
+				break
+			}
+		}
+	}
+	return mcUUIDs, nil
 }
 
 func (s *fakeLuckpermsStorage) ReplacePermissionsWithPrefix(_ context.Context, _ uuid.UUID, nodePrefix string, node string) error {
@@ -163,6 +189,14 @@ func TestPlayerService(t *testing.T) {
 		t.Errorf("unknown player must have empty playtime, got %v", unknown)
 	}
 
+	onlinePlayers, err := client.ListOnlinePlayers(ctx, &shellv1.ListOnlinePlayersRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := onlinePlayers.GetMinecraftUuids(); len(got) != 1 || got[0] != knownUUID.String() {
+		t.Errorf("unexpected online players: %v", got)
+	}
+
 	changed, err := client.ListChangedPlaytimes(ctx, &shellv1.ListChangedPlaytimesRequest{SinceMs: 5000})
 	if err != nil {
 		t.Fatal(err)
@@ -195,6 +229,17 @@ func TestPermissionService(t *testing.T) {
 	}
 	if _, ok := groups.GetGroups()[unknownUUID.String()]; !ok {
 		t.Errorf("unknown player must be present")
+	}
+
+	members, err := client.ListPlayersByGroups(ctx, &shellv1.ListPlayersByGroupsRequest{Groups: []string{"admin", "mod"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := members.GetMinecraftUuids(); len(got) != 1 || got[0] != knownUUID.String() {
+		t.Errorf("unexpected group members: %v", got)
+	}
+	if want := []string{"group.admin", "group.mod"}; !slices.Equal(env.luckperms.lastPermissions, want) {
+		t.Errorf("groups must be queried as permission nodes, got %v want %v", env.luckperms.lastPermissions, want)
 	}
 
 	_, err = client.SetPlayerPrefix(ctx, &shellv1.SetPlayerPrefixRequest{MinecraftUuid: knownUUID.String(), Prefix: "<red>[A]"})

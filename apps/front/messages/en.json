@@ -257,6 +257,10 @@
     "title": "Community",
     "searchPlaceholder": "Search by username",
     "noResults": "No players found",
+    "filters": {
+      "online": "Online",
+      "staff": "Staff"
+    },
     "profile": {
       "open": "Open profile",
       "metadata": {

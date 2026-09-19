@@ -15,6 +15,8 @@ import (
 type PermissionService interface {
 	// GetPlayerGroups returns an entry for every requested player.
 	GetPlayerGroups(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error)
+	// ListPlayersByGroups returns players that belong to at least one of the groups.
+	ListPlayersByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error)
 	SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error
 }
 
@@ -52,6 +54,14 @@ func (s *permissionService) GetPlayerGroups(ctx context.Context, mcUUIDs uuid.UU
 		groups[mcUUID] = names
 	}
 	return groups, nil
+}
+
+func (s *permissionService) ListPlayersByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error) {
+	nodes := make([]string, len(groups))
+	for i, group := range groups {
+		nodes[i] = groupNodePrefix + group
+	}
+	return s.luckpermsStorage.FindPlayersWithPermissions(ctx, nodes)
 }
 
 func (s *permissionService) SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error {

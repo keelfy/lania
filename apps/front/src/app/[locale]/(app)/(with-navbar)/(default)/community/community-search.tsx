@@ -5,9 +5,9 @@ import { useDebouncedState } from '@/lib/use-debounced-state'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React from 'react'
-import { communityHref } from './community-href'
+import { CommunityFilters, communityHref } from './community-href'
 
-type Props = {
+type Props = CommunityFilters & {
   defaultValue?: string
   sort?: string
   locale: string
@@ -16,7 +16,13 @@ type Props = {
 // Longest Minecraft username.
 const MAX_SEARCH_LENGTH = 16
 
-export default function CommunitySearch({ defaultValue, sort, locale }: Props) {
+export default function CommunitySearch({
+  defaultValue,
+  sort,
+  locale,
+  online,
+  staff,
+}: Props) {
   const t = useTranslations('community')
   const router = useRouter()
   const [value, setValue] = React.useState(defaultValue ?? '')
@@ -24,8 +30,8 @@ export default function CommunitySearch({ defaultValue, sort, locale }: Props) {
 
   React.useEffect(() => {
     if (search === (defaultValue ?? '')) return
-    router.replace(communityHref({ locale, sort, search }))
-  }, [search, defaultValue, sort, locale, router])
+    router.replace(communityHref({ locale, sort, search, online, staff }))
+  }, [search, defaultValue, sort, locale, online, staff, router])
 
   return (
     <Input

@@ -256,6 +256,10 @@
     "title": "Сообщество",
     "searchPlaceholder": "Поиск по нику",
     "noResults": "Никого не нашли",
+    "filters": {
+      "online": "Онлайн",
+      "staff": "Администрация"
+    },
     "profile": {
       "open": "Открыть профиль",
       "metadata": {

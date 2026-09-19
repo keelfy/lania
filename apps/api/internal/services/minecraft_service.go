@@ -12,6 +12,8 @@ import (
 // MinecraftService reads and changes state of the Minecraft server through shell.
 type MinecraftService interface {
 	GetOnlineStatusByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
+	ListOnlineMinecraftUUIDs(ctx context.Context) (uuid.UUIDs, error)
+	ListMinecraftUUIDsByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error)
 	GetGroupsByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error)
 	SetPrefixByMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, prefix string) error
 	AddToWhitelist(ctx context.Context, profile *domain.Profile) error
@@ -31,6 +33,22 @@ func (s *minecraftService) GetOnlineStatusByMinecraftUUIDs(ctx context.Context, 
 		return nil, utils.NewInternalServerError("failed to get online status by minecraft uuids", err)
 	}
 	return online, nil
+}
+
+func (s *minecraftService) ListOnlineMinecraftUUIDs(ctx context.Context) (uuid.UUIDs, error) {
+	online, err := s.shellAPI.ListOnlinePlayers(ctx)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to list online minecraft uuids", err)
+	}
+	return online, nil
+}
+
+func (s *minecraftService) ListMinecraftUUIDsByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error) {
+	members, err := s.shellAPI.ListPlayersByGroups(ctx, groups)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to list minecraft uuids by groups", err)
+	}
+	return members, nil
 }
 
 func (s *minecraftService) GetGroupsByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error) {

@@ -11,6 +11,7 @@ import { getProfiles } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
 import { communityHref, DEFAULT_COMMUNITY_SORT } from './community-href'
+import CommunityFilters from './community-filters'
 import CommunityPlayerList from './community-player-list'
 import CommunitySearch from './community-search'
 import SelectCommunitySort from './select-profile-sort'
@@ -22,6 +23,8 @@ type Props = {
   searchParams: Promise<{
     sort?: string
     q?: string
+    online?: string
+    staff?: string
     page?: string
   }>
 }
@@ -32,16 +35,20 @@ function GetPaginationItems({
   locale,
   sort,
   search,
+  online,
+  staff,
 }: {
   page: number
   totalPages: number
   locale: string
   sort: string
   search: string
+  online: boolean
+  staff: boolean
 }) {
   const items = []
   const hrefFor = (target: number) =>
-    communityHref({ locale, sort, search, page: target })
+    communityHref({ locale, sort, search, online, staff, page: target })
 
   if (page > 0) {
     items.push(
@@ -103,11 +110,15 @@ export default async function CommunityPage({ params, searchParams }: Props) {
   const {
     sort: sortParam,
     q: searchParam,
+    online: onlineParam,
+    staff: staffParam,
     page: pageParam,
   } = await searchParams
   const t = await getTranslations({ locale, namespace: 'community' })
   const sort = sortParam ?? DEFAULT_COMMUNITY_SORT
   const search = searchParam?.trim() ?? ''
+  const online = onlineParam === 'true'
+  const staff = staffParam === 'true'
   const page = Math.max(0, parseInt(pageParam ?? '') || 0)
   const [col, dir] = sort.split('.')
 
@@ -117,6 +128,9 @@ export default async function CommunityPage({ params, searchParams }: Props) {
     dir,
     page,
     search,
+    undefined,
+    online,
+    staff,
   ).catch((err) => {
     console.error(err)
     return { content: [], page: 0, size: 0, totalPages: 0, totalElements: 0 }
@@ -126,14 +140,29 @@ export default async function CommunityPage({ params, searchParams }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-4xl font-extrabold tracking-tight">{t('title')}</h1>
         <div className="flex w-full items-center gap-2 sm:w-auto">
-          <CommunitySearch defaultValue={search} sort={sort} locale={locale} />
+          <CommunitySearch
+            defaultValue={search}
+            sort={sort}
+            locale={locale}
+            online={online}
+            staff={staff}
+          />
           <SelectCommunitySort
             defaultValue={sort}
             search={search}
             locale={locale}
+            online={online}
+            staff={staff}
           />
         </div>
       </div>
+      <CommunityFilters
+        sort={sort}
+        search={search}
+        locale={locale}
+        online={online}
+        staff={staff}
+      />
       {paginatedProfiles.content.length > 0 ? (
         <CommunityPlayerList
           profiles={paginatedProfiles.content}
@@ -153,6 +182,8 @@ export default async function CommunityPage({ params, searchParams }: Props) {
               locale={locale}
               sort={sort}
               search={search}
+              online={online}
+              staff={staff}
             />
           </PaginationContent>
         </Pagination>

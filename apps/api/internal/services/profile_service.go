@@ -4,6 +4,7 @@ import (
 	"context"
 	stdsql "database/sql"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,8 +18,8 @@ import (
 
 type ProfileService interface {
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
-	GetPublicProfiles(ctx context.Context, search string, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, error)
-	CountPublicProfiles(ctx context.Context, search string) (int64, error)
+	// GetPublicProfiles returns a page of profiles and the total number of profiles matching the filter.
+	GetPublicProfiles(ctx context.Context, filter domain.ProfileFilter, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, int64, error)
 	GetOrCreateProfileByUsername(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) (*domain.Profile, error)
 	GetProfileByUsername(ctx context.Context, username string) (*domain.Profile, error)
 	GetProfileByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID) (*domain.Profile, error)
@@ -58,24 +59,65 @@ func (s *profileService) GetProfilesByOwnerUserID(ctx context.Context, ownerUser
 	return profiles, nil
 }
 
-func (s *profileService) GetPublicProfiles(ctx context.Context, search string, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, error) {
-	profiles, err := s.storage.Queries().FindPublicProfiles(ctx, search, sort.Column, sort.Direction, pagination.Size, pagination.From)
-	if err == stdsql.ErrNoRows {
-		return []*domain.Profile{}, nil
-	} else if err != nil {
-		return nil, utils.NewInternalServerError("failed to get public profiles", err)
+func (s *profileService) GetPublicProfiles(ctx context.Context, filter domain.ProfileFilter, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, int64, error) {
+	only, err := s.filterMinecraftUUIDs(ctx, filter)
+	if err != nil {
+		return nil, 0, err
 	}
-	return profiles, nil
+
+	profiles, err := s.storage.Queries().FindPublicProfiles(ctx, filter.Search, only, sort.Column, sort.Direction, pagination.Size, pagination.From)
+	if err == stdsql.ErrNoRows {
+		profiles = []*domain.Profile{}
+	} else if err != nil {
+		return nil, 0, utils.NewInternalServerError("failed to get public profiles", err)
+	}
+
+	count, err := s.storage.Queries().CountPublicProfiles(ctx, filter.Search, only)
+	if err == stdsql.ErrNoRows {
+		count = 0
+	} else if err != nil {
+		return nil, 0, utils.NewInternalServerError("failed to count public profiles", err)
+	}
+	return profiles, count, nil
 }
 
-func (s *profileService) CountPublicProfiles(ctx context.Context, search string) (int64, error) {
-	count, err := s.storage.Queries().CountPublicProfiles(ctx, search)
-	if err == stdsql.ErrNoRows {
-		return 0, nil
-	} else if err != nil {
-		return 0, utils.NewInternalServerError("failed to count public profiles", err)
+// filterMinecraftUUIDs resolves filters that depend on the Minecraft server into the players they keep.
+// It returns nil when no such filter is set. Failing is intended: without the server the filter cannot be applied.
+func (s *profileService) filterMinecraftUUIDs(ctx context.Context, filter domain.ProfileFilter) (*uuid.UUIDs, error) {
+	var only *uuid.UUIDs
+	keep := func(mcUUIDs uuid.UUIDs) {
+		if only == nil {
+			only = &mcUUIDs
+			return
+		}
+		kept := uuid.UUIDs{}
+		for _, mcUUID := range *only {
+			if slices.Contains(mcUUIDs, mcUUID) {
+				kept = append(kept, mcUUID)
+			}
+		}
+		only = &kept
 	}
-	return count, nil
+
+	if filter.OnlineOnly {
+		online, err := s.minecraftService.ListOnlineMinecraftUUIDs(ctx)
+		if err != nil {
+			return nil, err
+		}
+		keep(online)
+	}
+	if filter.StaffOnly {
+		groups := make([]string, len(domain.StaffRoles))
+		for i, role := range domain.StaffRoles {
+			groups[i] = string(role)
+		}
+		staff, err := s.minecraftService.ListMinecraftUUIDsByGroups(ctx, groups)
+		if err != nil {
+			return nil, err
+		}
+		keep(staff)
+	}
+	return only, nil
 }
 
 func (s *profileService) GetProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error) {

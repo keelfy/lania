@@ -22,6 +22,7 @@ const (
 	PlayerService_GetOnlineStatus_FullMethodName      = "/lania.shell.v1.PlayerService/GetOnlineStatus"
 	PlayerService_GetPlaytime_FullMethodName          = "/lania.shell.v1.PlayerService/GetPlaytime"
 	PlayerService_ListChangedPlaytimes_FullMethodName = "/lania.shell.v1.PlayerService/ListChangedPlaytimes"
+	PlayerService_ListOnlinePlayers_FullMethodName    = "/lania.shell.v1.PlayerService/ListOnlinePlayers"
 )
 
 // PlayerServiceClient is the client API for PlayerService service.
@@ -37,6 +38,9 @@ type PlayerServiceClient interface {
 	// ListChangedPlaytimes returns playtime of every player whose last session ended at or after since_ms.
 	// Used for periodic sync, so the caller does not need to know player UUIDs in advance.
 	ListChangedPlaytimes(ctx context.Context, in *ListChangedPlaytimesRequest, opts ...grpc.CallOption) (*ListChangedPlaytimesResponse, error)
+	// ListOnlinePlayers returns every player that is online right now.
+	// Used to filter player lists by status, so the caller does not need to know player UUIDs in advance.
+	ListOnlinePlayers(ctx context.Context, in *ListOnlinePlayersRequest, opts ...grpc.CallOption) (*ListOnlinePlayersResponse, error)
 }
 
 type playerServiceClient struct {
@@ -77,6 +81,16 @@ func (c *playerServiceClient) ListChangedPlaytimes(ctx context.Context, in *List
 	return out, nil
 }
 
+func (c *playerServiceClient) ListOnlinePlayers(ctx context.Context, in *ListOnlinePlayersRequest, opts ...grpc.CallOption) (*ListOnlinePlayersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListOnlinePlayersResponse)
+	err := c.cc.Invoke(ctx, PlayerService_ListOnlinePlayers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PlayerServiceServer is the server API for PlayerService service.
 // All implementations must embed UnimplementedPlayerServiceServer
 // for forward compatibility.
@@ -90,6 +104,9 @@ type PlayerServiceServer interface {
 	// ListChangedPlaytimes returns playtime of every player whose last session ended at or after since_ms.
 	// Used for periodic sync, so the caller does not need to know player UUIDs in advance.
 	ListChangedPlaytimes(context.Context, *ListChangedPlaytimesRequest) (*ListChangedPlaytimesResponse, error)
+	// ListOnlinePlayers returns every player that is online right now.
+	// Used to filter player lists by status, so the caller does not need to know player UUIDs in advance.
+	ListOnlinePlayers(context.Context, *ListOnlinePlayersRequest) (*ListOnlinePlayersResponse, error)
 	mustEmbedUnimplementedPlayerServiceServer()
 }
 
@@ -108,6 +125,9 @@ func (UnimplementedPlayerServiceServer) GetPlaytime(context.Context, *GetPlaytim
 }
 func (UnimplementedPlayerServiceServer) ListChangedPlaytimes(context.Context, *ListChangedPlaytimesRequest) (*ListChangedPlaytimesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListChangedPlaytimes not implemented")
+}
+func (UnimplementedPlayerServiceServer) ListOnlinePlayers(context.Context, *ListOnlinePlayersRequest) (*ListOnlinePlayersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListOnlinePlayers not implemented")
 }
 func (UnimplementedPlayerServiceServer) mustEmbedUnimplementedPlayerServiceServer() {}
 func (UnimplementedPlayerServiceServer) testEmbeddedByValue()                       {}
@@ -184,6 +204,24 @@ func _PlayerService_ListChangedPlaytimes_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PlayerService_ListOnlinePlayers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOnlinePlayersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlayerServiceServer).ListOnlinePlayers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlayerService_ListOnlinePlayers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlayerServiceServer).ListOnlinePlayers(ctx, req.(*ListOnlinePlayersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PlayerService_ServiceDesc is the grpc.ServiceDesc for PlayerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -202,6 +240,10 @@ var PlayerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListChangedPlaytimes",
 			Handler:    _PlayerService_ListChangedPlaytimes_Handler,
+		},
+		{
+			MethodName: "ListOnlinePlayers",
+			Handler:    _PlayerService_ListOnlinePlayers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

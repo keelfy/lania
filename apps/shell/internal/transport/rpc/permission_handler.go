@@ -34,6 +34,15 @@ func (h *PermissionHandler) GetPlayerGroups(ctx context.Context, req *shellv1.Ge
 	return res, nil
 }
 
+func (h *PermissionHandler) ListPlayersByGroups(ctx context.Context, req *shellv1.ListPlayersByGroupsRequest) (*shellv1.ListPlayersByGroupsResponse, error) {
+	mcUUIDs, err := h.permissionService.ListPlayersByGroups(ctx, req.GetGroups())
+	if err != nil {
+		return nil, internalError(err)
+	}
+
+	return &shellv1.ListPlayersByGroupsResponse{MinecraftUuids: mcUUIDs.Strings()}, nil
+}
+
 func (h *PermissionHandler) SetPlayerPrefix(ctx context.Context, req *shellv1.SetPlayerPrefixRequest) (*shellv1.SetPlayerPrefixResponse, error) {
 	mcUUID, err := parseUUID(req.GetMinecraftUuid())
 	if err != nil {

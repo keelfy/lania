@@ -206,6 +206,16 @@ func BindSearch(r *http.Request) string {
 	return string(search)
 }
 
+// BindProfileFilter reads the search query and the online and staff switches.
+func BindProfileFilter(r *http.Request) domain.ProfileFilter {
+	query := r.URL.Query()
+	return domain.ProfileFilter{
+		Search:     BindSearch(r),
+		OnlineOnly: query.Get("online") == "true",
+		StaffOnly:  query.Get("staff") == "true",
+	}
+}
+
 // ParseCursor parses the cursor value from query parameters based on the expected column type.
 func BindCursor(r *http.Request, columnType string) (any, error) {
 	cursorParam := BindOptionalQueryParamAsString(r, CursorQueryParam, "")

@@ -50,6 +50,15 @@ func (h *PlayerHandler) GetPlaytime(ctx context.Context, req *shellv1.GetPlaytim
 	return &shellv1.GetPlaytimeResponse{Playtimes: presentPlaytimes(playtimes)}, nil
 }
 
+func (h *PlayerHandler) ListOnlinePlayers(ctx context.Context, _ *shellv1.ListOnlinePlayersRequest) (*shellv1.ListOnlinePlayersResponse, error) {
+	mcUUIDs, err := h.playerService.ListOnlinePlayers(ctx)
+	if err != nil {
+		return nil, internalError(err)
+	}
+
+	return &shellv1.ListOnlinePlayersResponse{MinecraftUuids: mcUUIDs.Strings()}, nil
+}
+
 func (h *PlayerHandler) ListChangedPlaytimes(ctx context.Context, req *shellv1.ListChangedPlaytimesRequest) (*shellv1.ListChangedPlaytimesResponse, error) {
 	playtimes, err := h.playerService.ListChangedPlaytimes(ctx, req.GetSinceMs())
 	if err != nil {

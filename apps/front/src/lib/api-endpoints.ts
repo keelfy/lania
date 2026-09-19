@@ -31,6 +31,8 @@ export function getProfiles(
   page: number = 0,
   search: string = '',
   size: number = 40,
+  onlineOnly: boolean = false,
+  staffOnly: boolean = false,
 ): Promise<Paginated<PublicProfile>> {
   const params = new URLSearchParams()
   params.set('column', col)
@@ -38,6 +40,8 @@ export function getProfiles(
   params.set('page', page.toString())
   params.set('size', size.toString())
   if (search) params.set('search', search)
+  if (onlineOnly) params.set('online', 'true')
+  if (staffOnly) params.set('staff', 'true')
   return fetcher<Paginated<PublicProfile>>('/v1/profiles', params)
 }
 

@@ -1,6 +1,10 @@
 package sql
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/google/uuid"
+)
 
 func TestProfileOrderBy(t *testing.T) {
 	tests := []struct {
@@ -31,17 +35,42 @@ func TestProfileOrderBy(t *testing.T) {
 	}
 }
 
-func TestProfileSearchClause(t *testing.T) {
-	where, args := profileSearchClause("")
+func TestProfileWhereClause(t *testing.T) {
+	where, args := profileWhereClause("", nil)
 	if where != "" || len(args) != 0 {
 		t.Errorf("empty search = %q %v, want no clause", where, args)
 	}
 
-	where, args = profileSearchClause(`50%_a\b`)
+	where, args = profileWhereClause(`50%_a\b`, nil)
 	if where == "" || len(args) != 1 {
 		t.Fatalf("clause = %q %v", where, args)
 	}
 	if want := `50\%\_a\\b%`; args[0] != want {
 		t.Errorf("arg = %q, want %q", args[0], want)
+	}
+}
+
+func TestProfileWhereClauseOnly(t *testing.T) {
+	first, second := uuid.New(), uuid.New()
+
+	where, args := profileWhereClause("", &uuid.UUIDs{first, second})
+	if want := "WHERE p.mc_uuid IN (?, ?)"; where != want {
+		t.Errorf("where = %q, want %q", where, want)
+	}
+	if len(args) != 2 || args[0] != first.String() || args[1] != second.String() {
+		t.Errorf("args = %v", args)
+	}
+
+	where, args = profileWhereClause("a", &uuid.UUIDs{first})
+	if want := "WHERE p.mc_username LIKE ? AND p.mc_uuid IN (?)"; where != want {
+		t.Errorf("where = %q, want %q", where, want)
+	}
+	if len(args) != 2 || args[0] != "a%" || args[1] != first.String() {
+		t.Errorf("args = %v", args)
+	}
+
+	where, args = profileWhereClause("", &uuid.UUIDs{})
+	if where != "WHERE 1 = 0" || len(args) != 0 {
+		t.Errorf("empty only = %q %v, want a clause matching nobody", where, args)
 	}
 }
