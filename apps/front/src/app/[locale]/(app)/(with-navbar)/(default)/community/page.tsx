@@ -10,7 +10,9 @@ import {
 import { getProfiles } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
+import { communityHref, DEFAULT_COMMUNITY_SORT } from './community-href'
 import CommunityPlayerList from './community-player-list'
+import CommunitySearch from './community-search'
 import SelectCommunitySort from './select-profile-sort'
 
 type Props = {
@@ -19,6 +21,7 @@ type Props = {
   }>
   searchParams: Promise<{
     sort?: string
+    q?: string
     page?: string
   }>
 }
@@ -28,20 +31,22 @@ function GetPaginationItems({
   totalPages,
   locale,
   sort,
+  search,
 }: {
   page: number
   totalPages: number
   locale: string
   sort: string
+  search: string
 }) {
   const items = []
+  const hrefFor = (target: number) =>
+    communityHref({ locale, sort, search, page: target })
 
   if (page > 0) {
     items.push(
       <PaginationItem key="previous">
-        <PaginationPrevious
-          href={`/${locale}/community?sort=${sort}&page=${page - 1}`}
-        />
+        <PaginationPrevious href={hrefFor(page - 1)} />
       </PaginationItem>,
     )
 
@@ -55,21 +60,14 @@ function GetPaginationItems({
 
     items.push(
       <PaginationItem key="previous-page">
-        <PaginationLink
-          href={`/${locale}/community?sort=${sort}&page=${page - 1}`}
-        >
-          {page}
-        </PaginationLink>
+        <PaginationLink href={hrefFor(page - 1)}>{page}</PaginationLink>
       </PaginationItem>,
     )
   }
 
   items.push(
     <PaginationItem key="current-page">
-      <PaginationLink
-        href={`/${locale}/community?sort=${sort}&page=${page}`}
-        isActive
-      >
+      <PaginationLink href={hrefFor(page)} isActive>
         {page + 1}
       </PaginationLink>
     </PaginationItem>,
@@ -78,11 +76,7 @@ function GetPaginationItems({
   if (page < totalPages - 1) {
     items.push(
       <PaginationItem key="next-page">
-        <PaginationLink
-          href={`/${locale}/community?sort=${sort}&page=${page + 1}`}
-        >
-          {page + 2}
-        </PaginationLink>
+        <PaginationLink href={hrefFor(page + 1)}>{page + 2}</PaginationLink>
       </PaginationItem>,
     )
 
@@ -96,9 +90,7 @@ function GetPaginationItems({
 
     items.push(
       <PaginationItem key="next">
-        <PaginationNext
-          href={`/${locale}/community?sort=${sort}&page=${page + 1}`}
-        />
+        <PaginationNext href={hrefFor(page + 1)} />
       </PaginationItem>,
     )
   }
@@ -108,10 +100,15 @@ function GetPaginationItems({
 
 export default async function CommunityPage({ params, searchParams }: Props) {
   const { locale } = await params
-  const { sort: sortParam, page: pageParam } = await searchParams
+  const {
+    sort: sortParam,
+    q: searchParam,
+    page: pageParam,
+  } = await searchParams
   const t = await getTranslations({ locale, namespace: 'community' })
-  const sort = sortParam ?? 'created_at.asc'
-  const page = pageParam ? parseInt(pageParam) : 0
+  const sort = sortParam ?? DEFAULT_COMMUNITY_SORT
+  const search = searchParam?.trim() ?? ''
+  const page = Math.max(0, parseInt(pageParam ?? '') || 0)
   const [col, dir] = sort.split('.')
 
   const paginatedProfiles = await getProfiles(
@@ -119,17 +116,31 @@ export default async function CommunityPage({ params, searchParams }: Props) {
     col,
     dir,
     page,
+    search,
   ).catch((err) => {
     console.error(err)
     return { content: [], page: 0, size: 0, totalPages: 0, totalElements: 0 }
   })
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-4xl font-extrabold tracking-tight">{t('title')}</h1>
-        <SelectCommunitySort defaultValue={sort} locale={locale} />
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <CommunitySearch defaultValue={search} sort={sort} locale={locale} />
+          <SelectCommunitySort
+            defaultValue={sort}
+            search={search}
+            locale={locale}
+          />
+        </div>
       </div>
-      <CommunityPlayerList profiles={paginatedProfiles.content} />
+      {paginatedProfiles.content.length > 0 ? (
+        <CommunityPlayerList profiles={paginatedProfiles.content} />
+      ) : (
+        <p className="text-muted-foreground py-10 text-center">
+          {t('noResults')}
+        </p>
+      )}
       {paginatedProfiles.totalPages > 1 && (
         <Pagination>
           <PaginationContent>
@@ -138,6 +149,7 @@ export default async function CommunityPage({ params, searchParams }: Props) {
               totalPages={paginatedProfiles.totalPages}
               locale={locale}
               sort={sort}
+              search={search}
             />
           </PaginationContent>
         </Pagination>

@@ -26,9 +26,10 @@ export function getUserProfiles(
 
 export function getProfiles(
   fetcher: ApiFetcher,
-  col: string = 'createdAt',
+  col: string = 'created_at',
   dir: string = 'asc',
   page: number = 0,
+  search: string = '',
   size: number = 40,
 ): Promise<Paginated<PublicProfile>> {
   const params = new URLSearchParams()
@@ -36,6 +37,7 @@ export function getProfiles(
   params.set('direction', dir)
   params.set('page', page.toString())
   params.set('size', size.toString())
+  if (search) params.set('search', search)
   return fetcher<Paginated<PublicProfile>>('/v1/profiles', params)
 }
 

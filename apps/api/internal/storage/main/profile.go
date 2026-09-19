@@ -119,11 +119,13 @@ func (q *queries) GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid
 }
 
 const countPublicProfiles = `
-SELECT COUNT(id) FROM profiles
+SELECT COUNT(p.id) FROM profiles p
+%s
 `
 
-func (q *queries) CountPublicProfiles(ctx context.Context) (int64, error) {
-	row := q.x.QueryRowContext(ctx, countPublicProfiles)
+func (q *queries) CountPublicProfiles(ctx context.Context, search string) (int64, error) {
+	where, args := profileSearchClause(search)
+	row := q.x.QueryRowContext(ctx, fmt.Sprintf(countPublicProfiles, where), args...)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -146,20 +148,32 @@ SELECT
 	nc.colors AS name_colors
 FROM profiles p
 LEFT JOIN name_colors nc ON p.name_color_id = nc.id
-ORDER BY %s %s
+%s
+%s
+ORDER BY %s
 LIMIT ? OFFSET ?
 `
 
-func (q *queries) getProfileSortColumn(sortCol string) string {
-	switch sortCol {
-	case "username":
-		return "p.mc_username"
-	default:
-		return "p.created_at"
+// Playtime is summed over all seasons. The join is only added when the list is sorted by playtime.
+const profilePlaytimeJoin = `
+LEFT JOIN (
+	SELECT mc_uuid, SUM(playtime) AS total_playtime
+	FROM profile_playtimes
+	GROUP BY mc_uuid
+) pt ON pt.mc_uuid = p.mc_uuid
+`
+
+var profileSearchEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+
+// profileSearchClause matches usernames by prefix, so the mc_username index is used.
+func profileSearchClause(search string) (string, []any) {
+	if search == "" {
+		return "", nil
 	}
+	return "WHERE p.mc_username LIKE ?", []any{profileSearchEscaper.Replace(search) + "%"}
 }
 
-func (q *queries) getProfileSortDirection(direction string) string {
+func getProfileSortDirection(direction string) string {
 	switch strings.ToLower(direction) {
 	case "desc":
 		return "DESC"
@@ -168,11 +182,30 @@ func (q *queries) getProfileSortDirection(direction string) string {
 	}
 }
 
-func (q *queries) FindPublicProfiles(ctx context.Context, sortCol, direction string, size, from int) ([]*domain.Profile, error) {
-	sortColumn := q.getProfileSortColumn(sortCol)
-	sortDirection := q.getProfileSortDirection(direction)
-	query := fmt.Sprintf(findPublicProfiles, sortColumn, sortDirection)
-	rows, err := q.x.QueryContext(ctx, query, size, from)
+// profileOrderBy returns the join needed by the sort column and the ORDER BY expression.
+// Profiles without a value are always listed last, and id keeps the order stable between pages.
+func profileOrderBy(sortCol, direction string) (join string, orderBy string) {
+	dir := getProfileSortDirection(direction)
+	switch sortCol {
+	case "username":
+		return "", fmt.Sprintf("p.mc_username %s, p.id", dir)
+	case "first_seen_at":
+		return "", fmt.Sprintf("p.first_seen_at IS NULL, p.first_seen_at %s, p.id", dir)
+	case "last_seen_at":
+		return "", fmt.Sprintf("p.last_seen_at IS NULL, p.last_seen_at %s, p.id", dir)
+	case "playtime":
+		return profilePlaytimeJoin, fmt.Sprintf("COALESCE(pt.total_playtime, 0) %s, p.id", dir)
+	default:
+		return "", fmt.Sprintf("p.created_at %s, p.id", dir)
+	}
+}
+
+func (q *queries) FindPublicProfiles(ctx context.Context, search, sortCol, direction string, size, from int) ([]*domain.Profile, error) {
+	join, orderBy := profileOrderBy(sortCol, direction)
+	where, args := profileSearchClause(search)
+	query := fmt.Sprintf(findPublicProfiles, join, where, orderBy)
+	args = append(args, size, from)
+	rows, err := q.x.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +219,7 @@ func (q *queries) FindPublicProfiles(ctx context.Context, sortCol, direction str
 		}
 		profiles = append(profiles, profile)
 	}
-	return profiles, nil
+	return profiles, rows.Err()
 }
 
 const insertProfile = `

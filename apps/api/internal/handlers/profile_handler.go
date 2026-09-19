@@ -56,14 +56,15 @@ func (h *profileHandler) GetPublicProfiles(w http.ResponseWriter, r *http.Reques
 	}
 
 	sort := binders.BindSort(r)
+	search := binders.BindSearch(r)
 
-	profiles, err := h.profileService.GetPublicProfiles(ctx, pagination, sort)
+	profiles, err := h.profileService.GetPublicProfiles(ctx, search, pagination, sort)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
 	}
 
-	count, err := h.profileService.CountPublicProfiles(ctx)
+	count, err := h.profileService.CountPublicProfiles(ctx, search)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return

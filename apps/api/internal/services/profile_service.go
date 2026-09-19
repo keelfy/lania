@@ -17,8 +17,8 @@ import (
 
 type ProfileService interface {
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
-	GetPublicProfiles(ctx context.Context, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, error)
-	CountPublicProfiles(ctx context.Context) (int64, error)
+	GetPublicProfiles(ctx context.Context, search string, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, error)
+	CountPublicProfiles(ctx context.Context, search string) (int64, error)
 	GetOrCreateProfileByUsername(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) (*domain.Profile, error)
 	GetProfileByUsername(ctx context.Context, username string) (*domain.Profile, error)
 	GetProfileByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID) (*domain.Profile, error)
@@ -58,8 +58,8 @@ func (s *profileService) GetProfilesByOwnerUserID(ctx context.Context, ownerUser
 	return profiles, nil
 }
 
-func (s *profileService) GetPublicProfiles(ctx context.Context, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, error) {
-	profiles, err := s.storage.Queries().FindPublicProfiles(ctx, sort.Column, sort.Direction, pagination.Size, pagination.From)
+func (s *profileService) GetPublicProfiles(ctx context.Context, search string, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, error) {
+	profiles, err := s.storage.Queries().FindPublicProfiles(ctx, search, sort.Column, sort.Direction, pagination.Size, pagination.From)
 	if err == stdsql.ErrNoRows {
 		return []*domain.Profile{}, nil
 	} else if err != nil {
@@ -68,8 +68,8 @@ func (s *profileService) GetPublicProfiles(ctx context.Context, pagination *doma
 	return profiles, nil
 }
 
-func (s *profileService) CountPublicProfiles(ctx context.Context) (int64, error) {
-	count, err := s.storage.Queries().CountPublicProfiles(ctx)
+func (s *profileService) CountPublicProfiles(ctx context.Context, search string) (int64, error) {
+	count, err := s.storage.Queries().CountPublicProfiles(ctx, search)
 	if err == stdsql.ErrNoRows {
 		return 0, nil
 	} else if err != nil {
