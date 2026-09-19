@@ -11,6 +11,8 @@ Reads:
   - <world>/stats/<uuid>.json      ("minecraft:play_time" in ticks)
   - usercache.json (optional, --usercache): UUID -> username fallback for
     players whose .dat has no "bukkit.lastKnownName"
+  - .dat file modification time: fallback for last played when the .dat has
+    no "bukkit.lastPlayed"
 
 No third-party dependencies; NBT is parsed with a small built-in reader.
 """
@@ -160,7 +162,7 @@ def extract_world(world_dir: Path, usercache: dict[str, str] | None = None) -> l
                 username=username,
                 playtime_hours=playtime_hours if playtime_hours is not None else 0.0,
                 first_join=_millis_to_iso(bukkit.get("firstPlayed")),
-                last_played=_millis_to_iso(bukkit.get("lastPlayed")),
+                last_played=_millis_to_iso(bukkit.get("lastPlayed") or dat_file.stat().st_mtime * 1000),
             )
         )
 
