@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"sync"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/config"
@@ -81,23 +80,11 @@ func (h *profileHandler) GetPublicProfiles(w http.ResponseWriter, r *http.Reques
 		onlineMap = make(map[uuid.UUID]bool)
 	}
 
-	mojangUUIDs := sync.Map{}
-	wg := sync.WaitGroup{}
-	for _, profile := range profiles {
-		wg.Add(1)
-		go func(profile *domain.Profile) {
-			defer wg.Done()
-
-			mojangUUID, err := h.mojangService.GetMojangUUID(ctx, profile.MinecraftUsername)
-			if err != nil {
-				logger.Errorf(ctx, "[MOJANG] Failed to get mojang uuid: %v", err)
-				return
-			}
-
-			mojangUUIDs.Store(profile.MinecraftUUID, mojangUUID)
-		}(profile)
+	mojangUUIDs, err := h.mojangService.GetMojangUUIDsByMinecraftUUIDs(ctx, mcUUIDs)
+	if err != nil {
+		logger.Errorf(ctx, "[MOJANG] Failed to get mojang uuids by minecraft uuids: %v", err)
+		mojangUUIDs = make(map[uuid.UUID]uuid.UUID)
 	}
-	wg.Wait()
 
 	res := make([]*responses.PublicProfile, len(profiles))
 	for i, profile := range profiles {
@@ -112,14 +99,8 @@ func (h *profileHandler) GetPublicProfiles(w http.ResponseWriter, r *http.Reques
 			isOnline = false
 		}
 
-		mojangUUIDValue, ok := mojangUUIDs.Load(profile.MinecraftUUID)
-		if !ok {
-			mojangUUIDValue = uuid.Nil
-		}
-
-		mojangUUID := mojangUUIDValue.(uuid.UUID)
 		var nullableMojangUUID *uuid.UUID
-		if mojangUUID != uuid.Nil {
+		if mojangUUID, ok := mojangUUIDs[profile.MinecraftUUID]; ok {
 			nullableMojangUUID = &mojangUUID
 		}
 
@@ -157,23 +138,11 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	mojangUUIDs := sync.Map{}
-	wg := sync.WaitGroup{}
-	for _, profile := range profiles {
-		wg.Add(1)
-		go func(profile *domain.Profile) {
-			defer wg.Done()
-
-			mojangUUID, err := h.mojangService.GetMojangUUID(ctx, profile.MinecraftUsername)
-			if err != nil {
-				logger.Errorf(ctx, "[MOJANG] Failed to get mojang uuid: %v", err)
-				return
-			}
-
-			mojangUUIDs.Store(profile.MinecraftUUID, mojangUUID)
-		}(profile)
+	mojangUUIDs, err := h.mojangService.GetMojangUUIDsByMinecraftUUIDs(ctx, mcUUIDs)
+	if err != nil {
+		logger.Errorf(ctx, "[MOJANG] Failed to get mojang uuids by minecraft uuids: %v", err)
+		mojangUUIDs = make(map[uuid.UUID]uuid.UUID)
 	}
-	wg.Wait()
 
 	res := make([]*responses.Profile, len(profiles))
 	for i, profile := range profiles {
@@ -186,14 +155,8 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 			accessStatus = domain.AccessStatusExpired
 		}
 
-		mojangUUIDValue, ok := mojangUUIDs.Load(profile.MinecraftUUID)
-		if !ok {
-			mojangUUIDValue = uuid.Nil
-		}
-
-		mojangUUID := mojangUUIDValue.(uuid.UUID)
 		var nullableMojangUUID *uuid.UUID
-		if mojangUUID != uuid.Nil {
+		if mojangUUID, ok := mojangUUIDs[profile.MinecraftUUID]; ok {
 			nullableMojangUUID = &mojangUUID
 		}
 
@@ -262,16 +225,22 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 		onlineMap = make(map[uuid.UUID]bool)
 	}
 
-	mojangUUID, err := h.mojangService.GetMojangUUID(ctx, profile.MinecraftUsername)
+	mojangUUIDs, err := h.mojangService.GetMojangUUIDsByMinecraftUUIDs(ctx, mcUUIDs)
 	if err != nil {
-		logger.Errorf(ctx, "[MOJANG] Failed to get mojang uuid: %v", err)
-		mojangUUID = uuid.Nil
+		logger.Errorf(ctx, "[MOJANG] Failed to get mojang uuids by minecraft uuids: %v", err)
+		mojangUUIDs = make(map[uuid.UUID]uuid.UUID)
 	}
 
-	isModelSlim, err := h.mojangService.IsPlayerModelSlim(ctx, mojangUUID)
-	if err != nil {
-		logger.Errorf(ctx, "[MOJANG] Failed to get player model slim: %v", err)
-		isModelSlim = false
+	var nullableMojangUUID *uuid.UUID
+	isModelSlim := false
+	if mojangUUID, ok := mojangUUIDs[profile.MinecraftUUID]; ok {
+		nullableMojangUUID = &mojangUUID
+
+		isModelSlim, err = h.mojangService.IsPlayerModelSlim(ctx, mojangUUID)
+		if err != nil {
+			logger.Errorf(ctx, "[MOJANG] Failed to get player model slim: %v", err)
+			isModelSlim = false
+		}
 	}
 
 	accessStatus := domain.AccessStatusInactive
@@ -281,11 +250,6 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 			break
 		}
 		accessStatus = domain.AccessStatusExpired
-	}
-
-	var nullableMojangUUID *uuid.UUID
-	if mojangUUID != uuid.Nil {
-		nullableMojangUUID = &mojangUUID
 	}
 
 	isOnline, ok := onlineMap[profile.MinecraftUUID]
