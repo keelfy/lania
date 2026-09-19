@@ -41,8 +41,8 @@ type Profile struct {
 	ID                uuid.UUID
 	MinecraftUUID     uuid.UUID
 	MinecraftUsername string
-	OwnerUserID       uuid.UUID
-	FirstSeenAt       *time.Time
+	OwnerUserID       *uuid.UUID
+	FirstSeenAt      *time.Time
 	LastSeenAt        *time.Time
 	Role              Role
 	IsSlimModel       bool
