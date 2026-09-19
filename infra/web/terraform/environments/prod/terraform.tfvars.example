@@ -54,3 +54,7 @@ donation_alerts_user_id                 = ""
 
 twitch_client_id     = ""
 twitch_client_secret = ""
+
+# Existing Kratos identity UUIDs; empty denies all admin access.
+admin_identity_ids = []
+admin_image_tag = "latest-admin"

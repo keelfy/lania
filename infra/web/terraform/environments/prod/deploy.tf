@@ -6,8 +6,10 @@ resource "local_sensitive_file" "env" {
   filename = "${path.module}/generated/.env"
 
   content = templatefile("${path.module}/templates/env.tftpl", {
-    image_tag = var.image_tag
-    domain    = var.domain
+    admin_identity_ids = join(",", var.admin_identity_ids)
+    admin_image_tag    = var.admin_image_tag
+    image_tag          = var.image_tag
+    domain             = var.domain
 
     api_key    = var.api_key
     jwt_secret = var.jwt_secret

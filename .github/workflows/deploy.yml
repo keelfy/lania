@@ -9,6 +9,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
+      admin: ${{ steps.filter.outputs.admin }}
       api: ${{ steps.filter.outputs.api }}
       front: ${{ steps.filter.outputs.front }}
       shell: ${{ steps.filter.outputs.shell }}
@@ -18,6 +19,10 @@ jobs:
         id: filter
         with:
           filters: |
+            admin:
+              - '.github/workflows/**'
+              - 'apps/admin/**'
+              - 'apps/api/**'
             api:
               - '.github/workflows/**'
               - 'apps/api/**'
@@ -27,6 +32,51 @@ jobs:
             shell:
               - '.github/workflows/**'
               - 'apps/shell/**'
+
+  build-admin:
+    needs: changes
+    if: needs.changes.outputs.admin == 'true'
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:12
+        env:
+          MARIADB_ROOT_PASSWORD: admin-test-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+      - name: Test admin service
+        working-directory: apps/api
+        env:
+          ADMIN_TEST_DSN: root:admin-test-password@tcp(127.0.0.1:3306)/
+          CGO_ENABLED: '1'
+        run: go test -race ./internal/admin ./cmd/admin
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/admin/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/keelfy/lania:latest-admin
+            ghcr.io/keelfy/lania:admin-${{ github.sha }}
 
   build-backend:
     needs: changes
@@ -112,13 +162,14 @@ jobs:
             ghcr.io/keelfy/lania:frontend-${{ github.sha }}
 
   deploy:
-    needs: [changes, build-backend, build-shell, build-frontend]
+    needs: [changes, build-admin, build-backend, build-shell, build-frontend]
     if: |
       always() &&
+      (needs.build-admin.result == 'success' || needs.build-admin.result == 'skipped') &&
       (needs.build-backend.result == 'success' || needs.build-backend.result == 'skipped') &&
       (needs.build-shell.result == 'success' || needs.build-shell.result == 'skipped') &&
       (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
-      (needs.changes.outputs.api == 'true' || needs.changes.outputs.shell == 'true' || needs.changes.outputs.front == 'true')
+      (needs.changes.outputs.admin == 'true' || needs.changes.outputs.api == 'true' || needs.changes.outputs.shell == 'true' || needs.changes.outputs.front == 'true')
     runs-on: ubuntu-latest
     steps:
       - name: Pull and restart the stack

@@ -11,6 +11,9 @@ prefixed `lania-` to avoid clashing with anything else on the box.
 
 - **front** — Next.js (`ghcr.io/lania-smp/frontend`), routed at `www.lania.network`
   (and `lania.network` redirects to it) via Traefik labels.
+- **admin** — standalone admin service at `admin.lania.network`, using existing
+  Kratos accounts. Set Terraform `admin_identity_ids` before granting access;
+  an empty list denies everyone. See [admin setup](../../apps/admin/README.md).
 - **api** — Go backend (`ghcr.io/lania-smp/backend`), routed at `api.lania.network`.
 - **shell** — Go gRPC service (`ghcr.io/lania-smp/shell`), the API's only way to
   reach the Minecraft server and its plugin data (Plan, Flectone, LuckPerms,
@@ -22,7 +25,7 @@ prefixed `lania-` to avoid clashing with anything else on the box.
   `accounts.lania.network`; the Kratos admin API (4434) has no route and is
   not reachable from outside the `lania-web-net` network.
 
-`front`, `api`, and `kratos` each join two networks: `lania-web-net` (talk to
+`front`, `api`, `admin`, and `kratos` each join two networks: `lania-web-net` (talk to
 the databases) and the external `edge` network (so the shared Traefik can
 reach them). `mariadb`, `redis`, `postgres`, `kratos-migrate` stay on
 `lania-web-net` only.
@@ -60,7 +63,7 @@ left out of this stack. Add them later if a feature actually needs them.
    mise run web-terraform-prod-apply
    ```
    This will:
-   - create Cloudflare A records for `lania.network`, `www`, `api`, `accounts`
+   - create Cloudflare A records for `lania.network`, `www`, `api`, `accounts`, `admin`
    - install Docker on the server if missing
    - render a real `.env` from your `terraform.tfvars` (kept only in
      `generated/.env`, gitignored, never committed)

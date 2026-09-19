@@ -63,6 +63,36 @@ services:
       - "traefik.http.routers.lania-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.lania-api.loadbalancer.server.port=8080"
 
+  admin:
+    image: ghcr.io/keelfy/lania:${ADMIN_IMAGE_TAG:-latest-admin}
+    container_name: lania-admin
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: 8081
+      ADMIN_ORIGIN: https://admin.lania.network
+      ORY_ADMIN_URL: http://kratos:4434
+      ORY_BROWSER_URL: https://accounts.lania.network
+    networks:
+      - lania-web-net
+      - edge
+    depends_on:
+      mariadb-migrate:
+        condition: service_completed_successfully
+      kratos:
+        condition: service_started
+      shell:
+        condition: service_started
+    mem_limit: 128m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=edge"
+      - "traefik.http.routers.lania-admin.rule=Host(`admin.lania.network`)"
+      - "traefik.http.routers.lania-admin.entrypoints=websecure"
+      - "traefik.http.routers.lania-admin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lania-admin.loadbalancer.server.port=8081"
+
   # Single entry point to the Minecraft server and its plugin databases.
   # Internal only: no edge network, no Traefik route.
   shell:

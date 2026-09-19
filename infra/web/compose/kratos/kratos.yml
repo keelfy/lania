@@ -29,6 +29,7 @@ serve:
 selfservice:
   default_browser_return_url: https://www.lania.network/welcome
   allowed_return_urls:
+    - https://admin.lania.network
     - https://www.lania.network
 
   methods:

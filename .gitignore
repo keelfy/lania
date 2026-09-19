@@ -40,3 +40,6 @@ infra/**/generated/
 infra/**/.env
 infra/**/.env.*
 !infra/**/.env.example
+
+# Local test environment (dev/dev.sh)
+.local-dev/

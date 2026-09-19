@@ -21,6 +21,7 @@ type ShellAPI interface {
 	GetPlayerGroups(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error)
 	SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error
 	AddToWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error
+	RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID) error
 }
 
 type shellAPI struct {
@@ -132,5 +133,10 @@ func (api *shellAPI) AddToWhitelist(ctx context.Context, mcUUID uuid.UUID, usern
 		MinecraftUuid:     mcUUID.String(),
 		MinecraftUsername: username,
 	})
+	return err
+}
+
+func (api *shellAPI) RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID) error {
+	_, err := api.whitelist.RemovePlayer(ctx, &shellv1.RemovePlayerRequest{MinecraftUuid: mcUUID.String()})
 	return err
 }

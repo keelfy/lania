@@ -1,0 +1,89 @@
+# Kratos config for the local test environment. @ROOT@ is replaced by dev/dev.sh.
+dsn: memory
+dev: true
+
+serve:
+  public:
+    base_url: http://localhost:4433/
+    cors:
+      enabled: true
+      allowed_origins:
+        - http://localhost:3000
+      allowed_methods:
+        - POST
+        - GET
+        - PUT
+        - PATCH
+        - DELETE
+      allowed_headers:
+        - Authorization
+        - Cookie
+        - Content-Type
+      exposed_headers:
+        - Content-Type
+        - Set-Cookie
+  admin:
+    base_url: http://localhost:4434/
+
+selfservice:
+  default_browser_return_url: http://localhost:3000/
+  allowed_return_urls:
+    - http://localhost:3000
+
+  methods:
+    password:
+      enabled: true
+      config:
+        haveibeenpwned_enabled: false
+    oidc:
+      enabled: false
+
+  flows:
+    error:
+      ui_url: http://localhost:3000/auth/error
+    settings:
+      ui_url: http://localhost:3000/settings
+    recovery:
+      enabled: false
+    verification:
+      enabled: false
+    logout:
+      after:
+        default_browser_return_url: http://localhost:3000/
+    login:
+      ui_url: http://localhost:3000/auth/login
+      lifespan: 30m
+    registration:
+      ui_url: http://localhost:3000/auth/registration
+      lifespan: 30m
+      after:
+        password:
+          hooks:
+            - hook: session
+
+session:
+  lifespan: 72h
+  cookie:
+    path: /
+    same_site: Lax
+
+log:
+  level: info
+  format: text
+
+secrets:
+  cookie:
+    - local-dev-cookie-secret-not-secure
+  cipher:
+    - local-dev-cipher-secret-32-char!
+
+hashers:
+  algorithm: bcrypt
+  bcrypt:
+    cost: 4
+
+identity:
+  default_schema_id: default
+  schemas:
+    - id: default
+      url: file://@ROOT@/dev/kratos/identity.schema.json

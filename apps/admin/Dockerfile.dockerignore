@@ -1,0 +1,10 @@
+**
+!apps/
+!apps/api/
+!apps/api/go.mod
+!apps/api/go.sum
+!apps/api/cmd/
+!apps/api/cmd/admin/
+!apps/api/cmd/admin/**
+!apps/api/internal/
+!apps/api/internal/**

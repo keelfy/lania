@@ -108,6 +108,34 @@ description = "Lint frontend with Bun"
 dir = "apps/front"
 run = "bun run lint"
 
+[tasks.dev-setup]
+description = "Download MariaDB and Kratos, build helper tools for the local test environment"
+run = "dev/dev.sh setup"
+
+[tasks.dev-up]
+description = "Start the local test environment (MariaDB, Redis, Kratos, API, front)"
+run = "dev/dev.sh up"
+
+[tasks.dev-down]
+description = "Stop the local test environment"
+run = "dev/dev.sh down"
+
+[tasks.dev-status]
+description = "Show which local services run"
+run = "dev/dev.sh status"
+
+[tasks.dev-seed]
+description = "Reload test data into the local database"
+run = "dev/dev.sh seed"
+
+[tasks.dev-reset]
+description = "Wipe local database and Kratos data, then start again"
+run = "dev/dev.sh reset"
+
+[tasks.dev-logs]
+description = "Tail logs of the local services"
+run = "dev/dev.sh logs"
+
 [tasks.spinoff-terraform-prod-init]
 description = "Initialize Terraform"
 dir = "infra/spinoff/terraform/environments/prod"
@@ -152,3 +180,18 @@ run = "terraform plan"
 description = "Apply Terraform"
 dir = "infra/edge/terraform/environments/prod"
 run = "terraform apply"
+
+[tasks.admin-run]
+description = "Run the standalone admin service"
+dir = "apps/api"
+run = "go run ./cmd/admin"
+
+[tasks.admin-test]
+description = "Run admin service tests"
+dir = "apps/api"
+run = "go test ./internal/admin ./cmd/admin"
+
+[tasks.admin-build]
+description = "Build the standalone admin binary"
+dir = "apps/api"
+run = "go build -o ./artifacts/admin ./cmd/admin"

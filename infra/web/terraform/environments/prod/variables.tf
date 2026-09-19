@@ -305,3 +305,19 @@ variable "oidc_twitch_client_secret" {
   default   = ""
   sensitive = true
 }
+
+variable "admin_identity_ids" {
+  description = "Existing Kratos identity UUIDs allowed to use the admin service. Empty denies everyone."
+  type        = list(string)
+  default     = []
+  validation {
+    condition     = alltrue([for id in var.admin_identity_ids : can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", id))])
+    error_message = "Admin identity IDs must be UUIDs."
+  }
+}
+
+variable "admin_image_tag" {
+  description = "Admin image tag, e.g. latest-admin or admin-<commit SHA>."
+  type        = string
+  default     = "latest-admin"
+}

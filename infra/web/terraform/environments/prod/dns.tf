@@ -3,6 +3,7 @@ locals {
     root     = "@"
     www      = "www"
     api      = "api"
+    admin    = "admin"
     accounts = "accounts"
   }
 }
