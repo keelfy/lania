@@ -13,6 +13,8 @@ Reads:
     players whose .dat has no "bukkit.lastKnownName"
   - .dat file modification time: fallback for last played when the .dat has
     no "bukkit.lastPlayed"
+  - .dat file creation time: fallback for first join when the .dat has no
+    "bukkit.firstPlayed" (skipped if the platform cannot report it)
 
 No third-party dependencies; NBT is parsed with a small built-in reader.
 """
@@ -26,6 +28,7 @@ import hashlib
 import io
 import json
 import struct
+import subprocess
 import sys
 import uuid as uuid_module
 from dataclasses import dataclass, asdict
@@ -143,6 +146,24 @@ def load_usercache(path: Path) -> dict[str, str]:
     return names
 
 
+def _creation_millis(path: Path) -> float | None:
+    """File creation time in millis, or None when the platform cannot tell."""
+    st = path.stat()
+    birthtime = getattr(st, "st_birthtime", None)  # macOS, BSD
+    if birthtime is not None:
+        return birthtime * 1000
+    if sys.platform == "win32":
+        return st.st_ctime * 1000  # creation time on Windows
+    # Linux: os.stat has no birth time; GNU stat reads it through statx (0 = unknown).
+    try:
+        out = subprocess.run(
+            ["stat", "-c", "%W", str(path)], capture_output=True, text=True, check=True
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return int(out) * 1000 if out.isdigit() and int(out) > 0 else None
+
+
 def extract_world(world_dir: Path, usercache: dict[str, str] | None = None) -> list[PlayerRecord]:
     playerdata_dir = world_dir / "playerdata"
     stats_dir = world_dir / "stats"
@@ -161,7 +182,7 @@ def extract_world(world_dir: Path, usercache: dict[str, str] | None = None) -> l
                 uuid=uuid,
                 username=username,
                 playtime_hours=playtime_hours if playtime_hours is not None else 0.0,
-                first_join=_millis_to_iso(bukkit.get("firstPlayed")),
+                first_join=_millis_to_iso(bukkit.get("firstPlayed") or _creation_millis(dat_file)),
                 last_played=_millis_to_iso(bukkit.get("lastPlayed") or dat_file.stat().st_mtime * 1000),
             )
         )
