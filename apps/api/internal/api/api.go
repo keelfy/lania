@@ -136,6 +136,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			api.useUnprotectedRoutes(r)
 
 			r.Get("/check-username/{username}", api.accessHandler.CheckUsernames)
+			r.Get("/by-username/{username}", api.profileHandler.GetProfileDetailsByUsername)
 		})
 
 		r.Group(func(r chi.Router) {

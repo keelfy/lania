@@ -17,6 +17,7 @@ import (
 type ProfileHandler interface {
 	GetUserProfiles(w http.ResponseWriter, r *http.Request)
 	GetUserProfileDetails(w http.ResponseWriter, r *http.Request)
+	GetProfileDetailsByUsername(w http.ResponseWriter, r *http.Request)
 	GetPublicProfiles(w http.ResponseWriter, r *http.Request)
 }
 
@@ -205,6 +206,30 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 		utils.HttpError(ctx, w, err)
 		return
 	}
+
+	h.writeProfileDetails(w, r, profile)
+}
+
+func (h *profileHandler) GetProfileDetailsByUsername(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	username, err := binders.BindPathVariable(r, "username")
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	profile, err := h.profileService.GetProfileByUsername(ctx, username)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	h.writeProfileDetails(w, r, profile)
+}
+
+func (h *profileHandler) writeProfileDetails(w http.ResponseWriter, r *http.Request, profile *domain.Profile) {
+	ctx := r.Context()
 
 	mcUUIDs := uuid.UUIDs{profile.MinecraftUUID}
 

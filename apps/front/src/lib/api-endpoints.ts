@@ -178,6 +178,15 @@ export function getProfileDetails(
   return fetcher<ProfileDetails>(`/v1/profiles/${id}`)
 }
 
+export function getProfileDetailsByUsername(
+  fetcher: ApiFetcher,
+  username: string,
+): Promise<ProfileDetails> {
+  return fetcher<ProfileDetails>(
+    `/v1/profiles/by-username/${encodeURIComponent(username)}`,
+  )
+}
+
 export function createOrder(
   fetcher: ApiFetcher,
   req: CreateOrderReq,

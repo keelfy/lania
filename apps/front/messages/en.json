@@ -257,6 +257,13 @@
     "title": "Community",
     "searchPlaceholder": "Search by username",
     "noResults": "No players found",
+    "profile": {
+      "open": "Open profile",
+      "metadata": {
+        "title": "{username} — player profile",
+        "description": "Playtime, activity and skin of {username} on Lania Network."
+      }
+    },
     "sort": {
       "placeholder": "Sort by",
       "createdAtAsc": "Oldest first",

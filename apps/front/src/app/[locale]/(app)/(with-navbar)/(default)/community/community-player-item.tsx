@@ -9,6 +9,9 @@ import {
 } from '@/components/ui/popover'
 import { useMediaQuery } from '@/lib/use-media-query'
 import { PublicProfile } from '@/models/profile'
+import { ArrowUpRightIcon } from 'lucide-react'
+import { useLocale, useTranslations } from 'next-intl'
+import Link from 'next/link'
 import React from 'react'
 
 type Props = React.ComponentProps<'button'> & {
@@ -21,6 +24,17 @@ export default function CommunityPlayerItem({
   ...props
 }: React.PropsWithChildren<Props>) {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const locale = useLocale()
+  const t = useTranslations('community.profile')
+  const profileLink = (
+    <Link
+      href={`/${locale}/community/${encodeURIComponent(profile.username)}`}
+      className="text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 pb-3 text-sm transition-colors"
+    >
+      {t('open')}
+      <ArrowUpRightIcon className="size-4" />
+    </Link>
+  )
   if (isDesktop) {
     return (
       <Popover>
@@ -35,6 +49,7 @@ export default function CommunityPlayerItem({
               className="border-none"
             />
           )}
+          {profileLink}
         </PopoverContent>
       </Popover>
     )
@@ -52,6 +67,7 @@ export default function CommunityPlayerItem({
             className="border-none bg-transparent p-0"
           />
         )}
+        {profileLink}
       </DrawerContent>
     </Drawer>
   )

@@ -256,6 +256,13 @@
     "title": "Сообщество",
     "searchPlaceholder": "Поиск по нику",
     "noResults": "Никого не нашли",
+    "profile": {
+      "open": "Открыть профиль",
+      "metadata": {
+        "title": "{username} — профиль игрока",
+        "description": "Время игры, активность и скин игрока {username} на Lania Network."
+      }
+    },
     "sort": {
       "placeholder": "Сортировать по",
       "createdAtAsc": "Сначала старые",
