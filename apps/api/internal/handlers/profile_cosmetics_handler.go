@@ -65,7 +65,7 @@ func (h *profileCosmeticsHandler) GetProfileCosmeticOptions(w http.ResponseWrite
 		return
 	}
 
-	if profile.OwnerUserID != authUserID {
+	if profile.OwnerUserID == nil || *profile.OwnerUserID != authUserID {
 		utils.HttpError(ctx, w, utils.NewForbiddenError("only owner can access profile cosmetics options", nil))
 		return
 	}
@@ -131,7 +131,7 @@ func (h *profileCosmeticsHandler) SelectProfileNameColor(w http.ResponseWriter, 
 		return
 	}
 
-	if profile.OwnerUserID != authUserID {
+	if profile.OwnerUserID == nil || *profile.OwnerUserID != authUserID {
 		utils.HttpError(ctx, w, utils.NewForbiddenError("only owner can access profile cosmetics options", nil))
 		return
 	}
@@ -218,7 +218,7 @@ func (h *profileCosmeticsHandler) SelectProfileNamePrefix(w http.ResponseWriter,
 		return
 	}
 
-	if profile.OwnerUserID != authUserID {
+	if profile.OwnerUserID == nil || *profile.OwnerUserID != authUserID {
 		utils.HttpError(ctx, w, utils.NewForbiddenError("only owner can access profile cosmetics options", nil))
 		return
 	}

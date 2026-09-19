@@ -81,7 +81,9 @@ func (h *accessHandler) CheckUsernames(w http.ResponseWriter, r *http.Request) {
 		if profile != nil {
 			authUserID := utils.GetUserIDFromContextOrNil(ctx)
 
-			if authUserID != nil && profile.OwnerUserID == *authUserID {
+			if profile.OwnerUserID == nil {
+				status = responses.UsernameStatusAvailable
+			} else if authUserID != nil && *profile.OwnerUserID == *authUserID {
 				status = responses.UsernameStatusOwnedByYou
 			} else {
 				status = responses.UsernameStatusTaken

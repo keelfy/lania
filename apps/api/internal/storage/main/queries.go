@@ -18,6 +18,7 @@ type Queries interface {
 	FindPublicProfiles(ctx context.Context, sortCol, direction string, size, from int) ([]*domain.Profile, error)
 	CountPublicProfiles(ctx context.Context) (int64, error)
 	InsertProfile(ctx context.Context, arg InsertProfileParams) error
+	ClaimProfile(ctx context.Context, profileID, ownerUserID uuid.UUID, updatedBy uuid.UUID) (bool, error)
 	FindProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)
 	FindProfileByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID) (*domain.Profile, error)
 

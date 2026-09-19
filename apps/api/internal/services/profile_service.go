@@ -94,6 +94,9 @@ func (s *profileService) GetOrCreateProfileByUsername(ctx context.Context, queri
 	if err != nil && err != stdsql.ErrNoRows {
 		logger.Errorf(ctx, "failed to find profile by username %s: %v", username, err)
 	} else if profile != nil && err == nil {
+		if profile.OwnerUserID == nil {
+			return s.claimProfile(ctx, queries, profile, ownerUserID)
+		}
 		return profile, nil
 	}
 
@@ -103,6 +106,25 @@ func (s *profileService) GetOrCreateProfileByUsername(ctx context.Context, queri
 	}
 
 	return s.GetProfileByMinecraftUUID(ctx, minecraftUUID)
+}
+
+func (s *profileService) claimProfile(ctx context.Context, queries sql.Queries, profile *domain.Profile, ownerUserID uuid.UUID) (*domain.Profile, error) {
+	authUserID, err := utils.GetUserIDFromCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	claimed, err := queries.ClaimProfile(ctx, profile.ID, ownerUserID, authUserID)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to claim profile", err)
+	}
+	if !claimed {
+		// lost the race, somebody else claimed it first
+		return s.GetProfileByMinecraftUUID(ctx, profile.MinecraftUUID)
+	}
+
+	profile.OwnerUserID = &ownerUserID
+	return profile, nil
 }
 
 func (s *profileService) GetProfileByUsername(ctx context.Context, username string) (*domain.Profile, error) {
@@ -144,7 +166,7 @@ func (s *profileService) createProfile(ctx context.Context, queries sql.Queries,
 		ID:                profileID,
 		MinecraftUUID:     mcUUID,
 		MinecraftUsername: username,
-		OwnerUserID:       ownerUserID,
+		OwnerUserID:       &ownerUserID,
 		Role:              string(domain.RolePlayer),
 		IsSlim:            false,
 		NameColorID:       config.GetDefaultNameColorID(),

@@ -207,7 +207,7 @@ INSERT INTO profiles (
 ) ON DUPLICATE KEY UPDATE
 	mc_uuid = VALUES(mc_uuid),
   mc_username = VALUES(mc_username),
-	owner_user_id = VALUES(owner_user_id),
+	owner_user_id = COALESCE(owner_user_id, VALUES(owner_user_id)),
 	role = VALUES(role),
 	is_slim = VALUES(is_slim),
 	name_color_id = VALUES(name_color_id),
@@ -219,7 +219,7 @@ type InsertProfileParams struct {
 	ID                uuid.UUID
 	MinecraftUUID     uuid.UUID
 	MinecraftUsername string
-	OwnerUserID       uuid.UUID
+	OwnerUserID       *uuid.UUID
 	Role              string
 	IsSlim            bool
 	NameColorID       uuid.UUID
@@ -238,6 +238,24 @@ func (q *queries) InsertProfile(ctx context.Context, arg InsertProfileParams) er
 		arg.UpdatedBy,
 	)
 	return err
+}
+
+const claimProfile = `
+UPDATE profiles
+SET owner_user_id = ?, updated_at = NOW(), updated_by = ?
+WHERE id = ? AND owner_user_id IS NULL
+`
+
+func (q *queries) ClaimProfile(ctx context.Context, profileID, ownerUserID uuid.UUID, updatedBy uuid.UUID) (bool, error) {
+	res, err := q.x.ExecContext(ctx, claimProfile, ownerUserID, updatedBy, profileID)
+	if err != nil {
+		return false, err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return affected > 0, nil
 }
 
 const findProfileByID = `
