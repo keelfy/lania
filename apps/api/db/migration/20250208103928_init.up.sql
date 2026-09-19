@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     id uuid NOT NULL DEFAULT UUID_v4(),
     mc_uuid uuid NOT NULL,
     mc_username tinytext NOT NULL,
-    owner_user_id uuid NOT NULL, 
+    owner_user_id uuid, 
     first_seen_at timestamp,
     last_seen_at timestamp,
     role tinytext NOT NULL,
