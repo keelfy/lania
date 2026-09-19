@@ -144,6 +144,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 
 			r.Get("/", api.profileHandler.GetPublicProfiles)
 			r.Get("/top-playtime", api.profileHandler.GetTopPlaytimeProfiles)
+			r.Get("/stats", api.profileHandler.GetProfilesStats)
 		})
 
 		r.Route("/{profileId}", func(r chi.Router) {

@@ -18,6 +18,8 @@ type Queries interface {
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
 	FindPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, size, from int) ([]*domain.Profile, error)
 	CountPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs) (int64, error)
+	// CountRecentProfiles returns the number of profiles created within the last days.
+	CountRecentProfiles(ctx context.Context, days int) (int64, error)
 	// FindTopProfilePlaytimes returns players with the most playtime in the season, each with its Profile.
 	FindTopProfilePlaytimes(ctx context.Context, seasonID uuid.UUID, limit int) ([]*domain.ProfilePlaytime, error)
 	InsertProfile(ctx context.Context, arg InsertProfileParams) error

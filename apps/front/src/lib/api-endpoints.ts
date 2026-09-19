@@ -11,6 +11,7 @@ import {
   PublicProfile,
   ProfileCosmeticOptions,
   ProfileDetails,
+  ProfilesStats,
   SelectCosmeticOptionReq,
   UsernameCheck,
 } from '@/models/profile'
@@ -53,6 +54,10 @@ export function getTopPlaytimeProfiles(
   const params = new URLSearchParams()
   params.set('limit', limit.toString())
   return fetcher<PublicProfile[]>('/v1/profiles/top-playtime', params)
+}
+
+export function getProfilesStats(fetcher: ApiFetcher): Promise<ProfilesStats> {
+  return fetcher<ProfilesStats>('/v1/profiles/stats')
 }
 
 export function getProfileCosmeticOptions(

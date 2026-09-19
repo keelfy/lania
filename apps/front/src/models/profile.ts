@@ -22,6 +22,13 @@ export type PublicProfile = Profile & {
   lastSeenAt?: number
 }
 
+export type ProfilesStats = {
+  total: number
+  // Missing when the game server cannot be reached.
+  online?: number
+  newLastWeek: number
+}
+
 export type ProfileDetails = Profile & {
   isSlimModel: boolean
   status: 'online' | 'offline' | 'banned'

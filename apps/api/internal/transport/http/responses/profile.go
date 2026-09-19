@@ -104,3 +104,9 @@ type ProfileNameCosmeticOptions struct {
 type ProfileCosmeticOptions struct {
 	Name *ProfileNameCosmeticOptions `json:"name"`
 }
+
+type ProfilesStats struct {
+	Total       int64  `json:"total"`
+	Online      *int64 `json:"online,omitempty"`
+	NewLastWeek int64  `json:"newLastWeek"`
+}

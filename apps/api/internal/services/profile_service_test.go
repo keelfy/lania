@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/storage"
+	sql "github.com/lania-smp/backend/internal/storage/main"
 )
 
 type stubMinecraftService struct {
@@ -153,6 +154,67 @@ func TestApplyProfileRoles(t *testing.T) {
 		}
 		if len(cache.values) != 0 {
 			t.Errorf("stored roles must not be cached as live ones, got %v", cache.values)
+		}
+	})
+}
+
+type stubStatsQueries struct {
+	sql.Queries
+	total, recent, online int64
+	lastOnly              *uuid.UUIDs
+}
+
+func (q *stubStatsQueries) CountPublicProfiles(_ context.Context, _ string, only *uuid.UUIDs) (int64, error) {
+	q.lastOnly = only
+	if only != nil {
+		return q.online, nil
+	}
+	return q.total, nil
+}
+
+func (q *stubStatsQueries) CountRecentProfiles(context.Context, int) (int64, error) {
+	return q.recent, nil
+}
+
+type stubMainStorage struct {
+	storage.MainStorage
+	queries sql.Queries
+}
+
+func (s *stubMainStorage) Queries() sql.Queries { return s.queries }
+
+func TestGetProfilesStats(t *testing.T) {
+	ctx := context.Background()
+	first, second := uuid.New(), uuid.New()
+
+	t.Run("counts online players that have a profile", func(t *testing.T) {
+		queries := &stubStatsQueries{total: 120, recent: 7, online: 1}
+		minecraft := &stubMinecraftService{online: uuid.UUIDs{first, second}}
+		service := &profileService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
+
+		stats, err := service.GetProfilesStats(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if stats.Total != 120 || stats.NewLastWeek != 7 || stats.Online == nil || *stats.Online != 1 {
+			t.Errorf("stats = %+v, want 120 total, 7 new and 1 online", stats)
+		}
+		if queries.lastOnly == nil || len(*queries.lastOnly) != 2 {
+			t.Errorf("online count must be limited to the online players, got %v", queries.lastOnly)
+		}
+	})
+
+	t.Run("online is left out when the server is down", func(t *testing.T) {
+		queries := &stubStatsQueries{total: 120, recent: 7}
+		minecraft := &stubMinecraftService{err: errors.New("shell down")}
+		service := &profileService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
+
+		stats, err := service.GetProfilesStats(ctx)
+		if err != nil {
+			t.Fatalf("stats must not fail without the server: %v", err)
+		}
+		if stats.Total != 120 || stats.NewLastWeek != 7 || stats.Online != nil {
+			t.Errorf("stats = %+v, want totals without online", stats)
 		}
 	})
 }

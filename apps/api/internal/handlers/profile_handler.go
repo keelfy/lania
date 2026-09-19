@@ -22,6 +22,7 @@ type ProfileHandler interface {
 	GetProfileDetailsByUsername(w http.ResponseWriter, r *http.Request)
 	GetPublicProfiles(w http.ResponseWriter, r *http.Request)
 	GetTopPlaytimeProfiles(w http.ResponseWriter, r *http.Request)
+	GetProfilesStats(w http.ResponseWriter, r *http.Request)
 }
 
 type profileHandler struct {
@@ -110,6 +111,22 @@ func (h *profileHandler) GetTopPlaytimeProfiles(w http.ResponseWriter, r *http.R
 	}
 
 	utils.WriteHttpJsonResponse(ctx, w, h.presentPublicProfiles(ctx, profiles, playtimes))
+}
+
+func (h *profileHandler) GetProfilesStats(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	stats, err := h.profileService.GetProfilesStats(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, &responses.ProfilesStats{
+		Total:       stats.Total,
+		Online:      stats.Online,
+		NewLastWeek: stats.NewLastWeek,
+	})
 }
 
 func splitProfilePrefixes(prefixes []*domain.ProfilePrefix) (glyth *domain.NamePrefix, special *domain.NamePrefix) {

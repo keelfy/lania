@@ -263,6 +263,15 @@
       "online": "Online",
       "staff": "Staff"
     },
+    "stats": {
+      "total": "Players",
+      "online": "Online now",
+      "newLastWeek": "New this week"
+    },
+    "onlineNow": {
+      "title": "Online now",
+      "showAll": "Show all"
+    },
     "top": {
       "title": "Top players this season"
     },

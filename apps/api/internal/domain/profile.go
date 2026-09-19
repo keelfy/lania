@@ -50,6 +50,13 @@ type ProfileFilter struct {
 	StaffOnly bool
 }
 
+// ProfilesStats sums up the community. Online is nil when the Minecraft server cannot be reached.
+type ProfilesStats struct {
+	Total       int64
+	Online      *int64
+	NewLastWeek int64
+}
+
 type Profile struct {
 	ID                uuid.UUID
 	MinecraftUUID     uuid.UUID

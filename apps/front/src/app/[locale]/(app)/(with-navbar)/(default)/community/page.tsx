@@ -12,6 +12,8 @@ import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
 import { communityHref, DEFAULT_COMMUNITY_SORT } from './community-href'
 import CommunityFilters from './community-filters'
+import CommunityOnlineNow from './community-online-now'
+import CommunityStats from './community-stats'
 import CommunityTopPlayers from './community-top-players'
 import CommunityPlayerList from './community-player-list'
 import CommunitySearch from './community-search'
@@ -122,7 +124,7 @@ export default async function CommunityPage({ params, searchParams }: Props) {
   const staff = staffParam === 'true'
   const page = Math.max(0, (parseInt(pageParam ?? '') || 1) - 1)
   const [col, dir] = sort.split('.')
-  // The season top is only shown on the untouched list, so it does not get in the way of searching.
+  // The online ribbon and the season top are only shown on the untouched list, so they do not get in the way of searching.
   const isDefaultView = page === 0 && !search && !online && !staff
 
   const paginatedProfiles = await getProfiles(
@@ -159,6 +161,8 @@ export default async function CommunityPage({ params, searchParams }: Props) {
           />
         </div>
       </div>
+      <CommunityStats locale={locale} />
+      {isDefaultView && <CommunityOnlineNow locale={locale} />}
       {isDefaultView && <CommunityTopPlayers locale={locale} />}
       <CommunityFilters
         sort={sort}

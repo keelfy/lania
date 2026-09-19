@@ -132,6 +132,17 @@ func (q *queries) CountPublicProfiles(ctx context.Context, search string, only *
 	return count, err
 }
 
+// The cutoff is computed by the database, so it uses the same clock as created_at.
+const countRecentProfiles = `
+SELECT COUNT(id) FROM profiles WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+`
+
+func (q *queries) CountRecentProfiles(ctx context.Context, days int) (int64, error) {
+	var count int64
+	err := q.x.QueryRowContext(ctx, countRecentProfiles, days).Scan(&count)
+	return count, err
+}
+
 const findPublicProfiles = `
 SELECT 
 	p.id,

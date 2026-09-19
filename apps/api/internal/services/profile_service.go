@@ -20,6 +20,8 @@ type ProfileService interface {
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
 	// GetPublicProfiles returns a page of profiles and the total number of profiles matching the filter.
 	GetPublicProfiles(ctx context.Context, filter domain.ProfileFilter, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, int64, error)
+	// GetProfilesStats returns community totals. Online is left empty when the Minecraft server cannot be reached.
+	GetProfilesStats(ctx context.Context) (*domain.ProfilesStats, error)
 	// GetTopPlaytimeProfiles returns players with the most playtime in the season, each with its Profile.
 	GetTopPlaytimeProfiles(ctx context.Context, seasonID uuid.UUID, limit int) ([]*domain.ProfilePlaytime, error)
 	GetOrCreateProfileByUsername(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) (*domain.Profile, error)
@@ -83,6 +85,33 @@ func (s *profileService) GetPublicProfiles(ctx context.Context, filter domain.Pr
 		return nil, 0, utils.NewInternalServerError("failed to count public profiles", err)
 	}
 	return profiles, count, nil
+}
+
+const newProfilesDays = 7
+
+func (s *profileService) GetProfilesStats(ctx context.Context) (*domain.ProfilesStats, error) {
+	total, err := s.storage.Queries().CountPublicProfiles(ctx, "", nil)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to count profiles", err)
+	}
+	recent, err := s.storage.Queries().CountRecentProfiles(ctx, newProfilesDays)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to count recent profiles", err)
+	}
+
+	stats := &domain.ProfilesStats{Total: total, NewLastWeek: recent}
+	// Only players with a profile count, the same as in the online filter of the list.
+	onlineUUIDs, err := s.minecraftService.ListOnlineMinecraftUUIDs(ctx)
+	if err != nil {
+		logger.Warnf(ctx, "failed to list online players for stats: %v", err)
+		return stats, nil
+	}
+	online, err := s.storage.Queries().CountPublicProfiles(ctx, "", &onlineUUIDs)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to count online profiles", err)
+	}
+	stats.Online = &online
+	return stats, nil
 }
 
 func (s *profileService) GetTopPlaytimeProfiles(ctx context.Context, seasonID uuid.UUID, limit int) ([]*domain.ProfilePlaytime, error) {
