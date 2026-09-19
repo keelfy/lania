@@ -226,6 +226,8 @@
   },
   "playerCard": {
     "noProfile": "Failed to load profile information",
+    "copyUsername": "Copy username",
+    "copyFailed": "Failed to copy username",
     "status": "Status",
     "statuses": {
       "online": "Online",
@@ -260,6 +262,9 @@
     "filters": {
       "online": "Online",
       "staff": "Staff"
+    },
+    "top": {
+      "title": "Top players this season"
     },
     "profile": {
       "open": "Open profile",

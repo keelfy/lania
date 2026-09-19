@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { getProfileDetails } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
@@ -14,12 +15,18 @@ import { initializeViewer } from '@/lib/skin-viewer'
 import { errorToast } from '@/lib/toasts'
 import { cn } from '@/lib/utils'
 import { NameCosmetics, ProfileDetails } from '@/models/profile'
-import { CircleUserRoundIcon, ClockIcon } from 'lucide-react'
+import {
+  CheckIcon,
+  CircleUserRoundIcon,
+  ClockIcon,
+  CopyIcon,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { useTimeAgo } from 'next-timeago'
 import React from 'react'
 import McUsername from './mc-username'
+import NamePrefixes from './name-prefixes'
 import PlayerFace from './player-face'
 
 type PlayerCardProps = React.ComponentProps<typeof Card> & {
@@ -97,6 +104,23 @@ export default function PlayerCard({
     return [ptSeconds, ptMinutes, ptHours]
   }, [profile?.playtime])
 
+  const displayName = username ?? profile?.username
+  const [copied, setCopied] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!copied) return
+    const timeout = setTimeout(() => setCopied(false), 2000)
+    return () => clearTimeout(timeout)
+  }, [copied])
+
+  const copyUsername = () => {
+    if (!displayName) return
+    navigator.clipboard
+      .writeText(displayName)
+      .then(() => setCopied(true))
+      .catch((error) => errorToast(t('copyFailed'), error))
+  }
+
   return (
     <Card
       className={cn('h-fit w-full sm:max-w-sm sm:min-w-sm', className)}
@@ -107,14 +131,31 @@ export default function PlayerCard({
           {profile?.mojangUuid && (
             <PlayerFace player={profile} className="size-5" />
           )}
+          <NamePrefixes cosmetics={nameCosmetics ?? profile?.cosmetics.name} />
           <McUsername
-            username={username ?? profile?.username ?? 'Steve'}
+            username={displayName ?? 'Steve'}
             className="text-xl"
             colors={
               nameCosmetics?.colors.colors ??
               profile?.cosmetics.name.colors.colors
             }
           />
+          {displayName && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-6"
+              onClick={copyUsername}
+              aria-label={t('copyUsername')}
+              title={t('copyUsername')}
+            >
+              {copied ? (
+                <CheckIcon className="size-4" />
+              ) : (
+                <CopyIcon className="size-4" />
+              )}
+            </Button>
+          )}
         </CardTitle>
         <CardDescription
           className="font-medium"

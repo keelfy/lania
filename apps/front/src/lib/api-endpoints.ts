@@ -45,6 +45,16 @@ export function getProfiles(
   return fetcher<Paginated<PublicProfile>>('/v1/profiles', params)
 }
 
+// Playtime of the returned profiles is counted in the active season only.
+export function getTopPlaytimeProfiles(
+  fetcher: ApiFetcher,
+  limit: number = 10,
+): Promise<PublicProfile[]> {
+  const params = new URLSearchParams()
+  params.set('limit', limit.toString())
+  return fetcher<PublicProfile[]>('/v1/profiles/top-playtime', params)
+}
+
 export function getProfileCosmeticOptions(
   fetcher: ApiFetcher,
   id: string,

@@ -47,8 +47,8 @@ export type NamePrefix = {
 
 export type NameCosmetics = {
   colors: NameColor
-  glythPrefix: NamePrefix
-  specialPrefix: NamePrefix
+  glythPrefix?: NamePrefix
+  specialPrefix?: NamePrefix
 }
 
 export type ProfileCosmetics = {

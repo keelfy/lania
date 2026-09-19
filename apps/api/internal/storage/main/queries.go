@@ -18,6 +18,8 @@ type Queries interface {
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
 	FindPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, size, from int) ([]*domain.Profile, error)
 	CountPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs) (int64, error)
+	// FindTopProfilePlaytimes returns players with the most playtime in the season, each with its Profile.
+	FindTopProfilePlaytimes(ctx context.Context, seasonID uuid.UUID, limit int) ([]*domain.ProfilePlaytime, error)
 	InsertProfile(ctx context.Context, arg InsertProfileParams) error
 	ClaimProfile(ctx context.Context, profileID, ownerUserID uuid.UUID, updatedBy uuid.UUID) (bool, error)
 	FindProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)
@@ -38,6 +40,7 @@ type Queries interface {
 	UpdateProfileNameColorByID(ctx context.Context, profileID uuid.UUID, nameColorID uuid.UUID) error
 	InsertProfilePrefix(ctx context.Context, arg InsertProfilePrefixParams) error
 	FindProfilePrefixesByProfileID(ctx context.Context, profileID uuid.UUID) ([]*domain.ProfilePrefix, error)
+	FindProfilePrefixesByProfileIDs(ctx context.Context, profileIDs uuid.UUIDs) ([]*domain.ProfilePrefix, error)
 	FindProfileNameColorOptionsByProfileOwnerUserID(ctx context.Context, ownerUserID uuid.UUID, seasonID *uuid.UUID) ([]*domain.ProfileNameColorOption, error)
 	FindProfileNamePrefixOptionsByProfileOwnerUserIDAndType(ctx context.Context, ownerUserID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) ([]*domain.ProfileNamePrefixOption, error)
 	UpdateProfileNamePrefixByProfileIDAndType(ctx context.Context, profileID uuid.UUID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType) error

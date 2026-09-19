@@ -9,6 +9,7 @@ type CommunityHrefParams = CommunityFilters & {
   locale: string
   sort?: string
   search?: string
+  // Zero-based, the URL shows it starting from 1.
   page?: number
 }
 
@@ -25,6 +26,6 @@ export function communityHref({
   if (search) params.set('q', search)
   if (online) params.set('online', 'true')
   if (staff) params.set('staff', 'true')
-  params.set('page', page.toString())
+  params.set('page', (page + 1).toString())
   return `/${locale}/community?${params.toString()}`
 }

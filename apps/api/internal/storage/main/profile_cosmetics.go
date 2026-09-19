@@ -5,6 +5,7 @@ import (
 	stdsql "database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
@@ -379,11 +380,25 @@ SELECT
 	np.metadata AS name_prefix_metadata
 FROM profile_prefixes pp
 LEFT JOIN name_prefixes np ON pp.name_prefix_id = np.id
-WHERE pp.profile_id = ?
+WHERE pp.profile_id IN (%s)
 `
 
 func (q *queries) FindProfilePrefixesByProfileID(ctx context.Context, profileID uuid.UUID) ([]*domain.ProfilePrefix, error) {
-	rows, err := q.x.QueryContext(ctx, findProfilePrefixesByProfileID, profileID)
+	return q.FindProfilePrefixesByProfileIDs(ctx, uuid.UUIDs{profileID})
+}
+
+func (q *queries) FindProfilePrefixesByProfileIDs(ctx context.Context, profileIDs uuid.UUIDs) ([]*domain.ProfilePrefix, error) {
+	if len(profileIDs) == 0 {
+		return []*domain.ProfilePrefix{}, nil
+	}
+
+	placeholders := make([]string, len(profileIDs))
+	args := make([]any, len(profileIDs))
+	for i, profileID := range profileIDs {
+		placeholders[i] = "?"
+		args[i] = profileID
+	}
+	rows, err := q.x.QueryContext(ctx, fmt.Sprintf(findProfilePrefixesByProfileID, strings.Join(placeholders, ", ")), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +429,7 @@ func (q *queries) FindProfilePrefixesByProfileID(ctx context.Context, profileID 
 		prefix.NamePrefix = &namePrefix
 		prefixes = append(prefixes, &prefix)
 	}
-	return prefixes, nil
+	return prefixes, rows.Err()
 }
 
 const insertProfilePrefix = `

@@ -25,6 +25,8 @@ type ProfileCosmeticsService interface {
 	GetProfileNameColorOptionsByProfileOwnerUserID(ctx context.Context, ownerUserID uuid.UUID, seasonID *uuid.UUID) ([]*domain.ProfileNameColorOption, error)
 	GetProfileNamePrefixOptionsByProfileOwnerUserIDAndType(ctx context.Context, ownerUserID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) ([]*domain.ProfileNamePrefixOption, error)
 	GetProfilePrefixes(ctx context.Context, profileID uuid.UUID) ([]*domain.ProfilePrefix, error)
+	// GetProfilesPrefixes returns the selected prefixes of every profile that has any, keyed by profile ID.
+	GetProfilesPrefixes(ctx context.Context, profileIDs uuid.UUIDs) (map[uuid.UUID][]*domain.ProfilePrefix, error)
 	GetProfileFullPrefix(ctx context.Context, nameColor *domain.NameColor, glythPrefix *domain.NamePrefix, specialPrefix *domain.NamePrefix) string
 }
 
@@ -197,6 +199,19 @@ func (s *profileCosmeticsService) GetProfilePrefixes(ctx context.Context, profil
 		return nil, utils.NewInternalServerError("failed to get profile prefixes", err)
 	}
 	return prefixes, nil
+}
+
+func (s *profileCosmeticsService) GetProfilesPrefixes(ctx context.Context, profileIDs uuid.UUIDs) (map[uuid.UUID][]*domain.ProfilePrefix, error) {
+	prefixes, err := s.storage.Queries().FindProfilePrefixesByProfileIDs(ctx, profileIDs)
+	if err != nil && err != stdsql.ErrNoRows {
+		return nil, utils.NewInternalServerError("failed to get profiles prefixes", err)
+	}
+
+	byProfile := make(map[uuid.UUID][]*domain.ProfilePrefix, len(profileIDs))
+	for _, prefix := range prefixes {
+		byProfile[prefix.ProfileID] = append(byProfile[prefix.ProfileID], prefix)
+	}
+	return byProfile, nil
 }
 
 func (s *profileCosmeticsService) GetProfileFullPrefix(ctx context.Context, nameColor *domain.NameColor, glythPrefix *domain.NamePrefix, specialPrefix *domain.NamePrefix) string {

@@ -45,11 +45,12 @@ func scanProfileRow(row *stdsql.Row) (*domain.Profile, error) {
 	return &profile, err
 }
 
-func scanProfileRows(rows *stdsql.Rows) (*domain.Profile, error) {
+// scanProfileRows scans the profile columns followed by extra destinations for columns selected after them.
+func scanProfileRows(rows *stdsql.Rows, extra ...any) (*domain.Profile, error) {
 	var profile domain.Profile
 	var nameColor domain.NameColor
 	var colors json.RawMessage
-	err := rows.Scan(
+	err := rows.Scan(append([]any{
 		&profile.ID,
 		&profile.MinecraftUUID,
 		&profile.MinecraftUsername,
@@ -63,7 +64,7 @@ func scanProfileRows(rows *stdsql.Rows) (*domain.Profile, error) {
 		&profile.UpdatedBy,
 		&profile.NameColorID,
 		&colors,
-	)
+	}, extra...)...)
 	if err != nil {
 		return nil, err
 	}
@@ -239,6 +240,52 @@ func (q *queries) FindPublicProfiles(ctx context.Context, search string, only *u
 		profiles = append(profiles, profile)
 	}
 	return profiles, rows.Err()
+}
+
+const findTopProfilePlaytimes = `
+SELECT
+	p.id,
+	p.mc_uuid,
+	p.mc_username,
+	p.owner_user_id,
+	p.first_seen_at,
+	p.last_seen_at,
+	p.role,
+	p.is_slim,
+	p.created_at,
+	p.updated_at,
+	p.updated_by,
+	p.name_color_id,
+	nc.colors AS name_colors,
+	pt.playtime
+FROM profile_playtimes pt
+JOIN profiles p ON p.mc_uuid = pt.mc_uuid
+LEFT JOIN name_colors nc ON p.name_color_id = nc.id
+WHERE pt.season_id = ? AND pt.playtime > 0
+ORDER BY pt.playtime DESC, p.id
+LIMIT ?
+`
+
+// FindTopProfilePlaytimes returns players with the most playtime in the season, each with its Profile.
+func (q *queries) FindTopProfilePlaytimes(ctx context.Context, seasonID uuid.UUID, limit int) ([]*domain.ProfilePlaytime, error) {
+	rows, err := q.x.QueryContext(ctx, findTopProfilePlaytimes, seasonID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	playtimes := make([]*domain.ProfilePlaytime, 0, limit)
+	for rows.Next() {
+		playtime := &domain.ProfilePlaytime{SeasonID: seasonID}
+		profile, err := scanProfileRows(rows, &playtime.Playtime)
+		if err != nil {
+			return nil, err
+		}
+		playtime.MinecraftUUID = profile.MinecraftUUID
+		playtime.Profile = profile
+		playtimes = append(playtimes, playtime)
+	}
+	return playtimes, rows.Err()
 }
 
 const insertProfile = `

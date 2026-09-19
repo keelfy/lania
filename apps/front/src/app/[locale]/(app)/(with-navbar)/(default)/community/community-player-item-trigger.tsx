@@ -1,8 +1,10 @@
 'use client'
 
 import McUsername from '@/components/ui/mc-username'
+import NamePrefixes from '@/components/ui/name-prefixes'
 import { PROFILE_ROLE_COLORS } from '@/components/ui/player-card'
 import PlayerFace from '@/components/ui/player-face'
+import { formatPlaytime } from '@/lib/playtime'
 import { PublicProfile } from '@/models/profile'
 import { ClockIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -14,16 +16,6 @@ type Props = {
   locale: string
 }
 
-function formatPlaytime(playtime: number) {
-  const seconds = playtime / 1000
-  const minutes = seconds / 60
-  const hours = minutes / 60
-  if (minutes >= 60) return { value: Math.floor(hours), unit: 'hours' } as const
-  if (seconds >= 60)
-    return { value: Math.floor(minutes), unit: 'minutes' } as const
-  return { value: Math.floor(seconds), unit: 'seconds' } as const
-}
-
 const CommunityPlayerItemTrigger = ({ profile, locale }: Props) => {
   const t = useTranslations('playerCard')
   const { TimeAgo } = useTimeAgo()
@@ -33,6 +25,7 @@ const CommunityPlayerItemTrigger = ({ profile, locale }: Props) => {
     <>
       <div className="flex items-center gap-2">
         <PlayerFace player={profile} className="size-7" />
+        <NamePrefixes cosmetics={profile.cosmetics.name} />
         <McUsername
           username={profile.username}
           colors={profile.cosmetics.name.colors.colors}

@@ -143,6 +143,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			api.useUnprotectedRoutes(r)
 
 			r.Get("/", api.profileHandler.GetPublicProfiles)
+			r.Get("/top-playtime", api.profileHandler.GetTopPlaytimeProfiles)
 		})
 
 		r.Route("/{profileId}", func(r chi.Router) {

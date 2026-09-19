@@ -20,12 +20,16 @@ type ProfileService interface {
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
 	// GetPublicProfiles returns a page of profiles and the total number of profiles matching the filter.
 	GetPublicProfiles(ctx context.Context, filter domain.ProfileFilter, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, int64, error)
+	// GetTopPlaytimeProfiles returns players with the most playtime in the season, each with its Profile.
+	GetTopPlaytimeProfiles(ctx context.Context, seasonID uuid.UUID, limit int) ([]*domain.ProfilePlaytime, error)
 	GetOrCreateProfileByUsername(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) (*domain.Profile, error)
 	GetProfileByUsername(ctx context.Context, username string) (*domain.Profile, error)
 	GetProfileByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID) (*domain.Profile, error)
 	CreateProfileByUsername(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) error
 	GetProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)
-	GetProfileRole(ctx context.Context, mcUUID uuid.UUID) (domain.Role, error)
+	// ApplyProfileRoles sets Role of the profiles to the live role from the Minecraft server.
+	// Profiles keep their stored role when the server cannot be reached.
+	ApplyProfileRoles(ctx context.Context, profiles []*domain.Profile)
 	// GetSeasonsPlaytimeByMinecraftUUIDs returns playtime in milliseconds summed over all seasons.
 	GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error)
 }
@@ -79,6 +83,16 @@ func (s *profileService) GetPublicProfiles(ctx context.Context, filter domain.Pr
 		return nil, 0, utils.NewInternalServerError("failed to count public profiles", err)
 	}
 	return profiles, count, nil
+}
+
+func (s *profileService) GetTopPlaytimeProfiles(ctx context.Context, seasonID uuid.UUID, limit int) ([]*domain.ProfilePlaytime, error) {
+	playtimes, err := s.storage.Queries().FindTopProfilePlaytimes(ctx, seasonID, limit)
+	if err == stdsql.ErrNoRows {
+		return []*domain.ProfilePlaytime{}, nil
+	} else if err != nil {
+		return nil, utils.NewInternalServerError("failed to get top playtime profiles", err)
+	}
+	return playtimes, nil
 }
 
 // filterMinecraftUUIDs resolves filters that depend on the Minecraft server into the players they keep.
@@ -237,19 +251,46 @@ func (s *profileService) GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context,
 	return totals, nil
 }
 
-func (s *profileService) GetProfileRole(ctx context.Context, mcUUID uuid.UUID) (domain.Role, error) {
-	cacheValue, err := s.cache.GetKey(ctx, fmt.Sprintf("profile_role:%s", mcUUID.String()))
-	if err == nil {
-		return domain.Role(cacheValue), nil
+func profileRoleCacheKey(mcUUID uuid.UUID) string {
+	return fmt.Sprintf("profile_role:%s", mcUUID.String())
+}
+
+// ApplyProfileRoles sets Role of the profiles to the live role from the Minecraft server, cached for an hour.
+// Roles of all uncached profiles are read in one call. When the server cannot be reached
+// the role stored in the profile is kept, so the site keeps working without it.
+func (s *profileService) ApplyProfileRoles(ctx context.Context, profiles []*domain.Profile) {
+	uncached := make(map[uuid.UUID]struct{})
+	for _, profile := range profiles {
+		cacheValue, err := s.cache.GetKey(ctx, profileRoleCacheKey(profile.MinecraftUUID))
+		if err == nil {
+			profile.Role = domain.Role(cacheValue)
+			continue
+		}
+		uncached[profile.MinecraftUUID] = struct{}{}
+	}
+	if len(uncached) == 0 {
+		return
 	}
 
-	groups, err := s.minecraftService.GetGroupsByMinecraftUUIDs(ctx, uuid.UUIDs{mcUUID})
+	mcUUIDs := make(uuid.UUIDs, 0, len(uncached))
+	for mcUUID := range uncached {
+		mcUUIDs = append(mcUUIDs, mcUUID)
+	}
+	groups, err := s.minecraftService.GetGroupsByMinecraftUUIDs(ctx, mcUUIDs)
 	if err != nil {
-		return domain.RolePlayer, err
+		logger.Warnf(ctx, "failed to get profile roles, keeping the stored ones: %v", err)
+		return
 	}
 
-	role := domain.HighestRole(groups[mcUUID])
-
-	_ = s.cache.SetKey(ctx, fmt.Sprintf("profile_role:%s", mcUUID.String()), string(role), 1*time.Hour)
-	return role, nil
+	for _, profile := range profiles {
+		if _, ok := uncached[profile.MinecraftUUID]; !ok {
+			continue
+		}
+		playerGroups, ok := groups[profile.MinecraftUUID]
+		if !ok {
+			continue
+		}
+		profile.Role = domain.HighestRole(playerGroups)
+		_ = s.cache.SetKey(ctx, profileRoleCacheKey(profile.MinecraftUUID), string(profile.Role), 1*time.Hour)
+	}
 }
