@@ -49,7 +49,6 @@ export default async function SeasonsPage({ params }: Props) {
                   alt="Season 1"
                   fill
                   className="rounded-md object-cover transition-transform duration-300 hover:scale-105"
-                  unoptimized
                 />
               </AspectRatio>
               <h2 className="-translate-y-0.5 text-2xl font-bold">
