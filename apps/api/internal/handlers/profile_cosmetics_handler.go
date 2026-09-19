@@ -26,20 +26,20 @@ type ProfileCosmeticsHandler interface {
 type profileCosmeticsHandler struct {
 	profileCosmeticsService services.ProfileCosmeticsService
 	profileService          services.ProfileService
-	luckpermsService        services.LuckpermsService
+	minecraftService        services.MinecraftService
 	storage                 storage.MainStorage
 }
 
 func NewProfileCosmeticsHandler(
 	profileCosmeticsService services.ProfileCosmeticsService,
 	profileService services.ProfileService,
-	luckpermsService services.LuckpermsService,
+	minecraftService services.MinecraftService,
 	storage storage.MainStorage,
 ) ProfileCosmeticsHandler {
 	return &profileCosmeticsHandler{
 		profileCosmeticsService: profileCosmeticsService,
 		profileService:          profileService,
-		luckpermsService:        luckpermsService,
+		minecraftService:        minecraftService,
 		storage:                 storage,
 	}
 }
@@ -169,7 +169,7 @@ func (h *profileCosmeticsHandler) SelectProfileNameColor(w http.ResponseWriter, 
 			return err
 		}
 
-		err = h.luckpermsService.SetUserPrefixByMinecraftUUID(ctx, queries, profile.MinecraftUUID, formattedPrefix)
+		err = h.minecraftService.SetPrefixByMinecraftUUID(ctx, profile.MinecraftUUID, formattedPrefix)
 		if err != nil {
 			return err
 		}
@@ -283,7 +283,7 @@ func (h *profileCosmeticsHandler) SelectProfileNamePrefix(w http.ResponseWriter,
 			}
 		}
 
-		err = h.luckpermsService.SetUserPrefixByMinecraftUUID(ctx, queries, profile.MinecraftUUID, formattedPrefix)
+		err = h.minecraftService.SetPrefixByMinecraftUUID(ctx, profile.MinecraftUUID, formattedPrefix)
 		if err != nil {
 			return err
 		}

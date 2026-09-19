@@ -14,6 +14,9 @@ run = [
   "go install github.com/rubenv/sql-migrate/...@latest",
   "go install github.com/google/wire/cmd/wire@latest",
   "go install github.com/swaggo/swag/cmd/swag@latest",
+  "go install github.com/bufbuild/buf/cmd/buf@latest",
+  "go install google.golang.org/protobuf/cmd/protoc-gen-go@latest",
+  "go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest",
 ]
 
 [tasks.api-deps]
@@ -55,6 +58,35 @@ run = "go run ./cmd"
 description = "Run API tests"
 dir = "apps/api"
 run = "go test -v ./..."
+
+[tasks.proto-generate]
+description = "Lint proto contracts and generate Go code for shell and API"
+dir = "proto"
+run = [
+  "buf lint",
+  "buf generate --template buf.gen.shell.yaml",
+  "buf generate --template buf.gen.api.yaml",
+]
+
+[tasks.shell-generate]
+description = "Generate shell wire artifacts"
+dir = "apps/shell"
+run = "wire ./cmd"
+
+[tasks.shell-run]
+description = "Run shell"
+dir = "apps/shell"
+run = "go run ./cmd"
+
+[tasks.shell-test]
+description = "Run shell tests"
+dir = "apps/shell"
+run = "go test -v ./..."
+
+[tasks.shell-build]
+description = "Build shell binary"
+dir = "apps/shell"
+run = "mkdir -p artifacts && rm -rf artifacts/* && GOOS=${GOOS:-$(go env GOOS)} GOARCH=${GOARCH:-$(go env GOARCH)} CGO_ENABLED=${CGO_ENABLED:-0} go build -ldflags='-s' -o ./artifacts/bin ./cmd"
 
 [tasks.front-install]
 description = "Install frontend dependencies with Bun"

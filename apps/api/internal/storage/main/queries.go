@@ -65,11 +65,6 @@ type Queries interface {
 	FindOrderByExternalID(ctx context.Context, externalID string) (*domain.Order, error)
 	UpdateOrderExternalIDByID(ctx context.Context, id uuid.UUID, externalID string) error
 
-	// Luckperms
-	FindLuckpermsPermissionLikeByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID, like string) ([]*domain.LuckpermsUserPermission, error)
-	InsertLuckpermsPermission(ctx context.Context, arg InsertLuckpermsPermissionParams) error
-	DeleteLuckpermsPermissionByIDs(ctx context.Context, ids []int64) error
-
 	// Basket
 	InsertBasketItem(ctx context.Context, arg InsertBasketItemParams) error
 	FindBasketItemsByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.BasketItem, error)

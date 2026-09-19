@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package lania.shell.v1;
+
+// PlayerService exposes live player data collected by the Minecraft server.
+service PlayerService {
+  // GetOnlineStatus reports whether each player is currently online.
+  rpc GetOnlineStatus(GetOnlineStatusRequest) returns (GetOnlineStatusResponse);
+  // GetPlaytime returns playtime on the current server for each player.
+  rpc GetPlaytime(GetPlaytimeRequest) returns (GetPlaytimeResponse);
+}
+
+message GetOnlineStatusRequest {
+  // Minecraft UUIDs in canonical string form.
+  repeated string minecraft_uuids = 1;
+}
+
+message GetOnlineStatusResponse {
+  // Keyed by Minecraft UUID. Unknown players are reported as offline.
+  map<string, bool> online = 1;
+}
+
+message GetPlaytimeRequest {
+  repeated string minecraft_uuids = 1;
+}
+
+message GetPlaytimeResponse {
+  // Keyed by Minecraft UUID. Every requested player is present.
+  map<string, Playtime> playtimes = 1;
+}
+
+message Playtime {
+  // Active playtime in milliseconds, AFK time excluded.
+  int64 total_ms = 1;
+  // Unix epoch milliseconds of the first session start. Absent if never played.
+  optional int64 first_seen_ms = 2;
+  // Unix epoch milliseconds of the last session end. Absent if never played.
+  optional int64 last_seen_ms = 3;
+}

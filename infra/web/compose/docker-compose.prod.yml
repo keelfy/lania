@@ -53,6 +53,7 @@ services:
       - mariadb-migrate
       - redis
       - kratos
+      - shell
     mem_limit: 512m
     labels:
       - "traefik.enable=true"
@@ -61,6 +62,22 @@ services:
       - "traefik.http.routers.lania-api.entrypoints=websecure"
       - "traefik.http.routers.lania-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.lania-api.loadbalancer.server.port=8080"
+
+  # Single entry point to the Minecraft server and its plugin databases.
+  # Internal only: no edge network, no Traefik route.
+  shell:
+    image: ghcr.io/lania-smp/shell:${IMAGE_TAG:-latest}
+    container_name: lania-shell
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: 9090
+    networks:
+      - lania-web-net
+    depends_on:
+      - mariadb
+    mem_limit: 128m
 
   mariadb:
     image: mariadb:12

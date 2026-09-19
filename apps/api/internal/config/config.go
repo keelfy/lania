@@ -69,20 +69,15 @@ func GetDatabaseName() string {
 	return os.Getenv("DATABASE_NAME")
 }
 
-func GetDatabaseFlectoneName() string {
-	return os.Getenv("DATABASE_FLECTONE_NAME")
+/** SHELL */
+
+// GetShellAddress returns host:port of the shell gRPC service.
+func GetShellAddress() string {
+	return os.Getenv("SHELL_ADDRESS")
 }
 
-func GetDatabasePlanName() string {
-	return os.Getenv("DATABASE_PLAN_NAME")
-}
-
-func GetLuckpermsUserPermissionsTableName() string {
-	tableName := os.Getenv("LUCKPERMS_USER_PERMISSIONS_TABLE_NAME")
-	if tableName == "" {
-		return "luckperms_user_permissions"
-	}
-	return tableName
+func GetShellToken() string {
+	return os.Getenv("SHELL_TOKEN")
 }
 
 /** REDIS */

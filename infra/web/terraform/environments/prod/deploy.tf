@@ -20,6 +20,12 @@ resource "local_sensitive_file" "env" {
     database_flectone_name = var.database_flectone_name
     database_plan_name     = var.database_plan_name
 
+    database_luckperms_name = var.database_luckperms_name
+    database_whitelist_name = var.database_whitelist_name
+    shell_token             = var.shell_token
+    rcon_address            = var.rcon_address
+    rcon_password           = var.rcon_password
+
     active_season_id      = var.active_season_id
     max_profiles_per_user = var.max_profiles_per_user
     default_name_color_id = var.default_name_color_id

@@ -5,6 +5,7 @@ import (
 	stdsql "database/sql"
 
 	"github.com/google/uuid"
+	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/storage"
 	sql "github.com/lania-smp/backend/internal/storage/main"
@@ -20,11 +21,15 @@ type AccessService interface {
 }
 
 type accessService struct {
-	storage storage.MainStorage
+	storage          storage.MainStorage
+	minecraftService MinecraftService
 }
 
-func NewAccessService(storage storage.MainStorage) AccessService {
-	return &accessService{storage: storage}
+func NewAccessService(storage storage.MainStorage, minecraftService MinecraftService) AccessService {
+	return &accessService{
+		storage:          storage,
+		minecraftService: minecraftService,
+	}
 }
 
 func (s *accessService) GetAccessesByMinecraftUUIDs(ctx context.Context, minecraftUUIDs uuid.UUIDs) (map[uuid.UUID][]*domain.ProfileAccess, error) {
@@ -65,6 +70,11 @@ func (s *accessService) ObtainAccessForProfile(ctx context.Context, seasonID uui
 	})
 	if err != nil {
 		return utils.NewInternalServerError("failed to insert profile access", err)
+	}
+
+	// Only the active season runs on the Minecraft server.
+	if seasonID == config.GetActiveSeasonID() {
+		return s.minecraftService.AddToWhitelist(ctx, profile)
 	}
 	return nil
 }

@@ -73,7 +73,7 @@ variable "database_password" {
 }
 
 variable "database_host" {
-  description = "MariaDB host. Defaults to the local mariadb container; override if the flectone/plan databases live on the Minecraft network's own MariaDB instance"
+  description = "MariaDB host. Defaults to the local mariadb container; shared with the Minecraft plugins and read by the shell service"
   type        = string
   default     = "mariadb"
 }
@@ -101,6 +101,37 @@ variable "database_flectone_name" {
 variable "database_plan_name" {
   type    = string
   default = "plan"
+}
+
+variable "database_luckperms_name" {
+  description = "Database holding LuckPerms tables. Defaults to the main database, where they live today"
+  type        = string
+  default     = "lania"
+}
+
+variable "database_whitelist_name" {
+  description = "Database holding the VelocityWhitelist table"
+  type        = string
+  default     = "lania"
+}
+
+variable "rcon_address" {
+  description = "host:port of the Minecraft server RCON reachable from the shell container. Empty disables live permission sync"
+  type        = string
+  default     = ""
+}
+
+variable "rcon_password" {
+  description = "Password for the Minecraft server RCON"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "shell_token" {
+  description = "Shared secret the API sends to the shell service"
+  type        = string
+  sensitive   = true
 }
 
 variable "active_season_id" {

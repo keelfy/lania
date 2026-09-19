@@ -136,6 +136,21 @@ type ProfileNamePrefixOption struct {
 	Season     *Season
 }
 
+// HighestRole picks the role with the smallest priority number among groups.
+// Groups that are not roles are ignored, so a player without role groups is a RolePlayer.
+func HighestRole(groups []string) Role {
+	role := RolePlayer
+	rolePriority := RolePriorityPlayer
+
+	for _, group := range groups {
+		if priority := GetRolePriority(Role(group)); priority < rolePriority {
+			role = Role(group)
+			rolePriority = priority
+		}
+	}
+	return role
+}
+
 func GetRolePriority(role Role) int {
 	switch role {
 	case RoleOwner:
