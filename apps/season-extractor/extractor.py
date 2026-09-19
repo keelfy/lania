@@ -9,6 +9,8 @@ Reads:
   - <world>/playerdata/<uuid>.dat  (NBT: "bukkit.lastKnownName",
                                     "bukkit.firstPlayed", "bukkit.lastPlayed")
   - <world>/stats/<uuid>.json      ("minecraft:play_time" in ticks)
+  - usercache.json (optional, --usercache): UUID -> username fallback for
+    players whose .dat has no "bukkit.lastKnownName"
 
 No third-party dependencies; NBT is parsed with a small built-in reader.
 """
@@ -125,21 +127,37 @@ def _millis_to_iso(millis: int | None) -> str | None:
     return datetime.fromtimestamp(millis / 1000, tz=timezone.utc).isoformat()
 
 
-def extract_world(world_dir: Path) -> list[PlayerRecord]:
+def load_usercache(path: Path) -> dict[str, str]:
+    """Read a server usercache.json into a {uuid: username} map."""
+    entries = json.loads(path.read_text(encoding="utf-8"))
+    names = {}
+    for entry in entries:
+        try:
+            key = str(uuid_module.UUID(entry["uuid"]))
+        except (KeyError, ValueError):
+            continue
+        if entry.get("name"):
+            names[key] = entry["name"]
+    return names
+
+
+def extract_world(world_dir: Path, usercache: dict[str, str] | None = None) -> list[PlayerRecord]:
     playerdata_dir = world_dir / "playerdata"
     stats_dir = world_dir / "stats"
     if not playerdata_dir.is_dir():
         raise FileNotFoundError(f"playerdata folder not found: {playerdata_dir}")
 
+    usercache = usercache or {}
     records = []
     for dat_file in sorted(playerdata_dir.glob("*.dat")):
         uuid = dat_file.stem
         bukkit = parse_nbt(dat_file.read_bytes()).get("bukkit", {})
+        username = bukkit.get("lastKnownName") or usercache.get(uuid.lower(), uuid)
         playtime_hours = read_playtime_hours(stats_dir / f"{uuid}.json")
         records.append(
             PlayerRecord(
                 uuid=uuid,
-                username=bukkit.get("lastKnownName", uuid),
+                username=username,
                 playtime_hours=playtime_hours if playtime_hours is not None else 0.0,
                 first_join=_millis_to_iso(bukkit.get("firstPlayed")),
                 last_played=_millis_to_iso(bukkit.get("lastPlayed")),
@@ -200,10 +218,13 @@ def merge_records(records: list[PlayerRecord]) -> list[PlayerRecord]:
     return result
 
 
-def extract(world_dirs: list[Path]) -> list[PlayerRecord]:
+def extract(world_dirs: list[Path], usercache_paths: list[Path] | None = None) -> list[PlayerRecord]:
+    usercache = {}
+    for path in usercache_paths or []:
+        usercache.update(load_usercache(path))
     records = []
     for world_dir in world_dirs:
-        records.extend(extract_world(world_dir))
+        records.extend(extract_world(world_dir, usercache))
     return merge_records(records)
 
 
@@ -234,13 +255,20 @@ def main() -> int:
         nargs="+",
         help="One or more world folders (each contains playerdata/, stats/)",
     )
+    parser.add_argument(
+        "--usercache",
+        type=Path,
+        action="append",
+        default=None,
+        help="usercache.json used to resolve usernames for UUIDs without a lastKnownName (repeatable)",
+    )
     parser.add_argument("--output", type=Path, default=None, help="Write result to file instead of stdout")
     parser.add_argument("--format", choices=["json", "csv"], default="json")
     args = parser.parse_args()
 
     try:
-        records = extract(args.worlds)
-    except FileNotFoundError as exc:
+        records = extract(args.worlds, args.usercache)
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
