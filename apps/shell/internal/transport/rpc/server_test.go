@@ -1,0 +1,234 @@
+package rpc
+
+import (
+	"context"
+	"net"
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/lania-smp/shell/internal/domain"
+	shellv1 "github.com/lania-smp/shell/internal/gen/lania/shell/v1"
+	"github.com/lania-smp/shell/internal/services"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
+)
+
+type fakePlanStorage struct {
+	playtimes map[uuid.UUID]*domain.Playtime
+}
+
+func (s *fakePlanStorage) FindPlaytimes(_ context.Context, _ uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
+	return s.playtimes, nil
+}
+
+type fakeFlectoneStorage struct {
+	online map[uuid.UUID]bool
+}
+
+func (s *fakeFlectoneStorage) FindOnline(_ context.Context, _ uuid.UUIDs) (map[uuid.UUID]bool, error) {
+	return s.online, nil
+}
+
+type fakeLuckpermsStorage struct {
+	nodes      map[uuid.UUID][]string
+	lastPrefix string
+	lastNode   string
+}
+
+func (s *fakeLuckpermsStorage) FindPermissionsWithPrefix(_ context.Context, _ uuid.UUIDs, _ string) (map[uuid.UUID][]string, error) {
+	return s.nodes, nil
+}
+
+func (s *fakeLuckpermsStorage) ReplacePermissionsWithPrefix(_ context.Context, _ uuid.UUID, nodePrefix string, node string) error {
+	s.lastPrefix = nodePrefix
+	s.lastNode = node
+	return nil
+}
+
+type fakeConsole struct {
+	commands []string
+}
+
+func (c *fakeConsole) Execute(_ context.Context, command string) (string, error) {
+	c.commands = append(c.commands, command)
+	return "", nil
+}
+
+type fakeWhitelistStorage struct {
+	usernames map[uuid.UUID]string
+}
+
+func (s *fakeWhitelistStorage) Upsert(_ context.Context, mcUUID uuid.UUID, username string) error {
+	s.usernames[mcUUID] = username
+	return nil
+}
+
+func (s *fakeWhitelistStorage) Delete(_ context.Context, mcUUID uuid.UUID) error {
+	delete(s.usernames, mcUUID)
+	return nil
+}
+
+var (
+	knownUUID   = uuid.MustParse("0f0c2a3e-5a4b-4d4c-9f6e-3b1a2c3d4e5f")
+	unknownUUID = uuid.MustParse("1a2b3c4d-5e6f-4a1b-8c2d-3e4f5a6b7c8d")
+)
+
+type testEnv struct {
+	conn      *grpc.ClientConn
+	luckperms *fakeLuckpermsStorage
+	console   *fakeConsole
+	whitelist *fakeWhitelistStorage
+}
+
+func newTestEnv(t *testing.T) *testEnv {
+	t.Helper()
+
+	first := int64(1000)
+	last := int64(5000)
+	luckperms := &fakeLuckpermsStorage{nodes: map[uuid.UUID][]string{knownUUID: {"group.admin", "group.default"}}}
+	console := &fakeConsole{}
+	whitelist := &fakeWhitelistStorage{usernames: map[uuid.UUID]string{}}
+
+	server := NewServer(
+		NewPlayerHandler(services.NewPlayerService(
+			&fakePlanStorage{playtimes: map[uuid.UUID]*domain.Playtime{knownUUID: {TotalMs: 3000, FirstSeenMs: &first, LastSeenMs: &last}}},
+			&fakeFlectoneStorage{online: map[uuid.UUID]bool{knownUUID: true}},
+		)),
+		NewPermissionHandler(services.NewPermissionService(luckperms, console)),
+		NewWhitelistHandler(services.NewWhitelistService(whitelist)),
+	)
+
+	listener := bufconn.Listen(1024 * 1024)
+	go func() {
+		_ = server.Serve(listener)
+	}()
+	t.Cleanup(server.Stop)
+
+	conn, err := grpc.NewClient(
+		"passthrough:///bufnet",
+		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+			return listener.DialContext(ctx)
+		}),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = conn.Close() })
+
+	return &testEnv{conn: conn, luckperms: luckperms, console: console, whitelist: whitelist}
+}
+
+func TestPlayerService(t *testing.T) {
+	env := newTestEnv(t)
+	client := shellv1.NewPlayerServiceClient(env.conn)
+	ctx := context.Background()
+	uuids := []string{knownUUID.String(), unknownUUID.String()}
+
+	online, err := client.GetOnlineStatus(ctx, &shellv1.GetOnlineStatusRequest{MinecraftUuids: uuids})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !online.GetOnline()[knownUUID.String()] {
+		t.Errorf("known player must be online")
+	}
+	if isOnline, ok := online.GetOnline()[unknownUUID.String()]; !ok || isOnline {
+		t.Errorf("unknown player must be present and offline, got ok=%v online=%v", ok, isOnline)
+	}
+
+	playtimes, err := client.GetPlaytime(ctx, &shellv1.GetPlaytimeRequest{MinecraftUuids: uuids})
+	if err != nil {
+		t.Fatal(err)
+	}
+	known := playtimes.GetPlaytimes()[knownUUID.String()]
+	if known.GetTotalMs() != 3000 || known.GetFirstSeenMs() != 1000 || known.GetLastSeenMs() != 5000 {
+		t.Errorf("unexpected known playtime: %v", known)
+	}
+	unknown, ok := playtimes.GetPlaytimes()[unknownUUID.String()]
+	if !ok || unknown.GetTotalMs() != 0 || unknown.FirstSeenMs != nil || unknown.LastSeenMs != nil {
+		t.Errorf("unknown player must have empty playtime, got %v", unknown)
+	}
+}
+
+func TestPermissionService(t *testing.T) {
+	env := newTestEnv(t)
+	client := shellv1.NewPermissionServiceClient(env.conn)
+	ctx := context.Background()
+
+	groups, err := client.GetPlayerGroups(ctx, &shellv1.GetPlayerGroupsRequest{MinecraftUuids: []string{knownUUID.String(), unknownUUID.String()}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := groups.GetGroups()[knownUUID.String()].GetNames()
+	if len(names) != 2 || names[0] != "admin" || names[1] != "default" {
+		t.Errorf("unexpected groups: %v", names)
+	}
+	if _, ok := groups.GetGroups()[unknownUUID.String()]; !ok {
+		t.Errorf("unknown player must be present")
+	}
+
+	_, err = client.SetPlayerPrefix(ctx, &shellv1.SetPlayerPrefixRequest{MinecraftUuid: knownUUID.String(), Prefix: "<red>[A]"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if env.luckperms.lastPrefix != "prefix." || env.luckperms.lastNode != "prefix.100.<red>[A]" {
+		t.Errorf("unexpected prefix write: %q %q", env.luckperms.lastPrefix, env.luckperms.lastNode)
+	}
+	if len(env.console.commands) != 1 || env.console.commands[0] != "lp sync" {
+		t.Errorf("server must be synced once after the write, got %v", env.console.commands)
+	}
+}
+
+func TestWhitelistService(t *testing.T) {
+	env := newTestEnv(t)
+	client := shellv1.NewWhitelistServiceClient(env.conn)
+	ctx := context.Background()
+
+	_, err := client.AddPlayer(ctx, &shellv1.AddPlayerRequest{MinecraftUuid: knownUUID.String(), MinecraftUsername: "Steve"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if env.whitelist.usernames[knownUUID] != "Steve" {
+		t.Errorf("player must be whitelisted")
+	}
+
+	_, err = client.RemovePlayer(ctx, &shellv1.RemovePlayerRequest{MinecraftUuid: knownUUID.String()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := env.whitelist.usernames[knownUUID]; ok {
+		t.Errorf("player must be removed from whitelist")
+	}
+
+	_, err = client.AddPlayer(ctx, &shellv1.AddPlayerRequest{MinecraftUuid: "not-a-uuid", MinecraftUsername: "Steve"})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Errorf("expected InvalidArgument, got %v", err)
+	}
+}
+
+func TestAuth(t *testing.T) {
+	t.Setenv("SHELL_TOKEN", "secret")
+	env := newTestEnv(t)
+	client := shellv1.NewPlayerServiceClient(env.conn)
+	req := &shellv1.GetOnlineStatusRequest{MinecraftUuids: []string{knownUUID.String()}}
+
+	_, err := client.GetOnlineStatus(context.Background(), req)
+	if status.Code(err) != codes.Unauthenticated {
+		t.Errorf("expected Unauthenticated without token, got %v", err)
+	}
+
+	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", "Bearer wrong")
+	_, err = client.GetOnlineStatus(ctx, req)
+	if status.Code(err) != codes.Unauthenticated {
+		t.Errorf("expected Unauthenticated with wrong token, got %v", err)
+	}
+
+	ctx = metadata.AppendToOutgoingContext(context.Background(), "authorization", "Bearer secret")
+	if _, err = client.GetOnlineStatus(ctx, req); err != nil {
+		t.Errorf("expected success with valid token, got %v", err)
+	}
+}

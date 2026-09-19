@@ -14,6 +14,11 @@ cloudflare_proxied   = false
 
 api_key    = "CHANGEME"
 jwt_secret = "CHANGEME"
+shell_token = "CHANGEME"
+
+# Optional: lets shell reload LuckPerms on the running server after a prefix change
+rcon_address  = ""
+rcon_password = ""
 
 database_password = "CHANGEME"
 mariadb_root_password = "CHANGEME" # same value as database_password

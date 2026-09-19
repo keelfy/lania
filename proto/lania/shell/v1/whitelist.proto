@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package lania.shell.v1;
+
+// WhitelistService manages who may join the Minecraft server.
+service WhitelistService {
+  // AddPlayer allows the player to join. Idempotent, updates the username.
+  rpc AddPlayer(AddPlayerRequest) returns (AddPlayerResponse);
+  // RemovePlayer forbids the player to join. Idempotent.
+  rpc RemovePlayer(RemovePlayerRequest) returns (RemovePlayerResponse);
+}
+
+message AddPlayerRequest {
+  string minecraft_uuid = 1;
+  string minecraft_username = 2;
+}
+
+message AddPlayerResponse {}
+
+message RemovePlayerRequest {
+  string minecraft_uuid = 1;
+}
+
+message RemovePlayerResponse {}

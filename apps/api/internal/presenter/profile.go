@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
-	plandomain "github.com/lania-smp/backend/internal/domain/plan"
 	"github.com/lania-smp/backend/internal/transport/http/responses"
 )
 
@@ -100,7 +99,7 @@ func PresentProfileDetails(
 	profile *domain.Profile,
 	mojangUUID *uuid.UUID,
 	accessStatus domain.AccessStatus,
-	playtime *plandomain.Playtime,
+	playtime *domain.Playtime,
 	seasonsPlaytime int64,
 	isOnline bool,
 	isModelSlim bool,

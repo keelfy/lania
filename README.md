@@ -9,6 +9,8 @@ This repository now tracks all services and apps in a single Git repository.
 - `VelocityWhitelist`
 - `front` (Next.js frontend, Bun-based workflow)
 - `monolith/apps/api` (Go backend, `mise` task runner)
+- `shell` (Go gRPC service, the API's gateway to the Minecraft server and plugins)
+- `proto` (protobuf contracts, `mise run proto-generate`)
 - `season-extractor`
 - `infra/terraform` (Terraform infrastructure scripts)
 

@@ -34,11 +34,18 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	}
 	statusHandler := handlers.NewStatusHandler(mainStorage, cacheStorage)
 	profileCosmeticsService := services.NewProfileCosmeticsService(mainStorage)
-	profileService := services.NewProfileService(mainStorage, cacheStorage, profileCosmeticsService)
-	accessService := services.NewAccessService(mainStorage)
+	shellAPI, cleanup2, err := clients.NewShellAPI(ctx)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	minecraftService := services.NewMinecraftService(shellAPI)
+	profileService := services.NewProfileService(mainStorage, cacheStorage, profileCosmeticsService, minecraftService)
+	accessService := services.NewAccessService(mainStorage, minecraftService)
 	seasonService := services.NewSeasonService(mainStorage)
 	oryAPI, err := clients.NewOryAPI(ctx)
 	if err != nil {
+		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
@@ -46,23 +53,9 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	basketService := services.NewBasketService(mainStorage)
 	productService := services.NewProductService(mainStorage)
 	accessHandler := handlers.NewAccessHandler(profileService, accessService, seasonService, identityService, basketService, productService, mainStorage)
-	planStorage, cleanup2, err := storage.NewPlanStorage(ctx)
-	if err != nil {
-		cleanup()
-		return nil, nil, err
-	}
-	planService := services.NewPlanService(planStorage)
-	flectoneStorage, cleanup3, err := storage.NewFlectoneStorage(ctx)
-	if err != nil {
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
-	flectoneService := services.NewFlectoneService(flectoneStorage)
 	mojangService := services.NewMojangService(mainStorage, cacheStorage)
-	profileHandler := handlers.NewProfileHandler(profileService, accessService, planService, flectoneService, mojangService, profileCosmeticsService)
-	luckpermsService := services.NewLuckpermsService(mainStorage)
-	profileCosmeticsHandler := handlers.NewProfileCosmeticsHandler(profileCosmeticsService, profileService, luckpermsService, mainStorage)
+	profileHandler := handlers.NewProfileHandler(profileService, accessService, minecraftService, mojangService, profileCosmeticsService)
+	profileCosmeticsHandler := handlers.NewProfileCosmeticsHandler(profileCosmeticsService, profileService, minecraftService, mainStorage)
 	productHandler := handlers.NewProductHandler(productService)
 	freekassaService := services.NewFreekassaService(mainStorage)
 	orderService := services.NewOrderService(mainStorage, freekassaService, accessService, profileCosmeticsService, productService, basketService, profileService)
@@ -75,7 +68,6 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	integrationService := services.NewIntegrationService(mainStorage, orderService)
 	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, integrationService, oryAPI)
 	return laniaAPI, func() {
-		cleanup3()
 		cleanup2()
 		cleanup()
 	}, nil

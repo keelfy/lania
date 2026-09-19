@@ -12,7 +12,11 @@ prefixed `lania-` to avoid clashing with anything else on the box.
 - **front** — Next.js (`ghcr.io/lania-smp/frontend`), routed at `www.lania.network`
   (and `lania.network` redirects to it) via Traefik labels.
 - **api** — Go backend (`ghcr.io/lania-smp/backend`), routed at `api.lania.network`.
-- **mariadb** — backs the API (`lania`, `flectone`, `plan` databases). Internal only.
+- **shell** — Go gRPC service (`ghcr.io/lania-smp/shell`), the API's only way to
+  reach the Minecraft server and its plugin data (Plan, Flectone, LuckPerms,
+  whitelist). Internal only.
+- **mariadb** — shared instance: API database `lania` plus the Minecraft plugin
+  databases (`flectone`, `plan`) that only `shell` reads. Internal only.
 - **redis** — API cache. Internal only.
 - **postgres** + **kratos** — Ory Kratos auth. Public API routed at
   `accounts.lania.network`; the Kratos admin API (4434) has no route and is
@@ -34,12 +38,9 @@ Elasticsearch and imgproxy env vars exist in the API's config package but are
 not wired into any service today (see `apps/api/cmd/wire_gen.go`), so they're
 left out of this stack. Add them later if a feature actually needs them.
 
-> **Flectone / Plan databases**: `flectone` and `plan` are normally populated by
-> the Minecraft network's own plugins. This compose stack creates empty local
-> databases with those names by default. If that data actually needs to come
-> from the game server's existing MariaDB, set `database_host` in
-> `terraform.tfvars` to that instance instead of leaving it on the local
-> `mariadb` container.
+> **Plugin databases**: `flectone`, `plan`, LuckPerms and whitelist tables are
+> written by the Minecraft plugins. Only `shell` touches them; the API talks to
+> `shell` over gRPC (`SHELL_ADDRESS`, `SHELL_TOKEN`).
 
 ## One-time setup
 

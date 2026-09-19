@@ -137,10 +137,9 @@ public class MySqlStorage {
   }
 
   private final String FIND_USERNAME_LIKE_STRING_SQL = """
-      SELECT p.mc_username
-      FROM %s a
-      INNER JOIN profiles p ON p.mc_uuid = a.mc_uuid
-      WHERE p.mc_username LIKE ?
+      SELECT username
+      FROM %s
+      WHERE username LIKE ?
       LIMIT ?
       """;
 
@@ -153,7 +152,7 @@ public class MySqlStorage {
       st.setInt(2, limit);
       try (val result = st.executeQuery()) {
         while (result.next()) {
-          resultList.add(result.getString("mc_username"));
+          resultList.add(result.getString("username"));
         }
       }
     } catch (SQLException e) {
@@ -163,11 +162,10 @@ public class MySqlStorage {
     return resultList;
   }
 
-  // TODO: Call backend API to insert whitelist
   private final String INSERT_WHITELIST_SQL = """
-      INSERT INTO %s (mc_uuid, mc_username)
+      INSERT INTO %s (mc_uuid, username)
       VALUES (?, ?)
-      ON DUPLICATE KEY UPDATE unique_id = VALUES(unique_id)
+      ON DUPLICATE KEY UPDATE username = VALUES(username)
       """;
 
   public boolean insertWhitelist(@NotNull UUID uniqueId, @NotNull String username) {
@@ -188,7 +186,6 @@ public class MySqlStorage {
       WHERE mc_uuid = ?
       """;
 
-  // TODO: Call backend API to delete whitelist
   public boolean deleteWhitelist(@NotNull UUID uniqueId) {
     val query = String.format(DELETE_WHITELIST_SQL, configHandler.getDatabase().getWhitelistTable());
     try (val conn = ds.getConnection(); val st = conn.prepareStatement(query)) {

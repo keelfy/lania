@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
-	plandomain "github.com/lania-smp/backend/internal/domain/plan"
 	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/presenter"
 	"github.com/lania-smp/backend/internal/services"
@@ -25,8 +24,7 @@ type ProfileHandler interface {
 type profileHandler struct {
 	profileService   services.ProfileService
 	accessService    services.AccessService
-	planService      services.PlanService
-	flectoneService  services.FlectoneService
+	minecraftService services.MinecraftService
 	mojangService    services.MojangService
 	cosmeticsService services.ProfileCosmeticsService
 }
@@ -34,16 +32,14 @@ type profileHandler struct {
 func NewProfileHandler(
 	profileService services.ProfileService,
 	accessService services.AccessService,
-	planService services.PlanService,
-	flectoneService services.FlectoneService,
+	minecraftService services.MinecraftService,
 	mojangService services.MojangService,
 	cosmeticsService services.ProfileCosmeticsService,
 ) ProfileHandler {
 	return &profileHandler{
 		profileService:   profileService,
 		accessService:    accessService,
-		planService:      planService,
-		flectoneService:  flectoneService,
+		minecraftService: minecraftService,
 		mojangService:    mojangService,
 		cosmeticsService: cosmeticsService,
 	}
@@ -79,9 +75,9 @@ func (h *profileHandler) GetPublicProfiles(w http.ResponseWriter, r *http.Reques
 		mcUUIDs[i] = profile.MinecraftUUID
 	}
 
-	onlineMap, err := h.flectoneService.CountPlaytimeByMinecaftUUIDs(ctx, mcUUIDs)
+	onlineMap, err := h.minecraftService.GetOnlineStatusByMinecraftUUIDs(ctx, mcUUIDs)
 	if err != nil {
-		logger.Errorf(ctx, "[FLECTONE] Failed to count playtime by minecraft uuid: %v", err)
+		logger.Errorf(ctx, "[SHELL] Failed to get online status by minecraft uuid: %v", err)
 		onlineMap = make(map[uuid.UUID]bool)
 	}
 
@@ -248,10 +244,10 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 		accesses = make(map[uuid.UUID][]*domain.ProfileAccess)
 	}
 
-	playtimes, err := h.planService.CountPlaytimeByMinecaftUUIDs(ctx, mcUUIDs)
+	playtimes, err := h.minecraftService.GetPlaytimeByMinecraftUUIDs(ctx, mcUUIDs)
 	if err != nil {
-		logger.Errorf(ctx, "[PLAN] Failed to count playtime by minecraft uuid: %v", err)
-		playtimes = make(map[uuid.UUID]*plandomain.Playtime)
+		logger.Errorf(ctx, "[SHELL] Failed to get playtime by minecraft uuid: %v", err)
+		playtimes = make(map[uuid.UUID]*domain.Playtime)
 	}
 
 	seasonsPlaytimes, err := h.profileService.GetSeasonsPlaytimeByMinecraftUUIDs(ctx, mcUUIDs)
@@ -260,9 +256,9 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 		seasonsPlaytimes = make(map[uuid.UUID]int64)
 	}
 
-	onlineMap, err := h.flectoneService.CountPlaytimeByMinecaftUUIDs(ctx, mcUUIDs)
+	onlineMap, err := h.minecraftService.GetOnlineStatusByMinecraftUUIDs(ctx, mcUUIDs)
 	if err != nil {
-		logger.Errorf(ctx, "[FLECTONE] Failed to count playtime by minecraft uuid: %v", err)
+		logger.Errorf(ctx, "[SHELL] Failed to get online status by minecraft uuid: %v", err)
 		onlineMap = make(map[uuid.UUID]bool)
 	}
 
@@ -299,7 +295,7 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 
 	playtime := playtimes[profile.MinecraftUUID]
 	if playtime == nil {
-		playtime = &plandomain.Playtime{
+		playtime = &domain.Playtime{
 			TotalPlaytime:     0,
 			FirstSessionStart: nil,
 			LastSessionEnd:    nil,

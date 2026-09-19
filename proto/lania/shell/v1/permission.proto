@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package lania.shell.v1;
+
+// PermissionService manages player groups and chat decorations.
+service PermissionService {
+  // GetPlayerGroups returns the permission groups assigned to each player.
+  rpc GetPlayerGroups(GetPlayerGroupsRequest) returns (GetPlayerGroupsResponse);
+  // SetPlayerPrefix replaces the player's chat prefix. Idempotent.
+  rpc SetPlayerPrefix(SetPlayerPrefixRequest) returns (SetPlayerPrefixResponse);
+}
+
+message GetPlayerGroupsRequest {
+  repeated string minecraft_uuids = 1;
+}
+
+message GetPlayerGroupsResponse {
+  // Keyed by Minecraft UUID. Players without groups map to an empty list.
+  map<string, PlayerGroups> groups = 1;
+}
+
+message PlayerGroups {
+  repeated string names = 1;
+}
+
+message SetPlayerPrefixRequest {
+  string minecraft_uuid = 1;
+  // Fully formatted prefix, MiniMessage allowed.
+  string prefix = 2;
+}
+
+message SetPlayerPrefixResponse {}

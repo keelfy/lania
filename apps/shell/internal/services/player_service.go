@@ -1,0 +1,54 @@
+package services
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+	"github.com/lania-smp/shell/internal/domain"
+	"github.com/lania-smp/shell/internal/storage"
+)
+
+type PlayerService interface {
+	// GetOnlineStatus returns an entry for every requested player.
+	GetOnlineStatus(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
+	// GetPlaytime returns an entry for every requested player.
+	GetPlaytime(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error)
+}
+
+type playerService struct {
+	planStorage     storage.PlanStorage
+	flectoneStorage storage.FlectoneStorage
+}
+
+func NewPlayerService(planStorage storage.PlanStorage, flectoneStorage storage.FlectoneStorage) PlayerService {
+	return &playerService{
+		planStorage:     planStorage,
+		flectoneStorage: flectoneStorage,
+	}
+}
+
+func (s *playerService) GetOnlineStatus(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error) {
+	online, err := s.flectoneStorage.FindOnline(ctx, mcUUIDs)
+	if err != nil {
+		return nil, err
+	}
+	for _, mcUUID := range mcUUIDs {
+		if _, ok := online[mcUUID]; !ok {
+			online[mcUUID] = false
+		}
+	}
+	return online, nil
+}
+
+func (s *playerService) GetPlaytime(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
+	playtimes, err := s.planStorage.FindPlaytimes(ctx, mcUUIDs)
+	if err != nil {
+		return nil, err
+	}
+	for _, mcUUID := range mcUUIDs {
+		if _, ok := playtimes[mcUUID]; !ok {
+			playtimes[mcUUID] = &domain.Playtime{}
+		}
+	}
+	return playtimes, nil
+}

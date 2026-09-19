@@ -17,8 +17,6 @@ import (
 func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	wire.Build(
 		storage.NewMainStorage,
-		storage.NewPlanStorage,
-		storage.NewFlectoneStorage,
 		storage.NewCacheStorage,
 		clients.ProviderSet,
 		services.ProviderSet,

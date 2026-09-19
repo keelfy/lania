@@ -4,7 +4,6 @@ import (
 	"context"
 	stdsql "database/sql"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,17 +33,20 @@ type profileService struct {
 	storage                 storage.MainStorage
 	cache                   storage.CacheStorage
 	profileCosmeticsService ProfileCosmeticsService
+	minecraftService        MinecraftService
 }
 
 func NewProfileService(
 	storage storage.MainStorage,
 	cache storage.CacheStorage,
 	profileCosmeticsService ProfileCosmeticsService,
+	minecraftService MinecraftService,
 ) ProfileService {
 	return &profileService{
 		storage:                 storage,
 		cache:                   cache,
 		profileCosmeticsService: profileCosmeticsService,
+		minecraftService:        minecraftService,
 	}
 }
 
@@ -199,27 +201,12 @@ func (s *profileService) GetProfileRole(ctx context.Context, mcUUID uuid.UUID) (
 		return domain.Role(cacheValue), nil
 	}
 
-	permissions, err := s.storage.Queries().FindLuckpermsPermissionLikeByMinecraftUUID(ctx, mcUUID, "group.")
+	groups, err := s.minecraftService.GetGroupsByMinecraftUUIDs(ctx, uuid.UUIDs{mcUUID})
 	if err != nil {
 		return domain.RolePlayer, err
 	}
 
-	role := domain.RolePlayer
-	rolePriority := domain.RolePriorityPlayer
-
-	for _, permission := range permissions {
-		permissionParts := strings.Split(permission.Permission, ".")
-		if len(permissionParts) < 2 {
-			continue
-		}
-
-		rolePart := permissionParts[1]
-		priority := domain.GetRolePriority(domain.Role(rolePart))
-		if priority > rolePriority {
-			role = domain.Role(rolePart)
-			rolePriority = priority
-		}
-	}
+	role := domain.HighestRole(groups[mcUUID])
 
 	_ = s.cache.SetKey(ctx, fmt.Sprintf("profile_role:%s", mcUUID.String()), string(role), 1*time.Hour)
 	return role, nil
