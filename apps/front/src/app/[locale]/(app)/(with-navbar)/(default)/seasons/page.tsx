@@ -10,7 +10,7 @@ const seasons = [
     seasonNumber: 3,
     startDate: '2025-04-01',
     endDate: '2025-06-10',
-    image: 's3://lania-web-134312503254-eu-central-1-an/2025-08-19_11.15.21.png',
+    image: 's3://lania-web-134312503254-eu-central-1-an/2025-08-19_11.15.29.png',
   },
   {
     seasonNumber: 2,
