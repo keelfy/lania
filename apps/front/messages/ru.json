@@ -253,7 +253,22 @@
     }
   },
   "community": {
-    "title": "Сообщество"
+    "title": "Сообщество",
+    "searchPlaceholder": "Поиск по нику",
+    "noResults": "Никого не нашли",
+    "sort": {
+      "placeholder": "Сортировать по",
+      "createdAtAsc": "Сначала старые",
+      "createdAtDesc": "Сначала новые",
+      "usernameAsc": "Ник: А-Я",
+      "usernameDesc": "Ник: Я-А",
+      "firstSeenAtAsc": "Первый вход: раньше",
+      "firstSeenAtDesc": "Первый вход: позже",
+      "lastSeenAtDesc": "Последний вход: недавно",
+      "lastSeenAtAsc": "Последний вход: давно",
+      "playtimeDesc": "Время игры: больше",
+      "playtimeAsc": "Время игры: меньше"
+    }
   },
   "navbar": {
     "title": "Меню",

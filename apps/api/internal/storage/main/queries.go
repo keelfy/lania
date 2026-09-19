@@ -16,8 +16,8 @@ type Queries interface {
 
 	// Game Profile
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
-	FindPublicProfiles(ctx context.Context, sortCol, direction string, size, from int) ([]*domain.Profile, error)
-	CountPublicProfiles(ctx context.Context) (int64, error)
+	FindPublicProfiles(ctx context.Context, search, sortCol, direction string, size, from int) ([]*domain.Profile, error)
+	CountPublicProfiles(ctx context.Context, search string) (int64, error)
 	InsertProfile(ctx context.Context, arg InsertProfileParams) error
 	ClaimProfile(ctx context.Context, profileID, ownerUserID uuid.UUID, updatedBy uuid.UUID) (bool, error)
 	FindProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)

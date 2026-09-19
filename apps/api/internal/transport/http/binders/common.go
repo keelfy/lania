@@ -155,7 +155,11 @@ var (
 	DirectionQueryParam = "direction"
 	CursorQueryParam    = "cursor"
 	FiltersQueryParam   = "filters"
+	SearchQueryParam    = "search"
 )
+
+// MaxSearchLength is the longest Minecraft username.
+const MaxSearchLength = 16
 
 func BindPagination(r *http.Request) (*domain.Pagination, error) {
 	page, err := strconv.Atoi(BindOptionalQueryParamAsString(r, PageQueryParam, strconv.Itoa(DefaultPage)))
@@ -190,6 +194,16 @@ func BindSort(r *http.Request) *domain.Sort {
 		Column:    column,
 		Direction: direction,
 	}
+}
+
+// BindSearch returns the trimmed search query, cut to MaxSearchLength characters.
+// The value is read from the parsed query, so it is not unescaped twice.
+func BindSearch(r *http.Request) string {
+	search := []rune(strings.TrimSpace(r.URL.Query().Get(SearchQueryParam)))
+	if len(search) > MaxSearchLength {
+		search = search[:MaxSearchLength]
+	}
+	return string(search)
 }
 
 // ParseCursor parses the cursor value from query parameters based on the expected column type.

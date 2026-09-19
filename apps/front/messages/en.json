@@ -254,7 +254,22 @@
     }
   },
   "community": {
-    "title": "Community"
+    "title": "Community",
+    "searchPlaceholder": "Search by username",
+    "noResults": "No players found",
+    "sort": {
+      "placeholder": "Sort by",
+      "createdAtAsc": "Oldest first",
+      "createdAtDesc": "Newest first",
+      "usernameAsc": "Username: A-Z",
+      "usernameDesc": "Username: Z-A",
+      "firstSeenAtAsc": "First seen: earliest",
+      "firstSeenAtDesc": "First seen: latest",
+      "lastSeenAtDesc": "Last seen: most recent",
+      "lastSeenAtAsc": "Last seen: longest ago",
+      "playtimeDesc": "Playtime: most",
+      "playtimeAsc": "Playtime: least"
+    }
   },
   "navbar": { 
     "title": "Menu",
