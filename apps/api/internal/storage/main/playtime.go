@@ -48,3 +48,36 @@ func (q *queries) FindProfilePlaytimesByMinecraftUUIDs(ctx context.Context, mcUU
 	}
 	return playtimes, nil
 }
+
+const sumProfilePlaytimesByMinecraftUUIDs = `
+SELECT
+	mc_uuid,
+	CAST(SUM(playtime) AS SIGNED) AS total_playtime
+FROM profile_playtimes
+WHERE mc_uuid IN ('%s')
+GROUP BY mc_uuid
+`
+
+func (q *queries) SumProfilePlaytimesByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error) {
+	mcUUIDsStr := make([]string, len(mcUUIDs))
+	for i, mcUUID := range mcUUIDs {
+		mcUUIDsStr[i] = mcUUID.String()
+	}
+	query := fmt.Sprintf(sumProfilePlaytimesByMinecraftUUIDs, strings.Join(mcUUIDsStr, "','"))
+	rows, err := q.x.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	totals := make(map[uuid.UUID]int64)
+	for rows.Next() {
+		var mcUUID uuid.UUID
+		var total int64
+		if err := rows.Scan(&mcUUID, &total); err != nil {
+			return nil, err
+		}
+		totals[mcUUID] = total
+	}
+	return totals, rows.Err()
+}

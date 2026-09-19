@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Convert extractor.py JSON output into SQL INSERT statements for `profiles`.
+"""Convert extractor.py JSON output into SQL INSERT statements for `profiles`
+and `profile_playtimes`.
 
 Filled columns: mc_uuid, mc_username, first_seen_at, last_seen_at, is_slim,
 role ('player'). All other columns use their DDL defaults.
@@ -8,6 +9,13 @@ is_slim is resolved through the Mojang API by username (same flow as the API's
 MojangService): username -> Mojang UUID -> skin model. When the username is not
 known to Mojang, the model comes from the client's default skin for the
 player's UUID (Steve/Alex/... picked by UUID hash).
+
+profile_playtimes rows come from each player's "world_playtimes". The world
+path -> season id mapping is a JSON object passed with --season-map, e.g.
+{"worlds/season1": "<season uuid>", "worlds/season2": "<season uuid>"}. Keys
+must match the world paths in the extractor output exactly. Worlds mapped to
+the same season are summed. Playtime is stored in milliseconds. The INSERTs
+use ON DUPLICATE KEY UPDATE on (mc_uuid, season_id), so re-running is safe.
 """
 
 from __future__ import annotations
@@ -27,6 +35,7 @@ MOJANG_UUID_URL = "https://api.mojang.com/users/profiles/minecraft/{}"
 MOJANG_PROFILE_URL = "https://sessionserver.mojang.com/session/minecraft/profile/{}"
 REQUEST_DELAY_SECONDS = 0.3
 MAX_RETRIES = 3
+MILLIS_PER_HOUR = 3_600_000
 
 
 def http_get_json(url: str) -> dict | None:
@@ -104,6 +113,41 @@ def build_insert(player: dict, slim: bool) -> str:
     )
 
 
+def load_season_map(path: Path) -> dict[str, str]:
+    """Read the world path -> season id JSON file, validating the season ids."""
+    mapping = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(mapping, dict):
+        raise ValueError(f"{path}: expected a JSON object of world path -> season id")
+    for world, season_id in mapping.items():
+        try:
+            uuid_module.UUID(season_id)
+        except (TypeError, ValueError):
+            raise ValueError(f"{path}: invalid season id for {world!r}: {season_id!r}") from None
+    return mapping
+
+
+def find_unmapped_worlds(players: list[dict], season_map: dict[str, str]) -> list[str]:
+    worlds = {entry["world"] for player in players for entry in player.get("world_playtimes", [])}
+    return sorted(worlds - season_map.keys())
+
+
+def build_playtime_inserts(player: dict, season_map: dict[str, str]) -> list[str]:
+    """One INSERT per season; worlds mapped to the same season are summed."""
+    millis_by_season: dict[str, int] = {}
+    for entry in player.get("world_playtimes", []):
+        season_id = season_map[entry["world"]]
+        millis = round(entry["playtime_hours"] * MILLIS_PER_HOUR)
+        millis_by_season[season_id] = millis_by_season.get(season_id, 0) + millis
+
+    return [
+        "INSERT INTO profile_playtimes (mc_uuid, season_id, playtime) VALUES ("
+        f"{sql_string(player['uuid'])}, {sql_string(season_id)}, {millis}) "
+        "ON DUPLICATE KEY UPDATE playtime = VALUES(playtime);"
+        for season_id, millis in millis_by_season.items()
+        if millis > 0
+    ]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path, help="JSON file produced by extractor.py")
@@ -113,9 +157,25 @@ def main() -> int:
         action="store_true",
         help="Do not call the Mojang API; derive is_slim from the default skin for the UUID",
     )
+    parser.add_argument(
+        "--season-map",
+        type=Path,
+        required=True,
+        help="JSON file mapping world path (as in the extractor output) -> season id",
+    )
     args = parser.parse_args()
 
     players = json.loads(args.input.read_text(encoding="utf-8"))
+    try:
+        season_map = load_season_map(args.season_map)
+    except (OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    unmapped = find_unmapped_worlds(players, season_map)
+    if unmapped:
+        print("error: worlds missing from --season-map: " + ", ".join(unmapped), file=sys.stderr)
+        return 1
 
     statements = []
     for index, player in enumerate(players, start=1):
@@ -140,6 +200,7 @@ def main() -> int:
             time.sleep(REQUEST_DELAY_SECONDS)
 
         statements.append(build_insert(player, slim))
+        statements.extend(build_playtime_inserts(player, season_map))
 
     sql = "\n".join(statements) + "\n"
     if args.output is not None:

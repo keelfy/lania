@@ -254,6 +254,12 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 		playtimes = make(map[uuid.UUID]*plandomain.Playtime)
 	}
 
+	seasonsPlaytimes, err := h.profileService.GetSeasonsPlaytimeByMinecraftUUIDs(ctx, mcUUIDs)
+	if err != nil {
+		logger.Errorf(ctx, "[PROFILE] Failed to sum seasons playtime by minecraft uuid: %v", err)
+		seasonsPlaytimes = make(map[uuid.UUID]int64)
+	}
+
 	onlineMap, err := h.flectoneService.CountPlaytimeByMinecaftUUIDs(ctx, mcUUIDs)
 	if err != nil {
 		logger.Errorf(ctx, "[FLECTONE] Failed to count playtime by minecraft uuid: %v", err)
@@ -325,6 +331,6 @@ func (h *profileHandler) GetUserProfileDetails(w http.ResponseWriter, r *http.Re
 	profile.Role = role
 
 	cosmetics := presenter.PresentProfileCosmetics(profile.NameColor, glythPrefix, specialPrefix)
-	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, playtime, isOnline, isModelSlim, cosmetics)
+	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, playtime, seasonsPlaytimes[profile.MinecraftUUID], isOnline, isModelSlim, cosmetics)
 	utils.WriteHttpJsonResponse(ctx, w, res)
 }

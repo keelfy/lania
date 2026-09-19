@@ -3,7 +3,8 @@
 player in one or more Minecraft world folders. Records are combined when
 they share a UUID (username taken from the latest last played) or a username
 (offline-mode UUID wins). Combined records sum playtime, take the earliest
-first join and the latest last played.
+first join and the latest last played. Each record also lists its playtime
+per world folder ("world_playtimes"), summed when worlds are combined.
 
 Reads:
   - <world>/playerdata/<uuid>.dat  (NBT: "bukkit.lastKnownName",
@@ -36,6 +37,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 TICKS_PER_SECOND = 20
+CSV_FIELDS = ["uuid", "username", "playtime_hours", "first_join", "last_played", "world_playtimes"]
 
 TAG_END = 0
 TAG_BYTE = 1
@@ -107,12 +109,19 @@ def parse_nbt(raw: bytes) -> dict:
 
 
 @dataclass
+class WorldPlaytime:
+    world: str  # world folder path exactly as passed on the command line
+    playtime_hours: float
+
+
+@dataclass
 class PlayerRecord:
     uuid: str
     username: str
     playtime_hours: float
     first_join: str | None
     last_played: str | None
+    world_playtimes: list[WorldPlaytime]
 
 
 def read_playtime_hours(stats_path: Path) -> float | None:
@@ -184,6 +193,12 @@ def extract_world(world_dir: Path, usercache: dict[str, str] | None = None) -> l
                 playtime_hours=playtime_hours if playtime_hours is not None else 0.0,
                 first_join=_millis_to_iso(bukkit.get("firstPlayed") or _creation_millis(dat_file)),
                 last_played=_millis_to_iso(bukkit.get("lastPlayed") or dat_file.stat().st_mtime * 1000),
+                world_playtimes=[
+                    WorldPlaytime(
+                        world=str(world_dir),
+                        playtime_hours=playtime_hours if playtime_hours is not None else 0.0,
+                    )
+                ],
             )
         )
 
@@ -198,6 +213,14 @@ def offline_uuid(name: str) -> str:
     return str(uuid_module.UUID(bytes=bytes(digest)))
 
 
+def _sum_world_playtimes(group: list[PlayerRecord]) -> list[WorldPlaytime]:
+    totals: dict[str, float] = {}
+    for record in group:
+        for entry in record.world_playtimes:
+            totals[entry.world] = totals.get(entry.world, 0.0) + entry.playtime_hours
+    return [WorldPlaytime(world=world, playtime_hours=round(hours, 2)) for world, hours in totals.items()]
+
+
 def _combine(group: list[PlayerRecord], identity: PlayerRecord) -> PlayerRecord:
     """Merge records; uuid and username come from `identity`."""
     first_joins = [r.first_join for r in group if r.first_join]
@@ -208,6 +231,7 @@ def _combine(group: list[PlayerRecord], identity: PlayerRecord) -> PlayerRecord:
         playtime_hours=round(sum(r.playtime_hours for r in group), 2),
         first_join=min(first_joins) if first_joins else None,
         last_played=max(last_played) if last_played else None,
+        world_playtimes=_sum_world_playtimes(group),
     )
 
 
@@ -256,12 +280,12 @@ def write_output(records: list[PlayerRecord], output: Path | None, fmt: str) -> 
         text = json.dumps([asdict(r) for r in records], indent=2)
     else:
         buf = io.StringIO()
-        writer = csv.DictWriter(
-            buf, fieldnames=["uuid", "username", "playtime_hours", "first_join", "last_played"]
-        )
+        writer = csv.DictWriter(buf, fieldnames=CSV_FIELDS)
         writer.writeheader()
         for r in records:
-            writer.writerow(asdict(r))
+            row = asdict(r)
+            row["world_playtimes"] = json.dumps(row["world_playtimes"])  # JSON string in one cell
+            writer.writerow(row)
         text = buf.getvalue()
 
     if output is not None:

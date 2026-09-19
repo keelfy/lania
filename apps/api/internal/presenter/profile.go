@@ -1,6 +1,8 @@
 package presenter
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
 	plandomain "github.com/lania-smp/backend/internal/domain/plan"
@@ -73,11 +75,33 @@ func PresentPublicProfile(
 	}
 }
 
+// firstSeenMillis prefers the imported profile date (earlier seasons), falling back to PLAN (current server).
+func firstSeenMillis(planMillis *int64, profileTime *time.Time) *int64 {
+	if profileTime == nil {
+		return planMillis
+	}
+	profileMillis := profileTime.UnixMilli()
+	return &profileMillis
+}
+
+// lastSeenMillis returns the latest of the imported profile date and PLAN.
+func lastSeenMillis(planMillis *int64, profileTime *time.Time) *int64 {
+	if profileTime == nil {
+		return planMillis
+	}
+	profileMillis := profileTime.UnixMilli()
+	if planMillis == nil || profileMillis > *planMillis {
+		return &profileMillis
+	}
+	return planMillis
+}
+
 func PresentProfileDetails(
 	profile *domain.Profile,
 	mojangUUID *uuid.UUID,
 	accessStatus domain.AccessStatus,
 	playtime *plandomain.Playtime,
+	seasonsPlaytime int64,
 	isOnline bool,
 	isModelSlim bool,
 	cosmetics *responses.ProfileCosmetics,
@@ -88,11 +112,11 @@ func PresentProfileDetails(
 		Username:      profile.MinecraftUsername,
 		Cosmetics:     cosmetics,
 		IsSlimModel:   isModelSlim,
-		FirstSeenAt:   playtime.FirstSessionStart,
-		LastSeenAt:    playtime.LastSessionEnd,
+		FirstSeenAt:   firstSeenMillis(playtime.FirstSessionStart, profile.FirstSeenAt),
+		LastSeenAt:    lastSeenMillis(playtime.LastSessionEnd, profile.LastSeenAt),
 		Role:          string(profile.Role),
 		AccessStatus:  string(accessStatus),
-		Playtime:      playtime.TotalPlaytime,
+		Playtime:      seasonsPlaytime + playtime.TotalPlaytime,
 		IsOnline:      isOnline,
 		MojangUUID:    mojangUUID,
 	}

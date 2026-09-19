@@ -26,6 +26,8 @@ type ProfileService interface {
 	CreateProfileByUsername(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) error
 	GetProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)
 	GetProfileRole(ctx context.Context, mcUUID uuid.UUID) (domain.Role, error)
+	// GetSeasonsPlaytimeByMinecraftUUIDs returns playtime in milliseconds summed over all seasons.
+	GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error)
 }
 
 type profileService struct {
@@ -159,6 +161,14 @@ func (s *profileService) createProfile(ctx context.Context, queries sql.Queries,
 		return utils.NewInternalServerError("failed to add profile name default color option", err)
 	}
 	return nil
+}
+
+func (s *profileService) GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error) {
+	totals, err := s.storage.Queries().SumProfilePlaytimesByMinecraftUUIDs(ctx, mcUUIDs)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to sum profile playtimes by minecraft uuid", err)
+	}
+	return totals, nil
 }
 
 func (s *profileService) GetProfileRole(ctx context.Context, mcUUID uuid.UUID) (domain.Role, error) {

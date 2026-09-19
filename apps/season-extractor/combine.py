@@ -3,7 +3,8 @@
 
 Uses the same merge logic as extractor.py between worlds: records sharing a
 UUID or a username are combined (playtime summed, earliest first join, latest
-last played; the offline-mode UUID wins for a shared username).
+last played; the offline-mode UUID wins for a shared username; per-world
+playtime is summed by world path).
 """
 
 from __future__ import annotations
@@ -14,16 +15,23 @@ import json
 import sys
 from pathlib import Path
 
-from extractor import PlayerRecord, merge_records, write_output
+from extractor import PlayerRecord, WorldPlaytime, merge_records, write_output
 
 
 def _record_from_dict(row: dict) -> PlayerRecord:
+    world_playtimes = row.get("world_playtimes") or []
+    if isinstance(world_playtimes, str):  # CSV stores the list as a JSON string
+        world_playtimes = json.loads(world_playtimes)
     return PlayerRecord(
         uuid=row["uuid"],
         username=row["username"],
         playtime_hours=float(row.get("playtime_hours") or 0.0),
         first_join=row.get("first_join") or None,
         last_played=row.get("last_played") or None,
+        world_playtimes=[
+            WorldPlaytime(world=entry["world"], playtime_hours=float(entry["playtime_hours"]))
+            for entry in world_playtimes
+        ],
     )
 
 
