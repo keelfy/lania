@@ -207,7 +207,7 @@ func (s *orderService) handleOrderItemCompletion(ctx context.Context, queries sq
 
 		if metadata.Action == domain.ProductUpgradeActionSeasonAccess {
 			// TODO: check if profile has access for the season
-			return s.accessService.ObtainAccessForProfile(ctx, item.SeasonID, profile, domain.AccessSourceFreekassa, &item.ID)
+			return s.accessService.ObtainAccessForProfile(ctx, item.SeasonID, profile, domain.AccessSourceFreekassa)
 		} else {
 			return fmt.Errorf("unknown upgrade action: %s", metadata.Action)
 		}

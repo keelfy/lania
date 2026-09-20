@@ -14,12 +14,10 @@ INSERT INTO profile_accesses (
 	mc_uuid,
 	season_id,
 	source,
-	order_item_id,
 	created_at,
 	updated_at,
 	updated_by
 ) VALUES (
-	?,
 	?,
 	?,
 	?,
@@ -33,7 +31,6 @@ type InsertProfileAccessParams struct {
 	MinecraftUUID uuid.UUID
 	SeasonID      uuid.UUID
 	Source        string
-	OrderItemID   *uuid.UUID
 	UpdatedBy     *uuid.UUID
 }
 
@@ -42,7 +39,6 @@ func (q *queries) InsertProfileAccess(ctx context.Context, arg InsertProfileAcce
 		arg.MinecraftUUID,
 		arg.SeasonID,
 		arg.Source,
-		arg.OrderItemID,
 		arg.UpdatedBy,
 	)
 	return err

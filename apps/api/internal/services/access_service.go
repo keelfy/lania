@@ -14,7 +14,7 @@ import (
 
 type AccessService interface {
 	GetAccessesByMinecraftUUIDs(ctx context.Context, minecraftUUIDs uuid.UUIDs) (map[uuid.UUID][]*domain.ProfileAccess, error)
-	ObtainAccessForProfile(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, source domain.AccessSource, orderItemID *uuid.UUID) error
+	ObtainAccessForProfile(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, source domain.AccessSource) error
 	CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, seasonID uuid.UUID) (bool, error)
 	GetProfileIDsWithAccessBySeasonIDAndOwnerUserID(ctx context.Context, seasonID uuid.UUID, ownerUserID uuid.UUID) (uuid.UUIDs, error)
 }
@@ -53,14 +53,13 @@ func (s *accessService) CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(ctx co
 	return res, nil
 }
 
-func (s *accessService) ObtainAccessForProfile(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, source domain.AccessSource, orderItemID *uuid.UUID) error {
+func (s *accessService) ObtainAccessForProfile(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, source domain.AccessSource) error {
 	authUserID := utils.GetUserIDFromContextOrNil(ctx)
 
 	err := s.storage.Queries().InsertProfileAccess(ctx, sql.InsertProfileAccessParams{
 		MinecraftUUID: profile.MinecraftUUID,
 		SeasonID:      seasonID,
 		Source:        string(source),
-		OrderItemID:   orderItemID,
 		UpdatedBy:     authUserID,
 	})
 	if err != nil {

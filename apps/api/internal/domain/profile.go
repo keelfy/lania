@@ -82,7 +82,6 @@ type ProfileAccess struct {
 	MinecraftUUID uuid.UUID
 	SeasonID      uuid.UUID
 	Source        AccessSource
-	OrderItemID   *uuid.UUID
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	UpdatedBy     *uuid.UUID

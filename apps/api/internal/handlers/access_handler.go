@@ -195,7 +195,7 @@ func (h *accessHandler) grantFreeAccess(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 
-		err = h.accessService.ObtainAccessForProfile(ctx, cmd.SeasonID, profile, source, nil)
+		err = h.accessService.ObtainAccessForProfile(ctx, cmd.SeasonID, profile, source)
 		if err != nil {
 			utils.HttpError(ctx, w, err)
 			return
