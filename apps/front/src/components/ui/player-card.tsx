@@ -11,6 +11,11 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { getProfileDetails } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
+import { formatPlaytime } from '@/lib/playtime'
+import {
+  PROFILE_ROLE_COLORS,
+  PROFILE_STATUS_COLORS,
+} from '@/lib/profile-colors'
 import { initializeViewer } from '@/lib/skin-viewer'
 import { errorToast } from '@/lib/toasts'
 import { cn } from '@/lib/utils'
@@ -34,19 +39,6 @@ type PlayerCardProps = React.ComponentProps<typeof Card> & {
   username?: string
   nameCosmetics?: NameCosmetics
   locale?: string
-}
-
-export const PROFILE_STATUS_COLORS = {
-  online: '#22c55e', // green-500
-  offline: '#eab308', // yellow-500
-  banned: '#ef4444', // red-500
-}
-
-export const PROFILE_ROLE_COLORS = {
-  admin: '#e7000b', // destructive
-  player: '#71717b', // muted-foreground
-  mod: '#10b981', // emerald-500
-  owner: '#ef4444', // red-500
 }
 
 export default function PlayerCard({
@@ -97,12 +89,10 @@ export default function PlayerCard({
     [profile?.isOnline],
   )
 
-  const [ptSeconds, ptMinutes, ptHours] = React.useMemo(() => {
-    const ptSeconds = (profile?.playtime ?? 0) / 1000
-    const ptMinutes = ptSeconds / 60
-    const ptHours = ptMinutes / 60
-    return [ptSeconds, ptMinutes, ptHours]
-  }, [profile?.playtime])
+  const playtime = React.useMemo(
+    () => formatPlaytime(profile?.playtime ?? 0),
+    [profile?.playtime],
+  )
 
   const displayName = username ?? profile?.username
   const [copied, setCopied] = React.useState(false)
@@ -191,19 +181,9 @@ export default function PlayerCard({
                 {t('playtime.title')}:
               </span>
               &nbsp;
-              <span className="font-medium">
-                {ptSeconds > 60
-                  ? ptMinutes > 60
-                    ? Math.floor(ptHours)
-                    : Math.floor(ptMinutes)
-                  : Math.floor(ptSeconds)}
-              </span>
+              <span className="font-medium">{playtime.value}</span>
               &nbsp;
-              {ptSeconds > 60
-                ? ptMinutes > 60
-                  ? t('playtime.hours')
-                  : t('playtime.minutes')
-                : t('playtime.seconds')}
+              {t(`playtime.${playtime.unit}`)}
             </p>
           </div>
 

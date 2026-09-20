@@ -211,3 +211,47 @@ func TestGetProfilesStats(t *testing.T) {
 		}
 	})
 }
+
+type stubSeasonStatsQueries struct {
+	sql.Queries
+	stats    []*domain.ProfileSeasonStats
+	err      error
+	lastUUID uuid.UUID
+}
+
+func (q *stubSeasonStatsQueries) FindProfileSeasonStats(_ context.Context, mcUUID uuid.UUID) ([]*domain.ProfileSeasonStats, error) {
+	q.lastUUID = mcUUID
+	return q.stats, q.err
+}
+
+func TestGetProfileSeasonStats(t *testing.T) {
+	ctx := context.Background()
+	mcUUID := uuid.New()
+
+	t.Run("returns the stats of the profile", func(t *testing.T) {
+		want := []*domain.ProfileSeasonStats{{SeasonName: "Season 2", Playtime: 5}, {SeasonName: "Season 1", Playtime: 9}}
+		queries := &stubSeasonStatsQueries{stats: want}
+		service := &profileService{storage: &stubMainStorage{queries: queries}}
+
+		got, err := service.GetProfileSeasonStats(ctx, mcUUID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(got) != 2 || got[0].SeasonName != "Season 2" || got[1].SeasonName != "Season 1" {
+			t.Errorf("stats = %+v, want the stored order", got)
+		}
+		if queries.lastUUID != mcUUID {
+			t.Errorf("queried %s, want %s", queries.lastUUID, mcUUID)
+		}
+	})
+
+	t.Run("a storage failure is an internal error", func(t *testing.T) {
+		queries := &stubSeasonStatsQueries{err: errors.New("db down")}
+		service := &profileService{storage: &stubMainStorage{queries: queries}}
+
+		_, err := service.GetProfileSeasonStats(ctx, mcUUID)
+		if utils.MapCustomErrorToHttpStatus(err) != http.StatusInternalServerError {
+			t.Fatalf("error %v, want internal server error", err)
+		}
+	})
+}

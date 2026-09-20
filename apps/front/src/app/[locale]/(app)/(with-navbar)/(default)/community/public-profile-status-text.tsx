@@ -1,5 +1,5 @@
 'use client'
-import { PROFILE_STATUS_COLORS } from '@/components/ui/player-card'
+import { PROFILE_STATUS_COLORS } from '@/lib/profile-colors'
 import { cn } from '@/lib/utils'
 import { DotIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'

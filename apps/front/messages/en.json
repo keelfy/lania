@@ -295,6 +295,14 @@
       "metadata": {
         "title": "{username} — player profile",
         "description": "Playtime, activity and skin of {username} on Lania Network."
+      },
+      "seasons": {
+        "title": "Playtime by season",
+        "total": "Total across servers",
+        "running": "Running now",
+        "since": "Since {date}",
+        "empty": "This player has not spent time on the servers yet.",
+        "loadError": "Could not load the statistics"
       }
     },
     "sort": {

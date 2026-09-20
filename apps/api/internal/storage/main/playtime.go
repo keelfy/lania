@@ -83,6 +83,48 @@ func (q *queries) SumProfilePlaytimesByMinecraftUUIDs(ctx context.Context, mcUUI
 	return totals, rows.Err()
 }
 
+const findProfileSeasonStats = `
+SELECT
+	s.id,
+	s.name,
+	s.start_date,
+	s.end_date,
+	s.is_active,
+	s.is_primary,
+	pt.playtime
+FROM profile_playtimes pt
+JOIN seasons s ON s.id = pt.season_id
+WHERE pt.mc_uuid = ? AND pt.playtime > 0
+ORDER BY s.start_date DESC, s.name ASC
+`
+
+// FindProfileSeasonStats returns the stats of the profile in every season it played in, the newest season first.
+func (q *queries) FindProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) ([]*domain.ProfileSeasonStats, error) {
+	rows, err := q.x.QueryContext(ctx, findProfileSeasonStats, mcUUID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	stats := make([]*domain.ProfileSeasonStats, 0)
+	for rows.Next() {
+		var seasonStats domain.ProfileSeasonStats
+		if err := rows.Scan(
+			&seasonStats.SeasonID,
+			&seasonStats.SeasonName,
+			&seasonStats.StartDate,
+			&seasonStats.EndDate,
+			&seasonStats.IsActive,
+			&seasonStats.IsPrimary,
+			&seasonStats.Playtime,
+		); err != nil {
+			return nil, err
+		}
+		stats = append(stats, &seasonStats)
+	}
+	return stats, rows.Err()
+}
+
 // Profiles unknown to the API are skipped, so players outside of the API never break the sync.
 // updated_at goes first because MySQL applies assignments left to right.
 const upsertProfilePlaytime = `

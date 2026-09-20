@@ -1,4 +1,5 @@
 import ProfileResyncCard from '@/components/profile-resync-card'
+import ProfileSeasonStats from '@/components/profile-season-stats'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -260,6 +261,13 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                       )}
                     </div>
                   </CardContent>
+                </Card>
+                <Card className="px-6">
+                  <ProfileSeasonStats
+                    profileId={selectedProfile.id}
+                    colors={selectedProfile.cosmetics.name.colors.colors}
+                    locale={locale}
+                  />
                 </Card>
                 <Card>
                   <CardHeader>

@@ -2,7 +2,7 @@
 
 import McUsername from '@/components/ui/mc-username'
 import NamePrefixes from '@/components/ui/name-prefixes'
-import { PROFILE_ROLE_COLORS } from '@/components/ui/player-card'
+import { PROFILE_ROLE_COLORS } from '@/lib/profile-colors'
 import PlayerFace from '@/components/ui/player-face'
 import { formatPlaytime } from '@/lib/playtime'
 import { PublicProfile } from '@/models/profile'

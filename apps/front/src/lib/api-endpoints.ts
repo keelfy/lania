@@ -26,6 +26,7 @@ import {
   ProfileDetails,
   ProfileRole,
   ProfilesStats,
+  ProfileStats,
   SelectCosmeticOptionReq,
   UsernameCheck,
 } from '@/models/profile'
@@ -221,6 +222,14 @@ export function getProfileDetails(
   id: string,
 ): Promise<ProfileDetails> {
   return fetcher<ProfileDetails>(`/v1/profiles/${id}`)
+}
+
+// Playtime of the profile in every season it played in.
+export function getProfileStats(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<ProfileStats> {
+  return fetcher<ProfileStats>(`/v1/profiles/${id}/stats`)
 }
 
 export function getProfileDetailsByUsername(

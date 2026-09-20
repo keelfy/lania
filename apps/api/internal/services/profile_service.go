@@ -35,6 +35,8 @@ type ProfileService interface {
 	SetProfileRole(ctx context.Context, profileID uuid.UUID, role domain.Role) (*domain.Profile, error)
 	// GetSeasonsPlaytimeByMinecraftUUIDs returns playtime in milliseconds summed over all seasons.
 	GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error)
+	// GetProfileSeasonStats returns the stats of the profile in every season it played in, the newest season first.
+	GetProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) ([]*domain.ProfileSeasonStats, error)
 }
 
 type profileService struct {
@@ -307,4 +309,12 @@ func (s *profileService) GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context,
 		return nil, utils.NewInternalServerError("failed to sum profile playtimes by minecraft uuid", err)
 	}
 	return totals, nil
+}
+
+func (s *profileService) GetProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) ([]*domain.ProfileSeasonStats, error) {
+	stats, err := s.storage.Queries().FindProfileSeasonStats(ctx, mcUUID)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get profile season stats", err)
+	}
+	return stats, nil
 }

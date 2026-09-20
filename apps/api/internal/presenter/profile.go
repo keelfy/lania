@@ -124,6 +124,24 @@ func PresentProfileDetails(
 	}
 }
 
+// PresentProfileStats keeps the order of the given seasons.
+func PresentProfileStats(stats []*domain.ProfileSeasonStats) *responses.ProfileStats {
+	res := &responses.ProfileStats{Seasons: make([]*responses.ProfileSeasonStats, len(stats))}
+	for i, seasonStats := range stats {
+		res.TotalPlaytime += seasonStats.Playtime
+		res.Seasons[i] = &responses.ProfileSeasonStats{
+			SeasonID:   seasonStats.SeasonID,
+			SeasonName: seasonStats.SeasonName,
+			StartDate:  seasonStats.StartDate.UnixMilli(),
+			EndDate:    timeToMillis(seasonStats.EndDate),
+			IsActive:   seasonStats.IsActive,
+			IsPrimary:  seasonStats.IsPrimary,
+			Playtime:   seasonStats.Playtime,
+		}
+	}
+	return res
+}
+
 func PresentProfileCosmeticOptions(nameColorOptions []*domain.ProfileNameColorOption, glythPrefixOptions []*domain.ProfileNamePrefixOption, specialPrefixOptions []*domain.ProfileNamePrefixOption) *responses.ProfileCosmeticOptions {
 	nameColors := make([]*responses.ProfileNameColorOption, len(nameColorOptions))
 	for i, profileNameColor := range nameColorOptions {

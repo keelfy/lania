@@ -179,6 +179,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				api.useUnprotectedRoutes(r)
 
 				r.Get("/", api.profileHandler.GetUserProfileDetails)
+				r.Get("/stats", api.profileHandler.GetProfileStats)
 			})
 
 			r.Group(func(r chi.Router) {

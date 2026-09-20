@@ -47,6 +47,25 @@ export type ProfileDetails = Profile & {
   isOnline: boolean
 }
 
+// What one profile did in one season. Playtime is in milliseconds.
+export type ProfileSeasonStats = {
+  seasonId: string
+  seasonName: string
+  startDate: number
+  // Missing while the season is running.
+  endDate?: number
+  isActive: boolean
+  isPrimary: boolean
+  playtime: number
+}
+
+export type ProfileStats = {
+  // Summed over all seasons, in milliseconds.
+  totalPlaytime: number
+  // Only seasons the profile played in, the newest first.
+  seasons: ProfileSeasonStats[]
+}
+
 export type NameColor = {
   id: string
   name: string

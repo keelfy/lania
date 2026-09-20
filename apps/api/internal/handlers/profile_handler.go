@@ -23,6 +23,7 @@ type ProfileHandler interface {
 	GetPublicProfiles(w http.ResponseWriter, r *http.Request)
 	GetTopPlaytimeProfiles(w http.ResponseWriter, r *http.Request)
 	GetProfilesStats(w http.ResponseWriter, r *http.Request)
+	GetProfileStats(w http.ResponseWriter, r *http.Request)
 }
 
 type profileHandler struct {
@@ -128,6 +129,30 @@ func (h *profileHandler) GetProfilesStats(w http.ResponseWriter, r *http.Request
 		Online:      stats.Online,
 		NewLastWeek: stats.NewLastWeek,
 	})
+}
+
+func (h *profileHandler) GetProfileStats(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	profileID, err := binders.BindPathVariableAsUUID(r, "profileId")
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	profile, err := h.profileService.GetProfileByID(ctx, profileID)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	stats, err := h.profileService.GetProfileSeasonStats(ctx, profile.MinecraftUUID)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileStats(stats))
 }
 
 func splitProfilePrefixes(prefixes []*domain.ProfilePrefix) (glyth *domain.NamePrefix, special *domain.NamePrefix) {

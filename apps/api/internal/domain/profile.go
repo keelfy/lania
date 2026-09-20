@@ -145,6 +145,18 @@ type ProfilePlaytime struct {
 	Season  *Season
 }
 
+// ProfileSeasonStats is what one profile did in one season. New metrics are added as fields.
+type ProfileSeasonStats struct {
+	SeasonID   uuid.UUID
+	SeasonName string
+	StartDate  time.Time
+	EndDate    *time.Time
+	IsActive   bool
+	IsPrimary  bool
+	// Playtime is in milliseconds.
+	Playtime int64
+}
+
 // MojangLookupTarget is a profile whose Mojang UUID has to be looked up by username.
 type MojangLookupTarget struct {
 	MinecraftUUID     uuid.UUID

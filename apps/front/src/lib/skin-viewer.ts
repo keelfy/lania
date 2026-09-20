@@ -39,15 +39,26 @@ function updateBackground(
   skinViewer.background = color
 }
 
+type ViewerOptions = {
+  // The canvas to draw on, by default the element with the id skin_container.
+  canvas?: HTMLCanvasElement
+  width?: number
+  height?: number
+  // Leaves the background clear, so whatever is behind the canvas shows through.
+  transparent?: boolean
+}
+
+// The caller owns the returned viewer and has to dispose it when the canvas goes away.
 export function initializeViewer(
   skinUrl: string,
   capeUrl: string,
   isSlim: boolean,
   theme: 'light' | 'dark',
-): void {
-  const skinContainer = document.getElementById(
-    'skin_container',
-  ) as HTMLCanvasElement
+  options: ViewerOptions = {},
+): skinview3d.SkinViewer {
+  const skinContainer =
+    options.canvas ??
+    (document.getElementById('skin_container') as HTMLCanvasElement | null)
   if (!skinContainer) {
     throw new Error('Canvas element not found')
   }
@@ -56,8 +67,8 @@ export function initializeViewer(
     canvas: skinContainer,
   })
 
-  skinViewer.width = 300
-  skinViewer.height = 200
+  skinViewer.width = options.width ?? 300
+  skinViewer.height = options.height ?? 200
   skinViewer.fov = 40
   skinViewer.zoom = 0.9
   skinViewer.globalLight.intensity = 3
@@ -80,5 +91,8 @@ export function initializeViewer(
 
   reloadSkin(skinUrl, isSlim, skinViewer)
   reloadCape(capeUrl, skinViewer)
-  updateBackground(skinViewer, theme === 'light' ? '#FFFFFF' : '#18181b')
+  if (!options.transparent) {
+    updateBackground(skinViewer, theme === 'light' ? '#FFFFFF' : '#18181b')
+  }
+  return skinViewer
 }

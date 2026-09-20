@@ -47,6 +47,23 @@ type ProfileDetails struct {
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`
 }
 
+type ProfileSeasonStats struct {
+	SeasonID   uuid.UUID `json:"seasonId"`
+	SeasonName string    `json:"seasonName"`
+	StartDate  int64     `json:"startDate"`
+	EndDate    *int64    `json:"endDate,omitempty"`
+	IsActive   bool      `json:"isActive"`
+	IsPrimary  bool      `json:"isPrimary"`
+	// Playtime is in milliseconds.
+	Playtime int64 `json:"playtime"`
+}
+
+type ProfileStats struct {
+	// TotalPlaytime is summed over all seasons, in milliseconds.
+	TotalPlaytime int64                 `json:"totalPlaytime"`
+	Seasons       []*ProfileSeasonStats `json:"seasons"`
+}
+
 type NameColor struct {
 	ID     uuid.UUID `json:"id"`
 	Name   string    `json:"name"`
