@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/lania-smp/backend/internal/commands"
 	"github.com/lania-smp/backend/internal/domain"
@@ -23,6 +24,66 @@ func BindEmailSearch(r *http.Request) string {
 		search = search[:MaxEmailLength]
 	}
 	return string(search)
+}
+
+var SeasonIDVariable = "seasonId"
+
+func optionalTrimmed(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	trimmed := strings.TrimSpace(*value)
+	if trimmed == "" {
+		return nil
+	}
+	return &trimmed
+}
+
+func parseSeasonDate(value string) (time.Time, error) {
+	return time.Parse(time.DateOnly, value)
+}
+
+func BindSaveSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
+	req := &requests.SaveSeason{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+
+	startDate, err := parseSeasonDate(req.StartDate)
+	if err != nil {
+		return nil, utils.NewBadRequestError("startDate must use YYYY-MM-DD", err)
+	}
+
+	var endDate *time.Time
+	if req.EndDate != nil && strings.TrimSpace(*req.EndDate) != "" {
+		parsed, err := parseSeasonDate(*req.EndDate)
+		if err != nil {
+			return nil, utils.NewBadRequestError("endDate must use YYYY-MM-DD", err)
+		}
+		endDate = &parsed
+	}
+
+	return &commands.SaveSeasonCommand{
+		SeasonNumber:    req.SeasonNumber,
+		Name:            strings.TrimSpace(req.Name),
+		PreviewImage:    optionalTrimmed(req.PreviewImage),
+		StartDate:       startDate,
+		EndDate:         endDate,
+		ServerIP:        optionalTrimmed(req.ServerIP),
+		ServerPort:      req.ServerPort,
+		IsActive:        req.IsActive,
+		RCONPassword:    optionalTrimmed(req.RCONPassword),
+		SetRCONPassword: req.RCONPassword != nil,
+	}, nil
+}
+
+func BindUpdateSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
+	cmd, err := BindSaveSeason(r)
+	if err != nil {
+		return nil, err
+	}
+	cmd.ID, err = BindPathVariableAsUUID(r, SeasonIDVariable)
+	return cmd, err
 }
 
 // BindPageToken returns the opaque token of the requested page, empty for the first page.

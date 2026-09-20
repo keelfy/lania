@@ -13,3 +13,11 @@ type Season struct {
 	// IsActive marks the season that runs on the Minecraft server.
 	IsActive bool `json:"isActive"`
 }
+
+type AdminSeason struct {
+	Season
+	SeasonNumber    int     `json:"seasonNumber"`
+	ServerIP        *string `json:"serverIp,omitempty"`
+	ServerPort      *uint16 `json:"serverPort,omitempty"`
+	RCONPasswordSet bool    `json:"rconPasswordSet"`
+}

@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -141,8 +142,18 @@ func GetIGDBImageURLFormat() string {
 
 /** Business Constraints */
 
+var activeSeasonID atomic.Value
+
 func GetActiveSeasonID() uuid.UUID {
+	if value := activeSeasonID.Load(); value != nil {
+		return value.(uuid.UUID)
+	}
 	return uuid.MustParse(os.Getenv("ACTIVE_SEASON_ID"))
+}
+
+// SetActiveSeasonID updates the runtime value after the database-backed admin setting changes.
+func SetActiveSeasonID(id uuid.UUID) {
+	activeSeasonID.Store(id)
 }
 
 func GetMaxProfilesPerUser() int {

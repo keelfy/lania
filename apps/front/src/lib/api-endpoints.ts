@@ -17,7 +17,7 @@ import {
   PurchasedProduct,
 } from '@/models/order'
 import { Product, ProductMetadata } from '@/models/product'
-import { Season } from '@/models/season'
+import { AdminSeason, SaveSeason, Season } from '@/models/season'
 import {
   Profile,
   PublicProfile,
@@ -369,6 +369,37 @@ export function releaseProfileOwner(
 
 export function getSeasons(fetcher: ApiFetcher): Promise<Season[]> {
   return fetcher<Season[]>('/v1/seasons')
+}
+
+export function getAdminSeasons(fetcher: ApiFetcher): Promise<AdminSeason[]> {
+  return fetcher<AdminSeason[]>('/v1/admin/seasons')
+}
+
+export function createSeason(
+  fetcher: ApiFetcher,
+  season: SaveSeason,
+): Promise<AdminSeason> {
+  return fetcher<AdminSeason>('/v1/admin/seasons', undefined, {
+    method: 'POST',
+    body: JSON.stringify(season),
+  })
+}
+
+export function updateSeason(
+  fetcher: ApiFetcher,
+  id: string,
+  season: SaveSeason,
+): Promise<AdminSeason> {
+  return fetcher<AdminSeason>(`/v1/admin/seasons/${id}`, undefined, {
+    method: 'PUT',
+    body: JSON.stringify(season),
+  })
+}
+
+export function deleteSeason(fetcher: ApiFetcher, id: string): Promise<void> {
+  return fetcher<void>(`/v1/admin/seasons/${id}`, undefined, {
+    method: 'DELETE',
+  })
 }
 
 export function getAdminGrants(

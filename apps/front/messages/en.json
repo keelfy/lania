@@ -425,7 +425,8 @@
     "title": "Admin panel",
     "nav": {
       "users": "Users",
-      "profiles": "Profiles"
+      "profiles": "Profiles",
+      "seasons": "Seasons"
     },
     "users": {
       "title": "Users",
@@ -560,6 +561,52 @@
           "granted": "Item granted",
           "failed": "Failed to grant the item"
         }
+      }
+    },
+    "seasons": {
+      "title": "Seasons",
+      "description": "Season metadata and game server connection settings.",
+      "loadFailed": "Failed to load seasons",
+      "empty": "No seasons yet",
+      "create": "Add season",
+      "edit": "Edit",
+      "createTitle": "New season",
+      "editTitle": "Edit season",
+      "formDescription": "The RCON password is stored but never returned by the API.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "created": "Season created",
+      "updated": "Season updated",
+      "saveFailed": "Failed to save season",
+      "delete": "Delete",
+      "deleteTitle": "Delete season?",
+      "deleteDescription": "Season “{name}” will be deleted. A season used by profiles, access grants, or orders cannot be deleted.",
+      "deleted": "Season deleted",
+      "deleteFailed": "Failed to delete season",
+      "active": "Active",
+      "activeHint": "The active season cannot be disabled. Activate another season first.",
+      "inactiveHint": "Activation automatically disables the current active season.",
+      "passwordConfigured": "Password configured",
+      "passwordHint": "Leave empty to keep the current password.",
+      "clearPassword": "Remove saved RCON password",
+      "passwordOnly": "Password configured",
+      "fields": {
+        "number": "Season number",
+        "name": "Name",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "previewImage": "Preview image",
+        "serverIp": "Server IP",
+        "serverPort": "Server port",
+        "rconPassword": "RCON password",
+        "active": "Active season"
+      },
+      "columns": {
+        "season": "Season",
+        "dates": "Dates",
+        "server": "Server",
+        "rcon": "RCON",
+        "actions": "Actions"
       }
     }
   }

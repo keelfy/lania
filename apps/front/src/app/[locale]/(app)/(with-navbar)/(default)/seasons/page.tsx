@@ -52,8 +52,8 @@ export default async function SeasonsPage({ params }: Props) {
                 <Image
                   src={season.previewImage}
                   alt={season.name}
-                  width={690}
-                  height={480}
+                  width={640}
+                  height={360}
                   className="rounded-md object-cover transition-transform duration-300 hover:scale-105"
                 />
               </AspectRatio>

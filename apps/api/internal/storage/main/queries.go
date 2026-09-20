@@ -13,8 +13,14 @@ import (
 type Queries interface {
 	// Server Season
 	FindSeasonByID(ctx context.Context, seasonID uuid.UUID) (*domain.Season, error)
+	FindPublicSeasons(ctx context.Context) ([]*domain.Season, error)
 	// FindSeasons returns every season, the newest start first.
 	FindSeasons(ctx context.Context) ([]*domain.Season, error)
+	InsertSeason(ctx context.Context, arg InsertSeasonParams) error
+	UpdateSeason(ctx context.Context, arg UpdateSeasonParams) error
+	DeleteSeason(ctx context.Context, seasonID uuid.UUID) (bool, error)
+	ClearActiveSeasons(ctx context.Context) error
+	SetSeasonActive(ctx context.Context, seasonID uuid.UUID) (bool, error)
 
 	// Game Profile
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)

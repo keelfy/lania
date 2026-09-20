@@ -85,6 +85,9 @@ func NewLaniaAPI(
 }
 
 func (api *laniaAPI) BuildAPI(ctx context.Context) (*chi.Mux, error) {
+	if err := api.seasonHandler.InitializeActiveSeason(ctx); err != nil {
+		return nil, err
+	}
 	r := chi.NewRouter()
 
 	// connect to donation alerts centrifugo
@@ -215,6 +218,13 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 		r.Get("/users/{userId}", api.adminUserHandler.GetUserDetails)
 
 		r.Get("/cosmetics", api.adminGrantHandler.GetCosmetics)
+
+		r.Route("/seasons", func(r chi.Router) {
+			r.Get("/", api.seasonHandler.GetAdminSeasons)
+			r.Post("/", api.seasonHandler.CreateSeason)
+			r.Put("/{seasonId}", api.seasonHandler.UpdateSeason)
+			r.Delete("/{seasonId}", api.seasonHandler.DeleteSeason)
+		})
 
 		r.Get("/profiles", api.adminProfileHandler.GetProfiles)
 		r.Route("/profiles/{profileId}", func(r chi.Router) {

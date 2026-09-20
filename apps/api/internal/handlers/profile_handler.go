@@ -49,8 +49,6 @@ func NewProfileHandler(
 	}
 }
 
-var activeSeasonID = config.GetActiveSeasonID()
-
 const (
 	defaultTopPlaytimeLimit = 10
 	maxTopPlaytimeLimit     = 20
@@ -97,7 +95,7 @@ func (h *profileHandler) GetTopPlaytimeProfiles(w http.ResponseWriter, r *http.R
 		limit = maxTopPlaytimeLimit
 	}
 
-	top, err := h.profileService.GetTopPlaytimeProfiles(ctx, activeSeasonID, limit)
+	top, err := h.profileService.GetTopPlaytimeProfiles(ctx, config.GetActiveSeasonID(), limit)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
@@ -227,7 +225,7 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 	for i, profile := range profiles {
 		accessStatus := domain.AccessStatusInactive
 		for _, access := range accesses[profile.MinecraftUUID] {
-			if access.SeasonID == activeSeasonID {
+			if access.SeasonID == config.GetActiveSeasonID() {
 				accessStatus = domain.AccessStatusActive
 				break
 			}
@@ -333,7 +331,7 @@ func (h *profileHandler) writeProfileDetails(w http.ResponseWriter, r *http.Requ
 
 	accessStatus := domain.AccessStatusInactive
 	for _, access := range accesses[profile.MinecraftUUID] {
-		if access.SeasonID == activeSeasonID {
+		if access.SeasonID == config.GetActiveSeasonID() {
 			accessStatus = domain.AccessStatusActive
 			break
 		}
