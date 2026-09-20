@@ -110,6 +110,23 @@ func BindTransferProfileOwner(r *http.Request) (*commands.TransferProfileOwnerCo
 	}, nil
 }
 
+func BindSetProfileRole(r *http.Request) (*commands.SetProfileRoleCommand, error) {
+	profileID, err := BindPathVariableAsUUID(r, ProfileIDVariable)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &requests.SetProfileRole{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+
+	return &commands.SetProfileRoleCommand{
+		ProfileID: profileID,
+		Role:      domain.Role(strings.TrimSpace(req.Role)),
+	}, nil
+}
+
 var (
 	GrantTypeVariable = "grantType"
 	GrantIDVariable   = "grantId"

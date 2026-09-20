@@ -12,6 +12,7 @@ var ProviderSet = wire.NewSet(
 	NewOrderHandler,
 	NewAcquiringHandler,
 	NewProfileCosmeticsHandler,
+	NewProfileResyncHandler,
 	NewPurchaseHandler,
 	NewBasketHandler,
 	NewAdminUserHandler,

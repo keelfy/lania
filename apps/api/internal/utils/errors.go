@@ -76,3 +76,7 @@ func NewInternalServerError(msg string, err error) error {
 func NewConflictError(msg string, err error) error {
 	return &CustomError{HttpStatus: http.StatusConflict, Message: msg, OriginalError: err}
 }
+
+func NewTooManyRequestsError(msg string, err error) error {
+	return &CustomError{HttpStatus: http.StatusTooManyRequests, Message: msg, OriginalError: err}
+}

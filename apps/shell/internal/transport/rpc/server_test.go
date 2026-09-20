@@ -10,6 +10,7 @@ import (
 	"github.com/lania-smp/shell/internal/domain"
 	shellv1 "github.com/lania-smp/shell/internal/gen/lania/shell/v1"
 	"github.com/lania-smp/shell/internal/services"
+	"github.com/lania-smp/shell/internal/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -82,6 +83,10 @@ func (s *fakeLuckpermsStorage) FindPlayersWithPermissions(_ context.Context, per
 func (s *fakeLuckpermsStorage) ReplacePermissionsWithPrefix(_ context.Context, _ uuid.UUID, nodePrefix string, node string) error {
 	s.lastPrefix = nodePrefix
 	s.lastNode = node
+	return nil
+}
+
+func (s *fakeLuckpermsStorage) ReplacePermissions(context.Context, []storage.PermissionReplacement) error {
 	return nil
 }
 

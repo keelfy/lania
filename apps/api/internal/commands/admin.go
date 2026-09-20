@@ -29,6 +29,23 @@ func (c *TransferProfileOwnerCommand) Validate() error {
 	)
 }
 
+type SetProfileRoleCommand struct {
+	ProfileID uuid.UUID
+	Role      domain.Role
+}
+
+func (c *SetProfileRoleCommand) Validate() error {
+	return validation.ValidateStruct(c,
+		validation.Field(&c.ProfileID, notNilUUID),
+		validation.Field(&c.Role, validation.Required, validation.By(func(value any) error {
+			if !value.(domain.Role).Valid() {
+				return errors.New("must be owner, admin, mod or player")
+			}
+			return nil
+		})),
+	)
+}
+
 type GrantProductCommand struct {
 	ProfileID uuid.UUID
 	ProductID uuid.UUID

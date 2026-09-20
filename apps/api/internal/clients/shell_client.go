@@ -21,10 +21,10 @@ type ShellAPI interface {
 	ListOnlinePlayers(ctx context.Context) (uuid.UUIDs, error)
 	// ListChangedPlaytimes returns playtime of players whose last session ended at or after sinceMs.
 	ListChangedPlaytimes(ctx context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error)
-	GetPlayerGroups(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error)
-	// ListPlayersByGroups returns players that belong to at least one of the groups.
-	ListPlayersByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error)
 	SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error
+	// SetPlayerRoles makes every player belong to exactly the role group it maps to among roleGroups.
+	// An empty group leaves the player in no role group.
+	SetPlayerRoles(ctx context.Context, roleGroups []string, roles map[uuid.UUID]string) error
 	AddToWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error
 	// RemoveFromWhitelist forbids the player to join. It does nothing for a player that is not whitelisted.
 	RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID) error
@@ -129,14 +129,6 @@ func (api *shellAPI) ListOnlinePlayers(ctx context.Context) (uuid.UUIDs, error) 
 	return parseUUIDs(res.GetMinecraftUuids())
 }
 
-func (api *shellAPI) ListPlayersByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error) {
-	res, err := api.permission.ListPlayersByGroups(ctx, &shellv1.ListPlayersByGroupsRequest{Groups: groups})
-	if err != nil {
-		return nil, err
-	}
-	return parseUUIDs(res.GetMinecraftUuids())
-}
-
 func parseUUIDs(values []string) (uuid.UUIDs, error) {
 	mcUUIDs := make(uuid.UUIDs, len(values))
 	for i, value := range values {
@@ -170,28 +162,20 @@ func (api *shellAPI) ListChangedPlaytimes(ctx context.Context, sinceMs int64) (m
 	return playtimes, nil
 }
 
-func (api *shellAPI) GetPlayerGroups(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error) {
-	res, err := api.permission.GetPlayerGroups(ctx, &shellv1.GetPlayerGroupsRequest{MinecraftUuids: mcUUIDs.Strings()})
-	if err != nil {
-		return nil, err
-	}
-
-	groups := make(map[uuid.UUID][]string, len(res.GetGroups()))
-	for key, playerGroups := range res.GetGroups() {
-		mcUUID, err := uuid.Parse(key)
-		if err != nil {
-			return nil, err
-		}
-		groups[mcUUID] = playerGroups.GetNames()
-	}
-	return groups, nil
-}
-
 func (api *shellAPI) SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error {
 	_, err := api.permission.SetPlayerPrefix(ctx, &shellv1.SetPlayerPrefixRequest{
 		MinecraftUuid: mcUUID.String(),
 		Prefix:        prefix,
 	})
+	return err
+}
+
+func (api *shellAPI) SetPlayerRoles(ctx context.Context, roleGroups []string, roles map[uuid.UUID]string) error {
+	req := &shellv1.SetPlayerRolesRequest{RoleGroups: roleGroups, Roles: make(map[string]string, len(roles))}
+	for mcUUID, group := range roles {
+		req.Roles[mcUUID.String()] = group
+	}
+	_, err := api.permission.SetPlayerRoles(ctx, req)
 	return err
 }
 

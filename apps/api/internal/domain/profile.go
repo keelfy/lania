@@ -68,6 +68,21 @@ const (
 	RolePriorityPlayer    = 4
 )
 
+// Valid tells whether the role is one of the known roles.
+func (r Role) Valid() bool {
+	switch r {
+	case RoleOwner, RoleAdmin, RoleModerator, RolePlayer:
+		return true
+	}
+	return false
+}
+
+// ProfileRole is the role of one player.
+type ProfileRole struct {
+	MinecraftUUID uuid.UUID
+	Role          Role
+}
+
 // StaffRoles are the roles that make a profile part of the server staff.
 var StaffRoles = []Role{RoleOwner, RoleAdmin, RoleModerator}
 
@@ -190,21 +205,6 @@ type ProfileNamePrefixOption struct {
 	NamePrefix *NamePrefix
 	OrderItem  *OrderItem
 	Season     *Season
-}
-
-// HighestRole picks the role with the smallest priority number among groups.
-// Groups that are not roles are ignored, so a player without role groups is a RolePlayer.
-func HighestRole(groups []string) Role {
-	role := RolePlayer
-	rolePriority := RolePriorityPlayer
-
-	for _, group := range groups {
-		if priority := GetRolePriority(Role(group)); priority < rolePriority {
-			role = Role(group)
-			rolePriority = priority
-		}
-	}
-	return role
 }
 
 func GetRolePriority(role Role) int {

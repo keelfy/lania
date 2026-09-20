@@ -3,9 +3,7 @@ package services
 import (
 	"context"
 	stdsql "database/sql"
-	"fmt"
 	"slices"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/config"
@@ -32,29 +30,26 @@ type ProfileService interface {
 	// SetProfileOwner gives the profile to the user, or releases it when ownerUserID is nil.
 	// The previous owner does not matter, unlike in a claim.
 	SetProfileOwner(ctx context.Context, profileID uuid.UUID, ownerUserID *uuid.UUID) (*domain.Profile, error)
-	// ApplyProfileRoles sets Role of the profiles to the live role from the Minecraft server.
-	// Profiles keep their stored role when the server cannot be reached.
-	ApplyProfileRoles(ctx context.Context, profiles []*domain.Profile)
+	// SetProfileRole stores the role in the profile, which is the source of truth for roles.
+	// Role sync pushes the change to the season servers shortly after. The same role is written again too, to push it again.
+	SetProfileRole(ctx context.Context, profileID uuid.UUID, role domain.Role) (*domain.Profile, error)
 	// GetSeasonsPlaytimeByMinecraftUUIDs returns playtime in milliseconds summed over all seasons.
 	GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error)
 }
 
 type profileService struct {
 	storage                 storage.MainStorage
-	cache                   storage.CacheStorage
 	profileCosmeticsService ProfileCosmeticsService
 	minecraftService        MinecraftService
 }
 
 func NewProfileService(
 	storage storage.MainStorage,
-	cache storage.CacheStorage,
 	profileCosmeticsService ProfileCosmeticsService,
 	minecraftService MinecraftService,
 ) ProfileService {
 	return &profileService{
 		storage:                 storage,
-		cache:                   cache,
 		profileCosmeticsService: profileCosmeticsService,
 		minecraftService:        minecraftService,
 	}
@@ -128,7 +123,7 @@ func (s *profileService) GetTopPlaytimeProfiles(ctx context.Context, seasonID uu
 }
 
 // filterMinecraftUUIDs resolves filters that depend on the Minecraft server into the players they keep.
-// It returns nil when no such filter is set. Failing is intended: without the server the filter cannot be applied.
+// It returns nil when no such filter is set. Online players need the server, so that filter fails without it.
 func (s *profileService) filterMinecraftUUIDs(ctx context.Context, filter domain.ProfileFilter) (*uuid.UUIDs, error) {
 	var only *uuid.UUIDs
 	keep := func(mcUUIDs uuid.UUIDs) {
@@ -153,13 +148,9 @@ func (s *profileService) filterMinecraftUUIDs(ctx context.Context, filter domain
 		keep(online)
 	}
 	if filter.StaffOnly {
-		groups := make([]string, len(domain.StaffRoles))
-		for i, role := range domain.StaffRoles {
-			groups[i] = string(role)
-		}
-		staff, err := s.minecraftService.ListMinecraftUUIDsByGroups(ctx, groups)
+		staff, err := s.storage.Queries().FindMinecraftUUIDsByRoles(ctx, domain.StaffRoles)
 		if err != nil {
-			return nil, err
+			return nil, utils.NewInternalServerError("failed to find staff profiles", err)
 		}
 		keep(staff)
 	}
@@ -188,6 +179,26 @@ func (s *profileService) SetProfileOwner(ctx context.Context, profileID uuid.UUI
 	}
 
 	profile.OwnerUserID = ownerUserID
+	return profile, nil
+}
+
+func (s *profileService) SetProfileRole(ctx context.Context, profileID uuid.UUID, role domain.Role) (*domain.Profile, error) {
+	if !role.Valid() {
+		return nil, utils.NewBadRequestError("role is invalid", nil)
+	}
+
+	profile, err := s.GetProfileByID(ctx, profileID)
+	if err != nil {
+		return nil, err
+	}
+
+	// The same role is written again on purpose: it makes role sync push the role once more.
+	err = s.storage.Queries().SetProfileRole(ctx, profileID, role, utils.GetUserIDFromContextOrNil(ctx))
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to set profile role", err)
+	}
+
+	profile.Role = role
 	return profile, nil
 }
 
@@ -296,48 +307,4 @@ func (s *profileService) GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context,
 		return nil, utils.NewInternalServerError("failed to sum profile playtimes by minecraft uuid", err)
 	}
 	return totals, nil
-}
-
-func profileRoleCacheKey(mcUUID uuid.UUID) string {
-	return fmt.Sprintf("profile_role:%s", mcUUID.String())
-}
-
-// ApplyProfileRoles sets Role of the profiles to the live role from the Minecraft server, cached for an hour.
-// Roles of all uncached profiles are read in one call. When the server cannot be reached
-// the role stored in the profile is kept, so the site keeps working without it.
-func (s *profileService) ApplyProfileRoles(ctx context.Context, profiles []*domain.Profile) {
-	uncached := make(map[uuid.UUID]struct{})
-	for _, profile := range profiles {
-		cacheValue, err := s.cache.GetKey(ctx, profileRoleCacheKey(profile.MinecraftUUID))
-		if err == nil {
-			profile.Role = domain.Role(cacheValue)
-			continue
-		}
-		uncached[profile.MinecraftUUID] = struct{}{}
-	}
-	if len(uncached) == 0 {
-		return
-	}
-
-	mcUUIDs := make(uuid.UUIDs, 0, len(uncached))
-	for mcUUID := range uncached {
-		mcUUIDs = append(mcUUIDs, mcUUID)
-	}
-	groups, err := s.minecraftService.GetGroupsByMinecraftUUIDs(ctx, mcUUIDs)
-	if err != nil {
-		logger.Warnf(ctx, "failed to get profile roles, keeping the stored ones: %v", err)
-		return
-	}
-
-	for _, profile := range profiles {
-		if _, ok := uncached[profile.MinecraftUUID]; !ok {
-			continue
-		}
-		playerGroups, ok := groups[profile.MinecraftUUID]
-		if !ok {
-			continue
-		}
-		profile.Role = domain.HighestRole(playerGroups)
-		_ = s.cache.SetKey(ctx, profileRoleCacheKey(profile.MinecraftUUID), string(profile.Role), 1*time.Hour)
-	}
 }

@@ -24,6 +24,7 @@ import {
   PublicProfile,
   ProfileCosmeticOptions,
   ProfileDetails,
+  ProfileRole,
   ProfilesStats,
   SelectCosmeticOptionReq,
   UsernameCheck,
@@ -364,6 +365,39 @@ export function releaseProfileOwner(
     undefined,
     { method: 'DELETE' },
   )
+}
+
+export function setProfileRole(
+  fetcher: ApiFetcher,
+  id: string,
+  role: ProfileRole,
+): Promise<AdminProfileDetails> {
+  return fetcher<AdminProfileDetails>(
+    `/v1/admin/profiles/${id}/role`,
+    undefined,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    },
+  )
+}
+
+// Writes the role, cosmetics and access of the profile to the game servers again.
+// Only the owner of the profile can call it, and it has a cooldown.
+export function resyncProfile(fetcher: ApiFetcher, id: string): Promise<void> {
+  return fetcher<void>(`/v1/profiles/${id}/resync`, undefined, {
+    method: 'POST',
+  })
+}
+
+// The same for admins: any profile and no cooldown.
+export function resyncProfileAsAdmin(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<void> {
+  return fetcher<void>(`/v1/admin/profiles/${id}/resync`, undefined, {
+    method: 'POST',
+  })
 }
 
 export function getSeasons(fetcher: ApiFetcher): Promise<Season[]> {

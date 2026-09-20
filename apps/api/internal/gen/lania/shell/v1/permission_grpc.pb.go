@@ -22,6 +22,7 @@ const (
 	PermissionService_GetPlayerGroups_FullMethodName     = "/lania.shell.v1.PermissionService/GetPlayerGroups"
 	PermissionService_ListPlayersByGroups_FullMethodName = "/lania.shell.v1.PermissionService/ListPlayersByGroups"
 	PermissionService_SetPlayerPrefix_FullMethodName     = "/lania.shell.v1.PermissionService/SetPlayerPrefix"
+	PermissionService_SetPlayerRoles_FullMethodName      = "/lania.shell.v1.PermissionService/SetPlayerRoles"
 )
 
 // PermissionServiceClient is the client API for PermissionService service.
@@ -36,6 +37,8 @@ type PermissionServiceClient interface {
 	ListPlayersByGroups(ctx context.Context, in *ListPlayersByGroupsRequest, opts ...grpc.CallOption) (*ListPlayersByGroupsResponse, error)
 	// SetPlayerPrefix replaces the player's chat prefix. Idempotent.
 	SetPlayerPrefix(ctx context.Context, in *SetPlayerPrefixRequest, opts ...grpc.CallOption) (*SetPlayerPrefixResponse, error)
+	// SetPlayerRoles makes every listed player belong to exactly the given role group. Idempotent.
+	SetPlayerRoles(ctx context.Context, in *SetPlayerRolesRequest, opts ...grpc.CallOption) (*SetPlayerRolesResponse, error)
 }
 
 type permissionServiceClient struct {
@@ -76,6 +79,16 @@ func (c *permissionServiceClient) SetPlayerPrefix(ctx context.Context, in *SetPl
 	return out, nil
 }
 
+func (c *permissionServiceClient) SetPlayerRoles(ctx context.Context, in *SetPlayerRolesRequest, opts ...grpc.CallOption) (*SetPlayerRolesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetPlayerRolesResponse)
+	err := c.cc.Invoke(ctx, PermissionService_SetPlayerRoles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PermissionServiceServer is the server API for PermissionService service.
 // All implementations must embed UnimplementedPermissionServiceServer
 // for forward compatibility.
@@ -88,6 +101,8 @@ type PermissionServiceServer interface {
 	ListPlayersByGroups(context.Context, *ListPlayersByGroupsRequest) (*ListPlayersByGroupsResponse, error)
 	// SetPlayerPrefix replaces the player's chat prefix. Idempotent.
 	SetPlayerPrefix(context.Context, *SetPlayerPrefixRequest) (*SetPlayerPrefixResponse, error)
+	// SetPlayerRoles makes every listed player belong to exactly the given role group. Idempotent.
+	SetPlayerRoles(context.Context, *SetPlayerRolesRequest) (*SetPlayerRolesResponse, error)
 	mustEmbedUnimplementedPermissionServiceServer()
 }
 
@@ -106,6 +121,9 @@ func (UnimplementedPermissionServiceServer) ListPlayersByGroups(context.Context,
 }
 func (UnimplementedPermissionServiceServer) SetPlayerPrefix(context.Context, *SetPlayerPrefixRequest) (*SetPlayerPrefixResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetPlayerPrefix not implemented")
+}
+func (UnimplementedPermissionServiceServer) SetPlayerRoles(context.Context, *SetPlayerRolesRequest) (*SetPlayerRolesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetPlayerRoles not implemented")
 }
 func (UnimplementedPermissionServiceServer) mustEmbedUnimplementedPermissionServiceServer() {}
 func (UnimplementedPermissionServiceServer) testEmbeddedByValue()                           {}
@@ -182,6 +200,24 @@ func _PermissionService_SetPlayerPrefix_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PermissionService_SetPlayerRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetPlayerRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PermissionServiceServer).SetPlayerRoles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PermissionService_SetPlayerRoles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PermissionServiceServer).SetPlayerRoles(ctx, req.(*SetPlayerRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PermissionService_ServiceDesc is the grpc.ServiceDesc for PermissionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -200,6 +236,10 @@ var PermissionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetPlayerPrefix",
 			Handler:    _PermissionService_SetPlayerPrefix_Handler,
+		},
+		{
+			MethodName: "SetPlayerRoles",
+			Handler:    _PermissionService_SetPlayerRoles_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

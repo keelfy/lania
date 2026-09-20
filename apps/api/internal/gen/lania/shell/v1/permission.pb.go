@@ -332,6 +332,96 @@ func (*SetPlayerPrefixResponse) Descriptor() ([]byte, []int) {
 	return file_lania_shell_v1_permission_proto_rawDescGZIP(), []int{6}
 }
 
+type SetPlayerRolesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Every group that stands for a role. A listed player leaves all of them before joining the given one.
+	RoleGroups []string `protobuf:"bytes,1,rep,name=role_groups,json=roleGroups,proto3" json:"role_groups,omitempty"`
+	// Role group per player, keyed by Minecraft UUID. An empty group leaves the player in no role group.
+	Roles         map[string]string `protobuf:"bytes,2,rep,name=roles,proto3" json:"roles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetPlayerRolesRequest) Reset() {
+	*x = SetPlayerRolesRequest{}
+	mi := &file_lania_shell_v1_permission_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetPlayerRolesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetPlayerRolesRequest) ProtoMessage() {}
+
+func (x *SetPlayerRolesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_lania_shell_v1_permission_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetPlayerRolesRequest.ProtoReflect.Descriptor instead.
+func (*SetPlayerRolesRequest) Descriptor() ([]byte, []int) {
+	return file_lania_shell_v1_permission_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *SetPlayerRolesRequest) GetRoleGroups() []string {
+	if x != nil {
+		return x.RoleGroups
+	}
+	return nil
+}
+
+func (x *SetPlayerRolesRequest) GetRoles() map[string]string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+type SetPlayerRolesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetPlayerRolesResponse) Reset() {
+	*x = SetPlayerRolesResponse{}
+	mi := &file_lania_shell_v1_permission_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetPlayerRolesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetPlayerRolesResponse) ProtoMessage() {}
+
+func (x *SetPlayerRolesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_lania_shell_v1_permission_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetPlayerRolesResponse.ProtoReflect.Descriptor instead.
+func (*SetPlayerRolesResponse) Descriptor() ([]byte, []int) {
+	return file_lania_shell_v1_permission_proto_rawDescGZIP(), []int{8}
+}
+
 var File_lania_shell_v1_permission_proto protoreflect.FileDescriptor
 
 const file_lania_shell_v1_permission_proto_rawDesc = "" +
@@ -353,11 +443,21 @@ const file_lania_shell_v1_permission_proto_rawDesc = "" +
 	"\x16SetPlayerPrefixRequest\x12%\n" +
 	"\x0eminecraft_uuid\x18\x01 \x01(\tR\rminecraftUuid\x12\x16\n" +
 	"\x06prefix\x18\x02 \x01(\tR\x06prefix\"\x19\n" +
-	"\x17SetPlayerPrefixResponse2\xcb\x02\n" +
+	"\x17SetPlayerPrefixResponse\"\xba\x01\n" +
+	"\x15SetPlayerRolesRequest\x12\x1f\n" +
+	"\vrole_groups\x18\x01 \x03(\tR\n" +
+	"roleGroups\x12F\n" +
+	"\x05roles\x18\x02 \x03(\v20.lania.shell.v1.SetPlayerRolesRequest.RolesEntryR\x05roles\x1a8\n" +
+	"\n" +
+	"RolesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x18\n" +
+	"\x16SetPlayerRolesResponse2\xac\x03\n" +
 	"\x11PermissionService\x12b\n" +
 	"\x0fGetPlayerGroups\x12&.lania.shell.v1.GetPlayerGroupsRequest\x1a'.lania.shell.v1.GetPlayerGroupsResponse\x12n\n" +
 	"\x13ListPlayersByGroups\x12*.lania.shell.v1.ListPlayersByGroupsRequest\x1a+.lania.shell.v1.ListPlayersByGroupsResponse\x12b\n" +
-	"\x0fSetPlayerPrefix\x12&.lania.shell.v1.SetPlayerPrefixRequest\x1a'.lania.shell.v1.SetPlayerPrefixResponseB\xc1\x01\n" +
+	"\x0fSetPlayerPrefix\x12&.lania.shell.v1.SetPlayerPrefixRequest\x1a'.lania.shell.v1.SetPlayerPrefixResponse\x12_\n" +
+	"\x0eSetPlayerRoles\x12%.lania.shell.v1.SetPlayerRolesRequest\x1a&.lania.shell.v1.SetPlayerRolesResponseB\xc1\x01\n" +
 	"\x12com.lania.shell.v1B\x0fPermissionProtoP\x01Z@github.com/lania-smp/backend/internal/gen/lania/shell/v1;shellv1\xa2\x02\x03LSX\xaa\x02\x0eLania.Shell.V1\xca\x02\x0eLania\\Shell\\V1\xe2\x02\x1aLania\\Shell\\V1\\GPBMetadata\xea\x02\x10Lania::Shell::V1b\x06proto3"
 
 var (
@@ -372,7 +472,7 @@ func file_lania_shell_v1_permission_proto_rawDescGZIP() []byte {
 	return file_lania_shell_v1_permission_proto_rawDescData
 }
 
-var file_lania_shell_v1_permission_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_lania_shell_v1_permission_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_lania_shell_v1_permission_proto_goTypes = []any{
 	(*GetPlayerGroupsRequest)(nil),      // 0: lania.shell.v1.GetPlayerGroupsRequest
 	(*GetPlayerGroupsResponse)(nil),     // 1: lania.shell.v1.GetPlayerGroupsResponse
@@ -381,22 +481,28 @@ var file_lania_shell_v1_permission_proto_goTypes = []any{
 	(*ListPlayersByGroupsResponse)(nil), // 4: lania.shell.v1.ListPlayersByGroupsResponse
 	(*SetPlayerPrefixRequest)(nil),      // 5: lania.shell.v1.SetPlayerPrefixRequest
 	(*SetPlayerPrefixResponse)(nil),     // 6: lania.shell.v1.SetPlayerPrefixResponse
-	nil,                                 // 7: lania.shell.v1.GetPlayerGroupsResponse.GroupsEntry
+	(*SetPlayerRolesRequest)(nil),       // 7: lania.shell.v1.SetPlayerRolesRequest
+	(*SetPlayerRolesResponse)(nil),      // 8: lania.shell.v1.SetPlayerRolesResponse
+	nil,                                 // 9: lania.shell.v1.GetPlayerGroupsResponse.GroupsEntry
+	nil,                                 // 10: lania.shell.v1.SetPlayerRolesRequest.RolesEntry
 }
 var file_lania_shell_v1_permission_proto_depIdxs = []int32{
-	7, // 0: lania.shell.v1.GetPlayerGroupsResponse.groups:type_name -> lania.shell.v1.GetPlayerGroupsResponse.GroupsEntry
-	2, // 1: lania.shell.v1.GetPlayerGroupsResponse.GroupsEntry.value:type_name -> lania.shell.v1.PlayerGroups
-	0, // 2: lania.shell.v1.PermissionService.GetPlayerGroups:input_type -> lania.shell.v1.GetPlayerGroupsRequest
-	3, // 3: lania.shell.v1.PermissionService.ListPlayersByGroups:input_type -> lania.shell.v1.ListPlayersByGroupsRequest
-	5, // 4: lania.shell.v1.PermissionService.SetPlayerPrefix:input_type -> lania.shell.v1.SetPlayerPrefixRequest
-	1, // 5: lania.shell.v1.PermissionService.GetPlayerGroups:output_type -> lania.shell.v1.GetPlayerGroupsResponse
-	4, // 6: lania.shell.v1.PermissionService.ListPlayersByGroups:output_type -> lania.shell.v1.ListPlayersByGroupsResponse
-	6, // 7: lania.shell.v1.PermissionService.SetPlayerPrefix:output_type -> lania.shell.v1.SetPlayerPrefixResponse
-	5, // [5:8] is the sub-list for method output_type
-	2, // [2:5] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	9,  // 0: lania.shell.v1.GetPlayerGroupsResponse.groups:type_name -> lania.shell.v1.GetPlayerGroupsResponse.GroupsEntry
+	10, // 1: lania.shell.v1.SetPlayerRolesRequest.roles:type_name -> lania.shell.v1.SetPlayerRolesRequest.RolesEntry
+	2,  // 2: lania.shell.v1.GetPlayerGroupsResponse.GroupsEntry.value:type_name -> lania.shell.v1.PlayerGroups
+	0,  // 3: lania.shell.v1.PermissionService.GetPlayerGroups:input_type -> lania.shell.v1.GetPlayerGroupsRequest
+	3,  // 4: lania.shell.v1.PermissionService.ListPlayersByGroups:input_type -> lania.shell.v1.ListPlayersByGroupsRequest
+	5,  // 5: lania.shell.v1.PermissionService.SetPlayerPrefix:input_type -> lania.shell.v1.SetPlayerPrefixRequest
+	7,  // 6: lania.shell.v1.PermissionService.SetPlayerRoles:input_type -> lania.shell.v1.SetPlayerRolesRequest
+	1,  // 7: lania.shell.v1.PermissionService.GetPlayerGroups:output_type -> lania.shell.v1.GetPlayerGroupsResponse
+	4,  // 8: lania.shell.v1.PermissionService.ListPlayersByGroups:output_type -> lania.shell.v1.ListPlayersByGroupsResponse
+	6,  // 9: lania.shell.v1.PermissionService.SetPlayerPrefix:output_type -> lania.shell.v1.SetPlayerPrefixResponse
+	8,  // 10: lania.shell.v1.PermissionService.SetPlayerRoles:output_type -> lania.shell.v1.SetPlayerRolesResponse
+	7,  // [7:11] is the sub-list for method output_type
+	3,  // [3:7] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_lania_shell_v1_permission_proto_init() }
@@ -410,7 +516,7 @@ func file_lania_shell_v1_permission_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_lania_shell_v1_permission_proto_rawDesc), len(file_lania_shell_v1_permission_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
@@ -326,7 +327,6 @@ INSERT INTO profiles (
 	mc_uuid = VALUES(mc_uuid),
   mc_username = VALUES(mc_username),
 	owner_user_id = COALESCE(owner_user_id, VALUES(owner_user_id)),
-	role = VALUES(role),
 	is_slim = VALUES(is_slim),
 	name_color_id = VALUES(name_color_id),
 	updated_at = NOW(),
@@ -438,4 +438,72 @@ func (q *queries) FindProfileByMinecraftUUID(ctx context.Context, minecraftUUID 
 	row := q.x.QueryRowContext(ctx, findProfileByMinecraftUUID, minecraftUUID)
 	profile, err := scanProfileRow(row)
 	return profile, err
+}
+
+const setProfileRole = `
+UPDATE profiles
+SET role = ?, role_updated_at = NOW(), updated_at = NOW(), updated_by = ?
+WHERE id = ?
+`
+
+// SetProfileRole stores the role and marks the moment, so role sync picks the change up.
+func (q *queries) SetProfileRole(ctx context.Context, profileID uuid.UUID, role domain.Role, updatedBy *uuid.UUID) error {
+	_, err := q.x.ExecContext(ctx, setProfileRole, role, updatedBy, profileID)
+	return err
+}
+
+// The cutoff is computed by the database, so it uses the same clock as role_updated_at.
+const findProfileRolesChangedSince = `
+SELECT mc_uuid, role
+FROM profiles
+WHERE role_updated_at >= DATE_SUB(NOW(), INTERVAL ? SECOND)
+`
+
+func (q *queries) FindProfileRolesChangedSince(ctx context.Context, since time.Duration) ([]*domain.ProfileRole, error) {
+	rows, err := q.x.QueryContext(ctx, findProfileRolesChangedSince, int64(since.Seconds()))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	roles := make([]*domain.ProfileRole, 0)
+	for rows.Next() {
+		var profileRole domain.ProfileRole
+		if err := rows.Scan(&profileRole.MinecraftUUID, &profileRole.Role); err != nil {
+			return nil, err
+		}
+		roles = append(roles, &profileRole)
+	}
+	return roles, rows.Err()
+}
+
+const findMinecraftUUIDsByRoles = `
+SELECT mc_uuid FROM profiles WHERE role IN (%s)
+`
+
+func (q *queries) FindMinecraftUUIDsByRoles(ctx context.Context, roles []domain.Role) (uuid.UUIDs, error) {
+	mcUUIDs := make(uuid.UUIDs, 0)
+	if len(roles) == 0 {
+		return mcUUIDs, nil
+	}
+
+	args := make([]any, len(roles))
+	for i, role := range roles {
+		args[i] = string(role)
+	}
+	placeholders := strings.TrimSuffix(strings.Repeat("?, ", len(roles)), ", ")
+	rows, err := q.x.QueryContext(ctx, fmt.Sprintf(findMinecraftUUIDsByRoles, placeholders), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var mcUUID uuid.UUID
+		if err := rows.Scan(&mcUUID); err != nil {
+			return nil, err
+		}
+		mcUUIDs = append(mcUUIDs, mcUUID)
+	}
+	return mcUUIDs, rows.Err()
 }

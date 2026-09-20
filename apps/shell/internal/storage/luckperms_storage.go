@@ -10,6 +10,15 @@ import (
 	"github.com/lania-smp/shell/internal/config"
 )
 
+// PermissionReplacement swaps permission nodes of one player.
+type PermissionReplacement struct {
+	MinecraftUUID uuid.UUID
+	// Remove lists the nodes deleted from the player.
+	Remove []string
+	// Add lists the nodes the player has after the swap.
+	Add []string
+}
+
 // LuckpermsStorage reads and writes LuckPerms user permission nodes.
 type LuckpermsStorage interface {
 	// FindPermissionsWithPrefix returns permission nodes starting with nodePrefix, keyed by player.
@@ -18,6 +27,8 @@ type LuckpermsStorage interface {
 	FindPlayersWithPermissions(ctx context.Context, permissions []string) (uuid.UUIDs, error)
 	// ReplacePermissionsWithPrefix deletes the player's nodes starting with nodePrefix and inserts node.
 	ReplacePermissionsWithPrefix(ctx context.Context, mcUUID uuid.UUID, nodePrefix string, node string) error
+	// ReplacePermissions applies every replacement in one transaction. A node in both lists stays once.
+	ReplacePermissions(ctx context.Context, replacements []PermissionReplacement) error
 }
 
 type luckpermsStorage struct {
@@ -117,5 +128,39 @@ func (s *luckpermsStorage) ReplacePermissionsWithPrefix(ctx context.Context, mcU
 		}
 		_, err := tx.ExecContext(ctx, fmt.Sprintf(insertPermission, tableName), mcUUID.String(), node)
 		return err
+	})
+}
+
+const deletePermissions = `
+DELETE FROM %s
+WHERE uuid = ? AND permission IN (%s)
+`
+
+func (s *luckpermsStorage) ReplacePermissions(ctx context.Context, replacements []PermissionReplacement) error {
+	tableName := config.GetLuckpermsUserPermissionsTableName()
+	return beginTx(ctx, s.db, func(tx *stdsql.Tx) error {
+		for _, replacement := range replacements {
+			// Nodes to add are deleted too, so applying a replacement twice leaves one row per node.
+			remove := append(append([]string{}, replacement.Remove...), replacement.Add...)
+			if len(remove) > 0 {
+				placeholders := make([]string, len(remove))
+				args := make([]any, 0, len(remove)+1)
+				args = append(args, replacement.MinecraftUUID.String())
+				for i, node := range remove {
+					placeholders[i] = "?"
+					args = append(args, node)
+				}
+				query := fmt.Sprintf(deletePermissions, tableName, strings.Join(placeholders, ", "))
+				if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+					return err
+				}
+			}
+			for _, node := range replacement.Add {
+				if _, err := tx.ExecContext(ctx, fmt.Sprintf(insertPermission, tableName), replacement.MinecraftUUID.String(), node); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
 	})
 }

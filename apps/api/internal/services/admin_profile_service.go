@@ -14,6 +14,8 @@ type AdminProfileService interface {
 	TransferProfile(ctx context.Context, profileID uuid.UUID, email string) (*domain.Profile, *domain.User, error)
 	// ReleaseProfile removes the owner of the profile, so anybody can claim it.
 	ReleaseProfile(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)
+	// SetProfileRole gives the profile the role. Setting the role it already has pushes the role to the servers again.
+	SetProfileRole(ctx context.Context, profileID uuid.UUID, role domain.Role) (*domain.Profile, *domain.User, error)
 }
 
 type adminProfileService struct {
@@ -67,4 +69,20 @@ func (s *adminProfileService) TransferProfile(ctx context.Context, profileID uui
 
 func (s *adminProfileService) ReleaseProfile(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error) {
 	return s.profileService.SetProfileOwner(ctx, profileID, nil)
+}
+
+func (s *adminProfileService) SetProfileRole(ctx context.Context, profileID uuid.UUID, role domain.Role) (*domain.Profile, *domain.User, error) {
+	profile, err := s.profileService.SetProfileRole(ctx, profileID, role)
+	if err != nil {
+		return nil, nil, err
+	}
+	if profile.OwnerUserID == nil {
+		return profile, nil, nil
+	}
+
+	owner, err := s.adminUserService.GetUserByID(ctx, *profile.OwnerUserID)
+	if err != nil {
+		return nil, nil, err
+	}
+	return profile, owner, nil
 }

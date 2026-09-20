@@ -361,21 +361,9 @@ func (s *adminGrantService) updatePrefix(ctx context.Context, profileID uuid.UUI
 		return err
 	}
 
-	prefixes, err := s.profileCosmeticsService.GetProfilePrefixes(ctx, profileID)
+	formattedPrefix, err := s.profileCosmeticsService.GetProfileChatPrefix(ctx, profile)
 	if err != nil {
 		return err
 	}
-
-	var glythPrefix, specialPrefix *domain.NamePrefix
-	for _, prefix := range prefixes {
-		switch prefix.Type {
-		case domain.ProfilePrefixTypeGlyth:
-			glythPrefix = prefix.NamePrefix
-		case domain.ProfilePrefixTypeSpecial:
-			specialPrefix = prefix.NamePrefix
-		}
-	}
-
-	formattedPrefix := s.profileCosmeticsService.GetProfileFullPrefix(ctx, profile.NameColor, glythPrefix, specialPrefix)
 	return s.minecraftService.SetPrefixByMinecraftUUID(ctx, profile.MinecraftUUID, formattedPrefix)
 }

@@ -1,3 +1,4 @@
+import ProfileResyncCard from '@/components/profile-resync-card'
 import { Button } from '@/components/ui/button'
 import { requireAdmin } from '@/lib/admin'
 import {
@@ -14,6 +15,7 @@ import { notFound } from 'next/navigation'
 import AdminShell from '../../admin-shell'
 import GrantsCard from './grants-card'
 import OwnerCard from './owner-card'
+import RoleCard from './role-card'
 
 type Props = {
   params: Promise<{
@@ -64,6 +66,8 @@ export default async function AdminProfilePage({ params }: Props) {
         <p className="text-muted-foreground font-mono text-xs">{profile.id}</p>
       </div>
       <OwnerCard profileId={profile.id} owner={profile.owner} locale={locale} />
+      <RoleCard profileId={profile.id} role={profile.role} />
+      <ProfileResyncCard profileId={profile.id} asAdmin />
       <GrantsCard
         profileId={profile.id}
         grants={grants}

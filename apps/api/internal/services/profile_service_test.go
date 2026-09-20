@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	stdsql "database/sql"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
@@ -10,36 +12,69 @@ import (
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/storage"
 	sql "github.com/lania-smp/backend/internal/storage/main"
+	"github.com/lania-smp/backend/internal/utils"
 )
 
 type stubMinecraftService struct {
 	MinecraftService
-	online     uuid.UUIDs
-	staff      uuid.UUIDs
-	groups     map[uuid.UUID][]string
-	err        error
-	lastGroup  []string
-	groupCalls int
-}
-
-func (s *stubMinecraftService) GetGroupsByMinecraftUUIDs(context.Context, uuid.UUIDs) (map[uuid.UUID][]string, error) {
-	s.groupCalls++
-	return s.groups, s.err
+	online uuid.UUIDs
+	roles  map[uuid.UUID]domain.Role
+	err    error
+	calls  int
 }
 
 func (s *stubMinecraftService) ListOnlineMinecraftUUIDs(context.Context) (uuid.UUIDs, error) {
 	return s.online, s.err
 }
 
-func (s *stubMinecraftService) ListMinecraftUUIDsByGroups(_ context.Context, groups []string) (uuid.UUIDs, error) {
-	s.lastGroup = groups
-	return s.staff, s.err
+func (s *stubMinecraftService) SetPlayerRoles(_ context.Context, roles map[uuid.UUID]domain.Role) error {
+	s.calls++
+	s.roles = roles
+	return s.err
+}
+
+// stubRoleQueries keeps profile roles in memory.
+type stubRoleQueries struct {
+	sql.Queries
+	profiles  map[uuid.UUID]*domain.Profile
+	staff     uuid.UUIDs
+	staffErr  error
+	lastRoles []domain.Role
+	changed   []*domain.ProfileRole
+	changeErr error
+	lastSince time.Duration
+	writes    int
+}
+
+func (q *stubRoleQueries) FindProfileByID(_ context.Context, id uuid.UUID) (*domain.Profile, error) {
+	if profile, ok := q.profiles[id]; ok {
+		copied := *profile
+		return &copied, nil
+	}
+	return nil, stdsql.ErrNoRows
+}
+
+func (q *stubRoleQueries) SetProfileRole(_ context.Context, id uuid.UUID, role domain.Role, _ *uuid.UUID) error {
+	q.writes++
+	q.profiles[id].Role = role
+	return nil
+}
+
+func (q *stubRoleQueries) FindMinecraftUUIDsByRoles(_ context.Context, roles []domain.Role) (uuid.UUIDs, error) {
+	q.lastRoles = roles
+	return q.staff, q.staffErr
+}
+
+func (q *stubRoleQueries) FindProfileRolesChangedSince(_ context.Context, since time.Duration) ([]*domain.ProfileRole, error) {
+	q.lastSince = since
+	return q.changed, q.changeErr
 }
 
 func TestFilterMinecraftUUIDs(t *testing.T) {
 	first, second, third := uuid.New(), uuid.New(), uuid.New()
-	minecraft := &stubMinecraftService{online: uuid.UUIDs{first, second}, staff: uuid.UUIDs{second, third}}
-	service := &profileService{minecraftService: minecraft}
+	minecraft := &stubMinecraftService{online: uuid.UUIDs{first, second}}
+	queries := &stubRoleQueries{staff: uuid.UUIDs{second, third}}
+	service := &profileService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
 	ctx := context.Background()
 
 	only, err := service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{Search: "a"})
@@ -56,8 +91,8 @@ func TestFilterMinecraftUUIDs(t *testing.T) {
 	if err != nil || only == nil || len(*only) != 2 {
 		t.Errorf("staff = %v %v, want 2 players", only, err)
 	}
-	if want := []string{"owner", "admin", "mod"}; len(minecraft.lastGroup) != 3 || minecraft.lastGroup[0] != want[0] || minecraft.lastGroup[1] != want[1] || minecraft.lastGroup[2] != want[2] {
-		t.Errorf("groups = %v, want %v", minecraft.lastGroup, want)
+	if want := []domain.Role{domain.RoleOwner, domain.RoleAdmin, domain.RoleModerator}; len(queries.lastRoles) != 3 || queries.lastRoles[0] != want[0] || queries.lastRoles[1] != want[1] || queries.lastRoles[2] != want[2] {
+		t.Errorf("roles = %v, want %v", queries.lastRoles, want)
 	}
 
 	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true, StaffOnly: true})
@@ -65,7 +100,7 @@ func TestFilterMinecraftUUIDs(t *testing.T) {
 		t.Errorf("online staff = %v %v, want only the second player", only, err)
 	}
 
-	minecraft.staff = uuid.UUIDs{third}
+	queries.staff = uuid.UUIDs{third}
 	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true, StaffOnly: true})
 	if err != nil || only == nil || len(*only) != 0 {
 		t.Errorf("no online staff = %v %v, want an empty restriction", only, err)
@@ -73,87 +108,45 @@ func TestFilterMinecraftUUIDs(t *testing.T) {
 
 	minecraft.err = errors.New("shell down")
 	if _, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true}); err == nil {
-		t.Error("filter must fail when the server is unreachable")
+		t.Error("online filter must fail when the server is unreachable")
+	}
+	if only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{StaffOnly: true}); err != nil || only == nil {
+		t.Errorf("staff = %v %v, want the staff filter to work without the server", only, err)
 	}
 }
 
-type stubCache struct {
-	storage.CacheStorage
-	values map[string]string
-}
-
-func (c *stubCache) GetKey(_ context.Context, key string) (string, error) {
-	value, ok := c.values[key]
-	if !ok {
-		return "", errors.New("cache miss")
-	}
-	return value, nil
-}
-
-func (c *stubCache) SetKey(_ context.Context, key string, value interface{}, _ time.Duration) error {
-	c.values[key] = value.(string)
-	return nil
-}
-
-func TestApplyProfileRoles(t *testing.T) {
-	admin, cached, unknown := uuid.New(), uuid.New(), uuid.New()
-	newProfiles := func() []*domain.Profile {
-		return []*domain.Profile{
-			{MinecraftUUID: admin, Role: domain.RolePlayer},
-			{MinecraftUUID: cached, Role: domain.RolePlayer},
-			{MinecraftUUID: unknown, Role: domain.RoleModerator},
-		}
-	}
+func TestSetProfileRole(t *testing.T) {
 	ctx := context.Background()
+	profile := &domain.Profile{ID: uuid.New(), Role: domain.RolePlayer}
+	queries := &stubRoleQueries{profiles: map[uuid.UUID]*domain.Profile{profile.ID: profile}}
+	service := &profileService{storage: &stubMainStorage{queries: queries}}
 
-	t.Run("live roles win and are read in one call", func(t *testing.T) {
-		minecraft := &stubMinecraftService{groups: map[uuid.UUID][]string{admin: {"default", "admin"}, unknown: {"default"}}}
-		cache := &stubCache{values: map[string]string{profileRoleCacheKey(cached): "owner"}}
-		service := &profileService{minecraftService: minecraft, cache: cache}
-
-		profiles := newProfiles()
-		service.ApplyProfileRoles(ctx, profiles)
-
-		if profiles[0].Role != domain.RoleAdmin || profiles[1].Role != domain.RoleOwner || profiles[2].Role != domain.RolePlayer {
-			t.Errorf("roles = %v %v %v, want admin owner player", profiles[0].Role, profiles[1].Role, profiles[2].Role)
-		}
-		if minecraft.groupCalls != 1 {
-			t.Errorf("server calls = %d, want 1 for all uncached profiles", minecraft.groupCalls)
-		}
-		if cache.values[profileRoleCacheKey(admin)] != "admin" {
-			t.Errorf("live role must be cached, got %v", cache.values)
+	t.Run("stores a valid role", func(t *testing.T) {
+		got, err := service.SetProfileRole(ctx, profile.ID, domain.RoleModerator)
+		if err != nil || got.Role != domain.RoleModerator || queries.profiles[profile.ID].Role != domain.RoleModerator {
+			t.Fatalf("got %+v and error %v, want the mod role stored", got, err)
 		}
 	})
 
-	t.Run("cached roles skip the server", func(t *testing.T) {
-		minecraft := &stubMinecraftService{}
-		cache := &stubCache{values: map[string]string{profileRoleCacheKey(admin): "admin"}}
-		service := &profileService{minecraftService: minecraft, cache: cache}
-
-		profiles := []*domain.Profile{{MinecraftUUID: admin, Role: domain.RolePlayer}}
-		service.ApplyProfileRoles(ctx, profiles)
-
-		if profiles[0].Role != domain.RoleAdmin || minecraft.groupCalls != 0 {
-			t.Errorf("role = %v, server calls = %d, want admin without calls", profiles[0].Role, minecraft.groupCalls)
+	t.Run("the same role is written again to push it again", func(t *testing.T) {
+		queries.writes = 0
+		if _, err := service.SetProfileRole(ctx, profile.ID, domain.RoleModerator); err != nil || queries.writes != 1 {
+			t.Fatalf("error %v after %d writes, want 1 write", err, queries.writes)
 		}
 	})
 
-	t.Run("stored roles are kept when the server is down", func(t *testing.T) {
-		minecraft := &stubMinecraftService{err: errors.New("shell down")}
-		cache := &stubCache{values: map[string]string{}}
-		service := &profileService{minecraftService: minecraft, cache: cache}
-
-		profiles := []*domain.Profile{
-			{MinecraftUUID: admin, Role: domain.RoleAdmin},
-			{MinecraftUUID: unknown, Role: domain.RoleModerator},
+	t.Run("an unknown role is refused", func(t *testing.T) {
+		queries.writes = 0
+		_, err := service.SetProfileRole(ctx, profile.ID, "vip")
+		if utils.MapCustomErrorToHttpStatus(err) != http.StatusBadRequest || queries.writes != 0 {
+			t.Fatalf("error %v after %d writes, want bad request and no writes", err, queries.writes)
 		}
-		service.ApplyProfileRoles(ctx, profiles)
+	})
 
-		if profiles[0].Role != domain.RoleAdmin || profiles[1].Role != domain.RoleModerator {
-			t.Errorf("roles = %v %v, want the stored admin and mod", profiles[0].Role, profiles[1].Role)
-		}
-		if len(cache.values) != 0 {
-			t.Errorf("stored roles must not be cached as live ones, got %v", cache.values)
+	t.Run("an unknown profile is not found", func(t *testing.T) {
+		_, err := service.SetProfileRole(ctx, uuid.New(), domain.RoleAdmin)
+		if utils.MapCustomErrorToHttpStatus(err) != http.StatusNotFound {
+			t.Fatalf("error %v, want not found", err)
 		}
 	})
 }

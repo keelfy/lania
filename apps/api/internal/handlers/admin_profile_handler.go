@@ -16,6 +16,7 @@ type AdminProfileHandler interface {
 	GetProfileDetails(w http.ResponseWriter, r *http.Request)
 	TransferProfile(w http.ResponseWriter, r *http.Request)
 	ReleaseProfile(w http.ResponseWriter, r *http.Request)
+	SetProfileRole(w http.ResponseWriter, r *http.Request)
 }
 
 type adminProfileHandler struct {
@@ -114,4 +115,27 @@ func (h *adminProfileHandler) ReleaseProfile(w http.ResponseWriter, r *http.Requ
 	}
 
 	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentAdminProfileDetails(profile, nil))
+}
+
+func (h *adminProfileHandler) SetProfileRole(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	cmd, err := binders.BindSetProfileRole(r)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	if err := cmd.Validate(); err != nil {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("", err))
+		return
+	}
+
+	profile, owner, err := h.adminProfileService.SetProfileRole(ctx, cmd.ProfileID, cmd.Role)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentAdminProfileDetails(profile, owner))
 }

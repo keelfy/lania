@@ -150,7 +150,7 @@ func minecraftUUIDsOf(profiles []*domain.Profile) uuid.UUIDs {
 	return mcUUIDs
 }
 
-// presentPublicProfiles adds online status, role and Mojang UUID to profiles. Playtimes are in milliseconds.
+// presentPublicProfiles adds online status and Mojang UUID to profiles. Playtimes are in milliseconds.
 func (h *profileHandler) presentPublicProfiles(ctx context.Context, profiles []*domain.Profile, playtimes map[uuid.UUID]int64) []*responses.PublicProfile {
 	mcUUIDs := minecraftUUIDsOf(profiles)
 
@@ -165,8 +165,6 @@ func (h *profileHandler) presentPublicProfiles(ctx context.Context, profiles []*
 		logger.Errorf(ctx, "[MOJANG] Failed to get mojang uuids by minecraft uuids: %v", err)
 		mojangUUIDs = make(map[uuid.UUID]uuid.UUID)
 	}
-
-	h.profileService.ApplyProfileRoles(ctx, profiles)
 
 	profileIDs := make(uuid.UUIDs, len(profiles))
 	for i, profile := range profiles {
@@ -365,8 +363,6 @@ func (h *profileHandler) writeProfileDetails(w http.ResponseWriter, r *http.Requ
 	}
 
 	glythPrefix, specialPrefix := splitProfilePrefixes(profilePrefixes)
-
-	h.profileService.ApplyProfileRoles(ctx, []*domain.Profile{profile})
 
 	cosmetics := presenter.PresentProfileCosmetics(profile.NameColor, glythPrefix, specialPrefix)
 	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), seasonsPlaytimes[profile.MinecraftUUID], isOnline, isModelSlim, cosmetics)

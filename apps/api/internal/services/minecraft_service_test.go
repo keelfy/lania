@@ -16,6 +16,8 @@ type fakeShell struct {
 	err       error
 	prefixes  []string
 	whitelist int
+	roles     map[uuid.UUID]string
+	roleGroup []string
 }
 
 func (s *fakeShell) ListOnlinePlayers(context.Context) (uuid.UUIDs, error) {
@@ -39,6 +41,12 @@ func (s *fakeShell) GetOnlineStatus(_ context.Context, mcUUIDs uuid.UUIDs) (map[
 
 func (s *fakeShell) SetPlayerPrefix(_ context.Context, _ uuid.UUID, prefix string) error {
 	s.prefixes = append(s.prefixes, prefix)
+	return s.err
+}
+
+func (s *fakeShell) SetPlayerRoles(_ context.Context, roleGroups []string, roles map[uuid.UUID]string) error {
+	s.roleGroup = roleGroups
+	s.roles = roles
 	return s.err
 }
 
@@ -154,5 +162,39 @@ func TestMinecraftService_WhitelistUsesShellOfSeason(t *testing.T) {
 	}
 	if pool["a:1"].whitelist != 1 || pool["b:1"].whitelist != 0 {
 		t.Fatalf("whitelist calls a=%d b=%d, want 1 0; a season without shell is skipped", pool["a:1"].whitelist, pool["b:1"].whitelist)
+	}
+}
+
+func TestMinecraftService_RolesGoToEveryActiveServer(t *testing.T) {
+	admin, player := uuid.New(), uuid.New()
+	pool := fakeShellPool{"a:1": {}, "b:1": {}, "c:1": {}}
+	seasons := &fakeSeasons{seasons: []*domain.Season{season("a:1", true), season("b:1", true), season("c:1", false)}}
+	service := NewMinecraftService(seasons, pool)
+	ctx := context.Background()
+
+	roles := map[uuid.UUID]domain.Role{admin: domain.RoleAdmin, player: domain.RolePlayer}
+	if err := service.SetPlayerRoles(ctx, roles); err != nil {
+		t.Fatal(err)
+	}
+	for _, address := range []string{"a:1", "b:1"} {
+		shell := pool[address]
+		if shell.roles[admin] != "admin" || shell.roles[player] != "" || len(shell.roles) != 2 {
+			t.Errorf("%s roles = %v, want admin and a player without group", address, shell.roles)
+		}
+		if len(shell.roleGroup) != 3 || shell.roleGroup[0] != "owner" || shell.roleGroup[1] != "admin" || shell.roleGroup[2] != "mod" {
+			t.Errorf("%s role groups = %v, want owner admin mod", address, shell.roleGroup)
+		}
+	}
+	if pool["c:1"].roles != nil {
+		t.Error("an inactive season must not get roles")
+	}
+
+	pool["a:1"].err = errors.New("down")
+	pool["b:1"].roles = nil
+	if err := service.SetPlayerRoles(ctx, roles); err == nil {
+		t.Fatal("want an error when a server rejects the roles")
+	}
+	if pool["b:1"].roles == nil {
+		t.Fatal("the other server must still get the roles")
 	}
 }

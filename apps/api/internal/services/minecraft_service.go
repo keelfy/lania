@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/clients"
-	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/utils"
@@ -18,17 +17,17 @@ var errSeasonHasNoShell = errors.New("season has no shell address")
 // MinecraftService reads and changes state of the season servers through their shell services.
 //
 // Online status, roles and chat prefixes belong to the player, not to a season. Online status is read from
-// every active server. A role is the same on every server, so it is read from the primary one, and a prefix is
-// written to every active server. A whitelist and playtime belong to one season and use its own shell.
+// every active server. A role and a prefix are written to every active server. A whitelist and playtime
+// belong to one season and use its own shell.
 type MinecraftService interface {
 	// GetOnlineStatusByMinecraftUUIDs marks a player online when the player is on at least one active server.
 	GetOnlineStatusByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
 	// ListOnlineMinecraftUUIDs returns players that are online on at least one active server.
 	ListOnlineMinecraftUUIDs(ctx context.Context) (uuid.UUIDs, error)
-	ListMinecraftUUIDsByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error)
-	GetGroupsByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error)
 	// SetPrefixByMinecraftUUID writes the prefix to every active server.
 	SetPrefixByMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, prefix string) error
+	// SetPlayerRoles writes the roles to every active server. Every server is tried, even when one fails.
+	SetPlayerRoles(ctx context.Context, roles map[uuid.UUID]domain.Role) error
 	// AddToWhitelist does nothing when the season has no shell address, because it has no server yet.
 	AddToWhitelist(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
 	// RemoveFromWhitelist does nothing when the season has no shell address, because it has no server yet.
@@ -148,39 +147,6 @@ func (s *minecraftService) ListOnlineMinecraftUUIDs(ctx context.Context) (uuid.U
 	return online, nil
 }
 
-func (s *minecraftService) ListMinecraftUUIDsByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error) {
-	api, err := s.primaryShell(ctx)
-	if err != nil {
-		return nil, err
-	}
-	members, err := api.ListPlayersByGroups(ctx, groups)
-	if err != nil {
-		return nil, utils.NewInternalServerError("failed to list minecraft uuids by groups", err)
-	}
-	return members, nil
-}
-
-func (s *minecraftService) GetGroupsByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error) {
-	api, err := s.primaryShell(ctx)
-	if err != nil {
-		return nil, err
-	}
-	groups, err := api.GetPlayerGroups(ctx, mcUUIDs)
-	if err != nil {
-		return nil, utils.NewInternalServerError("failed to get groups by minecraft uuids", err)
-	}
-	return groups, nil
-}
-
-// primaryShell returns the shell that answers for data that is the same on every server.
-func (s *minecraftService) primaryShell(ctx context.Context) (clients.ShellAPI, error) {
-	api, err := s.seasonShell(ctx, config.GetPrimarySeasonID())
-	if errors.Is(err, errSeasonHasNoShell) {
-		return nil, utils.NewInternalServerError("primary season has no shell address", err)
-	}
-	return api, err
-}
-
 func (s *minecraftService) SetPrefixByMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, prefix string) error {
 	apis, err := s.activeShells(ctx)
 	if err != nil {
@@ -196,6 +162,39 @@ func (s *minecraftService) SetPrefixByMinecraftUUID(ctx context.Context, mcUUID 
 	}
 	if len(failures) > 0 {
 		return utils.NewInternalServerError("failed to set prefix by minecraft uuid", errors.Join(failures...))
+	}
+	return nil
+}
+
+func (s *minecraftService) SetPlayerRoles(ctx context.Context, roles map[uuid.UUID]domain.Role) error {
+	apis, err := s.activeShells(ctx)
+	if err != nil {
+		return err
+	}
+
+	// A staff role is a group on the server, a player has no group.
+	roleGroups := make([]string, len(domain.StaffRoles))
+	for i, role := range domain.StaffRoles {
+		roleGroups[i] = string(role)
+	}
+	groups := make(map[uuid.UUID]string, len(roles))
+	for mcUUID, role := range roles {
+		group := ""
+		if role != domain.RolePlayer {
+			group = string(role)
+		}
+		groups[mcUUID] = group
+	}
+
+	// Every server is tried, so one server down does not keep the others on the old roles.
+	var failures []error
+	for _, api := range apis {
+		if err := api.SetPlayerRoles(ctx, roleGroups, groups); err != nil {
+			failures = append(failures, err)
+		}
+	}
+	if len(failures) > 0 {
+		return utils.NewInternalServerError("failed to set player roles", errors.Join(failures...))
 	}
 	return nil
 }

@@ -1,3 +1,4 @@
+import ProfileResyncCard from '@/components/profile-resync-card'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -372,6 +373,7 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                     </div>
                   </CardContent>
                 </Card>
+                <ProfileResyncCard profileId={selectedProfile.id} />
               </>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-2">

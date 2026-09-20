@@ -2,9 +2,13 @@ package rpc
 
 import (
 	"context"
+	"errors"
 
+	"github.com/google/uuid"
 	shellv1 "github.com/lania-smp/shell/internal/gen/lania/shell/v1"
 	"github.com/lania-smp/shell/internal/services"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type PermissionHandler struct {
@@ -53,4 +57,23 @@ func (h *PermissionHandler) SetPlayerPrefix(ctx context.Context, req *shellv1.Se
 		return nil, internalError(err)
 	}
 	return &shellv1.SetPlayerPrefixResponse{}, nil
+}
+
+func (h *PermissionHandler) SetPlayerRoles(ctx context.Context, req *shellv1.SetPlayerRolesRequest) (*shellv1.SetPlayerRolesResponse, error) {
+	roles := make(map[uuid.UUID]string, len(req.GetRoles()))
+	for key, group := range req.GetRoles() {
+		mcUUID, err := parseUUID(key)
+		if err != nil {
+			return nil, err
+		}
+		roles[mcUUID] = group
+	}
+
+	err := h.permissionService.SetPlayerRoles(ctx, req.GetRoleGroups(), roles)
+	if errors.Is(err, services.ErrUnknownRoleGroup) {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	} else if err != nil {
+		return nil, internalError(err)
+	}
+	return &shellv1.SetPlayerRolesResponse{}, nil
 }

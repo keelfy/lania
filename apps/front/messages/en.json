@@ -232,6 +232,13 @@
       "buyInStore": "buy cosmetics in the store"
     }
   },
+  "profileResync": {
+    "title": "Synchronization",
+    "description": "Sends the role, cosmetics and access of this game profile to every game server again. Use it when something in the game does not match the site.",
+    "button": "Synchronize",
+    "success": "The game profile is synchronized",
+    "error": "Failed to synchronize the game profile"
+  },
   "playerCard": {
     "noProfile": "Failed to load profile information",
     "copyUsername": "Copy username",
@@ -488,6 +495,20 @@
         "owner": "Owner",
         "role": "Role",
         "createdAt": "Created"
+      },
+      "role": {
+        "title": "Role",
+        "description": "The role is stored in the profile and pushed to the game servers within a minute. Saving the same role pushes it again.",
+        "select": "Select a role",
+        "save": "Save",
+        "saved": "Role changed to {role}",
+        "saveFailed": "Failed to change the role",
+        "names": {
+          "owner": "Owner",
+          "admin": "Admin",
+          "mod": "Moderator",
+          "player": "Player"
+        }
       },
       "owner": {
         "title": "Owner",

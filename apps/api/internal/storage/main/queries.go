@@ -35,6 +35,12 @@ type Queries interface {
 	ClaimProfile(ctx context.Context, profileID, ownerUserID uuid.UUID, updatedBy uuid.UUID) (bool, error)
 	// SetProfileOwner replaces the owner of the profile whoever it is. A nil ownerUserID releases the profile.
 	SetProfileOwner(ctx context.Context, profileID uuid.UUID, ownerUserID, updatedBy *uuid.UUID) error
+	// SetProfileRole stores the role and marks the moment of the change for FindProfileRolesChangedSince.
+	SetProfileRole(ctx context.Context, profileID uuid.UUID, role domain.Role, updatedBy *uuid.UUID) error
+	// FindProfileRolesChangedSince returns the role of every profile whose role changed within the last since.
+	FindProfileRolesChangedSince(ctx context.Context, since time.Duration) ([]*domain.ProfileRole, error)
+	// FindMinecraftUUIDsByRoles returns the players whose stored role is one of the roles.
+	FindMinecraftUUIDsByRoles(ctx context.Context, roles []domain.Role) (uuid.UUIDs, error)
 	FindProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)
 	FindProfileByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID) (*domain.Profile, error)
 

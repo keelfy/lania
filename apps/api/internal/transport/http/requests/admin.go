@@ -6,6 +6,11 @@ type TransferProfileOwner struct {
 	Email string `json:"email"`
 }
 
+type SetProfileRole struct {
+	// Role is owner, admin, mod or player.
+	Role string `json:"role"`
+}
+
 type GrantProduct struct {
 	ProductID uuid.UUID `json:"productId"`
 	SeasonID  uuid.UUID `json:"seasonId"`

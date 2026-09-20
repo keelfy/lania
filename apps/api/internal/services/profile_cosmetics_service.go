@@ -29,6 +29,9 @@ type ProfileCosmeticsService interface {
 	// GetProfilesPrefixes returns the selected prefixes of every profile that has any, keyed by profile ID.
 	GetProfilesPrefixes(ctx context.Context, profileIDs uuid.UUIDs) (map[uuid.UUID][]*domain.ProfilePrefix, error)
 	GetProfileFullPrefix(ctx context.Context, nameColor *domain.NameColor, glythPrefix *domain.NamePrefix, specialPrefix *domain.NamePrefix) string
+	// GetProfileChatPrefix builds the chat prefix from the selected name color and prefixes of the profile,
+	// the same one the Minecraft servers get.
+	GetProfileChatPrefix(ctx context.Context, profile *domain.Profile) (string, error)
 }
 
 type profileCosmeticsService struct {
@@ -219,6 +222,24 @@ func (s *profileCosmeticsService) GetProfilesPrefixes(ctx context.Context, profi
 		byProfile[prefix.ProfileID] = append(byProfile[prefix.ProfileID], prefix)
 	}
 	return byProfile, nil
+}
+
+func (s *profileCosmeticsService) GetProfileChatPrefix(ctx context.Context, profile *domain.Profile) (string, error) {
+	prefixes, err := s.GetProfilePrefixes(ctx, profile.ID)
+	if err != nil {
+		return "", err
+	}
+
+	var glythPrefix, specialPrefix *domain.NamePrefix
+	for _, prefix := range prefixes {
+		switch prefix.Type {
+		case domain.ProfilePrefixTypeGlyth:
+			glythPrefix = prefix.NamePrefix
+		case domain.ProfilePrefixTypeSpecial:
+			specialPrefix = prefix.NamePrefix
+		}
+	}
+	return s.GetProfileFullPrefix(ctx, profile.NameColor, glythPrefix, specialPrefix), nil
 }
 
 func (s *profileCosmeticsService) GetProfileFullPrefix(ctx context.Context, nameColor *domain.NameColor, glythPrefix *domain.NamePrefix, specialPrefix *domain.NamePrefix) string {

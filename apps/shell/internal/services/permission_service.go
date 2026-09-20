@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -18,7 +20,13 @@ type PermissionService interface {
 	// ListPlayersByGroups returns players that belong to at least one of the groups.
 	ListPlayersByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error)
 	SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error
+	// SetPlayerRoles makes every player of roles belong to exactly the role group it maps to, among roleGroups.
+	// An empty group leaves the player in no role group. A group that is not in roleGroups is an error.
+	SetPlayerRoles(ctx context.Context, roleGroups []string, roles map[uuid.UUID]string) error
 }
+
+// ErrUnknownRoleGroup means a role maps to a group that is not one of the role groups.
+var ErrUnknownRoleGroup = errors.New("group is not a role group")
 
 type permissionService struct {
 	luckpermsStorage storage.LuckpermsStorage
@@ -75,6 +83,36 @@ func (s *permissionService) SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUI
 	return nil
 }
 
+func (s *permissionService) SetPlayerRoles(ctx context.Context, roleGroups []string, roles map[uuid.UUID]string) error {
+	if len(roles) == 0 {
+		return nil
+	}
+
+	remove := make([]string, len(roleGroups))
+	for i, group := range roleGroups {
+		remove[i] = groupNodePrefix + group
+	}
+
+	replacements := make([]storage.PermissionReplacement, 0, len(roles))
+	for mcUUID, group := range roles {
+		replacement := storage.PermissionReplacement{MinecraftUUID: mcUUID, Remove: remove}
+		if group != "" {
+			if !slices.Contains(roleGroups, group) {
+				return fmt.Errorf("%w: %q", ErrUnknownRoleGroup, group)
+			}
+			replacement.Add = []string{groupNodePrefix + group}
+		}
+		replacements = append(replacements, replacement)
+	}
+
+	if err := s.luckpermsStorage.ReplacePermissions(ctx, replacements); err != nil {
+		return err
+	}
+
+	s.syncServer(ctx)
+	return nil
+}
+
 // syncServer makes the running server pick up the database change. It is best
 // effort: the database is the source of truth and the server loads it on start,
 // so an unreachable server must not fail the write.
@@ -85,7 +123,7 @@ func (s *permissionService) syncServer(ctx context.Context) {
 	case errors.Is(err, clients.ErrConsoleDisabled):
 		logger.Debugf(ctx, "skipping %q: rcon is not configured", command)
 	case err != nil:
-		logger.Warnf(ctx, "failed to run %q, in-game prefix stays stale until the next sync: %v", command, err)
+		logger.Warnf(ctx, "failed to run %q, in-game permissions stay stale until the next sync: %v", command, err)
 	default:
 		logger.Debugf(ctx, "%q: %s", command, output)
 	}

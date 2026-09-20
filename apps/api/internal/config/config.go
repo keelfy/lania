@@ -87,6 +87,25 @@ func GetShellToken() string {
 	return os.Getenv("SHELL_TOKEN")
 }
 
+/** ROLE SYNC */
+
+const defaultRoleSyncWindowMinutes = 10
+
+// GetRoleSyncWindow returns how far back role sync looks for changed roles.
+// A change is pushed to the shells on every run within this window, so a shell that was down for a shorter time catches up.
+func GetRoleSyncWindow() time.Duration {
+	value := os.Getenv("ROLE_SYNC_WINDOW_MINUTES")
+	if value == "" {
+		return defaultRoleSyncWindowMinutes * time.Minute
+	}
+	minutes, err := strconv.Atoi(value)
+	if err != nil || minutes <= 0 {
+		log.Printf("Error parsing ROLE_SYNC_WINDOW_MINUTES: %q is not a positive number", value)
+		return defaultRoleSyncWindowMinutes * time.Minute
+	}
+	return time.Duration(minutes) * time.Minute
+}
+
 /** REDIS */
 
 func GetRedisURL() string {

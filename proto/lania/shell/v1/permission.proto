@@ -10,6 +10,8 @@ service PermissionService {
   rpc ListPlayersByGroups(ListPlayersByGroupsRequest) returns (ListPlayersByGroupsResponse);
   // SetPlayerPrefix replaces the player's chat prefix. Idempotent.
   rpc SetPlayerPrefix(SetPlayerPrefixRequest) returns (SetPlayerPrefixResponse);
+  // SetPlayerRoles makes every listed player belong to exactly the given role group. Idempotent.
+  rpc SetPlayerRoles(SetPlayerRolesRequest) returns (SetPlayerRolesResponse);
 }
 
 message GetPlayerGroupsRequest {
@@ -41,3 +43,12 @@ message SetPlayerPrefixRequest {
 }
 
 message SetPlayerPrefixResponse {}
+
+message SetPlayerRolesRequest {
+  // Every group that stands for a role. A listed player leaves all of them before joining the given one.
+  repeated string role_groups = 1;
+  // Role group per player, keyed by Minecraft UUID. An empty group leaves the player in no role group.
+  map<string, string> roles = 2;
+}
+
+message SetPlayerRolesResponse {}

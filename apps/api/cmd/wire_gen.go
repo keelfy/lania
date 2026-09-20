@@ -34,14 +34,14 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	}
 	statusHandler := handlers.NewStatusHandler(mainStorage, cacheStorage)
 	profileCosmeticsService := services.NewProfileCosmeticsService(mainStorage)
+	seasonService := services.NewSeasonService(mainStorage)
 	shellPool, cleanup2, err := clients.NewShellPool(ctx)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	seasonService := services.NewSeasonService(mainStorage)
 	minecraftService := services.NewMinecraftService(seasonService, shellPool)
-	profileService := services.NewProfileService(mainStorage, cacheStorage, profileCosmeticsService, minecraftService)
+	profileService := services.NewProfileService(mainStorage, profileCosmeticsService, minecraftService)
 	accessService := services.NewAccessService(mainStorage, minecraftService)
 	oryAPI, err := clients.NewOryAPI(ctx)
 	if err != nil {
@@ -56,6 +56,8 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	mojangService := services.NewMojangService(mainStorage, cacheStorage)
 	profileHandler := handlers.NewProfileHandler(profileService, accessService, seasonService, minecraftService, mojangService, profileCosmeticsService)
 	profileCosmeticsHandler := handlers.NewProfileCosmeticsHandler(profileCosmeticsService, profileService, minecraftService, mainStorage)
+	profileResyncService := services.NewProfileResyncService(profileService, profileCosmeticsService, accessService, seasonService, minecraftService)
+	profileResyncHandler := handlers.NewProfileResyncHandler(profileResyncService)
 	productHandler := handlers.NewProductHandler(productService)
 	freekassaService := services.NewFreekassaService(mainStorage)
 	notificationService := services.NewNotificationService(mainStorage)
@@ -77,7 +79,8 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 	integrationService := services.NewIntegrationService(mainStorage, orderService)
 	playerSyncService := services.NewPlayerSyncService(mainStorage, seasonService, minecraftService)
-	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, seasonHandler, notificationHandler, integrationService, mojangService, playerSyncService, oryAPI)
+	roleSyncService := services.NewRoleSyncService(mainStorage, minecraftService)
+	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, seasonHandler, notificationHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
 	return laniaAPI, func() {
 		cleanup2()
 		cleanup()

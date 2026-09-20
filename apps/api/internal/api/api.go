@@ -27,6 +27,7 @@ type laniaAPI struct {
 	accessHandler           handlers.AccessHandler
 	profileHandler          handlers.ProfileHandler
 	profileCosmeticsHandler handlers.ProfileCosmeticsHandler
+	profileResyncHandler    handlers.ProfileResyncHandler
 	productHandler          handlers.ProductHandler
 	orderHandler            handlers.OrderHandler
 	freekassaHandler        handlers.AcquiringHandler
@@ -40,6 +41,7 @@ type laniaAPI struct {
 	integrationService      services.IntegrationService
 	mojangService           services.MojangService
 	playerSyncService       services.PlayerSyncService
+	roleSyncService         services.RoleSyncService
 	tokenAuth               *jwtAuth.JWTAuth
 	oryAPI                  clients.OryAPI
 }
@@ -49,6 +51,7 @@ func NewLaniaAPI(
 	accessHandler handlers.AccessHandler,
 	profileHandler handlers.ProfileHandler,
 	profileCosmeticsHandler handlers.ProfileCosmeticsHandler,
+	profileResyncHandler handlers.ProfileResyncHandler,
 	productHandler handlers.ProductHandler,
 	orderHandler handlers.OrderHandler,
 	freekassaHandler handlers.AcquiringHandler,
@@ -62,6 +65,7 @@ func NewLaniaAPI(
 	integrationService services.IntegrationService,
 	mojangService services.MojangService,
 	playerSyncService services.PlayerSyncService,
+	roleSyncService services.RoleSyncService,
 	oryAPI clients.OryAPI,
 ) LaniaAPI {
 	return &laniaAPI{
@@ -69,6 +73,7 @@ func NewLaniaAPI(
 		accessHandler:           accessHandler,
 		profileHandler:          profileHandler,
 		profileCosmeticsHandler: profileCosmeticsHandler,
+		profileResyncHandler:    profileResyncHandler,
 		productHandler:          productHandler,
 		orderHandler:            orderHandler,
 		freekassaHandler:        freekassaHandler,
@@ -82,6 +87,7 @@ func NewLaniaAPI(
 		integrationService:      integrationService,
 		mojangService:           mojangService,
 		playerSyncService:       playerSyncService,
+		roleSyncService:         roleSyncService,
 		oryAPI:                  oryAPI,
 		tokenAuth:               jwtAuth.New("HS256", config.GetJWTSecret(), nil),
 	}
@@ -109,6 +115,9 @@ func (api *laniaAPI) BuildAPI(ctx context.Context) (*chi.Mux, error) {
 
 	// copy playtime and seen dates from the minecraft server so profile pages never wait for shell
 	go api.playerSyncService.RunPlayerSync(ctx)
+
+	// push roles changed in profiles to every season server, profiles are the source of truth for roles
+	go api.roleSyncService.RunRoleSync(ctx)
 
 	// middlewares
 	r.Use(chiMiddleware.RequestID)
@@ -178,6 +187,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				r.Get("/cosmetics/options", api.profileCosmeticsHandler.GetProfileCosmeticOptions)
 				r.Post("/cosmetics/name-color", api.profileCosmeticsHandler.SelectProfileNameColor)
 				r.Post("/cosmetics/name-prefix/{type}", api.profileCosmeticsHandler.SelectProfileNamePrefix)
+				r.Post("/resync", api.profileResyncHandler.ResyncProfile)
 			})
 		})
 	})
@@ -233,7 +243,9 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 		r.Route("/profiles/{profileId}", func(r chi.Router) {
 			r.Get("/", api.adminProfileHandler.GetProfileDetails)
 			r.Put("/owner", api.adminProfileHandler.TransferProfile)
+			r.Put("/role", api.adminProfileHandler.SetProfileRole)
 			r.Delete("/owner", api.adminProfileHandler.ReleaseProfile)
+			r.Post("/resync", api.profileResyncHandler.AdminResyncProfile)
 
 			r.Get("/grants", api.adminGrantHandler.GetGrants)
 			r.Post("/grants", api.adminGrantHandler.GrantProduct)
