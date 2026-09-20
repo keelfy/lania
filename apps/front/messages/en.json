@@ -330,6 +330,7 @@
     "description": "Obtain access to the Lania servers and start your adventure.",
     "success": "Access obtained",
     "successFree": "Access granted",
+    "successPre": "Pre-registration completed",
     "error": "Failed to obtain access",
     "steps": {
       "step1": {
@@ -352,6 +353,11 @@
         "title": "Create a profile and get access",
         "description": "Access to the <b>current season</b> is granted right away and for free — no payment needed.",
         "action": "Get access"
+      },
+      "step3Pre": {
+        "title": "Create a profile and pre-register",
+        "description": "Your profile gets access to the <b>current season</b> right away — no payment needed.",
+        "action": "Pre-register"
       }
     },
     "validation": {

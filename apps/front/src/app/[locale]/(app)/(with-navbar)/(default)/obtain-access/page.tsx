@@ -13,7 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { registerForActiveSeason, requestAccess } from '@/lib/api-endpoints'
+import { accessMode, isFreeAccess } from '@/lib/access-mode'
+import {
+  registerForActiveSeason,
+  requestAccess,
+  requestFreeAccess,
+} from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
 import { useAuthStore } from '@/providers/auth-store'
@@ -44,14 +49,16 @@ type Props = {
   }>
 }
 
-// When free registration is open, picking a username is enough to play the
-// active season - no season pass, no basket.
-const isFreeRegistration = process.env.NEXT_PUBLIC_FREE_REGISTRATION === 'true'
+const lastSteps = {
+  preregistration: 'steps.step3Pre',
+  free: 'steps.step3Free',
+  paid: 'steps.step3',
+} as const
 
 export default function ObtainAccessPage({ params }: Props) {
   const { locale } = React.use(params)
   const t = useTranslations('obtainAccess')
-  const lastStep = isFreeRegistration ? 'steps.step3Free' : 'steps.step3'
+  const lastStep = lastSteps[accessMode]
 
   const [queryUsernames] = useQueryState('u', parseAsString.withDefault(''))
   const session = useAuthStore((state) => state.session)
@@ -85,9 +92,14 @@ export default function ObtainAccessPage({ params }: Props) {
 
     startObtainingAccess(async () => {
       try {
-        if (isFreeRegistration) {
-          await registerForActiveSeason(clientApiFetcher, [data.username])
-          toast.success(t('successFree'))
+        if (isFreeAccess) {
+          if (accessMode === 'preregistration') {
+            await requestFreeAccess(clientApiFetcher, [data.username])
+            toast.success(t('successPre'))
+          } else {
+            await registerForActiveSeason(clientApiFetcher, [data.username])
+            toast.success(t('successFree'))
+          }
           router.push(`/${locale}/profiles`)
           return
         }
@@ -144,7 +156,7 @@ export default function ObtainAccessPage({ params }: Props) {
              * (free registration) or add the season pass to the basket */}
             <li className="ms-6 mb-10">
               <span className="bg-primary-foreground absolute -start-3 flex h-6 w-6 items-center justify-center rounded-full ring-8 ring-teal-900/30">
-                {isFreeRegistration ? (
+                {isFreeAccess ? (
                   <ZapIcon className="size-4" />
                 ) : (
                   <CreditCardIcon className="size-4" />

@@ -29,6 +29,7 @@ import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import NameColorOptionSelect from './name-color-option-select'
 import NameGlythOptionSelect from './name-glyth-option-select'
+import { isFreeAccess } from '@/lib/access-mode'
 import ProfileSelectWrapper from './profile-select-wrapper'
 
 const accessStatusColors = {
@@ -48,10 +49,6 @@ const accessStatusIconColors = {
   inactive: 'text-destructive',
   expired: 'text-orange-500',
 }
-
-// With free registration open there is nothing to buy - access to the active
-// season is one click away.
-const isFreeRegistration = process.env.NEXT_PUBLIC_FREE_REGISTRATION === 'true'
 
 const DEFAULT_COSMETIC_OPTIONS: ProfileCosmeticOptions = {
   name: { colors: [], glythPrefixes: [], specialPrefixes: [] },
@@ -206,13 +203,13 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                               },
                             }}
                           >
-                            {isFreeRegistration ? (
+                            {isFreeAccess ? (
                               <ZapIcon className="size-4" />
                             ) : (
                               <ShoppingBagIcon className="size-4" />
                             )}
                             {t(
-                              isFreeRegistration
+                              isFreeAccess
                                 ? 'accessStatus.obtainFree'
                                 : 'accessStatus.obtain',
                             )}
@@ -341,9 +338,7 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                   <RichText>
                     {(tags) =>
                       t.rich(
-                        isFreeRegistration
-                          ? 'selectProfileFree'
-                          : 'selectProfile',
+                        isFreeAccess ? 'selectProfileFree' : 'selectProfile',
                         {
                           ...tags,
                           obtainAccess: (chunks: React.ReactNode) => (

@@ -21,7 +21,7 @@ const seasons = [
   {
     seasonNumber: 10,
     name: "LANIA SPINOFF I",
-    startDate: '2026-10-09',
+    startDate: '2026-04-26',
     endDate: '-',
     image: 's3://lania-web-134312503254-eu-central-1-an/lania-spinoff-1-preview.png',
   },
