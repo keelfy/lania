@@ -7,7 +7,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { seasonNumbers } from '@/lib/season-number'
 import Image from 'next/image'
 
 type Props = {
@@ -15,7 +14,7 @@ type Props = {
 }
 
 const season = {
-  seasonNumber: 1,
+  name: "LANIA I",
   startDate: '2023-12-23',
   endDate: '2024-02-23',
   description: 'Первый сезон был запущен для игры со зрителями keelfy.',
@@ -35,19 +34,19 @@ export default async function SeasonPage({ params }: Props) {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbPage>
-              ʟᴀɴɪᴀ {seasonNumbers[Number(id)]} {locale}
+              {season.name} {locale}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       <h1 className="mb-6 text-center text-4xl font-bold">
-        ʟᴀɴɪᴀ &mdash; Сезон {seasonNumbers[Number(id)]}
+        ʟᴀɴɪᴀ &mdash; Сезон {season.name}
       </h1>
       <div className="flex flex-col gap-4">
         <AspectRatio ratio={16 / 9}>
           <Image
             src={season.image}
-            alt={`Lania ${seasonNumbers[Number(id)]}`}
+            alt={`Lania ${season.name}`}
             fill
             className="rounded-md object-cover transition-transform duration-300 hover:scale-105"
             unoptimized
