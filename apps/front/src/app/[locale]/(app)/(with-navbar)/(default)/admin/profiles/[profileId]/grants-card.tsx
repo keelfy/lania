@@ -31,8 +31,9 @@ import {
 import { revokeGrant } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
-import { AdminCosmeticsCatalog, AdminGrant, AdminSeason } from '@/models/admin'
+import { AdminCosmeticsCatalog, AdminGrant } from '@/models/admin'
 import { Product, ProductMetadata } from '@/models/product'
+import { Season } from '@/models/season'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React from 'react'
@@ -45,7 +46,7 @@ type Props = {
   profileId: string
   // Missing when the grants could not be loaded.
   grants: AdminGrant[] | undefined
-  seasons: AdminSeason[]
+  seasons: Season[]
   products: Product<ProductMetadata>[]
   // Missing when the catalog could not be loaded.
   catalog: AdminCosmeticsCatalog | undefined
@@ -63,8 +64,8 @@ export default function GrantsCard({
   const router = useRouter()
   const [isPending, startTransition] = React.useTransition()
 
-  const seasonNumber = (seasonId: string | undefined) =>
-    seasons.find((season) => season.id === seasonId)?.seasonNumber
+  const seasonName = (seasonId: string | undefined) =>
+    seasons.find((season) => season.id === seasonId)?.name
 
   const handleRevoke = (grant: AdminGrant) => {
     startTransition(async () => {
@@ -140,7 +141,7 @@ export default function GrantsCard({
                     </div>
                   </TableCell>
                   <TableCell>
-                    {seasonNumber(grant.seasonId) ?? t('anySeason')}
+                    {seasonName(grant.seasonId) ?? t('anySeason')}
                   </TableCell>
                   <TableCell>{sourceLabel(grant)}</TableCell>
                   <TableCell>

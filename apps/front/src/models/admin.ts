@@ -27,15 +27,6 @@ export type AdminProfileDetails = AdminProfile & {
   owner?: AdminUser
 }
 
-export type AdminSeason = {
-  id: string
-  seasonNumber: number
-  startDate: number
-  endDate?: number
-  // The season that runs on the game server.
-  isActive: boolean
-}
-
 export type GrantType = 'access' | 'name-color' | 'name-prefix'
 
 export type AdminGrant = {

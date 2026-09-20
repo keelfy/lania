@@ -8,9 +8,10 @@ import (
 )
 
 const findSeasonByID = `
-SELECT 
+SELECT
 	id,
-	season_number,
+	name,
+	preview_image,
 	start_date,
 	end_date
 FROM seasons
@@ -22,7 +23,8 @@ func (q *queries) FindSeasonByID(ctx context.Context, seasonID uuid.UUID) (*doma
 	var season domain.Season
 	err := row.Scan(
 		&season.ID,
-		&season.SeasonNumber,
+		&season.Name,
+		&season.PreviewImage,
 		&season.StartDate,
 		&season.EndDate,
 	)
@@ -32,14 +34,15 @@ func (q *queries) FindSeasonByID(ctx context.Context, seasonID uuid.UUID) (*doma
 const findSeasons = `
 SELECT
 	id,
-	season_number,
+	name,
+	preview_image,
 	start_date,
 	end_date
 FROM seasons
-ORDER BY season_number DESC
+ORDER BY start_date DESC, season_number DESC
 `
 
-// FindSeasons returns every season, the newest number first.
+// FindSeasons returns every season, the newest start first.
 func (q *queries) FindSeasons(ctx context.Context) ([]*domain.Season, error) {
 	rows, err := q.x.QueryContext(ctx, findSeasons)
 	if err != nil {
@@ -50,7 +53,7 @@ func (q *queries) FindSeasons(ctx context.Context) ([]*domain.Season, error) {
 	seasons := make([]*domain.Season, 0)
 	for rows.Next() {
 		var season domain.Season
-		if err := rows.Scan(&season.ID, &season.SeasonNumber, &season.StartDate, &season.EndDate); err != nil {
+		if err := rows.Scan(&season.ID, &season.Name, &season.PreviewImage, &season.StartDate, &season.EndDate); err != nil {
 			return nil, err
 		}
 		seasons = append(seasons, &season)

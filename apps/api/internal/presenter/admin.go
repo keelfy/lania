@@ -1,7 +1,6 @@
 package presenter
 
 import (
-	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/transport/http/responses"
 )
@@ -62,20 +61,6 @@ func PresentAdminGrants(grants []*domain.Grant) []*responses.AdminGrant {
 			CreatedAt:   grant.CreatedAt.UnixMilli(),
 			RevokedAt:   timeToMillis(grant.RevokedAt),
 			RevokedBy:   grant.RevokedBy,
-		}
-	}
-	return res
-}
-
-func PresentAdminSeasons(seasons []*domain.Season, activeSeasonID uuid.UUID) []*responses.AdminSeason {
-	res := make([]*responses.AdminSeason, len(seasons))
-	for i, season := range seasons {
-		res[i] = &responses.AdminSeason{
-			ID:           season.ID,
-			SeasonNumber: season.SeasonNumber,
-			StartDate:    season.StartDate.UnixMilli(),
-			EndDate:      timeToMillis(season.EndDate),
-			IsActive:     season.ID == activeSeasonID,
 		}
 	}
 	return res

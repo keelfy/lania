@@ -11,8 +11,6 @@ import (
 )
 
 type AdminGrantHandler interface {
-	// GetSeasons lists the seasons a product can be granted for.
-	GetSeasons(w http.ResponseWriter, r *http.Request)
 	GetGrants(w http.ResponseWriter, r *http.Request)
 	GrantProduct(w http.ResponseWriter, r *http.Request)
 	// GetCosmetics lists the name colors and name prefixes that can be granted.
@@ -23,29 +21,10 @@ type AdminGrantHandler interface {
 
 type adminGrantHandler struct {
 	adminGrantService services.AdminGrantService
-	seasonService     services.SeasonService
 }
 
-func NewAdminGrantHandler(
-	adminGrantService services.AdminGrantService,
-	seasonService services.SeasonService,
-) AdminGrantHandler {
-	return &adminGrantHandler{
-		adminGrantService: adminGrantService,
-		seasonService:     seasonService,
-	}
-}
-
-func (h *adminGrantHandler) GetSeasons(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	seasons, err := h.seasonService.GetSeasons(ctx)
-	if err != nil {
-		utils.HttpError(ctx, w, err)
-		return
-	}
-
-	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentAdminSeasons(seasons, activeSeasonID))
+func NewAdminGrantHandler(adminGrantService services.AdminGrantService) AdminGrantHandler {
+	return &adminGrantHandler{adminGrantService: adminGrantService}
 }
 
 func (h *adminGrantHandler) GetGrants(w http.ResponseWriter, r *http.Request) {

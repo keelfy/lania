@@ -3,7 +3,6 @@ import {
   AdminGrant,
   AdminProfile,
   AdminProfileDetails,
-  AdminSeason,
   AdminUser,
   AdminUserDetails,
   GrantCosmeticReq,
@@ -18,6 +17,7 @@ import {
   PurchasedProduct,
 } from '@/models/order'
 import { Product, ProductMetadata } from '@/models/product'
+import { Season } from '@/models/season'
 import {
   Profile,
   PublicProfile,
@@ -367,8 +367,8 @@ export function releaseProfileOwner(
   )
 }
 
-export function getAdminSeasons(fetcher: ApiFetcher): Promise<AdminSeason[]> {
-  return fetcher<AdminSeason[]>('/v1/admin/seasons')
+export function getSeasons(fetcher: ApiFetcher): Promise<Season[]> {
+  return fetcher<Season[]>('/v1/seasons')
 }
 
 export function getAdminGrants(

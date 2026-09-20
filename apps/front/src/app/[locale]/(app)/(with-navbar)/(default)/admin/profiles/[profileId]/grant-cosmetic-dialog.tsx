@@ -24,9 +24,9 @@ import { errorToast } from '@/lib/toasts'
 import {
   AdminCosmeticsCatalog,
   AdminNameColor,
-  AdminSeason,
   GrantCosmeticReq,
 } from '@/models/admin'
+import { Season } from '@/models/season'
 import { SparklesIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
@@ -36,7 +36,7 @@ import { toast } from 'sonner'
 
 type Props = {
   profileId: string
-  seasons: AdminSeason[]
+  seasons: Season[]
   // Missing when the catalog could not be loaded.
   catalog: AdminCosmeticsCatalog | undefined
 }
@@ -197,7 +197,7 @@ export default function GrantCosmeticDialog({
                 <SelectItem value={PERMANENT}>{t('permanent')}</SelectItem>
                 {seasons.map((season) => (
                   <SelectItem key={season.id} value={season.id}>
-                    {t('seasonOption', { number: season.seasonNumber })}
+                    {season.name}
                     {season.isActive ? ` (${t('activeSeason')})` : ''}
                   </SelectItem>
                 ))}

@@ -7,8 +7,10 @@ import (
 )
 
 type Season struct {
-	ID           uuid.UUID
-	SeasonNumber int
+	ID   uuid.UUID
+	Name string
+	// PreviewImage is the screenshot shown on the seasons page. A season without one is not shown there.
+	PreviewImage *string
 	StartDate    time.Time
 	EndDate      *time.Time
 	// relations

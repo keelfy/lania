@@ -13,7 +13,7 @@ import (
 type Queries interface {
 	// Server Season
 	FindSeasonByID(ctx context.Context, seasonID uuid.UUID) (*domain.Season, error)
-	// FindSeasons returns every season, the newest number first.
+	// FindSeasons returns every season, the newest start first.
 	FindSeasons(ctx context.Context) ([]*domain.Season, error)
 
 	// Game Profile

@@ -112,23 +112,23 @@ jobs:
             ghcr.io/keelfy/lania:latest-frontend
             ghcr.io/keelfy/lania:frontend-${{ github.sha }}
 
-  deploy:
-    needs: [changes, build-backend, build-shell, build-frontend]
-    if: |
-      always() &&
-      (needs.build-backend.result == 'success' || needs.build-backend.result == 'skipped') &&
-      (needs.build-shell.result == 'success' || needs.build-shell.result == 'skipped') &&
-      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
-      (needs.changes.outputs.api == 'true' || needs.changes.outputs.shell == 'true' || needs.changes.outputs.front == 'true')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Pull and restart the stack
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_SSH_HOST }}
-          username: ${{ secrets.DEPLOY_SSH_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            cd /opt/lania-web/compose
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+  # deploy:
+  #   needs: [changes, build-backend, build-shell, build-frontend]
+  #   if: |
+  #     always() &&
+  #     (needs.build-backend.result == 'success' || needs.build-backend.result == 'skipped') &&
+  #     (needs.build-shell.result == 'success' || needs.build-shell.result == 'skipped') &&
+  #     (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
+  #     (needs.changes.outputs.api == 'true' || needs.changes.outputs.shell == 'true' || needs.changes.outputs.front == 'true')
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Pull and restart the stack
+  #       uses: appleboy/ssh-action@v1
+  #       with:
+  #         host: ${{ secrets.DEPLOY_SSH_HOST }}
+  #         username: ${{ secrets.DEPLOY_SSH_USER }}
+  #         key: ${{ secrets.DEPLOY_SSH_KEY }}
+  #         script: |
+  #           cd /opt/lania-web/compose
+  #           docker compose -f docker-compose.prod.yml pull
+  #           docker compose -f docker-compose.prod.yml up -d --remove-orphans

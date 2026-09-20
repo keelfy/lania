@@ -35,6 +35,7 @@ type laniaAPI struct {
 	adminUserHandler        handlers.AdminUserHandler
 	adminProfileHandler     handlers.AdminProfileHandler
 	adminGrantHandler       handlers.AdminGrantHandler
+	seasonHandler           handlers.SeasonHandler
 	integrationService      services.IntegrationService
 	mojangService           services.MojangService
 	playerSyncService       services.PlayerSyncService
@@ -55,6 +56,7 @@ func NewLaniaAPI(
 	adminUserHandler handlers.AdminUserHandler,
 	adminProfileHandler handlers.AdminProfileHandler,
 	adminGrantHandler handlers.AdminGrantHandler,
+	seasonHandler handlers.SeasonHandler,
 	integrationService services.IntegrationService,
 	mojangService services.MojangService,
 	playerSyncService services.PlayerSyncService,
@@ -73,6 +75,7 @@ func NewLaniaAPI(
 		adminUserHandler:        adminUserHandler,
 		adminProfileHandler:     adminProfileHandler,
 		adminGrantHandler:       adminGrantHandler,
+		seasonHandler:           seasonHandler,
 		integrationService:      integrationService,
 		mojangService:           mojangService,
 		playerSyncService:       playerSyncService,
@@ -173,6 +176,10 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 		})
 	})
 
+	r.Route("/seasons", func(r chi.Router) {
+		r.Get("/", api.seasonHandler.GetSeasons)
+	})
+
 	r.Route("/seasons/{seasonId}", func(r chi.Router) {
 		api.useProtectedRoutes(r)
 
@@ -207,7 +214,6 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 		r.Get("/users", api.adminUserHandler.GetUsers)
 		r.Get("/users/{userId}", api.adminUserHandler.GetUserDetails)
 
-		r.Get("/seasons", api.adminGrantHandler.GetSeasons)
 		r.Get("/cosmetics", api.adminGrantHandler.GetCosmetics)
 
 		r.Get("/profiles", api.adminProfileHandler.GetProfiles)

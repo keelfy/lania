@@ -12,7 +12,7 @@ import (
 
 type SeasonService interface {
 	GetSeasonByID(ctx context.Context, seasonID uuid.UUID) (*domain.Season, error)
-	// GetSeasons returns every season, the newest number first.
+	// GetSeasons returns every season, the newest start first.
 	GetSeasons(ctx context.Context) ([]*domain.Season, error)
 }
 

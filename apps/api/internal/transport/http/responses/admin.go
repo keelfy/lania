@@ -45,15 +45,6 @@ type AdminGrant struct {
 	RevokedBy   *uuid.UUID `json:"revokedBy,omitempty"`
 }
 
-type AdminSeason struct {
-	ID           uuid.UUID `json:"id"`
-	SeasonNumber int       `json:"seasonNumber"`
-	StartDate    int64     `json:"startDate"`
-	EndDate      *int64    `json:"endDate,omitempty"`
-	// IsActive marks the season that runs on the Minecraft server.
-	IsActive bool `json:"isActive"`
-}
-
 type AdminNameColor struct {
 	ID     uuid.UUID `json:"id"`
 	Name   string    `json:"name"`

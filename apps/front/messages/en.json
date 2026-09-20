@@ -376,27 +376,27 @@
     }
   },
   "seasons": {
-    "1": {
+    "123e4567-e89b-12d3-a456-426614174000": {
       "length": "3 months 2 days",
       "description": "The first season was launched for the audience of keelfy."
     },
-    "2": {
+    "123e4567-e89b-12d3-a456-426614174001": {
       "length": "2 months 23 days",
       "description": "The server began to acquire a periodic character, plans for development appeared."
     },
-    "3": {
+    "123e4567-e89b-12d3-a456-426614174002": {
       "length": "3 months 10 days",
       "description": "A strong jump in technical execution - the appearance of the lobby and the farm world."
     },
-    "4": {
+    "123e4567-e89b-12d3-a456-426614174003": {
       "length": "2 months 15 days",
       "description": "A relatively short but eventful season. During this time, the website appeared along with a variety of profile customization options."
     },
-    "5": {
+    "123e4567-e89b-12d3-a456-426614174004": {
       "length": "Active",
       "description": "The autumn season, which began with the release of the Wilderness Bound update. Yellow foliage, Halloween, and a group of friends - what could be better?"
     },
-    "10": {
+    "123e4567-e89b-12d3-a456-426614174010": {
       "length": "Active",
       "description": "The first full-fledged season with mods. The server was built around Create with the Aeronautics addon."
     },
@@ -527,7 +527,6 @@
           "selectProduct": "Select a product",
           "season": "Season",
           "selectSeason": "Select a season",
-          "seasonOption": "Season {number}",
           "activeSeason": "active",
           "submit": "Grant",
           "granted": "Product granted",
@@ -556,7 +555,6 @@
           "prefixTypeHint": "A player wears one glyth and one special prefix at a time.",
           "season": "Valid for",
           "permanent": "For good",
-          "seasonOption": "Season {number}",
           "activeSeason": "active",
           "submit": "Grant",
           "granted": "Item granted",

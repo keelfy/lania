@@ -4,7 +4,7 @@ import {
   getAdminCosmetics,
   getAdminGrants,
   getAdminProfile,
-  getAdminSeasons,
+  getSeasons,
   getProducts,
 } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
@@ -40,7 +40,7 @@ export default async function AdminProfilePage({ params }: Props) {
       console.error(error)
       return undefined
     }),
-    getAdminSeasons(serverApiFetcher).catch((error) => {
+    getSeasons(serverApiFetcher).catch((error) => {
       console.error(error)
       return []
     }),

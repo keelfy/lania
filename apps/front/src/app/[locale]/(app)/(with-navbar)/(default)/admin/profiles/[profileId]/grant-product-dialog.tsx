@@ -21,8 +21,8 @@ import {
 import { grantProduct } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
-import { AdminSeason } from '@/models/admin'
 import { Product, ProductMetadata } from '@/models/product'
+import { Season } from '@/models/season'
 import { PlusIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
@@ -31,7 +31,7 @@ import { toast } from 'sonner'
 
 type Props = {
   profileId: string
-  seasons: AdminSeason[]
+  seasons: Season[]
   products: Product<ProductMetadata>[]
 }
 
@@ -104,7 +104,7 @@ export default function GrantProductDialog({
               <SelectContent>
                 {seasons.map((season) => (
                   <SelectItem key={season.id} value={season.id}>
-                    {t('seasonOption', { number: season.seasonNumber })}
+                    {season.name}
                     {season.isActive ? ` (${t('activeSeason')})` : ''}
                   </SelectItem>
                 ))}
