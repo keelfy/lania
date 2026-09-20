@@ -20,6 +20,7 @@ const (
 	AccessSourceFree         AccessSource = "free"
 	AccessSourceRegistration AccessSource = "registration"
 	AccessSourceFreekassa    AccessSource = "freekassa"
+	AccessSourceAdmin        AccessSource = "admin"
 )
 
 type Role string

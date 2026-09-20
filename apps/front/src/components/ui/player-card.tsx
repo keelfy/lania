@@ -76,10 +76,10 @@ export default function PlayerCard({
 
   React.useEffect(() => {
     const skinUrl = profile?.mojangUuid
-      ? `https://crafatar.com/skins/${profile.mojangUuid}`
+      ? `https://crafatar-pub.neodium.fr/skins/${profile.mojangUuid}`
       : '/images/steve_skin.png'
     const capeUrl = profile?.mojangUuid
-      ? `https://crafatar.com/capes/${profile.mojangUuid}`
+      ? `https://crafatar-pub.neodium.fr/capes/${profile.mojangUuid}`
       : ''
 
     if (typeof window !== 'undefined' && profile?.id !== undefined) {

@@ -16,8 +16,10 @@ INSERT INTO profile_name_color_options (
 	profile_id,
 	name_color_id,
 	for_season_id,
-	order_item_id
-) VALUES (?, ?, ?, ?)
+	order_item_id,
+	created_by
+) VALUES (?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE revoked_at = NULL, revoked_by = NULL
 `
 
 type InsertProfileNameColorOptionParams struct {
@@ -25,6 +27,7 @@ type InsertProfileNameColorOptionParams struct {
 	NameColorID uuid.UUID
 	ForSeasonID *uuid.UUID
 	OrderItemID *uuid.UUID
+	CreatedBy   *uuid.UUID
 }
 
 func (q *queries) InsertProfileNameColorOption(ctx context.Context, arg InsertProfileNameColorOptionParams) error {
@@ -33,6 +36,7 @@ func (q *queries) InsertProfileNameColorOption(ctx context.Context, arg InsertPr
 		arg.NameColorID,
 		arg.ForSeasonID,
 		arg.OrderItemID,
+		arg.CreatedBy,
 	)
 	return err
 }
@@ -43,8 +47,10 @@ INSERT INTO profile_name_prefix_options (
 	name_prefix_id,
 	type,
 	for_season_id,
-	order_item_id
-) VALUES (?, ?, ?, ?, ?)
+	order_item_id,
+	created_by
+) VALUES (?, ?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE revoked_at = NULL, revoked_by = NULL
 `
 
 type InsertProfileNamePrefixOptionParams struct {
@@ -53,6 +59,7 @@ type InsertProfileNamePrefixOptionParams struct {
 	Type         domain.ProfilePrefixType
 	ForSeasonID  *uuid.UUID
 	OrderItemID  *uuid.UUID
+	CreatedBy    *uuid.UUID
 }
 
 func (q *queries) InsertProfileNamePrefixOption(ctx context.Context, arg InsertProfileNamePrefixOptionParams) error {
@@ -62,6 +69,7 @@ func (q *queries) InsertProfileNamePrefixOption(ctx context.Context, arg InsertP
 		arg.Type,
 		arg.ForSeasonID,
 		arg.OrderItemID,
+		arg.CreatedBy,
 	)
 	return err
 }
@@ -76,7 +84,7 @@ SELECT
 	nc.name AS name_color_name
 FROM profile_name_color_options pnc
 LEFT JOIN name_colors nc ON pnc.name_color_id = nc.id
-WHERE pnc.profile_id = ? AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL)
+WHERE pnc.profile_id = ? AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL) AND pnc.revoked_at IS NULL
 ORDER BY pnc.created_at DESC
 `
 
@@ -128,7 +136,7 @@ SELECT
 	np.metadata AS name_prefix_metadata
 FROM profile_name_prefix_options pnc
 LEFT JOIN name_prefixes np ON pnc.name_prefix_id = np.id
-WHERE pnc.profile_id = ? AND pnc.type = ? AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL)
+WHERE pnc.profile_id = ? AND pnc.type = ? AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL) AND pnc.revoked_at IS NULL
 ORDER BY pnc.created_at DESC
 `
 
@@ -182,7 +190,7 @@ SELECT
 	nc.colors AS name_colors
 FROM profile_name_color_options pnc
 LEFT JOIN name_colors nc ON pnc.name_color_id = nc.id
-WHERE pnc.id = ? AND pnc.profile_id = ? AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL)
+WHERE pnc.id = ? AND pnc.profile_id = ? AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL) AND pnc.revoked_at IS NULL
 `
 
 func (q *queries) FindProfileNameColorOptionByIDAndProfileID(ctx context.Context, optionID uuid.UUID, profileID uuid.UUID, seasonID *uuid.UUID) (*domain.ProfileNameColorOption, error) {
@@ -223,7 +231,7 @@ SELECT
 	np.metadata AS name_prefix_metadata
 FROM profile_name_prefix_options pnp
 LEFT JOIN name_prefixes np ON pnp.name_prefix_id = np.id
-WHERE pnp.id = ? AND pnp.profile_id = ? AND pnp.type = ? AND (pnp.for_season_id = ? OR pnp.for_season_id IS NULL)
+WHERE pnp.id = ? AND pnp.profile_id = ? AND pnp.type = ? AND (pnp.for_season_id = ? OR pnp.for_season_id IS NULL) AND pnp.revoked_at IS NULL
 `
 
 func (q *queries) FindProfileNamePrefixOptionByIDAndProfileIDAndType(ctx context.Context, optionID uuid.UUID, profileID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) (*domain.ProfileNamePrefixOption, error) {
@@ -266,7 +274,7 @@ SELECT
 	nc.name AS name_color_name
 FROM profile_name_color_options pnc
 LEFT JOIN name_colors nc ON pnc.name_color_id = nc.id
-WHERE pnc.profile_id IN (SELECT id FROM profiles WHERE owner_user_id = ?) AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL)
+WHERE pnc.profile_id IN (SELECT id FROM profiles WHERE owner_user_id = ?) AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL) AND pnc.revoked_at IS NULL
 ORDER BY pnc.created_at DESC
 `
 
@@ -318,7 +326,7 @@ SELECT
 	np.metadata AS name_prefix_metadata
 FROM profile_name_prefix_options pnc
 LEFT JOIN name_prefixes np ON pnc.name_prefix_id = np.id
-WHERE pnc.profile_id IN (SELECT id FROM profiles WHERE owner_user_id = ?) AND pnc.type = ? AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL)
+WHERE pnc.profile_id IN (SELECT id FROM profiles WHERE owner_user_id = ?) AND pnc.type = ? AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL) AND pnc.revoked_at IS NULL
 ORDER BY pnc.created_at DESC
 `
 

@@ -8,7 +8,7 @@ type PlayerFaceProps = Partial<React.ComponentProps<typeof Image>> & {
 
 export default function PlayerFace({ player, ...props }: PlayerFaceProps) {
   const src = player?.mojangUuid
-    ? `https://crafatar.com/avatars/${player.mojangUuid}?size=64`
+    ? `https://crafatar-pub.neodium.fr/avatars/${player.mojangUuid}?size=64`
     : '/images/steve_face.jpg'
 
   return (

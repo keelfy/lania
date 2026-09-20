@@ -29,6 +29,9 @@ type ProfileService interface {
 	GetProfileByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID) (*domain.Profile, error)
 	CreateProfileByUsername(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) error
 	GetProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)
+	// SetProfileOwner gives the profile to the user, or releases it when ownerUserID is nil.
+	// The previous owner does not matter, unlike in a claim.
+	SetProfileOwner(ctx context.Context, profileID uuid.UUID, ownerUserID *uuid.UUID) (*domain.Profile, error)
 	// ApplyProfileRoles sets Role of the profiles to the live role from the Minecraft server.
 	// Profiles keep their stored role when the server cannot be reached.
 	ApplyProfileRoles(ctx context.Context, profiles []*domain.Profile)
@@ -165,11 +168,26 @@ func (s *profileService) filterMinecraftUUIDs(ctx context.Context, filter domain
 
 func (s *profileService) GetProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error) {
 	profile, err := s.storage.Queries().FindProfileByID(ctx, profileID)
-	if err != nil {
-		return nil, utils.NewInternalServerError("failed to find profile by id", err)
-	} else if err == stdsql.ErrNoRows {
+	if err == stdsql.ErrNoRows {
 		return nil, utils.NewNotFoundError("profile not found", err)
+	} else if err != nil {
+		return nil, utils.NewInternalServerError("failed to find profile by id", err)
 	}
+	return profile, nil
+}
+
+func (s *profileService) SetProfileOwner(ctx context.Context, profileID uuid.UUID, ownerUserID *uuid.UUID) (*domain.Profile, error) {
+	profile, err := s.GetProfileByID(ctx, profileID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.storage.Queries().SetProfileOwner(ctx, profileID, ownerUserID, utils.GetUserIDFromContextOrNil(ctx))
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to set profile owner", err)
+	}
+
+	profile.OwnerUserID = ownerUserID
 	return profile, nil
 }
 

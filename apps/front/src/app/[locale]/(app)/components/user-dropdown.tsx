@@ -11,9 +11,10 @@ import {
   HandCoinsIcon,
   MessageCircleIcon,
   SettingsIcon,
+  ShieldCheckIcon,
   UserIcon,
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 import SignOutDropdownMenuItem from '../(with-navbar)/components/sign-out-button'
 
@@ -42,8 +43,13 @@ const menuItems = [
   },
 ]
 
-export default function UserDropdownMenu() {
+type Props = {
+  isAdmin?: boolean
+}
+
+export default function UserDropdownMenu({ isAdmin = false }: Props) {
   const t = useTranslations('navbar.userDropdown')
+  const locale = useLocale()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -61,6 +67,14 @@ export default function UserDropdownMenu() {
               </Link>
             </DropdownMenuItem>
           ))}
+          {isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link href={`/${locale}/admin/users`}>
+                <ShieldCheckIcon className="size-4" />
+                {t('admin')}
+              </Link>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <SignOutDropdownMenuItem />

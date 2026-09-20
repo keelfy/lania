@@ -41,6 +41,11 @@ func GetOryUrl() string {
 	return os.Getenv("ORY_URL")
 }
 
+// GetOryAdminUrl returns the Kratos admin API address. It must never be reachable from outside the private network.
+func GetOryAdminUrl() string {
+	return os.Getenv("ORY_ADMIN_URL")
+}
+
 /** JWT */
 
 func GetJWTSecret() []byte {

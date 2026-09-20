@@ -32,6 +32,9 @@ type laniaAPI struct {
 	freekassaHandler        handlers.AcquiringHandler
 	purchaseHandler         handlers.PurchaseHandler
 	basketHandler           handlers.BasketHandler
+	adminUserHandler        handlers.AdminUserHandler
+	adminProfileHandler     handlers.AdminProfileHandler
+	adminGrantHandler       handlers.AdminGrantHandler
 	integrationService      services.IntegrationService
 	mojangService           services.MojangService
 	playerSyncService       services.PlayerSyncService
@@ -49,6 +52,9 @@ func NewLaniaAPI(
 	freekassaHandler handlers.AcquiringHandler,
 	purchaseHandler handlers.PurchaseHandler,
 	basketHandler handlers.BasketHandler,
+	adminUserHandler handlers.AdminUserHandler,
+	adminProfileHandler handlers.AdminProfileHandler,
+	adminGrantHandler handlers.AdminGrantHandler,
 	integrationService services.IntegrationService,
 	mojangService services.MojangService,
 	playerSyncService services.PlayerSyncService,
@@ -64,6 +70,9 @@ func NewLaniaAPI(
 		freekassaHandler:        freekassaHandler,
 		purchaseHandler:         purchaseHandler,
 		basketHandler:           basketHandler,
+		adminUserHandler:        adminUserHandler,
+		adminProfileHandler:     adminProfileHandler,
+		adminGrantHandler:       adminGrantHandler,
 		integrationService:      integrationService,
 		mojangService:           mojangService,
 		playerSyncService:       playerSyncService,
@@ -189,6 +198,27 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 
 		r.Get("/profiles", api.profileHandler.GetUserProfiles)
 		r.Get("/orders", api.orderHandler.GetOrdersByUserID)
+	})
+
+	r.Route("/admin", func(r chi.Router) {
+		api.useProtectedRoutes(r)
+		r.Use(middleware.AdminOnly())
+
+		r.Get("/users", api.adminUserHandler.GetUsers)
+		r.Get("/users/{userId}", api.adminUserHandler.GetUserDetails)
+
+		r.Get("/seasons", api.adminGrantHandler.GetSeasons)
+
+		r.Get("/profiles", api.adminProfileHandler.GetProfiles)
+		r.Route("/profiles/{profileId}", func(r chi.Router) {
+			r.Get("/", api.adminProfileHandler.GetProfileDetails)
+			r.Put("/owner", api.adminProfileHandler.TransferProfile)
+			r.Delete("/owner", api.adminProfileHandler.ReleaseProfile)
+
+			r.Get("/grants", api.adminGrantHandler.GetGrants)
+			r.Post("/grants", api.adminGrantHandler.GrantProduct)
+			r.Delete("/grants/{grantType}/{grantId}", api.adminGrantHandler.RevokeGrant)
+		})
 	})
 
 	r.Route("/callbacks", func(r chi.Router) {

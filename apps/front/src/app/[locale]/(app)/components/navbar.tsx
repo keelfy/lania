@@ -10,7 +10,8 @@ import NavItemLink from './nav-item-link'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetTrigger } from '@/components/ui/sheet'
 import { Currency, CURRENCY_COOKIE, DEFAULT_CURRENCY } from '@/lib/currency'
-import { isCurrentSessionActive } from '@/lib/get-current-session'
+import { isAdminSession } from '@/lib/admin'
+import { getCurrentSession } from '@/lib/get-current-session'
 import { Locale } from '@/lib/locale'
 import { cn } from '@/lib/utils'
 import {
@@ -60,7 +61,7 @@ const navItems: NavbarItem[] = [
     labelKey: 'products',
     href: '/products',
     icon: ShoppingBagIcon,
-    disabled: true
+    disabled: true,
   },
   {
     labelKey: 'community',
@@ -84,7 +85,8 @@ export default async function Navbar({
   ...props
 }: React.ComponentProps<'header'> & Props) {
   const t = await getTranslations({ locale: currentLocale })
-  const isSessionActive = await isCurrentSessionActive()
+  const session = await getCurrentSession()
+  const isSessionActive = session?.active === true
   const currency =
     ((await cookies()).get(CURRENCY_COOKIE)?.value as Currency) ??
     DEFAULT_CURRENCY
@@ -156,7 +158,11 @@ export default async function Navbar({
           />
         </Sheet>
         <div className="relative hidden items-center gap-6 lg:flex">
-          {isSessionActive ? <UserDropdownMenu /> : <SignInButton />}
+          {isSessionActive ? (
+            <UserDropdownMenu isAdmin={isAdminSession(session)} />
+          ) : (
+            <SignInButton />
+          )}
           <LanguageDropdownMenu
             currentLocale={currentLocale}
             className="absolute right-0 translate-x-[calc(100%+1rem)]"

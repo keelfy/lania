@@ -317,7 +317,8 @@
       "settings": "Настройки",
       "support": "Поддержка",
       "signOut": "Выйти",
-      "signOutFailed": "Не удалось выйти"
+      "signOutFailed": "Не удалось выйти",
+      "admin": "Админ-панель"
     }
   },
   "notifications": {
@@ -417,6 +418,121 @@
       "privacy": "Политика конфиденциальности",
       "payments": "Условия оплаты",
       "refund": "Политика возврата средств"
+    }
+  },
+  "admin": {
+    "title": "Админ-панель",
+    "nav": {
+      "users": "Пользователи",
+      "profiles": "Профили"
+    },
+    "users": {
+      "title": "Пользователи",
+      "searchPlaceholder": "Поиск по email",
+      "loadFailed": "Не удалось загрузить пользователей",
+      "noResults": "Никого не нашли",
+      "searchLimit": "Показано: {count}. Поиск ищет по началу и середине email среди первых 10 000 аккаунтов.",
+      "firstPage": "К началу",
+      "nextPage": "Дальше",
+      "back": "← Ко всем пользователям",
+      "profiles": "Профили",
+      "noProfiles": "У пользователя нет профилей",
+      "columns": {
+        "email": "Email",
+        "username": "Имя",
+        "role": "Роль",
+        "createdAt": "Создан"
+      },
+      "profileColumns": {
+        "username": "Ник",
+        "role": "Роль",
+        "createdAt": "Создан"
+      }
+    },
+    "profiles": {
+      "title": "Профили",
+      "searchPlaceholder": "Поиск по нику",
+      "loadFailed": "Не удалось загрузить профили",
+      "noResults": "Ничего не нашли",
+      "noOwner": "Без владельца",
+      "previousPage": "Назад",
+      "nextPage": "Дальше",
+      "pageOf": "Страница {page} из {total}",
+      "back": "← Ко всем профилям",
+      "columns": {
+        "username": "Ник",
+        "owner": "Владелец",
+        "role": "Роль",
+        "createdAt": "Создан"
+      },
+      "owner": {
+        "title": "Владелец",
+        "description": "Профиль принадлежит пользователю с этим email. Лимит профилей на пользователя не проверяется.",
+        "noOwner": "У профиля нет владельца",
+        "release": "Освободить",
+        "releaseConfirmTitle": "Освободить профиль?",
+        "releaseConfirmDescription": "У профиля не останется владельца, и любой пользователь сможет его занять. Доступы и косметика остаются у профиля.",
+        "cancel": "Отмена",
+        "emailPlaceholder": "Email нового владельца",
+        "transfer": "Передать",
+        "transferred": "Профиль передан: {email}",
+        "transferFailed": "Не удалось передать профиль",
+        "released": "Профиль освобождён",
+        "releaseFailed": "Не удалось освободить профиль"
+      },
+      "grants": {
+        "title": "Выданное",
+        "description": "Доступы и косметика профиля. Отозванное остаётся в истории.",
+        "loadFailed": "Не удалось загрузить выданное",
+        "empty": "Ничего не выдано",
+        "seasonAccess": "Доступ к сезону",
+        "anySeason": "Любой",
+        "active": "Действует",
+        "revokedAt": "Отозвано {date}",
+        "revoke": "Отозвать",
+        "sync": "Синхронизировать",
+        "revoked": "Отозвано",
+        "synced": "Сервер обновлён",
+        "revokeFailed": "Не удалось отозвать",
+        "cancel": "Отмена",
+        "revokeConfirmTitle": "Отозвать выданное?",
+        "revokeConfirmDescription": "Для доступа в активный сезон игрок будет убран из whitelist, если других доступов не осталось. Выбранный цвет или префикс, который больше не доступен, будет сброшен.",
+        "syncConfirmTitle": "Обновить игровой сервер?",
+        "syncConfirmDescription": "Отзыв уже записан. Запрос повторно обновит whitelist или префикс на игровом сервере.",
+        "columns": {
+          "grant": "Что",
+          "season": "Сезон",
+          "source": "Откуда",
+          "status": "Статус"
+        },
+        "types": {
+          "access": "Доступ",
+          "name-color": "Цвет ника",
+          "name-prefix": "Префикс"
+        },
+        "sources": {
+          "free": "Бесплатно",
+          "registration": "Регистрация",
+          "freekassa": "Оплата",
+          "admin": "Админ",
+          "order": "Заказ",
+          "manual": "Вручную"
+        },
+        "grantDialog": {
+          "open": "Выдать",
+          "title": "Выдать продукт",
+          "description": "Продукт выдаётся без оплаты. Если он уже есть у профиля на этот сезон, выдача откажет.",
+          "product": "Продукт",
+          "selectProduct": "Выберите продукт",
+          "season": "Сезон",
+          "selectSeason": "Выберите сезон",
+          "seasonOption": "Сезон {number}",
+          "activeSeason": "активный",
+          "submit": "Выдать",
+          "granted": "Продукт выдан",
+          "failed": "Не удалось выдать продукт"
+        }
+      }
     }
   }
 }

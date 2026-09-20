@@ -318,7 +318,8 @@
       "orders": "My orders",
       "support": "Support",
       "signOut": "Sign out",
-      "signOutFailed": "Failed to sign out"
+      "signOutFailed": "Failed to sign out",
+      "admin": "Admin panel"
     }
   },
   "notifications": {
@@ -418,6 +419,121 @@
       "privacy": "Privacy policy",
       "payments": "Payment conditions",
       "refund": "Refund policy"
+    }
+  },
+  "admin": {
+    "title": "Admin panel",
+    "nav": {
+      "users": "Users",
+      "profiles": "Profiles"
+    },
+    "users": {
+      "title": "Users",
+      "searchPlaceholder": "Search by email",
+      "loadFailed": "Failed to load users",
+      "noResults": "Nobody found",
+      "searchLimit": "Showing {count}. Search looks for part of an email among the first 10,000 accounts.",
+      "firstPage": "To the start",
+      "nextPage": "Next",
+      "back": "← All users",
+      "profiles": "Profiles",
+      "noProfiles": "The user has no profiles",
+      "columns": {
+        "email": "Email",
+        "username": "Name",
+        "role": "Role",
+        "createdAt": "Created"
+      },
+      "profileColumns": {
+        "username": "Username",
+        "role": "Role",
+        "createdAt": "Created"
+      }
+    },
+    "profiles": {
+      "title": "Profiles",
+      "searchPlaceholder": "Search by username",
+      "loadFailed": "Failed to load profiles",
+      "noResults": "Nothing found",
+      "noOwner": "No owner",
+      "previousPage": "Previous",
+      "nextPage": "Next",
+      "pageOf": "Page {page} of {total}",
+      "back": "← All profiles",
+      "columns": {
+        "username": "Username",
+        "owner": "Owner",
+        "role": "Role",
+        "createdAt": "Created"
+      },
+      "owner": {
+        "title": "Owner",
+        "description": "The profile belongs to the user with this email. The limit of profiles per user is not checked.",
+        "noOwner": "The profile has no owner",
+        "release": "Release",
+        "releaseConfirmTitle": "Release the profile?",
+        "releaseConfirmDescription": "The profile will have no owner, and any user will be able to claim it. Its accesses and cosmetics stay with the profile.",
+        "cancel": "Cancel",
+        "emailPlaceholder": "Email of the new owner",
+        "transfer": "Transfer",
+        "transferred": "Profile transferred to {email}",
+        "transferFailed": "Failed to transfer the profile",
+        "released": "Profile released",
+        "releaseFailed": "Failed to release the profile"
+      },
+      "grants": {
+        "title": "Granted",
+        "description": "Accesses and cosmetics of the profile. Revoked items stay as history.",
+        "loadFailed": "Failed to load grants",
+        "empty": "Nothing is granted",
+        "seasonAccess": "Season access",
+        "anySeason": "Any",
+        "active": "Active",
+        "revokedAt": "Revoked {date}",
+        "revoke": "Revoke",
+        "sync": "Sync",
+        "revoked": "Revoked",
+        "synced": "Server updated",
+        "revokeFailed": "Failed to revoke",
+        "cancel": "Cancel",
+        "revokeConfirmTitle": "Revoke this grant?",
+        "revokeConfirmDescription": "For access to the active season the player is removed from the whitelist when no other access remains. A selected color or prefix that is no longer available is reset.",
+        "syncConfirmTitle": "Update the game server?",
+        "syncConfirmDescription": "The revoke is already saved. This repeats the update of the whitelist or prefix on the game server.",
+        "columns": {
+          "grant": "Item",
+          "season": "Season",
+          "source": "Source",
+          "status": "Status"
+        },
+        "types": {
+          "access": "Access",
+          "name-color": "Name color",
+          "name-prefix": "Prefix"
+        },
+        "sources": {
+          "free": "Free",
+          "registration": "Registration",
+          "freekassa": "Payment",
+          "admin": "Admin",
+          "order": "Order",
+          "manual": "Manual"
+        },
+        "grantDialog": {
+          "open": "Grant",
+          "title": "Grant a product",
+          "description": "The product is granted without payment. It is refused when the profile already has it for the season.",
+          "product": "Product",
+          "selectProduct": "Select a product",
+          "season": "Season",
+          "selectSeason": "Select a season",
+          "seasonOption": "Season {number}",
+          "activeSeason": "active",
+          "submit": "Grant",
+          "granted": "Product granted",
+          "failed": "Failed to grant the product"
+        }
+      }
     }
   }
 }

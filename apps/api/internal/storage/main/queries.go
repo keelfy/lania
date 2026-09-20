@@ -13,6 +13,8 @@ import (
 type Queries interface {
 	// Server Season
 	FindSeasonByID(ctx context.Context, seasonID uuid.UUID) (*domain.Season, error)
+	// FindSeasons returns every season, the newest number first.
+	FindSeasons(ctx context.Context) ([]*domain.Season, error)
 
 	// Game Profile
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
@@ -24,6 +26,8 @@ type Queries interface {
 	FindTopProfilePlaytimes(ctx context.Context, seasonID uuid.UUID, limit int) ([]*domain.ProfilePlaytime, error)
 	InsertProfile(ctx context.Context, arg InsertProfileParams) error
 	ClaimProfile(ctx context.Context, profileID, ownerUserID uuid.UUID, updatedBy uuid.UUID) (bool, error)
+	// SetProfileOwner replaces the owner of the profile whoever it is. A nil ownerUserID releases the profile.
+	SetProfileOwner(ctx context.Context, profileID uuid.UUID, ownerUserID, updatedBy *uuid.UUID) error
 	FindProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)
 	FindProfileByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID) (*domain.Profile, error)
 
@@ -53,6 +57,14 @@ type Queries interface {
 	CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, seasonID uuid.UUID) (bool, error)
 	FindProfileAccessesByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) ([]*domain.ProfileAccess, error)
 	GetProfileAccessesBySeasonIDAndOwnerUserID(ctx context.Context, seasonID uuid.UUID, ownerUserID uuid.UUID) (uuid.UUIDs, error)
+
+	// Profile Grants
+	// FindProfileGrants returns everything the profile was given, revoked grants included, newest first.
+	FindProfileGrants(ctx context.Context, profileID, mcUUID uuid.UUID) ([]*domain.Grant, error)
+	// The revoke queries leave a grant that is already revoked untouched.
+	RevokeProfileAccess(ctx context.Context, mcUUID, accessID uuid.UUID, revokedBy *uuid.UUID) error
+	RevokeProfileNameColorOption(ctx context.Context, profileID, optionID uuid.UUID, revokedBy *uuid.UUID) error
+	RevokeProfileNamePrefixOption(ctx context.Context, profileID, optionID uuid.UUID, revokedBy *uuid.UUID) error
 
 	// Profile Playtime
 	FindProfilePlaytimesByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) ([]*domain.ProfilePlaytime, error)

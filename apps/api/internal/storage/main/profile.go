@@ -376,6 +376,18 @@ func (q *queries) ClaimProfile(ctx context.Context, profileID, ownerUserID uuid.
 	return affected > 0, nil
 }
 
+const setProfileOwner = `
+UPDATE profiles
+SET owner_user_id = ?, updated_at = NOW(), updated_by = ?
+WHERE id = ?
+`
+
+// SetProfileOwner gives the profile to the user, or leaves it without an owner when ownerUserID is nil.
+func (q *queries) SetProfileOwner(ctx context.Context, profileID uuid.UUID, ownerUserID, updatedBy *uuid.UUID) error {
+	_, err := q.x.ExecContext(ctx, setProfileOwner, ownerUserID, updatedBy, profileID)
+	return err
+}
+
 const findProfileByID = `
 SELECT 
 	p.id,

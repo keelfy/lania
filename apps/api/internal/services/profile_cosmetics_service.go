@@ -150,6 +150,7 @@ func (s *profileCosmeticsService) AddProfileNameColorOption(ctx context.Context,
 		NameColorID: nameColorID,
 		ForSeasonID: forSeasonID,
 		OrderItemID: orderItemID,
+		CreatedBy:   utils.GetUserIDFromContextOrNil(ctx),
 	})
 	if err != nil {
 		return utils.NewInternalServerError("failed to add profile name color option", err)
@@ -164,6 +165,7 @@ func (s *profileCosmeticsService) AddProfileNameGlythOption(ctx context.Context,
 		Type:         domain.ProfilePrefixTypeGlyth,
 		ForSeasonID:  forSeasonID,
 		OrderItemID:  orderItemID,
+		CreatedBy:    utils.GetUserIDFromContextOrNil(ctx),
 	})
 	if err != nil {
 		return utils.NewInternalServerError("failed to add profile name glyth option", err)

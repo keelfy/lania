@@ -1,3 +1,13 @@
+import {
+  AdminGrant,
+  AdminProfile,
+  AdminProfileDetails,
+  AdminSeason,
+  AdminUser,
+  AdminUserDetails,
+  GrantProductReq,
+  GrantType,
+} from '@/models/admin'
 import { BasketItem } from '@/models/basket'
 import {
   CreateOrderReq,
@@ -16,7 +26,7 @@ import {
   UsernameCheck,
 } from '@/models/profile'
 import { ApiFetcher } from './fetcher'
-import { Paginated } from '@/models/types'
+import { Paginated, TokenPaginated } from '@/models/types'
 
 export function getUserProfiles(
   fetcher: ApiFetcher,
@@ -285,4 +295,114 @@ export function deleteFromBasket(
 
 export function getOrder(fetcher: ApiFetcher, id: string): Promise<Order> {
   return fetcher<Order>(`/v1/orders/${id}`)
+}
+
+export function getAdminUsers(
+  fetcher: ApiFetcher,
+  search: string = '',
+  pageToken: string = '',
+  size: number = 25,
+): Promise<TokenPaginated<AdminUser>> {
+  const params = new URLSearchParams()
+  params.set('size', size.toString())
+  if (search) params.set('search', search)
+  if (pageToken) params.set('pageToken', pageToken)
+  return fetcher<TokenPaginated<AdminUser>>('/v1/admin/users', params)
+}
+
+export function getAdminUser(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<AdminUserDetails> {
+  return fetcher<AdminUserDetails>(`/v1/admin/users/${id}`)
+}
+
+export function getAdminProfiles(
+  fetcher: ApiFetcher,
+  page: number = 0,
+  search: string = '',
+  size: number = 25,
+): Promise<Paginated<AdminProfile>> {
+  const params = new URLSearchParams()
+  params.set('column', 'created_at')
+  params.set('direction', 'desc')
+  params.set('page', page.toString())
+  params.set('size', size.toString())
+  if (search) params.set('search', search)
+  return fetcher<Paginated<AdminProfile>>('/v1/admin/profiles', params)
+}
+
+export function getAdminProfile(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<AdminProfileDetails> {
+  return fetcher<AdminProfileDetails>(`/v1/admin/profiles/${id}`)
+}
+
+export function transferProfileOwner(
+  fetcher: ApiFetcher,
+  id: string,
+  email: string,
+): Promise<AdminProfileDetails> {
+  return fetcher<AdminProfileDetails>(
+    `/v1/admin/profiles/${id}/owner`,
+    undefined,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ email }),
+    },
+  )
+}
+
+export function releaseProfileOwner(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<AdminProfileDetails> {
+  return fetcher<AdminProfileDetails>(
+    `/v1/admin/profiles/${id}/owner`,
+    undefined,
+    { method: 'DELETE' },
+  )
+}
+
+export function getAdminSeasons(fetcher: ApiFetcher): Promise<AdminSeason[]> {
+  return fetcher<AdminSeason[]>('/v1/admin/seasons')
+}
+
+export function getAdminGrants(
+  fetcher: ApiFetcher,
+  profileId: string,
+): Promise<AdminGrant[]> {
+  return fetcher<AdminGrant[]>(`/v1/admin/profiles/${profileId}/grants`)
+}
+
+// Answers with the grants of the profile after the change.
+export function grantProduct(
+  fetcher: ApiFetcher,
+  profileId: string,
+  req: GrantProductReq,
+): Promise<AdminGrant[]> {
+  return fetcher<AdminGrant[]>(
+    `/v1/admin/profiles/${profileId}/grants`,
+    undefined,
+    {
+      method: 'POST',
+      body: JSON.stringify(req),
+    },
+  )
+}
+
+// Answers with the grants of the profile after the change. Repeating it for a revoked grant
+// only repeats the update of the game server.
+export function revokeGrant(
+  fetcher: ApiFetcher,
+  profileId: string,
+  type: GrantType,
+  grantId: string,
+): Promise<AdminGrant[]> {
+  return fetcher<AdminGrant[]>(
+    `/v1/admin/profiles/${profileId}/grants/${type}/${grantId}`,
+    undefined,
+    { method: 'DELETE' },
+  )
 }

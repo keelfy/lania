@@ -10,7 +10,7 @@ import (
 func CORS(handler http.Handler) http.Handler {
 	c := cors.New(cors.Options{
 		AllowedOrigins:   config.GetCorsAllowedOrigins(),
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS", "PATCH", "DELETE"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "OPTIONS", "PATCH", "DELETE"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 	})

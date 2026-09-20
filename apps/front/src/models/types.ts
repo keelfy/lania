@@ -13,6 +13,12 @@ export type CursorPaginated<T> = {
   totalElements: number
 }
 
+// A page of a source that only knows the token of the next page. The token is missing on the last page.
+export type TokenPaginated<T> = {
+  content: T[]
+  nextPageToken?: string
+}
+
 export type SearchHit<T> = {
   id: string
   source: T

@@ -3,8 +3,6 @@ package services
 import (
 	"context"
 	stdsql "database/sql"
-	"encoding/json"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/commands"
@@ -27,32 +25,26 @@ type OrderService interface {
 }
 
 type orderService struct {
-	storage                 storage.MainStorage
-	freekassaService        FreekassaService
-	accessService           AccessService
-	profileCosmeticsService ProfileCosmeticsService
-	productService          ProductService
-	basketService           BasketService
-	profileService          ProfileService
+	storage            storage.MainStorage
+	freekassaService   FreekassaService
+	productService     ProductService
+	basketService      BasketService
+	fulfillmentService FulfillmentService
 }
 
 func NewOrderService(
 	storage storage.MainStorage,
 	freekassaService FreekassaService,
-	accessService AccessService,
-	profileCosmeticsService ProfileCosmeticsService,
 	productService ProductService,
 	basketService BasketService,
-	profileService ProfileService,
+	fulfillmentService FulfillmentService,
 ) OrderService {
 	return &orderService{
-		storage:                 storage,
-		freekassaService:        freekassaService,
-		accessService:           accessService,
-		profileCosmeticsService: profileCosmeticsService,
-		productService:          productService,
-		basketService:           basketService,
-		profileService:          profileService,
+		storage:            storage,
+		freekassaService:   freekassaService,
+		productService:     productService,
+		basketService:      basketService,
+		fulfillmentService: fulfillmentService,
 	}
 }
 
@@ -192,43 +184,7 @@ func (s *orderService) handleOrderCompletion(ctx context.Context, order *domain.
 }
 
 func (s *orderService) handleOrderItemCompletion(ctx context.Context, queries sql.Queries, item *domain.OrderItem, product *domain.Product) error {
-	switch product.Category {
-	case domain.ProductCategoryUpgrade:
-		var metadata domain.UpgradeProductMetadata
-		err := json.Unmarshal(product.Metadata, &metadata)
-		if err != nil {
-			return err
-		}
-
-		profile, err := s.profileService.GetProfileByID(ctx, item.ProfileID)
-		if err != nil {
-			return err
-		}
-
-		if metadata.Action == domain.ProductUpgradeActionSeasonAccess {
-			// TODO: check if profile has access for the season
-			return s.accessService.ObtainAccessForProfile(ctx, item.SeasonID, profile, domain.AccessSourceFreekassa)
-		} else {
-			return fmt.Errorf("unknown upgrade action: %s", metadata.Action)
-		}
-	case domain.ProductCategoryNameColor:
-		// TODO: avoid hitting unique constraint error
-		var metadata domain.NameColorProductMetadata
-		err := json.Unmarshal(product.Metadata, &metadata)
-		if err != nil {
-			return err
-		}
-		return s.profileCosmeticsService.AddProfileNameColorOption(ctx, queries, item.ProfileID, metadata.NameColorID, &item.SeasonID, &item.ID)
-	case domain.ProductCategoryNamePrefix:
-		var metadata domain.NamePrefixProductMetadata
-		err := json.Unmarshal(product.Metadata, &metadata)
-		if err != nil {
-			return err
-		}
-		return s.profileCosmeticsService.AddProfileNameGlythOption(ctx, queries, item.ProfileID, metadata.NamePrefixID, &item.SeasonID, &item.ID)
-	default:
-		return fmt.Errorf("unknown product category: %s", product.Category)
-	}
+	return s.fulfillmentService.GrantProduct(ctx, queries, item.ProfileID, item.SeasonID, product, domain.AccessSourceFreekassa, &item.ID)
 }
 
 func (s *orderService) GetOrderByExternalID(ctx context.Context, externalID string) (*domain.Order, error) {

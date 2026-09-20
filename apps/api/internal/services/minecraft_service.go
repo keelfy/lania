@@ -17,6 +17,7 @@ type MinecraftService interface {
 	GetGroupsByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error)
 	SetPrefixByMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, prefix string) error
 	AddToWhitelist(ctx context.Context, profile *domain.Profile) error
+	RemoveFromWhitelist(ctx context.Context, profile *domain.Profile) error
 }
 
 type minecraftService struct {
@@ -69,6 +70,13 @@ func (s *minecraftService) SetPrefixByMinecraftUUID(ctx context.Context, mcUUID 
 func (s *minecraftService) AddToWhitelist(ctx context.Context, profile *domain.Profile) error {
 	if err := s.shellAPI.AddToWhitelist(ctx, profile.MinecraftUUID, profile.MinecraftUsername); err != nil {
 		return utils.NewInternalServerError("failed to add profile to whitelist", err)
+	}
+	return nil
+}
+
+func (s *minecraftService) RemoveFromWhitelist(ctx context.Context, profile *domain.Profile) error {
+	if err := s.shellAPI.RemoveFromWhitelist(ctx, profile.MinecraftUUID); err != nil {
+		return utils.NewInternalServerError("failed to remove profile from whitelist", err)
 	}
 	return nil
 }

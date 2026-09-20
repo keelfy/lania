@@ -24,7 +24,7 @@ INSERT INTO profile_accesses (
 	now(),
 	now(),
 	?
-) ON DUPLICATE KEY UPDATE mc_uuid = mc_uuid;
+) ON DUPLICATE KEY UPDATE revoked_at = NULL, revoked_by = NULL;
 `
 
 type InsertProfileAccessParams struct {
@@ -48,7 +48,7 @@ const checkIfProfileHasAccessBySeasonIDAndMinecraftUUID = `
 SELECT EXISTS(
 	SELECT 1
 	FROM profile_accesses
-	WHERE mc_uuid = ? AND season_id = ?
+	WHERE mc_uuid = ? AND season_id = ? AND revoked_at IS NULL
 )
 `
 
@@ -62,7 +62,7 @@ const getProfileAccessesBySeasonIDAndOwnerUserID = `
 	SELECT profiles.id
 	FROM profile_accesses
 	LEFT JOIN profiles ON profile_accesses.mc_uuid = profiles.mc_uuid
-	WHERE season_id = ? AND owner_user_id = ?
+	WHERE season_id = ? AND owner_user_id = ? AND profile_accesses.revoked_at IS NULL
 `
 
 func (q *queries) GetProfileAccessesBySeasonIDAndOwnerUserID(ctx context.Context, seasonID uuid.UUID, ownerUserID uuid.UUID) (uuid.UUIDs, error) {
@@ -93,7 +93,7 @@ SELECT
 	pa.updated_at,
 	pa.updated_by
 FROM profile_accesses pa
-WHERE mc_uuid IN ('%s')
+WHERE mc_uuid IN ('%s') AND pa.revoked_at IS NULL
 `
 
 func (q *queries) FindProfileAccessesByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) ([]*domain.ProfileAccess, error) {

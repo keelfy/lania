@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'crafatar.com',
+        hostname: 'crafatar-pub.neodium.fr',
       },
       {
         protocol: 'https',
