@@ -4,12 +4,18 @@ import (
 	"github.com/google/uuid"
 )
 
+type SeasonAccess struct {
+	SeasonID uuid.UUID `json:"seasonId"`
+	Status   string    `json:"status"`
+}
+
 type Profile struct {
 	ID            uuid.UUID         `json:"id"`
 	MinecraftUUID uuid.UUID         `json:"mcUuid"`
 	Username      string            `json:"username"`
 	Cosmetics     *ProfileCosmetics `json:"cosmetics"`
 	AccessStatus  string            `json:"accessStatus"`
+	Accesses      []*SeasonAccess   `json:"accesses"`
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`
 }
 
@@ -35,6 +41,7 @@ type ProfileDetails struct {
 	LastSeenAt    *int64            `json:"lastSeenAt,omitempty"`
 	Role          string            `json:"role"`
 	AccessStatus  string            `json:"accessStatus"`
+	Accesses      []*SeasonAccess   `json:"accesses"`
 	Playtime      int64             `json:"playtime"`
 	IsOnline      bool              `json:"isOnline"`
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`

@@ -1,5 +1,6 @@
 import {
   getBasket,
+  getSeasons,
   getProductByIDs,
   getUserProfiles,
   getPurchases,
@@ -34,13 +35,27 @@ export default async function BasketPage({ params }: Props) {
 
   const productIds = basket.map((item) => item.productId)
 
+  const seasonIds = [...new Set(basket.map((item) => item.seasonId))]
+
+  const seasons = await getSeasons(serverApiFetcher).catch((err) => {
+    console.error(err)
+    return []
+  })
+
   const [purchases, products] =
     productIds.length > 0
       ? await Promise.all([
-          await getPurchases(serverApiFetcher, productIds).catch((err) => {
-            console.error(err)
-            return []
-          }),
+          // Purchases are looked up per season.
+          Promise.all(
+            seasonIds.map((seasonId) =>
+              getPurchases(serverApiFetcher, productIds, seasonId).catch(
+                (err) => {
+                  console.error(err)
+                  return []
+                },
+              ),
+            ),
+          ).then((bySeason) => bySeason.flat()),
           await getProductByIDs(
             serverApiFetcher,
             productIds,
@@ -63,6 +78,7 @@ export default async function BasketPage({ params }: Props) {
         profiles={profiles}
         purchases={purchases}
         products={products}
+        seasons={seasons}
         currency={(currency as Currency) ?? DEFAULT_CURRENCY}
       />
     </div>

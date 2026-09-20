@@ -60,6 +60,7 @@ func (s *basketService) AddBasketItem(ctx context.Context, queries sql.Queries, 
 		UserID:    cmd.UserID,
 		ProductID: cmd.ProductID,
 		ProfileID: cmd.ProfileID,
+		SeasonID:  cmd.SeasonID,
 		Quantity:  cmd.Quantity,
 		CreatedBy: authUserID,
 	})

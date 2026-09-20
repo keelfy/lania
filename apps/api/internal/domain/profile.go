@@ -14,6 +14,35 @@ const (
 	AccessStatusExpired  AccessStatus = "expired"
 )
 
+// SeasonAccessStatus is the access of a profile to one season.
+type SeasonAccessStatus struct {
+	SeasonID uuid.UUID
+	Status   AccessStatus
+}
+
+// SeasonAccessStatuses lists a status for every active season and for every ended season the profile has access to.
+// An active season is active or inactive for the profile, an ended one is expired. Seasons keep the given order.
+func SeasonAccessStatuses(seasons []*Season, accesses []*ProfileAccess) []*SeasonAccessStatus {
+	accessedSeasonIDs := make(map[uuid.UUID]bool, len(accesses))
+	for _, access := range accesses {
+		accessedSeasonIDs[access.SeasonID] = true
+	}
+
+	statuses := make([]*SeasonAccessStatus, 0, len(seasons))
+	for _, season := range seasons {
+		hasAccess := accessedSeasonIDs[season.ID]
+		switch {
+		case season.IsActive && hasAccess:
+			statuses = append(statuses, &SeasonAccessStatus{SeasonID: season.ID, Status: AccessStatusActive})
+		case season.IsActive:
+			statuses = append(statuses, &SeasonAccessStatus{SeasonID: season.ID, Status: AccessStatusInactive})
+		case hasAccess:
+			statuses = append(statuses, &SeasonAccessStatus{SeasonID: season.ID, Status: AccessStatusExpired})
+		}
+	}
+	return statuses
+}
+
 type AccessSource string
 
 const (

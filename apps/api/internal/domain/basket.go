@@ -11,6 +11,7 @@ type BasketItem struct {
 	UserID    uuid.UUID
 	ProductID uuid.UUID
 	ProfileID uuid.UUID
+	SeasonID  uuid.UUID
 	Quantity  int
 	CreatedAt time.Time
 	CreatedBy uuid.UUID

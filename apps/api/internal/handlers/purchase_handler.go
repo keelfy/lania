@@ -55,6 +55,14 @@ func (h *purchaseHandler) GetPurchasedProducts(w http.ResponseWriter, r *http.Re
 	}
 
 	seasonID := config.GetPrimarySeasonID()
+	requestedSeasonID, err := binders.BindOptionalQueryParamAsUUID(r, "seasonId")
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	if requestedSeasonID != nil {
+		seasonID = *requestedSeasonID
+	}
 
 	products, err := h.productService.GetProductsByIDs(ctx, productIDs)
 	if err != nil {

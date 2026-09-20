@@ -24,10 +24,14 @@ func BindCreateOrder(r *http.Request) (*commands.CreateOrderCommand, error) {
 
 	products := make([]*commands.OrderItemCommand, len(req.Products))
 	for i, product := range req.Products {
+		seasonID := config.GetPrimarySeasonID()
+		if product.SeasonID != nil {
+			seasonID = *product.SeasonID
+		}
 		products[i] = &commands.OrderItemCommand{
 			ProductID: product.ID,
 			ProfileID: product.ProfileID,
-			SeasonID:  config.GetPrimarySeasonID(),
+			SeasonID:  seasonID,
 			Quantity:  1,
 		}
 	}

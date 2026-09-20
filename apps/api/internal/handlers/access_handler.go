@@ -213,7 +213,7 @@ func (h *accessHandler) grantFreeAccess(
 		}
 
 		if hasAccess {
-			utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the primary season", nil))
+			utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the season", nil))
 			return
 		}
 
@@ -237,6 +237,16 @@ func (h *accessHandler) ObtainAccessForProfiles(w http.ResponseWriter, r *http.R
 
 	if err := cmd.Validate(); err != nil {
 		utils.HttpError(ctx, w, utils.NewBadRequestError("", err))
+		return
+	}
+
+	season, err := h.seasonService.GetSeasonByID(ctx, cmd.SeasonID)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	if !season.IsActive {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("season is not active", nil))
 		return
 	}
 
@@ -299,7 +309,7 @@ func (h *accessHandler) ObtainAccessForProfiles(w http.ResponseWriter, r *http.R
 		}
 
 		if hasAccess {
-			utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the primary season", nil))
+			utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the season", nil))
 			return
 		}
 
@@ -310,8 +320,8 @@ func (h *accessHandler) ObtainAccessForProfiles(w http.ResponseWriter, r *http.R
 		}
 
 		for _, basketItem := range basketItems {
-			if basketItem.ProductID == seasonAccessProduct.ID && basketItem.ProfileID == profile.ID {
-				utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the primary season", nil))
+			if basketItem.ProductID == seasonAccessProduct.ID && basketItem.ProfileID == profile.ID && basketItem.SeasonID == cmd.SeasonID {
+				utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the season", nil))
 				return
 			}
 		}
@@ -320,6 +330,7 @@ func (h *accessHandler) ObtainAccessForProfiles(w http.ResponseWriter, r *http.R
 			UserID:    cmd.OwnerUserID,
 			ProductID: seasonAccessProduct.ID,
 			ProfileID: profile.ID,
+			SeasonID:  cmd.SeasonID,
 			Quantity:  1,
 		})
 		if err != nil {

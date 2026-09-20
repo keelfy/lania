@@ -138,6 +138,10 @@
       "name-prefix": "Glyths"
     }
   },
+  "seasonSelect": {
+    "placeholder": "Season",
+    "primary": "primary"
+  },
   "basket": {
     "title": "Your basket",
     "error": "Failed to create order",
@@ -160,6 +164,7 @@
     "items": {
       "delete": "Delete",
       "recipient": "Recipient",
+      "season": "Season",
       "quantity": "1 pc.",
       "purchased": "Already in stock for this profile"
     }
@@ -190,6 +195,7 @@
       "title": "Access",
       "description": "Information about the access to this game profile",
       "status": "Status",
+      "season": "Season",
       "names": {
         "active": "Access active",
         "inactive": "Access inactive",
@@ -357,6 +363,10 @@
         "checking": "Checking...",
         "available": "Available"
       },
+      "stepSeason": {
+        "title": "Choose a season",
+        "description": "Choose the season you are getting access to."
+      },
       "step3": {
         "title": "Create a profile and proceed to payment",
         "description": "You will be ready to start playing on the <b>Lania</b> server.",
@@ -364,12 +374,12 @@
       },
       "step3Free": {
         "title": "Create a profile and get access",
-        "description": "Access to the <b>current season</b> is granted right away and for free — no payment needed.",
+        "description": "Access to the <b>selected season</b> is granted right away and for free — no payment needed.",
         "action": "Get access"
       },
       "step3Pre": {
         "title": "Create a profile and pre-register",
-        "description": "Your profile gets access to the <b>current season</b> right away — no payment needed.",
+        "description": "Your profile gets access to the <b>selected season</b> right away — no payment needed.",
         "action": "Pre-register"
       }
     },

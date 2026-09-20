@@ -6,5 +6,6 @@ type BasketItem struct {
 	ID        uuid.UUID `json:"id"`
 	ProductID uuid.UUID `json:"productId"`
 	ProfileID uuid.UUID `json:"profileId"`
+	SeasonID  uuid.UUID `json:"seasonId"`
 	Quantity  int       `json:"quantity"`
 }

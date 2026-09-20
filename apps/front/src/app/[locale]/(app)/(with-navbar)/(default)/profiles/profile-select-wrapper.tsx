@@ -2,7 +2,7 @@
 
 import ProfileSelect from '@/components/ui/profile-select'
 import { Profile } from '@/models/profile'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 type Props = {
   profiles: Profile[]
@@ -14,6 +14,8 @@ export default function ProfileSelectWrapper({
   selectedProfileId,
 }: Props) {
   const router = useRouter()
+  // The chosen season stays when another profile is picked.
+  const seasonId = useSearchParams().get('s')
   return (
     <ProfileSelect
       profiles={profiles}
@@ -21,7 +23,9 @@ export default function ProfileSelectWrapper({
       placeholder="Профиль"
       selectedProfileId={selectedProfileId}
       onSelectProfileId={(profileId) => {
-        router.push(`/profiles?id=${profileId}`)
+        router.push(
+          `/profiles?id=${profileId}${seasonId ? `&s=${seasonId}` : ''}`,
+        )
       }}
     />
   )

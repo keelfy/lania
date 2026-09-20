@@ -9,11 +9,10 @@ import LoadingSpinner from '@/components/ui/loading-spinner'
 import { CheckIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { UseFormReturn, useFormState } from 'react-hook-form'
-import z from 'zod'
-import { obtainAccessFormSchema } from './form'
+import { ObtainAccessFormValues } from './form'
 
 type Props = {
-  form: UseFormReturn<z.infer<typeof obtainAccessFormSchema>>
+  form: UseFormReturn<ObtainAccessFormValues>
 }
 
 export function UsernameField({ form }: Props) {

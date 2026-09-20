@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/clients"
-	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/presenter"
@@ -31,6 +30,7 @@ type orderHandler struct {
 	freekassaService  services.FreekassaService
 	easyDonateService services.EasyDonateService
 	productService    services.ProductService
+	seasonService     services.SeasonService
 	basketService     services.BasketService
 	purchaseService   services.PurchaseService
 	storage           storage.MainStorage
@@ -42,6 +42,7 @@ func NewOrderHandler(
 	freekassaService services.FreekassaService,
 	easyDonateService services.EasyDonateService,
 	productService services.ProductService,
+	seasonService services.SeasonService,
 	basketService services.BasketService,
 	purchaseService services.PurchaseService,
 	storage storage.MainStorage,
@@ -52,6 +53,7 @@ func NewOrderHandler(
 		freekassaService:  freekassaService,
 		easyDonateService: easyDonateService,
 		productService:    productService,
+		seasonService:     seasonService,
 		basketService:     basketService,
 		purchaseService:   purchaseService,
 		storage:           storage,
@@ -110,11 +112,31 @@ func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	seasonID := config.GetPrimarySeasonID()
-	purchases, err := h.purchaseService.GetPurchasesByProducts(ctx, cmd.UserID, seasonID, products)
-	if err != nil {
-		utils.HttpError(ctx, w, err)
-		return
+	// Every ordered season has to be active, purchases are looked up per season.
+	purchases := make([]*domain.PurchasedProduct, 0)
+	checkedSeasonIDs := make(map[uuid.UUID]bool)
+	for _, item := range cmd.Items {
+		if checkedSeasonIDs[item.SeasonID] {
+			continue
+		}
+		checkedSeasonIDs[item.SeasonID] = true
+
+		season, err := h.seasonService.GetSeasonByID(ctx, item.SeasonID)
+		if err != nil {
+			utils.HttpError(ctx, w, err)
+			return
+		}
+		if !season.IsActive {
+			utils.HttpError(ctx, w, utils.NewBadRequestError("season is not active", nil))
+			return
+		}
+
+		seasonPurchases, err := h.purchaseService.GetPurchasesByProducts(ctx, cmd.UserID, item.SeasonID, products)
+		if err != nil {
+			utils.HttpError(ctx, w, err)
+			return
+		}
+		purchases = append(purchases, seasonPurchases...)
 	}
 
 	// filter products that are not purchased
@@ -149,7 +171,7 @@ func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		itemsToOrder = append(itemsToOrder, &itemToOrder{
 			Product:   product,
 			ProfileID: item.ProfileID,
-			SeasonID:  seasonID,
+			SeasonID:  item.SeasonID,
 			Quantity:  item.Quantity,
 			Amounts:   []*domain.OrderAmounts{},
 		})
@@ -281,7 +303,7 @@ func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		basketItemIDs := make([]uuid.UUID, 0)
 		for _, item := range itemsToOrder {
 			for _, basketItem := range basketItems {
-				if basketItem.ProductID == item.Product.ID && basketItem.ProfileID == item.ProfileID {
+				if basketItem.ProductID == item.Product.ID && basketItem.ProfileID == item.ProfileID && basketItem.SeasonID == item.SeasonID {
 					basketItemIDs = append(basketItemIDs, basketItem.ID)
 				}
 			}

@@ -34,7 +34,7 @@ export default function AddToBasketButton({
   const session = useAuthStore((state) => state.session)
   const router = useRouter()
   const pathname = usePathname()
-  const { addItem, removeItem, items } = useBasket()
+  const { addItem, removeItem, refresh, items } = useBasket()
 
   const addItemToBasket = React.useCallback(
     (productId: string, profileId: string) => {
@@ -42,13 +42,15 @@ export default function AddToBasketButton({
       startAddingToBasket(async () => {
         try {
           await addToBasket(clientApiFetcher, productId, profileId)
+          // The optimistic item does not know its season yet.
+          await refresh()
         } catch (error) {
           removeItem(mockItemId)
           errorToast(t('failedToAddToBasket'), error)
         }
       })
     },
-    [addItem, removeItem, startAddingToBasket],
+    [addItem, removeItem, refresh, startAddingToBasket],
   )
 
   const notInBasket = React.useMemo(

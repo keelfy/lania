@@ -87,8 +87,12 @@ export function getBasket(fetcher: ApiFetcher): Promise<BasketItem[]> {
 export function getPurchases(
   fetcher: ApiFetcher,
   productIds: string[],
+  seasonId?: string,
 ): Promise<PurchasedProduct[]> {
   const params = new URLSearchParams()
+  if (seasonId) {
+    params.set('seasonId', seasonId)
+  }
   if (productIds) {
     params.set('productIds', productIds.join(','))
   }
@@ -163,8 +167,16 @@ export function getOrders(
 export function checkUsername(
   fetcher: ApiFetcher,
   username: string,
+  seasonId?: string,
 ): Promise<UsernameCheck[]> {
-  return fetcher<UsernameCheck[]>(`/v1/profiles/check-username/${username}`)
+  const params = new URLSearchParams()
+  if (seasonId) {
+    params.set('seasonId', seasonId)
+  }
+  return fetcher<UsernameCheck[]>(
+    `/v1/profiles/check-username/${username}`,
+    params,
+  )
 }
 
 export function requestFreeAccess(
@@ -260,10 +272,12 @@ export function addToBasket(
   fetcher: ApiFetcher,
   productId: string,
   profileId: string,
+  seasonId?: string,
 ): Promise<void> {
   return fetcher<void>(`/v1/basket`, undefined, {
     method: 'POST',
-    body: JSON.stringify({ productId, profileId }),
+    // The API falls back to the primary season without a seasonId.
+    body: JSON.stringify({ productId, profileId, seasonId }),
   })
 }
 

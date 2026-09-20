@@ -10,4 +10,6 @@ type CreateOrder struct {
 type OrderProduct struct {
 	ID        uuid.UUID `json:"id"`
 	ProfileID uuid.UUID `json:"profileId"`
+	// SeasonID defaults to the primary season.
+	SeasonID *uuid.UUID `json:"seasonId"`
 }

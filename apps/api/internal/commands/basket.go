@@ -10,6 +10,7 @@ type AddBasketItemCommand struct {
 	UserID    uuid.UUID
 	ProductID uuid.UUID
 	ProfileID uuid.UUID
+	SeasonID  uuid.UUID
 	Quantity  int
 }
 
@@ -18,6 +19,7 @@ func (c *AddBasketItemCommand) Validate() error {
 		validation.Field(&c.UserID, validation.Required, is.UUID),
 		validation.Field(&c.ProductID, validation.Required, is.UUID),
 		validation.Field(&c.ProfileID, validation.Required, is.UUID),
+		validation.Field(&c.SeasonID, validation.Required, is.UUID),
 		validation.Field(&c.Quantity, validation.Required, validation.Max(1)),
 	)
 }

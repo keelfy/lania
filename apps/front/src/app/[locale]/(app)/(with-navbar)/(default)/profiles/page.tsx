@@ -9,8 +9,8 @@ import {
 import PlayerCard from '@/components/ui/player-card'
 import RichText from '@/components/ui/rich-text'
 import {
-  getPrimarySeason,
   getProfileCosmeticOptions,
+  getSeasons,
   getUserProfiles,
 } from '@/lib/api-endpoints'
 import { getCurrentSession } from '@/lib/get-current-session'
@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils'
 import { Profile, ProfileCosmeticOptions } from '@/models/profile'
 import {
   ActivityIcon,
+  CalendarIcon,
   CannabisIcon,
   CheckIcon,
   ClockIcon,
@@ -34,6 +35,8 @@ import Link from 'next/link'
 import NameColorOptionSelect from './name-color-option-select'
 import NameGlythOptionSelect from './name-glyth-option-select'
 import { getAccessMode, isFreeAccess } from '@/lib/access-mode'
+import { pickSeason } from '@/lib/seasons'
+import AccessSeasonSelect from './access-season-select'
 import ProfileSelectWrapper from './profile-select-wrapper'
 
 const accessStatusColors = {
@@ -61,6 +64,8 @@ const DEFAULT_COSMETIC_OPTIONS: ProfileCosmeticOptions = {
 type Props = {
   searchParams: Promise<{
     id: string | undefined
+    // The season the access status is shown for.
+    s: string | undefined
   }>
   params: Promise<{
     locale: string
@@ -109,13 +114,14 @@ const fetchProfiles = async (
 }
 
 export default async function ProfilePage({ searchParams, params }: Props) {
-  const { id } = await searchParams
+  const { id, s: seasonParam } = await searchParams
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'profiles' })
-  const [session, primarySeason] = await Promise.all([
+  const [session, seasons] = await Promise.all([
     getCurrentSession(),
-    getPrimarySeason(serverApiFetcher).catch(() => undefined),
+    getSeasons(serverApiFetcher).catch(() => []),
   ])
+  const primarySeason = seasons.find((season) => season.isPrimary)
   const freeAccess = isFreeAccess(getAccessMode(primarySeason))
 
   const [profiles, cosmeticOptions] = await fetchProfiles(
@@ -126,7 +132,18 @@ export default async function ProfilePage({ searchParams, params }: Props) {
   const profileId = id ?? (profiles.length > 0 ? profiles[0].id : undefined)
 
   const selectedProfile = profiles.find((profile) => profile.id === profileId)
-  const accessStatus = selectedProfile?.accessStatus ?? 'inactive'
+  // The profile lists a status for every running season and every ended season it has access to.
+  const accessSeasons = seasons.filter((season) =>
+    selectedProfile?.accesses.some((access) => access.seasonId === season.id),
+  )
+  const accessSeason = pickSeason(accessSeasons, seasonParam)
+  const accessStatus =
+    selectedProfile?.accesses.find(
+      (access) => access.seasonId === accessSeason?.id,
+    )?.status ?? 'inactive'
+  // An ended season cannot be bought or registered for any more.
+  const canObtainAccess = accessSeason?.isActive ?? false
+  const accessSeasonFree = isFreeAccess(getAccessMode(accessSeason))
   const accessStatusColor = accessStatusColors[accessStatus]
   const Icon = accessStatusIcons[accessStatus]
 
@@ -179,6 +196,21 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-2">
+                      {accessSeasons.length > 1 && (
+                        <>
+                          <div className="flex flex-nowrap items-center gap-2">
+                            <CalendarIcon className="text-muted-foreground size-4 stroke-3" />
+                            <p className="text-md font-semibold tracking-tight">
+                              {t('accessStatus.season')}
+                            </p>
+                          </div>
+                          <AccessSeasonSelect
+                            seasons={accessSeasons}
+                            selectedSeasonId={accessSeason?.id}
+                            profileId={selectedProfile.id}
+                          />
+                        </>
+                      )}
                       <div className="flex flex-nowrap items-center gap-2">
                         <ActivityIcon className="text-muted-foreground size-4 stroke-3" />
                         <p className="text-md font-semibold tracking-tight">
@@ -196,7 +228,7 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                           )}
                         />
                       </div>
-                      {accessStatus !== 'active' && (
+                      {accessStatus !== 'active' && canObtainAccess && (
                         <Button
                           variant="outline"
                           asChild
@@ -208,16 +240,17 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                               pathname: '/obtain-access',
                               query: {
                                 u: selectedProfile?.username,
+                                s: accessSeason?.id,
                               },
                             }}
                           >
-                            {freeAccess ? (
+                            {accessSeasonFree ? (
                               <ZapIcon className="size-4" />
                             ) : (
                               <ShoppingBagIcon className="size-4" />
                             )}
                             {t(
-                              freeAccess
+                              accessSeasonFree
                                 ? 'accessStatus.obtainFree'
                                 : 'accessStatus.obtain',
                             )}

@@ -19,6 +19,7 @@ import { errorToast } from '@/lib/toasts'
 import { PaymentMethod, PurchasedProduct } from '@/models/order'
 import { Product, ProductMetadata } from '@/models/product'
 import { Profile } from '@/models/profile'
+import { Season } from '@/models/season'
 import {
   ArrowRightIcon,
   BanknoteIcon,
@@ -37,6 +38,7 @@ type Props = {
   profiles: Profile[]
   purchases: PurchasedProduct[]
   products: Product<ProductMetadata>[]
+  seasons: Season[]
   currency: Currency
 }
 
@@ -44,6 +46,7 @@ export default function BasketList({
   profiles,
   purchases,
   products,
+  seasons,
   currency,
 }: Props) {
   const t = useTranslations('basket')
@@ -62,7 +65,8 @@ export default function BasketList({
       const purchased = purchases.find(
         (purchase) =>
           purchase.productId === product?.id &&
-          purchase.profileId === item.profileId,
+          purchase.profileId === item.profileId &&
+          purchase.seasonId === item.seasonId,
       )
       return !product || purchased
     })
@@ -88,6 +92,7 @@ export default function BasketList({
           .map((item) => ({
             id: item.productId,
             profileId: item.profileId,
+            seasonId: item.seasonId,
           })),
       })
         .then((res) => {
@@ -142,7 +147,8 @@ export default function BasketList({
           const purchased = purchases.find(
             (purchase) =>
               purchase.productId === item.productId &&
-              purchase.profileId === item.profileId,
+              purchase.profileId === item.profileId &&
+              purchase.seasonId === item.seasonId,
           )
 
           if (!product || !profile) return null
@@ -153,6 +159,7 @@ export default function BasketList({
               item={item}
               product={product}
               profile={profile}
+              season={seasons.find((season) => season.id === item.seasonId)}
               purchased={purchased !== undefined}
               index={index + 1}
               currency={currency}

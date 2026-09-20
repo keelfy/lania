@@ -13,9 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import SeasonSelect from '@/components/ui/season-select'
 import { getAccessMode, isFreeAccess } from '@/lib/access-mode'
+import { getSelectableSeasons, pickSeason } from '@/lib/seasons'
 import {
-  getPrimarySeason,
+  getSeasons,
   registerForPrimarySeason,
   requestAccess,
   requestFreeAccess,
@@ -27,6 +29,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import {
   ArrowRightIcon,
   CheckIcon,
+  CalendarIcon,
   CreditCardIcon,
   Gamepad2Icon,
   UserCheckIcon,
@@ -38,9 +41,8 @@ import { parseAsString, useQueryState } from 'nuqs'
 import React from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
-import z from 'zod'
 import SignInButton from '../../components/sign-in-button'
-import { obtainAccessFormSchema } from './form'
+import { createObtainAccessFormSchema, ObtainAccessFormValues } from './form'
 import { UsernameField } from './username-field'
 import { useBasket } from '@/context/basket'
 import { Season } from '@/models/season'
@@ -60,19 +62,22 @@ const lastSteps = {
 export default function ObtainAccessPage({ params }: Props) {
   const { locale } = React.use(params)
   const t = useTranslations('obtainAccess')
-  const [primarySeason, setPrimarySeason] = React.useState<Season>()
+  const [seasons, setSeasons] = React.useState<Season[]>([])
   React.useEffect(() => {
     let cancelled = false
-    getPrimarySeason(clientApiFetcher)
-      .then((season) => {
-        if (!cancelled) setPrimarySeason(season)
+    getSeasons(clientApiFetcher)
+      .then((seasons) => {
+        if (!cancelled) setSeasons(getSelectableSeasons(seasons))
       })
       .catch(console.error)
     return () => {
       cancelled = true
     }
   }, [])
-  const accessMode = getAccessMode(primarySeason)
+  // The season comes from the `s` query param and falls back to the primary one.
+  const [querySeasonId, setQuerySeasonId] = useQueryState('s', parseAsString)
+  const season = pickSeason(seasons, querySeasonId)
+  const accessMode = getAccessMode(season)
   const freeAccess = isFreeAccess(accessMode)
   const lastStep = lastSteps[accessMode]
 
@@ -81,8 +86,10 @@ export default function ObtainAccessPage({ params }: Props) {
   const router = useRouter()
   const { refresh } = useBasket()
 
-  const form = useForm<z.infer<typeof obtainAccessFormSchema>>({
-    resolver: zodResolver(obtainAccessFormSchema),
+  const seasonId = season?.id
+  const form = useForm<ObtainAccessFormValues>({
+    // react-hook-form reads the latest resolver on every validation.
+    resolver: zodResolver(createObtainAccessFormSchema(seasonId)),
     defaultValues: {
       username: queryUsernames,
     },
@@ -90,13 +97,22 @@ export default function ObtainAccessPage({ params }: Props) {
 
   const username = useWatch({ control: form.control, name: 'username' })
 
+  // The same username can have access to one season and not to another.
+  React.useEffect(() => {
+    if (seasonId && form.getValues('username')) {
+      void form.trigger('username')
+    }
+  }, [seasonId, form])
+
   const [isSubmitting, startObtainingAccess] = React.useTransition()
 
   const onSubmit = form.handleSubmit((data) => {
     if (!session?.active) {
       // Send the guest to sign in and bring them back with the username
       // prefilled through the `u` query param.
-      const returnTo = `${process.env.NEXT_PUBLIC_DOMAIN}/${locale}/obtain-access?${new URLSearchParams({ u: data.username })}`
+      const returnParams = new URLSearchParams({ u: data.username })
+      if (season) returnParams.set('s', season.id)
+      const returnTo = `${process.env.NEXT_PUBLIC_DOMAIN}/${locale}/obtain-access?${returnParams}`
       const signInParams = new URLSearchParams({ return_to: returnTo })
       // External Ory URL, not an internal Next.js page.
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
@@ -108,16 +124,15 @@ export default function ObtainAccessPage({ params }: Props) {
 
     startObtainingAccess(async () => {
       try {
-        const selectedSeason =
-          primarySeason ?? (await getPrimarySeason(clientApiFetcher))
+        if (!season) return
         if (freeAccess) {
           if (accessMode === 'preregistration') {
-            await requestFreeAccess(clientApiFetcher, selectedSeason.id, [
+            await requestFreeAccess(clientApiFetcher, season.id, [
               data.username,
             ])
             toast.success(t('successPre'))
           } else {
-            await registerForPrimarySeason(clientApiFetcher, selectedSeason.id, [
+            await registerForPrimarySeason(clientApiFetcher, season.id, [
               data.username,
             ])
             toast.success(t('successFree'))
@@ -126,7 +141,7 @@ export default function ObtainAccessPage({ params }: Props) {
           return
         }
 
-        await requestAccess(clientApiFetcher, selectedSeason.id, [data.username])
+        await requestAccess(clientApiFetcher, season.id, [data.username])
         toast.success(t('success'))
         await refresh()
         router.push(`/${locale}/basket`)
@@ -159,6 +174,26 @@ export default function ObtainAccessPage({ params }: Props) {
                   {t('steps.step1.description')}
                 </p>
                 <SignInButton username={username} />
+              </li>
+            )}
+            {/** season: only asked when more than one season is running */}
+            {seasons.length > 1 && (
+              <li className="ms-6 mb-10">
+                <span className="bg-primary-foreground absolute -start-3 flex h-6 w-6 items-center justify-center rounded-full ring-8 ring-teal-900/30">
+                  <CalendarIcon className="size-4" />
+                </span>
+                <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+                  {t('steps.stepSeason.title')}
+                </h3>
+                <p className="mb-4 text-base font-normal text-gray-500 dark:text-gray-400">
+                  {t('steps.stepSeason.description')}
+                </p>
+                <SeasonSelect
+                  seasons={seasons}
+                  selectedSeasonId={season?.id}
+                  onSelectSeasonId={(id) => void setQuerySeasonId(id)}
+                  className="w-full"
+                />
               </li>
             )}
             {/** step 2: specify username */}
@@ -244,7 +279,7 @@ export default function ObtainAccessPage({ params }: Props) {
                 <Button
                   className="w-full"
                   type="submit"
-                  disabled={isSubmitting || !primarySeason}
+                  disabled={isSubmitting || !season}
                 >
                   {isSubmitting ? (
                     <LoadingSpinner className="size-4" />

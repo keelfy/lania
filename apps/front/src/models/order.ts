@@ -14,6 +14,7 @@ export type CreateOrderReq = {
 export type CreateOrderProductReq = {
   id: string
   profileId: string
+  seasonId: string
 }
 
 export type CreateOrderRes = {

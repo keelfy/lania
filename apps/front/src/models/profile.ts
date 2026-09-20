@@ -5,13 +5,21 @@ export type UsernameCheck = {
 
 export type ProfileRole = 'admin' | 'player' | 'mod' | 'owner'
 
+export type SeasonAccess = {
+  seasonId: string
+  status: 'active' | 'inactive' | 'expired'
+}
+
 export type Profile = {
   id: string
   uuid: string
   username: string
   role: ProfileRole
   cosmetics: ProfileCosmetics
+  // The status for the primary season.
   accessStatus: 'active' | 'inactive' | 'expired'
+  // The status for every running season and every ended season the profile has access to.
+  accesses: SeasonAccess[]
   mojangUuid?: string
 }
 

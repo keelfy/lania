@@ -16,6 +16,7 @@ import {
   UpgradeProductMetadata,
 } from '@/models/product'
 import { Profile } from '@/models/profile'
+import { Season } from '@/models/season'
 import { CheckCheckIcon, Loader2Icon, TrashIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
@@ -28,6 +29,7 @@ type Props = {
   item: BasketItem
   product: Product<ProductMetadata>
   profile: Profile
+  season?: Season
   purchased: boolean
   index: number
   currency: Currency
@@ -37,6 +39,7 @@ export default function BasketItemElement({
   item,
   product,
   profile,
+  season,
   purchased,
   index,
   currency,
@@ -100,6 +103,11 @@ export default function BasketItemElement({
             &nbsp;
             {product.description}
           </p>
+          {season && (
+            <p className="text-muted-foreground hidden text-sm lg:block">
+              {t('items.season')}: {season.name}
+            </p>
+          )}
           <button
             className="hover:bg-accent w-fit cursor-pointer rounded-md px-3 py-2 transition-colors"
             onClick={() => {
@@ -122,6 +130,14 @@ export default function BasketItemElement({
             </p>
             <ProfileUsername profile={profile} className="inline-block" />
           </div>
+          {season && (
+            <div className="flex flex-nowrap items-center gap-2 text-nowrap">
+              <p className="text-muted-foreground text-md">
+                {t('items.season')}:
+              </p>
+              <p>{season.name}</p>
+            </div>
+          )}
           {purchased && (
             <div className="flex items-center gap-2 text-yellow-500">
               <CheckCheckIcon className="size-4" />

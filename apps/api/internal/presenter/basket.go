@@ -10,6 +10,7 @@ func PresentBasketItem(item *domain.BasketItem) *responses.BasketItem {
 		ID:        item.ID,
 		ProductID: item.ProductID,
 		ProfileID: item.ProfileID,
+		SeasonID:  item.SeasonID,
 		Quantity:  item.Quantity,
 	}
 }

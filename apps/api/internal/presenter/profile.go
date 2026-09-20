@@ -41,10 +41,19 @@ func PresentProfileCosmetics(nameColor *domain.NameColor, glyth *domain.NamePref
 	}
 }
 
+func presentSeasonAccesses(statuses []*domain.SeasonAccessStatus) []*responses.SeasonAccess {
+	res := make([]*responses.SeasonAccess, len(statuses))
+	for i, status := range statuses {
+		res[i] = &responses.SeasonAccess{SeasonID: status.SeasonID, Status: string(status.Status)}
+	}
+	return res
+}
+
 func PresentProfile(
 	profile *domain.Profile,
 	mojangUUID *uuid.UUID,
 	accessStatus domain.AccessStatus,
+	seasonAccesses []*domain.SeasonAccessStatus,
 	cosmetics *responses.ProfileCosmetics,
 ) *responses.Profile {
 	return &responses.Profile{
@@ -53,6 +62,7 @@ func PresentProfile(
 		Username:      profile.MinecraftUsername,
 		Cosmetics:     cosmetics,
 		AccessStatus:  string(accessStatus),
+		Accesses:      presentSeasonAccesses(seasonAccesses),
 		MojangUUID:    mojangUUID,
 	}
 }
@@ -90,6 +100,7 @@ func PresentProfileDetails(
 	profile *domain.Profile,
 	mojangUUID *uuid.UUID,
 	accessStatus domain.AccessStatus,
+	seasonAccesses []*domain.SeasonAccessStatus,
 	// playtime is summed over all seasons, the current one is synced from the Minecraft server in background.
 	playtime int64,
 	isOnline bool,
@@ -106,6 +117,7 @@ func PresentProfileDetails(
 		LastSeenAt:    timeToMillis(profile.LastSeenAt),
 		Role:          string(profile.Role),
 		AccessStatus:  string(accessStatus),
+		Accesses:      presentSeasonAccesses(seasonAccesses),
 		Playtime:      playtime,
 		IsOnline:      isOnline,
 		MojangUUID:    mojangUUID,

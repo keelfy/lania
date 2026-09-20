@@ -28,6 +28,7 @@ type ProfileHandler interface {
 type profileHandler struct {
 	profileService   services.ProfileService
 	accessService    services.AccessService
+	seasonService    services.SeasonService
 	minecraftService services.MinecraftService
 	mojangService    services.MojangService
 	cosmeticsService services.ProfileCosmeticsService
@@ -36,6 +37,7 @@ type profileHandler struct {
 func NewProfileHandler(
 	profileService services.ProfileService,
 	accessService services.AccessService,
+	seasonService services.SeasonService,
 	minecraftService services.MinecraftService,
 	mojangService services.MojangService,
 	cosmeticsService services.ProfileCosmeticsService,
@@ -43,6 +45,7 @@ func NewProfileHandler(
 	return &profileHandler{
 		profileService:   profileService,
 		accessService:    accessService,
+		seasonService:    seasonService,
 		minecraftService: minecraftService,
 		mojangService:    mojangService,
 		cosmeticsService: cosmeticsService,
@@ -221,6 +224,12 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 		mojangUUIDs = make(map[uuid.UUID]uuid.UUID)
 	}
 
+	seasons, err := h.seasonService.GetSeasons(ctx)
+	if err != nil {
+		logger.Errorf(ctx, "[SEASON] Failed to get seasons: %v", err)
+		seasons = nil
+	}
+
 	res := make([]*responses.Profile, len(profiles))
 	for i, profile := range profiles {
 		accessStatus := domain.AccessStatusInactive
@@ -246,7 +255,7 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 		glythPrefix, specialPrefix := splitProfilePrefixes(profilePrefixes)
 
 		cosmetics := presenter.PresentProfileCosmetics(profile.NameColor, glythPrefix, specialPrefix)
-		res[i] = presenter.PresentProfile(profile, nullableMojangUUID, accessStatus, cosmetics)
+		res[i] = presenter.PresentProfile(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), cosmetics)
 	}
 
 	utils.WriteHttpJsonResponse(ctx, w, res)
@@ -338,6 +347,12 @@ func (h *profileHandler) writeProfileDetails(w http.ResponseWriter, r *http.Requ
 		accessStatus = domain.AccessStatusExpired
 	}
 
+	seasons, err := h.seasonService.GetSeasons(ctx)
+	if err != nil {
+		logger.Errorf(ctx, "[SEASON] Failed to get seasons: %v", err)
+		seasons = nil
+	}
+
 	isOnline, ok := onlineMap[profile.MinecraftUUID]
 	if !ok {
 		isOnline = false
@@ -354,6 +369,6 @@ func (h *profileHandler) writeProfileDetails(w http.ResponseWriter, r *http.Requ
 	h.profileService.ApplyProfileRoles(ctx, []*domain.Profile{profile})
 
 	cosmetics := presenter.PresentProfileCosmetics(profile.NameColor, glythPrefix, specialPrefix)
-	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, seasonsPlaytimes[profile.MinecraftUUID], isOnline, isModelSlim, cosmetics)
+	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), seasonsPlaytimes[profile.MinecraftUUID], isOnline, isModelSlim, cosmetics)
 	utils.WriteHttpJsonResponse(ctx, w, res)
 }

@@ -14,12 +14,14 @@ INSERT INTO basket_items (
 	user_id,
 	product_id,
 	profile_id,
+	season_id,
 	quantity,
 	created_at,
 	created_by,
 	updated_at,
 	updated_by
 ) VALUES (
+	?,
 	?,
 	?,
 	?,
@@ -35,6 +37,7 @@ type InsertBasketItemParams struct {
 	UserID    uuid.UUID
 	ProductID uuid.UUID
 	ProfileID uuid.UUID
+	SeasonID  uuid.UUID
 	Quantity  int
 	CreatedBy uuid.UUID
 }
@@ -44,6 +47,7 @@ func (q *queries) InsertBasketItem(ctx context.Context, arg InsertBasketItemPara
 		arg.UserID,
 		arg.ProductID,
 		arg.ProfileID,
+		arg.SeasonID,
 		arg.Quantity,
 		arg.CreatedBy,
 		arg.CreatedBy,
@@ -57,6 +61,7 @@ SELECT
 	user_id,
 	product_id,
 	profile_id,
+	season_id,
 	quantity,
 	created_at,
 	created_by,
@@ -81,6 +86,7 @@ func (q *queries) FindBasketItemsByUserID(ctx context.Context, userID uuid.UUID)
 			&basketItem.UserID,
 			&basketItem.ProductID,
 			&basketItem.ProfileID,
+			&basketItem.SeasonID,
 			&basketItem.Quantity,
 			&basketItem.CreatedAt,
 			&basketItem.CreatedBy,
