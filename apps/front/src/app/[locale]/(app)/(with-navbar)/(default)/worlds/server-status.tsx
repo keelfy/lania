@@ -7,11 +7,13 @@ import MapButton from './map-button';
 import React from 'react';
 import Image from 'next/image';
 import SmallCopyIpButton from './components/small-copy-ip-button';
+import { Season } from '@/models/season';
 
 type Props = {
   params: Promise<{
     locale: string
-    server: ServerInfo
+    server: Season
+    maps: ServerMapInfo[]
     status: pinger.Data | undefined
   }>
 }
@@ -22,11 +24,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
 }
 
 export default async function ServerStatusWithMaps({ params, }: Props) {
-  const { locale, server, status } = await params
+  const { locale, server, maps, status } = await params
   const t = await getTranslations({ locale, namespace: 'worlds' })
   
   return (
-    <div key={server.domain + ':' + server.port} className="flex flex-col gap-2 h-min">
+    <div className="flex flex-col gap-2 h-min">
       <div className="bg-card flex flex-col items-center justify-between gap-2 rounded-md px-4 py-3 shadow-md sm:flex-row">
         <div className="flex items-center gap-4">
           <DeerIcon className="hidden size-14 rounded-sm bg-black/20 p-1 sm:inline-block" />
@@ -64,16 +66,16 @@ export default async function ServerStatusWithMaps({ params, }: Props) {
             </label>
             <UsersIcon className="text-muted-foreground size-5" />
           </div>
-          <SmallCopyIpButton copyText={server.domain} />
+          <SmallCopyIpButton copyText={server.publicAddress ?? "127.0.0.1"} />
         </div>
       </div>
-      {server.maps.length > 0 && (
+      {maps.length > 0 && !!status?.description && (
         <>
           <h2 className="mt-1 text-2xl font-bold tracking-tight sm:mt-2">
             {t('mapsTitle')}
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {server.maps.map((map) => (
+            {maps.map((map) => (
               <ServerMap
                 key={map.id}
                 params={Promise.resolve({ locale, server, map, status })}
@@ -89,7 +91,7 @@ export default async function ServerStatusWithMaps({ params, }: Props) {
 type ServerMapProps = {
   params: Promise<{
     locale: string
-    server: ServerInfo
+    server: Season
     map: ServerMapInfo
     status: pinger.Data | undefined
   }>

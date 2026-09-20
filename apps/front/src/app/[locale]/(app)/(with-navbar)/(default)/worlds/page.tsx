@@ -3,9 +3,12 @@ import { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { ServerInfo } from '@/models/server'
+import { ServerInfo, ServerMapInfo } from '@/models/server'
 import ServerStatusWithMaps from './server-status'
 import { Noto_Sans } from 'next/font/google'
+import { getSeasons } from '@/lib/api-endpoints'
+import { serverApiFetcher } from '@/lib/server'
+import { Season } from '@/models/season'
 
 type Props = {
   params: Promise<{
@@ -38,26 +41,30 @@ export default async function WorldPage({ params }: Props) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'worlds' })
 
-  const servers: ServerInfo[] = await readFile(
-    path.join(process.cwd(), 'public/data/servers.json'),
+  const seasons = (
+    await getSeasons(serverApiFetcher).catch(() => [] as Season[])
+  ).filter((season): season is Season => season.isActive)
+
+  const mapsPerServer = await readFile(
+    path.join(process.cwd(), 'public/data/server-maps.json'),
     'utf-8',
   )
-    .then((raw) => JSON.parse(raw).servers)
+    .then((raw) => JSON.parse(raw))
     .catch((error) => {
-      console.error('Failed to read servers.json', error)
-      return []
+      console.error('Failed to read server-maps.json', error)
+      return {}
     })
 
-  const statuses: { server: ServerInfo; status: pinger.Data | undefined }[] = []
+  const statuses: { server: Season; status: pinger.Data | undefined }[] = []
 
-  for (const server of servers) {
-    const { domain, port } = server
+  for (const server of seasons) {
+    const { publicAddress } = server
 
-    if (domain && port) {
+    if (publicAddress) {
       let status: pinger.Data | undefined = undefined
       try {
         status = await Promise.race([
-          pinger.pingPromise(domain, port),
+          pinger.pingPromise(publicAddress, 25565),
           new Promise<undefined>((_, reject) => setTimeout(reject, 1000)),
         ])
       } catch (error) {
@@ -69,17 +76,18 @@ export default async function WorldPage({ params }: Props) {
 
   return (
     <div className="flex flex-col gap-10">
-      {statuses.map(({ server, status }) => (
-        <div key={server.domain + ':' + server.port} className="flex flex-col gap-4">
+      {statuses.map(({ server, status }) => {
+        const seasonMaps = mapsPerServer[server.id] as ServerMapInfo[];
+        return (
+        <div key={server.id} className="flex flex-col gap-4">
           <h1 className={`text-3xl font-extrabold ${notoSans.className} antialiased`}>
             {server.name}
           </h1>
           <ServerStatusWithMaps
-            key={server.domain + ':' + server.port}
-            params={Promise.resolve({ locale, server, status })}
+            params={Promise.resolve({ locale, server, maps: seasonMaps, status })}
           />
         </div>
-      ))}
+      )})}
     </div>
   )
 }

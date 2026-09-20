@@ -1,0 +1,15 @@
+{
+  "123e4567-e89b-12d3-a456-426614174004": [
+    {
+      "id": "survival",
+      "icon": "house",
+      "image": "s3://lania-web-134312503254-eu-central-1-an/2025-08-19_11.15.29.png"
+    },
+    {
+      "id": "farms",
+      "icon": "pickaxe",
+      "image": "s3://lania-web-134312503254-eu-central-1-an/2025-08-29_21.30.10.png"
+    }
+  ],
+  "123e4567-e89b-12d3-a456-426614174010": []
+}
