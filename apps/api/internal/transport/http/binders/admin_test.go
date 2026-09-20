@@ -55,34 +55,30 @@ func TestBindTransferProfileOwner(t *testing.T) {
 	}
 }
 
-func TestBindSaveSeason_RCONPasswordSemantics(t *testing.T) {
+func TestBindSaveSeason_ShellAddress(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		password     string
-		wantSet      bool
-		wantPassword *string
+		name     string
+		address  string
+		wantAddr *string
 	}{
-		{name: "omitted keeps password", password: "", wantSet: false},
-		{name: "empty clears password", password: `,"rconPassword":""`, wantSet: true},
-		{name: "value replaces password", password: `,"rconPassword":" secret "`, wantSet: true, wantPassword: stringPointer("secret")},
+		{name: "omitted is empty", address: ""},
+		{name: "blank is empty", address: `,"shellAddress":"  "`},
+		{name: "value is trimmed", address: `,"shellAddress":" shell:9090 "`, wantAddr: stringPointer("shell:9090")},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			body := `{"name":" Lania V ","startDate":"2026-10-09","preregistration":true,"freeRegistration":true` + tt.password + `}`
+			body := `{"name":" Lania V ","startDate":"2026-10-09","preregistration":true,"freeRegistration":true` + tt.address + `}`
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 			cmd, err := BindSaveSeason(req)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if cmd.SetRCONPassword != tt.wantSet || (cmd.RCONPassword == nil) != (tt.wantPassword == nil) {
-				t.Fatalf("got set=%v password=%v", cmd.SetRCONPassword, cmd.RCONPassword)
-			}
-			if tt.wantPassword != nil && *cmd.RCONPassword != *tt.wantPassword {
-				t.Fatalf("password = %q, want %q", *cmd.RCONPassword, *tt.wantPassword)
+			if (cmd.ShellAddress == nil) != (tt.wantAddr == nil) || (tt.wantAddr != nil && *cmd.ShellAddress != *tt.wantAddr) {
+				t.Fatalf("shell address = %v, want %v", cmd.ShellAddress, tt.wantAddr)
 			}
 			if cmd.Name != "Lania V" || !cmd.Preregistration || !cmd.FreeRegistration || cmd.Validate() != nil {
 				t.Fatalf("got invalid command: %+v", cmd)

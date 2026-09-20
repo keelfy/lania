@@ -177,7 +177,7 @@ type recordingMinecraftService struct {
 	err      error
 }
 
-func (s *recordingMinecraftService) RemoveFromWhitelist(context.Context, *domain.Profile) error {
+func (s *recordingMinecraftService) RemoveFromWhitelist(context.Context, uuid.UUID, *domain.Profile) error {
 	s.removed++
 	return s.err
 }
@@ -436,7 +436,7 @@ func TestRevokeAccess(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		seasonIsLive  bool
+		primarySeason bool
 		otherAccess   bool
 		alreadyGone   bool
 		wantRevokes   int
@@ -444,7 +444,7 @@ func TestRevokeAccess(t *testing.T) {
 	}{
 		{"removes the player from the whitelist", true, false, false, 1, 1},
 		{"keeps the whitelist while another access remains", true, true, false, 1, 0},
-		{"leaves the whitelist alone for a past season", false, false, false, 1, 0},
+		{"removes the player from the whitelist of another season", false, false, false, 1, 1},
 		{"repeating a revoke retries the whitelist update only", true, false, true, 0, 1},
 	}
 
@@ -452,7 +452,7 @@ func TestRevokeAccess(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f := newGrantFixture(t)
 			seasonID := uuid.New()
-			if tt.seasonIsLive {
+			if tt.primarySeason {
 				seasonID = f.season
 			}
 			grant := &domain.Grant{ID: uuid.New(), Type: domain.GrantTypeAccess, SeasonID: &seasonID}

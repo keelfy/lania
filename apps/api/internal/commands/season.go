@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,14 +18,11 @@ type SaveSeasonCommand struct {
 	StartDate        time.Time
 	EndDate          *time.Time
 	PublicAddress    *string
-	SystemAddress    *string
-	RCONPort         *uint16
+	ShellAddress     *string
 	IsActive         bool
 	IsPrimary        bool
 	Preregistration  bool
 	FreeRegistration bool
-	RCONPassword     *string
-	SetRCONPassword  bool
 }
 
 func (c *SaveSeasonCommand) Validate() error {
@@ -41,11 +39,7 @@ func (c *SaveSeasonCommand) Validate() error {
 			&c.PublicAddress,
 			validation.By(validateAddress(c.PublicAddress)),
 		),
-		validation.Field(
-			&c.SystemAddress,
-			validation.By(validateAddressAndPort(c.SystemAddress, c.RCONPort, "system address and RCON port")),
-		),
-		validation.Field(&c.RCONPassword, validation.RuneLength(0, 4096)),
+		validation.Field(&c.ShellAddress, validation.By(validateShellAddress(c.ShellAddress))),
 	)
 }
 
@@ -58,15 +52,21 @@ func validateAddress(address *string) validation.RuleFunc {
 	}
 }
 
-func validateAddressAndPort(address *string, port *uint16, fieldNames string) validation.RuleFunc {
+// validateShellAddress requires host:port, the form gRPC dials.
+func validateShellAddress(address *string) validation.RuleFunc {
 	return func(value any) error {
-		if (address == nil) != (port == nil) {
-			return errors.New(fieldNames + " must be set together")
+		if address == nil {
+			return nil
 		}
-		if port != nil && *port == 0 {
+		host, portValue, err := net.SplitHostPort(*address)
+		if err != nil {
+			return errors.New("must be host:port")
+		}
+		port, err := strconv.ParseUint(portValue, 10, 16)
+		if err != nil || port == 0 {
 			return errors.New("port must be between 1 and 65535")
 		}
-		if address != nil && !isServerAddress(*address) {
+		if !isServerAddress(host) {
 			return errors.New("must be a valid IP address or hostname")
 		}
 		return nil

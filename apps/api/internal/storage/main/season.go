@@ -15,13 +15,11 @@ const seasonColumns = `
 	start_date,
 	end_date,
 	public_address,
-	system_address,
-	rcon_port,
+	shell_address,
 	is_active,
 	is_primary,
 	preregistration,
-	free_registration,
-	rcon_password`
+	free_registration`
 
 func scanSeason(row interface{ Scan(...any) error }) (*domain.Season, error) {
 	var season domain.Season
@@ -32,13 +30,11 @@ func scanSeason(row interface{ Scan(...any) error }) (*domain.Season, error) {
 		&season.StartDate,
 		&season.EndDate,
 		&season.PublicAddress,
-		&season.SystemAddress,
-		&season.RCONPort,
+		&season.ShellAddress,
 		&season.IsActive,
 		&season.IsPrimary,
 		&season.Preregistration,
 		&season.FreeRegistration,
-		&season.RCONPassword,
 	)
 	return &season, err
 }
@@ -101,28 +97,24 @@ type InsertSeasonParams struct {
 	StartDate        time.Time
 	EndDate          *time.Time
 	PublicAddress    *string
-	SystemAddress    *string
-	RCONPort         *uint16
+	ShellAddress     *string
 	IsActive         bool
 	Preregistration  bool
 	FreeRegistration bool
-	RCONPassword     *string
 }
 
 func (q *queries) InsertSeason(ctx context.Context, arg InsertSeasonParams) error {
 	_, err := q.x.ExecContext(ctx, `
 INSERT INTO seasons (
 	id, name, preview_image, start_date, end_date,
-	public_address, system_address, rcon_port, is_active, preregistration, free_registration, rcon_password
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	public_address, shell_address, is_active, preregistration, free_registration
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		arg.ID, arg.Name, arg.PreviewImage, arg.StartDate, arg.EndDate,
 		arg.PublicAddress,
-		arg.SystemAddress,
-		arg.RCONPort,
+		arg.ShellAddress,
 		arg.IsActive,
 		arg.Preregistration,
 		arg.FreeRegistration,
-		arg.RCONPassword,
 	)
 	return err
 }
@@ -134,32 +126,25 @@ type UpdateSeasonParams struct {
 	StartDate        time.Time
 	EndDate          *time.Time
 	PublicAddress    *string
-	SystemAddress    *string
-	RCONPort         *uint16
+	ShellAddress     *string
 	IsActive         bool
 	Preregistration  bool
 	FreeRegistration bool
-	RCONPassword     *string
-	SetRCONPassword  bool
 }
 
 func (q *queries) UpdateSeason(ctx context.Context, arg UpdateSeasonParams) error {
 	_, err := q.x.ExecContext(ctx, `
 UPDATE seasons SET
 	name = ?, preview_image = ?, start_date = ?, end_date = ?,
-	public_address = ?, system_address = ?, rcon_port = ?, is_active = ?,
-	preregistration = ?, free_registration = ?,
-	rcon_password = CASE WHEN ? THEN ? ELSE rcon_password END
+	public_address = ?, shell_address = ?, is_active = ?,
+	preregistration = ?, free_registration = ?
 WHERE id = ?`,
 		arg.Name, arg.PreviewImage, arg.StartDate, arg.EndDate,
 		arg.PublicAddress,
-		arg.SystemAddress,
-		arg.RCONPort,
+		arg.ShellAddress,
 		arg.IsActive,
 		arg.Preregistration,
 		arg.FreeRegistration,
-		arg.SetRCONPassword,
-		arg.RCONPassword,
 		arg.ID,
 	)
 	return err
@@ -190,4 +175,9 @@ func (q *queries) SetSeasonPrimary(ctx context.Context, seasonID uuid.UUID) (boo
 	}
 	count, err := result.RowsAffected()
 	return count > 0, err
+}
+
+func (q *queries) SetSeasonShellAddress(ctx context.Context, seasonID uuid.UUID, address string) error {
+	_, err := q.x.ExecContext(ctx, "UPDATE seasons SET shell_address = ? WHERE id = ?", address, seasonID)
+	return err
 }

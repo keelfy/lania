@@ -19,7 +19,5 @@ type Season struct {
 
 type AdminSeason struct {
 	Season
-	SystemAddress   *string `json:"systemAddress,omitempty"`
-	RCONPort        *uint16 `json:"rconPort,omitempty"`
-	RCONPasswordSet bool    `json:"rconPasswordSet"`
+	ShellAddress *string `json:"shellAddress,omitempty"`
 }

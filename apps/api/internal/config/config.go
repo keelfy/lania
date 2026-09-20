@@ -77,7 +77,8 @@ func GetDatabaseName() string {
 
 /** SHELL */
 
-// GetShellAddress returns host:port of the shell gRPC service.
+// GetShellAddress returns host:port of the shell gRPC service of the primary season.
+// It only seeds the season setting once, the address is kept in the seasons table afterwards.
 func GetShellAddress() string {
 	return os.Getenv("SHELL_ADDRESS")
 }

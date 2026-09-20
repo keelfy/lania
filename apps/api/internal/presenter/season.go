@@ -28,9 +28,7 @@ func PresentAdminSeason(season *domain.Season) *responses.AdminSeason {
 			IsActive:      season.IsActive, IsPrimary: season.IsPrimary,
 			Preregistration: season.Preregistration, FreeRegistration: season.FreeRegistration,
 		},
-		SystemAddress:   season.SystemAddress,
-		RCONPort:        season.RCONPort,
-		RCONPasswordSet: season.RCONPassword != nil && *season.RCONPassword != "",
+		ShellAddress: season.ShellAddress,
 	}
 }
 

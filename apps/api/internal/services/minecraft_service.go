@@ -2,50 +2,158 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/clients"
+	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
+	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/utils"
 )
 
-// MinecraftService reads and changes state of the Minecraft server through shell.
+// errSeasonHasNoShell means the season has no shell address, so its server cannot be reached.
+var errSeasonHasNoShell = errors.New("season has no shell address")
+
+// MinecraftService reads and changes state of the season servers through their shell services.
+//
+// Online status, roles and chat prefixes belong to the player, not to a season. Online status is read from
+// every active server. A role is the same on every server, so it is read from the primary one, and a prefix is
+// written to every active server. A whitelist and playtime belong to one season and use its own shell.
 type MinecraftService interface {
+	// GetOnlineStatusByMinecraftUUIDs marks a player online when the player is on at least one active server.
 	GetOnlineStatusByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
+	// ListOnlineMinecraftUUIDs returns players that are online on at least one active server.
 	ListOnlineMinecraftUUIDs(ctx context.Context) (uuid.UUIDs, error)
 	ListMinecraftUUIDsByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error)
 	GetGroupsByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error)
+	// SetPrefixByMinecraftUUID writes the prefix to every active server.
 	SetPrefixByMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, prefix string) error
-	AddToWhitelist(ctx context.Context, profile *domain.Profile) error
-	RemoveFromWhitelist(ctx context.Context, profile *domain.Profile) error
+	// AddToWhitelist does nothing when the season has no shell address, because it has no server yet.
+	AddToWhitelist(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
+	// RemoveFromWhitelist does nothing when the season has no shell address, because it has no server yet.
+	RemoveFromWhitelist(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
+	// ListChangedPlaytimes returns playtime of players whose last session in the season ended at or after sinceMs.
+	ListChangedPlaytimes(ctx context.Context, seasonID uuid.UUID, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error)
 }
 
 type minecraftService struct {
-	shellAPI clients.ShellAPI
+	seasonService SeasonService
+	shellPool     clients.ShellPool
 }
 
-func NewMinecraftService(shellAPI clients.ShellAPI) MinecraftService {
-	return &minecraftService{shellAPI: shellAPI}
+func NewMinecraftService(seasonService SeasonService, shellPool clients.ShellPool) MinecraftService {
+	return &minecraftService{seasonService: seasonService, shellPool: shellPool}
+}
+
+// seasonShell returns the client of the shell service that serves the season.
+func (s *minecraftService) seasonShell(ctx context.Context, seasonID uuid.UUID) (clients.ShellAPI, error) {
+	season, err := s.seasonService.GetSeasonByID(ctx, seasonID)
+	if err != nil {
+		return nil, err
+	}
+	if season.ShellAddress == nil {
+		return nil, errSeasonHasNoShell
+	}
+	api, err := s.shellPool.Get(*season.ShellAddress)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to connect to season shell", err)
+	}
+	return api, nil
+}
+
+// activeShells returns one client for every shell service that serves an active season.
+// Seasons that share a shell address give it once.
+func (s *minecraftService) activeShells(ctx context.Context) ([]clients.ShellAPI, error) {
+	seasons, err := s.seasonService.GetSeasons(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[string]struct{})
+	apis := make([]clients.ShellAPI, 0, len(seasons))
+	for _, season := range seasons {
+		if !season.IsActive || season.ShellAddress == nil {
+			continue
+		}
+		if _, ok := seen[*season.ShellAddress]; ok {
+			continue
+		}
+		seen[*season.ShellAddress] = struct{}{}
+
+		api, err := s.shellPool.Get(*season.ShellAddress)
+		if err != nil {
+			return nil, utils.NewInternalServerError("failed to connect to season shell", err)
+		}
+		apis = append(apis, api)
+	}
+	if len(apis) == 0 {
+		return nil, utils.NewInternalServerError("no active season has a shell address", nil)
+	}
+	return apis, nil
+}
+
+// readFromActiveShells runs read on every active shell. A shell that fails is skipped with a warning,
+// so one server down does not hide the players of the others. It fails only when every shell fails.
+func (s *minecraftService) readFromActiveShells(ctx context.Context, what string, read func(clients.ShellAPI) error) error {
+	apis, err := s.activeShells(ctx)
+	if err != nil {
+		return err
+	}
+
+	var failures []error
+	for _, api := range apis {
+		if err := read(api); err != nil {
+			logger.Warnf(ctx, "[SHELL] Failed to %s on one server: %v", what, err)
+			failures = append(failures, err)
+		}
+	}
+	if len(failures) == len(apis) {
+		return utils.NewInternalServerError("failed to "+what, errors.Join(failures...))
+	}
+	return nil
 }
 
 func (s *minecraftService) GetOnlineStatusByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error) {
-	online, err := s.shellAPI.GetOnlineStatus(ctx, mcUUIDs)
+	online := make(map[uuid.UUID]bool, len(mcUUIDs))
+	err := s.readFromActiveShells(ctx, "get online status by minecraft uuids", func(api clients.ShellAPI) error {
+		status, err := api.GetOnlineStatus(ctx, mcUUIDs)
+		for mcUUID, isOnline := range status {
+			online[mcUUID] = online[mcUUID] || isOnline
+		}
+		return err
+	})
 	if err != nil {
-		return nil, utils.NewInternalServerError("failed to get online status by minecraft uuids", err)
+		return nil, err
 	}
 	return online, nil
 }
 
 func (s *minecraftService) ListOnlineMinecraftUUIDs(ctx context.Context) (uuid.UUIDs, error) {
-	online, err := s.shellAPI.ListOnlinePlayers(ctx)
+	seen := make(map[uuid.UUID]struct{})
+	online := uuid.UUIDs{}
+	err := s.readFromActiveShells(ctx, "list online minecraft uuids", func(api clients.ShellAPI) error {
+		players, err := api.ListOnlinePlayers(ctx)
+		for _, mcUUID := range players {
+			if _, ok := seen[mcUUID]; !ok {
+				seen[mcUUID] = struct{}{}
+				online = append(online, mcUUID)
+			}
+		}
+		return err
+	})
 	if err != nil {
-		return nil, utils.NewInternalServerError("failed to list online minecraft uuids", err)
+		return nil, err
 	}
 	return online, nil
 }
 
 func (s *minecraftService) ListMinecraftUUIDsByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error) {
-	members, err := s.shellAPI.ListPlayersByGroups(ctx, groups)
+	api, err := s.primaryShell(ctx)
+	if err != nil {
+		return nil, err
+	}
+	members, err := api.ListPlayersByGroups(ctx, groups)
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to list minecraft uuids by groups", err)
 	}
@@ -53,30 +161,75 @@ func (s *minecraftService) ListMinecraftUUIDsByGroups(ctx context.Context, group
 }
 
 func (s *minecraftService) GetGroupsByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error) {
-	groups, err := s.shellAPI.GetPlayerGroups(ctx, mcUUIDs)
+	api, err := s.primaryShell(ctx)
+	if err != nil {
+		return nil, err
+	}
+	groups, err := api.GetPlayerGroups(ctx, mcUUIDs)
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to get groups by minecraft uuids", err)
 	}
 	return groups, nil
 }
 
+// primaryShell returns the shell that answers for data that is the same on every server.
+func (s *minecraftService) primaryShell(ctx context.Context) (clients.ShellAPI, error) {
+	api, err := s.seasonShell(ctx, config.GetPrimarySeasonID())
+	if errors.Is(err, errSeasonHasNoShell) {
+		return nil, utils.NewInternalServerError("primary season has no shell address", err)
+	}
+	return api, err
+}
+
 func (s *minecraftService) SetPrefixByMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, prefix string) error {
-	if err := s.shellAPI.SetPlayerPrefix(ctx, mcUUID, prefix); err != nil {
-		return utils.NewInternalServerError("failed to set prefix by minecraft uuid", err)
+	apis, err := s.activeShells(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Every server is tried, so one server down does not keep the others on the old prefix.
+	var failures []error
+	for _, api := range apis {
+		if err := api.SetPlayerPrefix(ctx, mcUUID, prefix); err != nil {
+			failures = append(failures, err)
+		}
+	}
+	if len(failures) > 0 {
+		return utils.NewInternalServerError("failed to set prefix by minecraft uuid", errors.Join(failures...))
 	}
 	return nil
 }
 
-func (s *minecraftService) AddToWhitelist(ctx context.Context, profile *domain.Profile) error {
-	if err := s.shellAPI.AddToWhitelist(ctx, profile.MinecraftUUID, profile.MinecraftUsername); err != nil {
+func (s *minecraftService) AddToWhitelist(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error {
+	api, err := s.seasonShell(ctx, seasonID)
+	if errors.Is(err, errSeasonHasNoShell) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	if err := api.AddToWhitelist(ctx, profile.MinecraftUUID, profile.MinecraftUsername); err != nil {
 		return utils.NewInternalServerError("failed to add profile to whitelist", err)
 	}
 	return nil
 }
 
-func (s *minecraftService) RemoveFromWhitelist(ctx context.Context, profile *domain.Profile) error {
-	if err := s.shellAPI.RemoveFromWhitelist(ctx, profile.MinecraftUUID); err != nil {
+func (s *minecraftService) RemoveFromWhitelist(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error {
+	api, err := s.seasonShell(ctx, seasonID)
+	if errors.Is(err, errSeasonHasNoShell) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	if err := api.RemoveFromWhitelist(ctx, profile.MinecraftUUID); err != nil {
 		return utils.NewInternalServerError("failed to remove profile from whitelist", err)
 	}
 	return nil
+}
+
+func (s *minecraftService) ListChangedPlaytimes(ctx context.Context, seasonID uuid.UUID, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error) {
+	api, err := s.seasonShell(ctx, seasonID)
+	if err != nil {
+		return nil, err
+	}
+	return api.ListChangedPlaytimes(ctx, sinceMs)
 }

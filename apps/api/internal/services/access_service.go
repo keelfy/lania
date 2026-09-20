@@ -5,7 +5,6 @@ import (
 	stdsql "database/sql"
 
 	"github.com/google/uuid"
-	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/storage"
 	sql "github.com/lania-smp/backend/internal/storage/main"
@@ -66,11 +65,8 @@ func (s *accessService) ObtainAccessForProfile(ctx context.Context, seasonID uui
 		return utils.NewInternalServerError("failed to insert profile access", err)
 	}
 
-	// The primary season remains the default business context.
-	if seasonID == config.GetPrimarySeasonID() {
-		return s.minecraftService.AddToWhitelist(ctx, profile)
-	}
-	return nil
+	// The whitelist of a season is kept on the server of that season.
+	return s.minecraftService.AddToWhitelist(ctx, seasonID, profile)
 }
 
 func (s *accessService) GetProfileIDsWithAccessBySeasonIDAndOwnerUserID(ctx context.Context, seasonID uuid.UUID, ownerUserID uuid.UUID) (uuid.UUIDs, error) {

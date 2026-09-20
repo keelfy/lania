@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// ShellAPI is the only way the API reaches the Minecraft server and its plugins.
+// ShellAPI is the only way the API reaches a Minecraft server and its plugins. One ShellAPI serves one season.
 type ShellAPI interface {
 	GetOnlineStatus(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
 	// ListOnlinePlayers returns every player that is online right now.
@@ -29,6 +30,17 @@ type ShellAPI interface {
 	RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID) error
 }
 
+// ShellPool gives the ShellAPI of a season by the address of its shell service.
+type ShellPool interface {
+	Get(address string) (ShellAPI, error)
+}
+
+type shellPool struct {
+	mu    sync.Mutex
+	conns map[string]*grpc.ClientConn
+	apis  map[string]ShellAPI
+}
+
 type shellAPI struct {
 	player     shellv1.PlayerServiceClient
 	permission shellv1.PermissionServiceClient
@@ -38,26 +50,48 @@ type shellAPI struct {
 // shellCallTimeout keeps pages responsive when the Minecraft host is slow.
 const shellCallTimeout = 3 * time.Second
 
-func NewShellAPI(ctx context.Context) (ShellAPI, func(), error) {
-	// Shell runs on the same host inside a private docker network, so plaintext is fine.
+func NewShellPool(ctx context.Context) (ShellPool, func(), error) {
+	pool := &shellPool{
+		conns: make(map[string]*grpc.ClientConn),
+		apis:  make(map[string]ShellAPI),
+	}
+	cleanup := func() {
+		pool.mu.Lock()
+		defer pool.mu.Unlock()
+		for _, conn := range pool.conns {
+			_ = conn.Close()
+		}
+	}
+	return pool, cleanup, nil
+}
+
+// Get connects on first use of an address. gRPC dials lazily, so an unreachable shell fails at the call.
+func (p *shellPool) Get(address string) (ShellAPI, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if api, ok := p.apis[address]; ok {
+		return api, nil
+	}
+
+	// Shell runs on the same host as its Minecraft server inside a private docker network, so plaintext is fine.
 	conn, err := grpc.NewClient(
-		config.GetShellAddress(),
+		address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(shellUnaryInterceptor),
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	cleanup := func() {
-		_ = conn.Close()
-	}
-
-	return &shellAPI{
+	api := &shellAPI{
 		player:     shellv1.NewPlayerServiceClient(conn),
 		permission: shellv1.NewPermissionServiceClient(conn),
 		whitelist:  shellv1.NewWhitelistServiceClient(conn),
-	}, cleanup, nil
+	}
+	p.conns[address] = conn
+	p.apis[address] = api
+	return api, nil
 }
 
 func shellUnaryInterceptor(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {

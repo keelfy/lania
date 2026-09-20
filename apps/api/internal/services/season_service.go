@@ -65,9 +65,9 @@ func insertSeasonParams(id uuid.UUID, cmd *commands.SaveSeasonCommand) sql.Inser
 		ID: id, Name: cmd.Name, PreviewImage: cmd.PreviewImage,
 		StartDate: cmd.StartDate, EndDate: cmd.EndDate,
 		PublicAddress: cmd.PublicAddress,
-		SystemAddress: cmd.SystemAddress, RCONPort: cmd.RCONPort,
-		IsActive: cmd.IsActive, Preregistration: cmd.Preregistration,
-		FreeRegistration: cmd.FreeRegistration, RCONPassword: cmd.RCONPassword,
+		ShellAddress:  cmd.ShellAddress,
+		IsActive:      cmd.IsActive, Preregistration: cmd.Preregistration,
+		FreeRegistration: cmd.FreeRegistration,
 	}
 }
 
@@ -76,9 +76,8 @@ func updateSeasonParams(cmd *commands.SaveSeasonCommand) sql.UpdateSeasonParams 
 		ID: cmd.ID, Name: cmd.Name, PreviewImage: cmd.PreviewImage,
 		StartDate: cmd.StartDate, EndDate: cmd.EndDate,
 		PublicAddress: cmd.PublicAddress,
-		SystemAddress: cmd.SystemAddress, RCONPort: cmd.RCONPort, IsActive: cmd.IsActive,
+		ShellAddress:  cmd.ShellAddress, IsActive: cmd.IsActive,
 		Preregistration: cmd.Preregistration, FreeRegistration: cmd.FreeRegistration,
-		RCONPassword: cmd.RCONPassword, SetRCONPassword: cmd.SetRCONPassword,
 	}
 }
 
@@ -187,7 +186,7 @@ func (s *seasonService) InitializePrimarySeason(ctx context.Context) error {
 	for _, season := range seasons {
 		if season.IsPrimary {
 			config.SetPrimarySeasonID(season.ID)
-			return nil
+			return s.seedShellAddress(ctx, season)
 		}
 	}
 
@@ -198,5 +197,17 @@ func (s *seasonService) InitializePrimarySeason(ctx context.Context) error {
 		return utils.NewInternalServerError("failed to initialize primary season", err)
 	}
 	config.SetPrimarySeasonID(fallback)
+	return s.seedShellAddress(ctx, &domain.Season{ID: fallback})
+}
+
+// seedShellAddress moves the deployment-wide SHELL_ADDRESS into a primary season that has none yet.
+func (s *seasonService) seedShellAddress(ctx context.Context, season *domain.Season) error {
+	address := config.GetShellAddress()
+	if season.ShellAddress != nil || address == "" {
+		return nil
+	}
+	if err := s.storage.Queries().SetSeasonShellAddress(ctx, season.ID, address); err != nil {
+		return utils.NewInternalServerError("failed to seed season shell address", err)
+	}
 	return nil
 }

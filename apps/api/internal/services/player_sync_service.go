@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lania-smp/backend/internal/clients"
-	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/storage"
@@ -29,20 +27,22 @@ type PlayerSyncService interface {
 }
 
 type playerSyncService struct {
-	storage  storage.MainStorage
-	shellAPI clients.ShellAPI
+	storage          storage.MainStorage
+	seasonService    SeasonService
+	minecraftService MinecraftService
 }
 
-func NewPlayerSyncService(storage storage.MainStorage, shellAPI clients.ShellAPI) PlayerSyncService {
+func NewPlayerSyncService(storage storage.MainStorage, seasonService SeasonService, minecraftService MinecraftService) PlayerSyncService {
 	return &playerSyncService{
-		storage:  storage,
-		shellAPI: shellAPI,
+		storage:          storage,
+		seasonService:    seasonService,
+		minecraftService: minecraftService,
 	}
 }
 
 func (s *playerSyncService) RunPlayerSync(ctx context.Context) {
-	// cursorMs is the latest session end already synced. Zero means full sync.
-	var cursorMs int64
+	// cursorsMs holds the latest session end already synced per season. Missing means full sync.
+	cursorsMs := make(map[uuid.UUID]int64)
 	var lastFullSync time.Time
 	wait := time.Duration(0)
 	for {
@@ -54,30 +54,44 @@ func (s *playerSyncService) RunPlayerSync(ctx context.Context) {
 
 		wait = playerSyncInterval
 		if time.Since(lastFullSync) >= playerSyncFullInterval {
-			cursorMs = 0
+			clear(cursorsMs)
 			lastFullSync = time.Now()
 		}
 
-		sinceMs := max(cursorMs-playerSyncOverlap.Milliseconds(), 0)
-		latestMs, err := s.syncPlayers(ctx, sinceMs)
-		switch {
-		case err == nil:
-			cursorMs = max(cursorMs, latestMs)
-		case errors.Is(err, context.Canceled):
-		default:
-			logger.Errorf(ctx, "[PLAYER SYNC] Failed to sync players: %v", err)
+		seasons, err := s.seasonService.GetSeasons(ctx)
+		if err != nil {
+			if !errors.Is(err, context.Canceled) {
+				logger.Errorf(ctx, "[PLAYER SYNC] Failed to list seasons: %v", err)
+			}
+			continue
+		}
+
+		for _, season := range seasons {
+			// A season without shell has no server to read from.
+			if !season.IsActive || season.ShellAddress == nil {
+				continue
+			}
+
+			sinceMs := max(cursorsMs[season.ID]-playerSyncOverlap.Milliseconds(), 0)
+			latestMs, err := s.syncPlayers(ctx, season.ID, sinceMs)
+			switch {
+			case err == nil:
+				cursorsMs[season.ID] = max(cursorsMs[season.ID], latestMs)
+			case errors.Is(err, context.Canceled):
+			default:
+				logger.Errorf(ctx, "[PLAYER SYNC] Failed to sync players of season %s: %v", season.ID, err)
+			}
 		}
 	}
 }
 
-// syncPlayers stores players changed since sinceMs and returns the latest session end among them.
-func (s *playerSyncService) syncPlayers(ctx context.Context, sinceMs int64) (int64, error) {
-	playtimes, err := s.shellAPI.ListChangedPlaytimes(ctx, sinceMs)
+// syncPlayers stores players of the season changed since sinceMs and returns the latest session end among them.
+func (s *playerSyncService) syncPlayers(ctx context.Context, seasonID uuid.UUID, sinceMs int64) (int64, error) {
+	playtimes, err := s.minecraftService.ListChangedPlaytimes(ctx, seasonID, sinceMs)
 	if err != nil {
 		return 0, err
 	}
 
-	seasonID := config.GetPrimarySeasonID()
 	var latestMs int64
 	err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
 		for mcUUID, playtime := range playtimes {
@@ -95,7 +109,7 @@ func (s *playerSyncService) syncPlayers(ctx context.Context, sinceMs int64) (int
 	}
 
 	if len(playtimes) > 0 {
-		logger.Debugf(ctx, "[PLAYER SYNC] Synced %d players changed since %d", len(playtimes), sinceMs)
+		logger.Debugf(ctx, "[PLAYER SYNC] Synced %d players of season %s changed since %d", len(playtimes), seasonID, sinceMs)
 	}
 	return latestMs, nil
 }

@@ -14,9 +14,8 @@ export type Season = {
 }
 
 export type AdminSeason = Season & {
-  systemAddress?: string
-  rconPort?: number
-  rconPasswordSet: boolean
+  // host:port of the shell service that serves the season server.
+  shellAddress?: string
 }
 
 export type SaveSeason = {
@@ -25,11 +24,9 @@ export type SaveSeason = {
   startDate: string
   endDate?: string
   publicAddress?: string
-  systemAddress?: string
-  rconPort?: number
+  shellAddress?: string
   isActive: boolean
   isPrimary: boolean
   preregistration: boolean
   freeRegistration: boolean
-  rconPassword?: string
 }

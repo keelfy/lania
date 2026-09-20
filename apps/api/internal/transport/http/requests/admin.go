@@ -27,12 +27,9 @@ type SaveSeason struct {
 	StartDate        string  `json:"startDate"`
 	EndDate          *string `json:"endDate"`
 	PublicAddress    *string `json:"publicAddress"`
-	SystemAddress    *string `json:"systemAddress"`
-	RCONPort         *uint16 `json:"rconPort"`
+	ShellAddress     *string `json:"shellAddress"`
 	IsActive         bool    `json:"isActive"`
 	IsPrimary        bool    `json:"isPrimary"`
 	Preregistration  bool    `json:"preregistration"`
 	FreeRegistration bool    `json:"freeRegistration"`
-	// Nil keeps the current password during update. Empty clears it.
-	RCONPassword *string `json:"rconPassword"`
 }

@@ -342,17 +342,16 @@ func (s *adminGrantService) updateGame(ctx context.Context, profile *domain.Prof
 		return s.updatePrefix(ctx, profile.ID)
 	}
 
-	// The primary season remains the default business context.
-	primarySeasonID := config.GetPrimarySeasonID()
-	if grant.SeasonID == nil || *grant.SeasonID != primarySeasonID {
+	// The whitelist of a season is kept on the server of that season.
+	if grant.SeasonID == nil {
 		return nil
 	}
 
-	hasAccess, err := s.accessService.CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(ctx, profile.MinecraftUUID, primarySeasonID)
+	hasAccess, err := s.accessService.CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(ctx, profile.MinecraftUUID, *grant.SeasonID)
 	if err != nil || hasAccess {
 		return err
 	}
-	return s.minecraftService.RemoveFromWhitelist(ctx, profile)
+	return s.minecraftService.RemoveFromWhitelist(ctx, *grant.SeasonID, profile)
 }
 
 // updatePrefix sends the chat prefix built from the selected name color and prefixes to the Minecraft server.

@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogClose,
@@ -93,26 +92,17 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
     if (isPending) return
 
     const form = new FormData(event.currentTarget)
-    const password = optionalString(form, 'rconPassword')
-    const clearPassword = form.get('clearRconPassword') === 'on'
-    const rconPort = optionalString(form, 'rconPort')
     const payload: SaveSeason = {
       name: String(form.get('name') ?? '').trim(),
       previewImage: optionalString(form, 'previewImage'),
       startDate: String(form.get('startDate') ?? ''),
       endDate: optionalString(form, 'endDate'),
       publicAddress: optionalString(form, 'publicAddress'),
-      systemAddress: optionalString(form, 'systemAddress'),
-      rconPort: rconPort ? Number(rconPort) : undefined,
+      shellAddress: optionalString(form, 'shellAddress'),
       isActive,
       isPrimary,
       preregistration,
       freeRegistration,
-      ...(password !== undefined
-        ? { rconPassword: password }
-        : clearPassword
-          ? { rconPassword: '' }
-          : {}),
     }
 
     startTransition(async () => {
@@ -217,64 +207,19 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
               </Field>
               <Field>
                 <FieldLabel
-                  htmlFor={`season-system-address-${season?.id ?? 'new'}`}
+                  htmlFor={`season-shell-address-${season?.id ?? 'new'}`}
                 >
-                  {t('fields.systemAddress')}
+                  {t('fields.shellAddress')}
                 </FieldLabel>
                 <Input
-                  id={`season-system-address-${season?.id ?? 'new'}`}
-                  name="systemAddress"
-                  defaultValue={season?.systemAddress}
-                  placeholder="minecraft.internal"
+                  id={`season-shell-address-${season?.id ?? 'new'}`}
+                  name="shellAddress"
+                  defaultValue={season?.shellAddress}
+                  placeholder="shell.internal:9090"
                 />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor={`season-rcon-port-${season?.id ?? 'new'}`}>
-                  {t('fields.rconPort')}
-                </FieldLabel>
-                <Input
-                  id={`season-rcon-port-${season?.id ?? 'new'}`}
-                  name="rconPort"
-                  type="number"
-                  min={1}
-                  max={65535}
-                  defaultValue={season?.rconPort}
-                />
-              </Field>
-              <Field>
-                <FieldLabel
-                  htmlFor={`season-rcon-password-${season?.id ?? 'new'}`}
-                >
-                  {t('fields.rconPassword')}
-                </FieldLabel>
-                <Input
-                  id={`season-rcon-password-${season?.id ?? 'new'}`}
-                  name="rconPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  maxLength={4096}
-                  placeholder={
-                    season?.rconPasswordSet
-                      ? t('passwordConfigured')
-                      : undefined
-                  }
-                />
-                {season?.rconPasswordSet && (
-                  <FieldDescription>{t('passwordHint')}</FieldDescription>
-                )}
+                <FieldDescription>{t('shellAddressHint')}</FieldDescription>
               </Field>
             </FieldGroup>
-            {season?.rconPasswordSet && (
-              <Field orientation="horizontal">
-                <Checkbox
-                  id={`season-clear-password-${season.id}`}
-                  name="clearRconPassword"
-                />
-                <FieldLabel htmlFor={`season-clear-password-${season.id}`}>
-                  {t('clearPassword')}
-                </FieldLabel>
-              </Field>
-            )}
             <Field orientation="horizontal">
               <Switch
                 id={`season-active-${season?.id ?? 'new'}`}
@@ -314,9 +259,7 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
                 >
                   {t('fields.preregistration')}
                 </FieldLabel>
-                <FieldDescription>
-                  {t('preregistrationHint')}
-                </FieldDescription>
+                <FieldDescription>{t('preregistrationHint')}</FieldDescription>
               </div>
             </Field>
             <Field orientation="horizontal">
@@ -331,9 +274,7 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
                 >
                   {t('fields.freeRegistration')}
                 </FieldLabel>
-                <FieldDescription>
-                  {t('freeRegistrationHint')}
-                </FieldDescription>
+                <FieldDescription>{t('freeRegistrationHint')}</FieldDescription>
               </div>
             </Field>
           </FieldGroup>
@@ -422,7 +363,7 @@ export default function SeasonManager({ seasons, locale }: Props) {
               <TableHead>{t('columns.season')}</TableHead>
               <TableHead>{t('columns.dates')}</TableHead>
               <TableHead>{t('columns.server')}</TableHead>
-              <TableHead>{t('columns.rcon')}</TableHead>
+              <TableHead>{t('columns.shell')}</TableHead>
               <TableHead className="text-right">
                 {t('columns.actions')}
               </TableHead>
@@ -450,21 +391,8 @@ export default function SeasonManager({ seasons, locale }: Props) {
                   {date.format(season.startDate)} –{' '}
                   {season.endDate ? date.format(season.endDate) : '—'}
                 </TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-1">
-                    <span>
-                      {season.publicAddress ?? '—'}
-                    </span>
-                    <span className="text-muted-foreground text-sm">
-                      {season.systemAddress && season.rconPort
-                        ? `${season.systemAddress}:${season.rconPort}`
-                        : '—'}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {season.rconPasswordSet ? t('passwordOnly') : '—'}
-                </TableCell>
+                <TableCell>{season.publicAddress ?? '—'}</TableCell>
+                <TableCell>{season.shellAddress ?? '—'}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
                     <SeasonDialog season={season} />

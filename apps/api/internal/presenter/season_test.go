@@ -36,15 +36,15 @@ func TestPresentSeasons(t *testing.T) {
 	}
 }
 
-func TestPresentAdminSeason_HidesRCONPassword(t *testing.T) {
+func TestPresentAdminSeason_ShowsShellAddress(t *testing.T) {
 	t.Parallel()
 
-	password := "do-not-return"
+	address := "shell:9090"
 	season := PresentAdminSeason(&domain.Season{
-		ID: uuid.New(), Name: "Lania V", StartDate: time.Now(), RCONPassword: &password,
+		ID: uuid.New(), Name: "Lania V", StartDate: time.Now(), ShellAddress: &address,
 	})
 
-	if !season.RCONPasswordSet {
-		t.Fatal("RCONPasswordSet = false, want true")
+	if season.ShellAddress == nil || *season.ShellAddress != address {
+		t.Fatalf("ShellAddress = %v, want %q", season.ShellAddress, address)
 	}
 }

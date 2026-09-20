@@ -69,14 +69,11 @@ func BindSaveSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 		StartDate:        startDate,
 		EndDate:          endDate,
 		PublicAddress:    optionalTrimmed(req.PublicAddress),
-		SystemAddress:    optionalTrimmed(req.SystemAddress),
-		RCONPort:         req.RCONPort,
+		ShellAddress:     optionalTrimmed(req.ShellAddress),
 		IsActive:         req.IsActive,
 		IsPrimary:        req.IsPrimary,
 		Preregistration:  req.Preregistration,
 		FreeRegistration: req.FreeRegistration,
-		RCONPassword:     optionalTrimmed(req.RCONPassword),
-		SetRCONPassword:  req.RCONPassword != nil,
 	}, nil
 }
 
