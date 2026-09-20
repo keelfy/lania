@@ -1,10 +1,12 @@
 import {
+  AdminCosmeticsCatalog,
   AdminGrant,
   AdminProfile,
   AdminProfileDetails,
   AdminSeason,
   AdminUser,
   AdminUserDetails,
+  GrantCosmeticReq,
   GrantProductReq,
   GrantType,
 } from '@/models/admin'
@@ -384,6 +386,28 @@ export function grantProduct(
 ): Promise<AdminGrant[]> {
   return fetcher<AdminGrant[]>(
     `/v1/admin/profiles/${profileId}/grants`,
+    undefined,
+    {
+      method: 'POST',
+      body: JSON.stringify(req),
+    },
+  )
+}
+
+export function getAdminCosmetics(
+  fetcher: ApiFetcher,
+): Promise<AdminCosmeticsCatalog> {
+  return fetcher<AdminCosmeticsCatalog>('/v1/admin/cosmetics')
+}
+
+// Answers with the grants of the profile after the change.
+export function grantCosmetic(
+  fetcher: ApiFetcher,
+  profileId: string,
+  req: GrantCosmeticReq,
+): Promise<AdminGrant[]> {
+  return fetcher<AdminGrant[]>(
+    `/v1/admin/profiles/${profileId}/grants/cosmetic`,
     undefined,
     {
       method: 'POST',

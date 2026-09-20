@@ -53,3 +53,20 @@ type AdminSeason struct {
 	// IsActive marks the season that runs on the Minecraft server.
 	IsActive bool `json:"isActive"`
 }
+
+type AdminNameColor struct {
+	ID     uuid.UUID `json:"id"`
+	Name   string    `json:"name"`
+	Colors []string  `json:"colors"`
+}
+
+type AdminNamePrefix struct {
+	ID    uuid.UUID `json:"id"`
+	Name  string    `json:"name"`
+	Image string    `json:"image"`
+}
+
+type AdminCosmeticsCatalog struct {
+	NameColors   []*AdminNameColor  `json:"nameColors"`
+	NamePrefixes []*AdminNamePrefix `json:"namePrefixes"`
+}

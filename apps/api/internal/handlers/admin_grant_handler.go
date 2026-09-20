@@ -15,6 +15,9 @@ type AdminGrantHandler interface {
 	GetSeasons(w http.ResponseWriter, r *http.Request)
 	GetGrants(w http.ResponseWriter, r *http.Request)
 	GrantProduct(w http.ResponseWriter, r *http.Request)
+	// GetCosmetics lists the name colors and name prefixes that can be granted.
+	GetCosmetics(w http.ResponseWriter, r *http.Request)
+	GrantCosmetic(w http.ResponseWriter, r *http.Request)
 	RevokeGrant(w http.ResponseWriter, r *http.Request)
 }
 
@@ -72,6 +75,40 @@ func (h *adminGrantHandler) GrantProduct(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := h.adminGrantService.GrantProduct(ctx, cmd.ProfileID, cmd.ProductID, cmd.SeasonID); err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	h.writeGrants(w, r, cmd.ProfileID)
+}
+
+func (h *adminGrantHandler) GetCosmetics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	catalog, err := h.adminGrantService.GetCosmeticsCatalog(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentAdminCosmeticsCatalog(catalog))
+}
+
+func (h *adminGrantHandler) GrantCosmetic(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	cmd, err := binders.BindGrantCosmetic(r)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	if err := cmd.Validate(); err != nil {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("", err))
+		return
+	}
+
+	if err := h.adminGrantService.GrantCosmetic(ctx, cmd.ProfileID, cmd.Type, cmd.ItemID, cmd.PrefixType, cmd.SeasonID); err != nil {
 		utils.HttpError(ctx, w, err)
 		return
 	}

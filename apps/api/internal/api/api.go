@@ -208,6 +208,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 		r.Get("/users/{userId}", api.adminUserHandler.GetUserDetails)
 
 		r.Get("/seasons", api.adminGrantHandler.GetSeasons)
+		r.Get("/cosmetics", api.adminGrantHandler.GetCosmetics)
 
 		r.Get("/profiles", api.adminProfileHandler.GetProfiles)
 		r.Route("/profiles/{profileId}", func(r chi.Router) {
@@ -217,6 +218,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 
 			r.Get("/grants", api.adminGrantHandler.GetGrants)
 			r.Post("/grants", api.adminGrantHandler.GrantProduct)
+			r.Post("/grants/cosmetic", api.adminGrantHandler.GrantCosmetic)
 			r.Delete("/grants/{grantType}/{grantId}", api.adminGrantHandler.RevokeGrant)
 		})
 	})

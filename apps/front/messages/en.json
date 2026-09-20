@@ -532,6 +532,35 @@
           "submit": "Grant",
           "granted": "Product granted",
           "failed": "Failed to grant the product"
+        },
+        "prefixTypes": {
+          "glyth": "Glyth",
+          "special": "Special"
+        },
+        "cosmeticDialog": {
+          "open": "Grant cosmetic",
+          "title": "Grant a name color or prefix",
+          "description": "Any color or prefix can be granted, also ones that are not for sale. The player picks it in the profile settings as usual, the game is not changed. It is refused when the profile already has the item.",
+          "type": "Type",
+          "types": {
+            "name-color": "Name color",
+            "name-prefix": "Name prefix"
+          },
+          "item": "Item",
+          "selectItem": "Select an item",
+          "prefixType": "Prefix slot",
+          "prefixTypes": {
+            "glyth": "Glyth",
+            "special": "Special"
+          },
+          "prefixTypeHint": "A player wears one glyth and one special prefix at a time.",
+          "season": "Valid for",
+          "permanent": "For good",
+          "seasonOption": "Season {number}",
+          "activeSeason": "active",
+          "submit": "Grant",
+          "granted": "Item granted",
+          "failed": "Failed to grant the item"
         }
       }
     }

@@ -50,7 +50,7 @@ INSERT INTO profile_name_prefix_options (
 	order_item_id,
 	created_by
 ) VALUES (?, ?, ?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE revoked_at = NULL, revoked_by = NULL
+ON DUPLICATE KEY UPDATE type = IF(revoked_at IS NULL, type, VALUES(type)), revoked_at = NULL, revoked_by = NULL
 `
 
 type InsertProfileNamePrefixOptionParams struct {

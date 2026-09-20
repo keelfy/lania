@@ -23,6 +23,30 @@ type fakeGrantQueries struct {
 	revokeCalls      int
 	colorUpdates     []uuid.UUID
 	deletedPrefixes  []domain.ProfilePrefixType
+
+	nameColors          []*domain.NameColor
+	namePrefixes        []*domain.NamePrefix
+	prefixOptionsByType map[domain.ProfilePrefixType][]*domain.ProfileNamePrefixOption
+	insertedColors      []sql.InsertProfileNameColorOptionParams
+	insertedPrefixes    []sql.InsertProfileNamePrefixOptionParams
+}
+
+func (q *fakeGrantQueries) FindNameColors(context.Context) ([]*domain.NameColor, error) {
+	return q.nameColors, nil
+}
+
+func (q *fakeGrantQueries) FindNamePrefixes(context.Context) ([]*domain.NamePrefix, error) {
+	return q.namePrefixes, nil
+}
+
+func (q *fakeGrantQueries) InsertProfileNameColorOption(_ context.Context, arg sql.InsertProfileNameColorOptionParams) error {
+	q.insertedColors = append(q.insertedColors, arg)
+	return nil
+}
+
+func (q *fakeGrantQueries) InsertProfileNamePrefixOption(_ context.Context, arg sql.InsertProfileNamePrefixOptionParams) error {
+	q.insertedPrefixes = append(q.insertedPrefixes, arg)
+	return nil
 }
 
 func (q *fakeGrantQueries) FindProfileGrants(context.Context, uuid.UUID, uuid.UUID) ([]*domain.Grant, error) {
@@ -58,7 +82,10 @@ func (q *fakeGrantQueries) FindProfileNameColorOptionsByProfileID(context.Contex
 	return q.colorOptions, nil
 }
 
-func (q *fakeGrantQueries) FindProfileNamePrefixOptionsByProfileIDAndType(context.Context, uuid.UUID, domain.ProfilePrefixType, *uuid.UUID) ([]*domain.ProfileNamePrefixOption, error) {
+func (q *fakeGrantQueries) FindProfileNamePrefixOptionsByProfileIDAndType(_ context.Context, _ uuid.UUID, prefixType domain.ProfilePrefixType, _ *uuid.UUID) ([]*domain.ProfileNamePrefixOption, error) {
+	if options, ok := q.prefixOptionsByType[prefixType]; ok {
+		return options, nil
+	}
 	return q.prefixOptions, nil
 }
 
@@ -289,6 +316,114 @@ func TestGrantProduct(t *testing.T) {
 		}
 		if len(f.fulfillment.calls) != 0 {
 			t.Errorf("got %d grants, want none", len(f.fulfillment.calls))
+		}
+	})
+}
+
+func TestGetCosmeticsCatalog(t *testing.T) {
+	f := newGrantFixture(t)
+	unique := &domain.NameColor{ID: uuid.New(), Name: "Owner"}
+	f.queries.nameColors = []*domain.NameColor{{ID: f.defaultDye, Name: "Default"}, unique}
+	f.queries.namePrefixes = []*domain.NamePrefix{{ID: uuid.New(), Name: "Yobshestvo"}}
+
+	catalog, err := f.svc.GetCosmeticsCatalog(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(catalog.NameColors) != 1 || catalog.NameColors[0] != unique {
+		t.Errorf("got name colors %+v, want only the unique color without the default one", catalog.NameColors)
+	}
+	if len(catalog.NamePrefixes) != 1 {
+		t.Errorf("got %d name prefixes, want 1", len(catalog.NamePrefixes))
+	}
+}
+
+func TestGrantCosmetic(t *testing.T) {
+	ctx := context.Background()
+
+	newFixture := func(t *testing.T) (*grantFixture, *domain.NameColor, *domain.NamePrefix) {
+		f := newGrantFixture(t)
+		color := &domain.NameColor{ID: uuid.New(), Name: "Owner"}
+		prefix := &domain.NamePrefix{ID: uuid.New(), Name: "Yobshestvo"}
+		f.queries.nameColors = []*domain.NameColor{{ID: f.defaultDye, Name: "Default"}, color}
+		f.queries.namePrefixes = []*domain.NamePrefix{prefix}
+		return f, color, prefix
+	}
+
+	t.Run("grants a name color for good without an order", func(t *testing.T) {
+		f, color, _ := newFixture(t)
+
+		err := f.svc.GrantCosmetic(ctx, f.profile.ID, domain.GrantTypeNameColor, color.ID, "", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if f.storage.txCalls != 1 || len(f.queries.insertedColors) != 1 {
+			t.Fatalf("got %d transactions and %d inserts, want 1 and 1", f.storage.txCalls, len(f.queries.insertedColors))
+		}
+		got := f.queries.insertedColors[0]
+		if got.ProfileID != f.profile.ID || got.NameColorID != color.ID || got.ForSeasonID != nil || got.OrderItemID != nil {
+			t.Errorf("got %+v", got)
+		}
+		if len(f.minecraft.prefixes) != 0 {
+			t.Errorf("a grant must not touch the game, got prefixes %v", f.minecraft.prefixes)
+		}
+	})
+
+	t.Run("grants a special name prefix for a season", func(t *testing.T) {
+		f, _, prefix := newFixture(t)
+
+		err := f.svc.GrantCosmetic(ctx, f.profile.ID, domain.GrantTypeNamePrefix, prefix.ID, domain.ProfilePrefixTypeSpecial, &f.season)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(f.queries.insertedPrefixes) != 1 {
+			t.Fatalf("got %d inserts, want 1", len(f.queries.insertedPrefixes))
+		}
+		got := f.queries.insertedPrefixes[0]
+		if got.NamePrefixID != prefix.ID || got.Type != domain.ProfilePrefixTypeSpecial || got.ForSeasonID == nil || *got.ForSeasonID != f.season || got.OrderItemID != nil {
+			t.Errorf("got %+v", got)
+		}
+	})
+
+	t.Run("refuses an item the profile already has", func(t *testing.T) {
+		f, color, prefix := newFixture(t)
+		f.queries.colorOptions = []*domain.ProfileNameColorOption{{NameColorID: color.ID}}
+		// The prefix is held with another type than the requested one, the unique index does not tell them apart.
+		f.queries.prefixOptionsByType = map[domain.ProfilePrefixType][]*domain.ProfileNamePrefixOption{
+			domain.ProfilePrefixTypeGlyth: {{NamePrefixID: prefix.ID}},
+		}
+
+		colorErr := f.svc.GrantCosmetic(ctx, f.profile.ID, domain.GrantTypeNameColor, color.ID, "", nil)
+		prefixErr := f.svc.GrantCosmetic(ctx, f.profile.ID, domain.GrantTypeNamePrefix, prefix.ID, domain.ProfilePrefixTypeSpecial, nil)
+		if statusOf(colorErr) != http.StatusConflict || statusOf(prefixErr) != http.StatusConflict {
+			t.Fatalf("got statuses %d and %d, want conflict for both", statusOf(colorErr), statusOf(prefixErr))
+		}
+		if len(f.queries.insertedColors)+len(f.queries.insertedPrefixes) != 0 {
+			t.Errorf("nothing may be inserted, got %+v %+v", f.queries.insertedColors, f.queries.insertedPrefixes)
+		}
+	})
+
+	t.Run("refuses bad input", func(t *testing.T) {
+		f, color, prefix := newFixture(t)
+
+		for name, tt := range map[string]struct {
+			err  error
+			want int
+		}{
+			"unknown profile":       {f.svc.GrantCosmetic(ctx, uuid.New(), domain.GrantTypeNameColor, color.ID, "", nil), http.StatusNotFound},
+			"unknown season":        {f.svc.GrantCosmetic(ctx, f.profile.ID, domain.GrantTypeNameColor, color.ID, "", &uuid.UUID{1}), http.StatusNotFound},
+			"unknown name color":    {f.svc.GrantCosmetic(ctx, f.profile.ID, domain.GrantTypeNameColor, uuid.New(), "", nil), http.StatusNotFound},
+			"default name color":    {f.svc.GrantCosmetic(ctx, f.profile.ID, domain.GrantTypeNameColor, f.defaultDye, "", nil), http.StatusNotFound},
+			"unknown name prefix":   {f.svc.GrantCosmetic(ctx, f.profile.ID, domain.GrantTypeNamePrefix, uuid.New(), domain.ProfilePrefixTypeGlyth, nil), http.StatusNotFound},
+			"unknown prefix type":   {f.svc.GrantCosmetic(ctx, f.profile.ID, domain.GrantTypeNamePrefix, prefix.ID, "shiny", nil), http.StatusBadRequest},
+			"access is no cosmetic": {f.svc.GrantCosmetic(ctx, f.profile.ID, domain.GrantTypeAccess, color.ID, "", nil), http.StatusBadRequest},
+		} {
+			if statusOf(tt.err) != tt.want {
+				t.Errorf("%s: got status %d, want %d", name, statusOf(tt.err), tt.want)
+			}
+		}
+		if len(f.queries.insertedColors)+len(f.queries.insertedPrefixes) != 0 {
+			t.Errorf("nothing may be inserted, got %+v %+v", f.queries.insertedColors, f.queries.insertedPrefixes)
 		}
 	})
 }

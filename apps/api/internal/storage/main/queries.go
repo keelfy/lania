@@ -37,6 +37,10 @@ type Queries interface {
 	UpsertProfileMojangUUID(ctx context.Context, mcUUID uuid.UUID, mojangUUID *uuid.UUID) error
 
 	// Profile Cosmetics
+	// FindNameColors returns every name color ordered by name.
+	FindNameColors(ctx context.Context) ([]*domain.NameColor, error)
+	// FindNamePrefixes returns every name prefix ordered by name.
+	FindNamePrefixes(ctx context.Context) ([]*domain.NamePrefix, error)
 	InsertProfileNameColorOption(ctx context.Context, arg InsertProfileNameColorOptionParams) error
 	InsertProfileNamePrefixOption(ctx context.Context, arg InsertProfileNamePrefixOptionParams) error
 	FindProfileNameColorOptionsByProfileID(ctx context.Context, profileID uuid.UUID, seasonID *uuid.UUID) ([]*domain.ProfileNameColorOption, error)

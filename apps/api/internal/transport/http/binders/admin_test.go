@@ -117,3 +117,48 @@ func TestBindRevokeGrant(t *testing.T) {
 		t.Error("an unknown grant type passed validation")
 	}
 }
+
+func TestBindGrantCosmetic(t *testing.T) {
+	profileID, itemID, seasonID := uuid.New(), uuid.New(), uuid.New()
+
+	tests := []struct {
+		name        string
+		body        string
+		wantSeason  *uuid.UUID
+		wantInvalid bool
+	}{
+		{"name color for good", `{"type":"name-color","itemId":"` + itemID.String() + `"}`, nil, false},
+		{"name color for a season", `{"type":"name-color","itemId":"` + itemID.String() + `","seasonId":"` + seasonID.String() + `"}`, &seasonID, false},
+		{"special prefix", `{"type":"name-prefix","itemId":"` + itemID.String() + `","prefixType":"special"}`, nil, false},
+		{"prefix without a type", `{"type":"name-prefix","itemId":"` + itemID.String() + `"}`, nil, true},
+		{"prefix with a wrong type", `{"type":"name-prefix","itemId":"` + itemID.String() + `","prefixType":"shiny"}`, nil, true},
+		{"access is no cosmetic", `{"type":"access","itemId":"` + itemID.String() + `"}`, nil, true},
+		{"missing type", `{"itemId":"` + itemID.String() + `"}`, nil, true},
+		{"missing item", `{"type":"name-color"}`, nil, true},
+		{"zero season", `{"type":"name-color","itemId":"` + itemID.String() + `","seasonId":"00000000-0000-0000-0000-000000000000"}`, &uuid.Nil, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body))
+			req.SetPathValue(ProfileIDVariable, profileID.String())
+
+			cmd, err := BindGrantCosmetic(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cmd.ProfileID != profileID || (tt.wantSeason == nil) != (cmd.SeasonID == nil) || (tt.wantSeason != nil && *tt.wantSeason != *cmd.SeasonID) {
+				t.Errorf("got %+v", cmd)
+			}
+			if invalid := cmd.Validate() != nil; invalid != tt.wantInvalid {
+				t.Errorf("validation failed = %v, want %v", invalid, tt.wantInvalid)
+			}
+		})
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{`))
+	req.SetPathValue(ProfileIDVariable, profileID.String())
+	if _, err := BindGrantCosmetic(req); utils.MapCustomErrorToHttpStatus(err) != http.StatusBadRequest {
+		t.Errorf("broken json: got %v, want bad request", err)
+	}
+}

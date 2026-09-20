@@ -58,3 +58,31 @@ export type GrantProductReq = {
   productId: string
   seasonId: string
 }
+
+export type AdminNameColor = {
+  id: string
+  name: string
+  // Gradient stops, empty for a plain color.
+  colors: string[]
+}
+
+export type AdminNamePrefix = {
+  id: string
+  name: string
+  image: string
+}
+
+// Every name color and name prefix that can be granted, for sale or not.
+export type AdminCosmeticsCatalog = {
+  nameColors: AdminNameColor[]
+  namePrefixes: AdminNamePrefix[]
+}
+
+export type GrantCosmeticReq = {
+  type: 'name-color' | 'name-prefix'
+  itemId: string
+  // Used for a name prefix only.
+  prefixType?: 'glyth' | 'special'
+  // Missing to grant the item for good.
+  seasonId?: string
+}

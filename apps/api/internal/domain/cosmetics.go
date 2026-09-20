@@ -23,3 +23,9 @@ type NamePrefix struct {
 	Name     string
 	Metadata NamePrefixMetadata
 }
+
+// CosmeticsCatalog lists every name color and name prefix that exists, whether it is for sale or not.
+type CosmeticsCatalog struct {
+	NameColors   []*NameColor
+	NamePrefixes []*NamePrefix
+}

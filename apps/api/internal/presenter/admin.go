@@ -80,3 +80,21 @@ func PresentAdminSeasons(seasons []*domain.Season, activeSeasonID uuid.UUID) []*
 	}
 	return res
 }
+
+func PresentAdminCosmeticsCatalog(catalog *domain.CosmeticsCatalog) *responses.AdminCosmeticsCatalog {
+	res := &responses.AdminCosmeticsCatalog{
+		NameColors:   make([]*responses.AdminNameColor, len(catalog.NameColors)),
+		NamePrefixes: make([]*responses.AdminNamePrefix, len(catalog.NamePrefixes)),
+	}
+	for i, nameColor := range catalog.NameColors {
+		colors := nameColor.Metadata.Colors
+		if colors == nil {
+			colors = []string{}
+		}
+		res.NameColors[i] = &responses.AdminNameColor{ID: nameColor.ID, Name: nameColor.Name, Colors: colors}
+	}
+	for i, namePrefix := range catalog.NamePrefixes {
+		res.NamePrefixes[i] = &responses.AdminNamePrefix{ID: namePrefix.ID, Name: namePrefix.Name, Image: namePrefix.Metadata.Image}
+	}
+	return res
+}

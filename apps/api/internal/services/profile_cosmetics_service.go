@@ -22,6 +22,7 @@ type ProfileCosmeticsService interface {
 	ClearProfilePrefixByType(ctx context.Context, queries sql.Queries, profileID uuid.UUID, prefixType domain.ProfilePrefixType) error
 	AddProfileNameColorOption(ctx context.Context, queries sql.Queries, profileID uuid.UUID, nameColorID uuid.UUID, forSeasonID *uuid.UUID, orderItemID *uuid.UUID) error
 	AddProfileNameGlythOption(ctx context.Context, queries sql.Queries, profileID uuid.UUID, namePrefixID uuid.UUID, forSeasonID *uuid.UUID, orderItemID *uuid.UUID) error
+	AddProfileNamePrefixOption(ctx context.Context, queries sql.Queries, profileID uuid.UUID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType, forSeasonID *uuid.UUID, orderItemID *uuid.UUID) error
 	GetProfileNameColorOptionsByProfileOwnerUserID(ctx context.Context, ownerUserID uuid.UUID, seasonID *uuid.UUID) ([]*domain.ProfileNameColorOption, error)
 	GetProfileNamePrefixOptionsByProfileOwnerUserIDAndType(ctx context.Context, ownerUserID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) ([]*domain.ProfileNamePrefixOption, error)
 	GetProfilePrefixes(ctx context.Context, profileID uuid.UUID) ([]*domain.ProfilePrefix, error)
@@ -159,16 +160,20 @@ func (s *profileCosmeticsService) AddProfileNameColorOption(ctx context.Context,
 }
 
 func (s *profileCosmeticsService) AddProfileNameGlythOption(ctx context.Context, queries sql.Queries, profileID uuid.UUID, namePrefixID uuid.UUID, forSeasonID *uuid.UUID, orderItemID *uuid.UUID) error {
+	return s.AddProfileNamePrefixOption(ctx, queries, profileID, namePrefixID, domain.ProfilePrefixTypeGlyth, forSeasonID, orderItemID)
+}
+
+func (s *profileCosmeticsService) AddProfileNamePrefixOption(ctx context.Context, queries sql.Queries, profileID uuid.UUID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType, forSeasonID *uuid.UUID, orderItemID *uuid.UUID) error {
 	err := queries.InsertProfileNamePrefixOption(ctx, sql.InsertProfileNamePrefixOptionParams{
 		ProfileID:    profileID,
 		NamePrefixID: namePrefixID,
-		Type:         domain.ProfilePrefixTypeGlyth,
+		Type:         prefixType,
 		ForSeasonID:  forSeasonID,
 		OrderItemID:  orderItemID,
 		CreatedBy:    utils.GetUserIDFromContextOrNil(ctx),
 	})
 	if err != nil {
-		return utils.NewInternalServerError("failed to add profile name glyth option", err)
+		return utils.NewInternalServerError("failed to add profile name "+string(prefixType)+" option", err)
 	}
 	return nil
 }

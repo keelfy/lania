@@ -92,3 +92,23 @@ func BindRevokeGrant(r *http.Request) (*commands.RevokeGrantCommand, error) {
 		GrantID:   grantID,
 	}, nil
 }
+
+func BindGrantCosmetic(r *http.Request) (*commands.GrantCosmeticCommand, error) {
+	profileID, err := BindPathVariableAsUUID(r, ProfileIDVariable)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &requests.GrantCosmetic{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+
+	return &commands.GrantCosmeticCommand{
+		ProfileID:  profileID,
+		Type:       domain.GrantType(req.Type),
+		ItemID:     req.ItemID,
+		PrefixType: domain.ProfilePrefixType(req.PrefixType),
+		SeasonID:   req.SeasonID,
+	}, nil
+}

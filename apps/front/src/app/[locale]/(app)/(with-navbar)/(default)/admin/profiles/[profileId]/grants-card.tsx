@@ -31,13 +31,14 @@ import {
 import { revokeGrant } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
-import { AdminGrant, AdminSeason } from '@/models/admin'
+import { AdminCosmeticsCatalog, AdminGrant, AdminSeason } from '@/models/admin'
 import { Product, ProductMetadata } from '@/models/product'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
 import { formatDateTime } from '../../format'
+import GrantCosmeticDialog from './grant-cosmetic-dialog'
 import GrantProductDialog from './grant-product-dialog'
 
 type Props = {
@@ -46,6 +47,8 @@ type Props = {
   grants: AdminGrant[] | undefined
   seasons: AdminSeason[]
   products: Product<ProductMetadata>[]
+  // Missing when the catalog could not be loaded.
+  catalog: AdminCosmeticsCatalog | undefined
 }
 
 export default function GrantsCard({
@@ -53,6 +56,7 @@ export default function GrantsCard({
   grants,
   seasons,
   products,
+  catalog,
 }: Props) {
   const t = useTranslations('admin.profiles.grants')
   const locale = useLocale()
@@ -91,11 +95,18 @@ export default function GrantsCard({
           <CardTitle className="text-lg">{t('title')}</CardTitle>
           <CardDescription>{t('description')}</CardDescription>
         </div>
-        <GrantProductDialog
-          profileId={profileId}
-          seasons={seasons}
-          products={products}
-        />
+        <div className="flex gap-2">
+          <GrantCosmeticDialog
+            profileId={profileId}
+            seasons={seasons}
+            catalog={catalog}
+          />
+          <GrantProductDialog
+            profileId={profileId}
+            seasons={seasons}
+            products={products}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         {!grants ? (
@@ -123,6 +134,8 @@ export default function GrantsCard({
                       </span>
                       <Badge variant="outline">
                         {t(`types.${grant.type}`)}
+                        {grant.prefixType &&
+                          ` · ${t(`prefixTypes.${grant.prefixType}`)}`}
                       </Badge>
                     </div>
                   </TableCell>

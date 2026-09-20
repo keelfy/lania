@@ -19,6 +19,13 @@ type AdminGrantService interface {
 	// GrantProduct gives the product to the profile for the season. It fails with a conflict error
 	// when the profile already has the product for that season.
 	GrantProduct(ctx context.Context, profileID, productID, seasonID uuid.UUID) error
+	// GetCosmeticsCatalog returns every name color and name prefix that can be granted.
+	GetCosmeticsCatalog(ctx context.Context) (*domain.CosmeticsCatalog, error)
+	// GrantCosmetic gives a name color or a name prefix to the profile whether it is for sale or not.
+	// A nil seasonID grants it for good. prefixType is used for a name prefix only.
+	// It fails with a conflict error when the profile already has the item. The item is not selected,
+	// so the game is not touched: the player picks it as usual.
+	GrantCosmetic(ctx context.Context, profileID uuid.UUID, grantType domain.GrantType, itemID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) error
 	// RevokeGrant takes the grant back and undoes its effect in the game.
 	// Repeating the request for a revoked grant repeats the update of the Minecraft server,
 	// so a failed update can be retried.
@@ -90,6 +97,87 @@ func (s *adminGrantService) GrantProduct(ctx context.Context, profileID, product
 	return s.storage.BeginTx(ctx, func(queries sql.Queries) error {
 		return s.fulfillmentService.GrantProduct(ctx, queries, profile.ID, seasonID, product, domain.AccessSourceAdmin, nil)
 	})
+}
+
+func (s *adminGrantService) GetCosmeticsCatalog(ctx context.Context) (*domain.CosmeticsCatalog, error) {
+	queries := s.storage.Queries()
+
+	nameColors, err := queries.FindNameColors(ctx)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to find name colors", err)
+	}
+	namePrefixes, err := queries.FindNamePrefixes(ctx)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to find name prefixes", err)
+	}
+
+	// Every profile starts with the default color, so it is never granted.
+	defaultNameColorID := config.GetDefaultNameColorID()
+	grantable := make([]*domain.NameColor, 0, len(nameColors))
+	for _, nameColor := range nameColors {
+		if nameColor.ID != defaultNameColorID {
+			grantable = append(grantable, nameColor)
+		}
+	}
+
+	return &domain.CosmeticsCatalog{NameColors: grantable, NamePrefixes: namePrefixes}, nil
+}
+
+func (s *adminGrantService) GrantCosmetic(ctx context.Context, profileID uuid.UUID, grantType domain.GrantType, itemID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) error {
+	profile, err := s.profileService.GetProfileByID(ctx, profileID)
+	if err != nil {
+		return err
+	}
+	if seasonID != nil {
+		if _, err := s.seasonService.GetSeasonByID(ctx, *seasonID); err != nil {
+			return err
+		}
+	}
+	catalog, err := s.GetCosmeticsCatalog(ctx)
+	if err != nil {
+		return err
+	}
+
+	switch grantType {
+	case domain.GrantTypeNameColor:
+		if !slices.ContainsFunc(catalog.NameColors, func(nameColor *domain.NameColor) bool { return nameColor.ID == itemID }) {
+			return utils.NewNotFoundError("name color not found", nil)
+		}
+		options, err := s.profileCosmeticsService.GetProfileNameColorOptions(ctx, profile.ID, seasonID)
+		if err != nil {
+			return err
+		}
+		if slices.ContainsFunc(options, func(option *domain.ProfileNameColorOption) bool { return option.NameColorID == itemID }) {
+			return utils.NewConflictError("profile already has this name color", nil)
+		}
+
+		return s.storage.BeginTx(ctx, func(queries sql.Queries) error {
+			return s.profileCosmeticsService.AddProfileNameColorOption(ctx, queries, profile.ID, itemID, seasonID, nil)
+		})
+	case domain.GrantTypeNamePrefix:
+		if prefixType != domain.ProfilePrefixTypeGlyth && prefixType != domain.ProfilePrefixTypeSpecial {
+			return utils.NewBadRequestError("prefix type must be glyth or special", nil)
+		}
+		if !slices.ContainsFunc(catalog.NamePrefixes, func(namePrefix *domain.NamePrefix) bool { return namePrefix.ID == itemID }) {
+			return utils.NewNotFoundError("name prefix not found", nil)
+		}
+
+		// The options of both types are checked: the same prefix cannot be granted twice for a season, whatever the type.
+		for _, existingType := range []domain.ProfilePrefixType{domain.ProfilePrefixTypeGlyth, domain.ProfilePrefixTypeSpecial} {
+			options, err := s.profileCosmeticsService.GetProfileNamePrefixOptionsByProfileIDAndType(ctx, profile.ID, existingType, seasonID)
+			if err != nil {
+				return err
+			}
+			if slices.ContainsFunc(options, func(option *domain.ProfileNamePrefixOption) bool { return option.NamePrefixID == itemID }) {
+				return utils.NewConflictError("profile already has this name prefix", nil)
+			}
+		}
+
+		return s.storage.BeginTx(ctx, func(queries sql.Queries) error {
+			return s.profileCosmeticsService.AddProfileNamePrefixOption(ctx, queries, profile.ID, itemID, prefixType, seasonID, nil)
+		})
+	}
+	return utils.NewBadRequestError("grant type must be name-color or name-prefix", nil)
 }
 
 func (s *adminGrantService) RevokeGrant(ctx context.Context, profileID uuid.UUID, grantType domain.GrantType, grantID uuid.UUID) error {

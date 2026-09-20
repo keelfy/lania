@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { requireAdmin } from '@/lib/admin'
 import {
+  getAdminCosmetics,
   getAdminGrants,
   getAdminProfile,
   getAdminSeasons,
@@ -34,7 +35,7 @@ export default async function AdminProfilePage({ params }: Props) {
   )
   if (!profile) notFound()
 
-  const [grants, seasons, products] = await Promise.all([
+  const [grants, seasons, products, catalog] = await Promise.all([
     getAdminGrants(serverApiFetcher, profileId).catch((error) => {
       console.error(error)
       return undefined
@@ -46,6 +47,10 @@ export default async function AdminProfilePage({ params }: Props) {
     getProducts(serverApiFetcher, undefined, locale).catch((error) => {
       console.error(error)
       return []
+    }),
+    getAdminCosmetics(serverApiFetcher).catch((error) => {
+      console.error(error)
+      return undefined
     }),
   ])
 
@@ -64,6 +69,7 @@ export default async function AdminProfilePage({ params }: Props) {
         grants={grants}
         seasons={seasons}
         products={products}
+        catalog={catalog}
       />
     </AdminShell>
   )

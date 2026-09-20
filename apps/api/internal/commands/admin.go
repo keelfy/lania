@@ -61,3 +61,40 @@ func (c *RevokeGrantCommand) Validate() error {
 		validation.Field(&c.GrantID, notNilUUID),
 	)
 }
+
+type GrantCosmeticCommand struct {
+	ProfileID  uuid.UUID
+	Type       domain.GrantType
+	ItemID     uuid.UUID
+	PrefixType domain.ProfilePrefixType
+	SeasonID   *uuid.UUID
+}
+
+func (c *GrantCosmeticCommand) Validate() error {
+	return validation.ValidateStruct(c,
+		validation.Field(&c.ProfileID, notNilUUID),
+		validation.Field(&c.Type, validation.Required, validation.By(func(value any) error {
+			if grantType := value.(domain.GrantType); grantType != domain.GrantTypeNameColor && grantType != domain.GrantTypeNamePrefix {
+				return errors.New("must be name-color or name-prefix")
+			}
+			return nil
+		})),
+		validation.Field(&c.ItemID, notNilUUID),
+		validation.Field(&c.PrefixType, validation.By(func(value any) error {
+			prefixType := value.(domain.ProfilePrefixType)
+			if c.Type != domain.GrantTypeNamePrefix {
+				return nil
+			}
+			if prefixType != domain.ProfilePrefixTypeGlyth && prefixType != domain.ProfilePrefixTypeSpecial {
+				return errors.New("must be glyth or special for a name prefix")
+			}
+			return nil
+		})),
+		validation.Field(&c.SeasonID, validation.By(func(value any) error {
+			if seasonID, ok := value.(*uuid.UUID); ok && seasonID != nil && *seasonID == uuid.Nil {
+				return errors.New("cannot be the zero UUID")
+			}
+			return nil
+		})),
+	)
+}
