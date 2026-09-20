@@ -1,7 +1,7 @@
 {
   "servers": [
     {
-      "name": "ʟᴀɴɪᴀ ᴠ",
+      "name": "LANIA V",
       "domain": "play.lania.network",
       "port": 25565,
       "maps": [
@@ -18,9 +18,9 @@
       ]
     },
     {
-      "name": "ʟᴀɴɪᴀ ꜱᴘɪɴᴏꜰꜰ ɪ",
+      "name": "LANIA SPINOFF I",
       "domain": "spinoff.lania.network",
-      "port": 25565,
+      "port": 25555,
       "maps": []
     }
   ]

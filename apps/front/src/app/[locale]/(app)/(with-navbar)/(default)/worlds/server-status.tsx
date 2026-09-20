@@ -6,8 +6,6 @@ import { getTranslations } from 'next-intl/server';
 import MapButton from './map-button';
 import React from 'react';
 import Image from 'next/image';
-import CopyButton from '../orders/[orderId]/donate/copy-button';
-import CopyIPButton from '../../../(landing)/components/copy-ip-button';
 import SmallCopyIpButton from './components/small-copy-ip-button';
 
 type Props = {

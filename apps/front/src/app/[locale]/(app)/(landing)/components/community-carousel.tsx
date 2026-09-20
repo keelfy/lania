@@ -16,16 +16,20 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { seasonNumbers } from '@/lib/season-number'
 import { useMediaQuery } from '@/lib/use-media-query'
 import Autoplay from 'embla-carousel-autoplay'
 import Image from 'next/image'
+import { Noto_Sans } from 'next/font/google'
+
+const notoSans = Noto_Sans({
+  subsets: ['latin'],
+})
 
 type LandingCommunityCarouselProps = {
   gallery: {
     src: string
     alt: string
-    season: number
+    name: string
   }[]
 }
 
@@ -48,8 +52,8 @@ export default function LandingCommunityCarousel({
                     className="rounded-2xl object-cover"
                   />
                   <div className="bg-accent/50 absolute right-0 bottom-0 m-2 rounded-sm px-2 py-1">
-                    <Label className="-translate-y-0.5 text-sm font-semibold">
-                      ʟᴀɴɪᴀ&nbsp;{seasonNumbers[item.season]}
+                    <Label className={`text-sm font-bold ${notoSans.className} antialiased`}>
+                      {item.name}
                     </Label>
                   </div>
                 </AspectRatio>
@@ -67,8 +71,8 @@ export default function LandingCommunityCarousel({
                   className="rounded-2xl object-cover"
                 />
                 <div className="bg-accent/50 absolute right-0 bottom-0 m-4 rounded-sm px-3 py-1">
-                  <Label className="text-md -translate-y-0.5 font-bold">
-                    ʟᴀɴɪᴀ&nbsp;{seasonNumbers[item.season]}
+                  <Label className={`text-md font-bold ${notoSans.className} antialiased`}>
+                    {item.name}
                   </Label>
                 </div>
               </AspectRatio>

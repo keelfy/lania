@@ -5,12 +5,17 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { ServerInfo } from '@/models/server'
 import ServerStatusWithMaps from './server-status'
+import { Noto_Sans } from 'next/font/google'
 
 type Props = {
   params: Promise<{
     locale: string
   }>
 }
+
+const notoSans = Noto_Sans({
+  subsets: ['latin'],
+})
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
@@ -66,7 +71,7 @@ export default async function WorldPage({ params }: Props) {
     <div className="flex flex-col gap-10">
       {statuses.map(({ server, status }) => (
         <div key={server.domain + ':' + server.port} className="flex flex-col gap-4">
-          <h1 className="text-4xl font-extrabold">
+          <h1 className={`text-3xl font-extrabold ${notoSans.className} antialiased`}>
             {server.name}
           </h1>
           <ServerStatusWithMaps
