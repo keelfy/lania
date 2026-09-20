@@ -174,6 +174,22 @@ export function requestFreeAccess(
   )
 }
 
+export function registerForActiveSeason(
+  fetcher: ApiFetcher,
+  usernames: string[],
+): Promise<void> {
+  const activeSeason = process.env.NEXT_PUBLIC_ACTIVE_SEASON_ID
+  if (!activeSeason || activeSeason.length === 0) {
+    throw new Error('No active season')
+  }
+
+  const params = new URLSearchParams()
+  params.set('username', usernames.join(','))
+  return fetcher<void>(`/v1/seasons/${activeSeason}/access/register`, params, {
+    method: 'POST',
+  })
+}
+
 export function requestAccess(
   fetcher: ApiFetcher,
   usernames: string[],

@@ -168,6 +168,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 		api.useProtectedRoutes(r)
 
 		r.Post("/access/pre-register", api.accessHandler.ObtainFreeAccessForProfiles)
+		r.Post("/access/register", api.accessHandler.RegisterProfilesForSeason)
 		r.Post("/get-access", api.accessHandler.ObtainAccessForProfiles)
 	})
 

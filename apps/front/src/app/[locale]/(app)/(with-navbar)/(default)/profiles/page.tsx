@@ -23,6 +23,7 @@ import {
   ShieldIcon,
   ShoppingBagIcon,
   XIcon,
+  ZapIcon,
 } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
@@ -47,6 +48,10 @@ const accessStatusIconColors = {
   inactive: 'text-destructive',
   expired: 'text-orange-500',
 }
+
+// With free registration open there is nothing to buy - access to the active
+// season is one click away.
+const isFreeRegistration = process.env.NEXT_PUBLIC_FREE_REGISTRATION === 'true'
 
 const DEFAULT_COSMETIC_OPTIONS: ProfileCosmeticOptions = {
   name: { colors: [], glythPrefixes: [], specialPrefixes: [] },
@@ -201,8 +206,16 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                               },
                             }}
                           >
-                            <ShoppingBagIcon className="size-4" />
-                            {t('accessStatus.obtain')}
+                            {isFreeRegistration ? (
+                              <ZapIcon className="size-4" />
+                            ) : (
+                              <ShoppingBagIcon className="size-4" />
+                            )}
+                            {t(
+                              isFreeRegistration
+                                ? 'accessStatus.obtainFree'
+                                : 'accessStatus.obtain',
+                            )}
                           </Link>
                         </Button>
                       )}
@@ -327,14 +340,23 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                 <p className="text-muted-foreground text-center text-base">
                   <RichText>
                     {(tags) =>
-                      t.rich('selectProfile', {
-                        ...tags,
-                        obtainAccess: (chunks: React.ReactNode) => (
-                          <Button variant="link" asChild className="h-auto p-0">
-                            <Link href="/obtain-access">{chunks}</Link>
-                          </Button>
-                        ),
-                      })
+                      t.rich(
+                        isFreeRegistration
+                          ? 'selectProfileFree'
+                          : 'selectProfile',
+                        {
+                          ...tags,
+                          obtainAccess: (chunks: React.ReactNode) => (
+                            <Button
+                              variant="link"
+                              asChild
+                              className="h-auto p-0"
+                            >
+                              <Link href="/obtain-access">{chunks}</Link>
+                            </Button>
+                          ),
+                        },
+                      )
                     }
                   </RichText>
                 </p>

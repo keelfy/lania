@@ -175,7 +175,7 @@
     }
   },
   "orders": {
-    "status" :{
+    "status": {
       "created": "Created",
       "processing": "Processing",
       "completed": "Completed",
@@ -185,6 +185,7 @@
   "profiles": {
     "title": "Your game profiles",
     "selectProfile": "Select a profile to view its information <br></br> --- or --- <br></br> <obtainAccess>obtain access for the game profile</obtainAccess>",
+    "selectProfileFree": "Select a profile to view its information <br></br> --- or --- <br></br> <obtainAccess>get access for the game profile</obtainAccess>",
     "accessStatus": {
       "title": "Access",
       "description": "Information about the access to this game profile",
@@ -194,7 +195,8 @@
         "inactive": "Access inactive",
         "expired": "Access expired"
       },
-      "obtain": "Obtain access"
+      "obtain": "Obtain access",
+      "obtainFree": "Get access"
     },
     "violations": {
       "title": "Violations",
@@ -296,7 +298,7 @@
       "playtimeAsc": "Playtime: least"
     }
   },
-  "navbar": { 
+  "navbar": {
     "title": "Menu",
     "items": {
       "worlds": "Worlds",
@@ -327,6 +329,7 @@
     "title": "Obtain access",
     "description": "Obtain access to the Lania servers and start your adventure.",
     "success": "Access obtained",
+    "successFree": "Access granted",
     "error": "Failed to obtain access",
     "steps": {
       "step1": {
@@ -344,6 +347,11 @@
         "title": "Create a profile and proceed to payment",
         "description": "You will be ready to start playing on the <b>Lania</b> server.",
         "action": "Proceed to payment"
+      },
+      "step3Free": {
+        "title": "Create a profile and get access",
+        "description": "Access to the <b>current season</b> is granted right away and for free — no payment needed.",
+        "action": "Get access"
       }
     },
     "validation": {

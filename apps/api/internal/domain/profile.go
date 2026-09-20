@@ -17,8 +17,9 @@ const (
 type AccessSource string
 
 const (
-	AccessSourceFree      AccessSource = "free"
-	AccessSourceFreekassa AccessSource = "freekassa"
+	AccessSourceFree         AccessSource = "free"
+	AccessSourceRegistration AccessSource = "registration"
+	AccessSourceFreekassa    AccessSource = "freekassa"
 )
 
 type Role string
@@ -62,7 +63,7 @@ type Profile struct {
 	MinecraftUUID     uuid.UUID
 	MinecraftUsername string
 	OwnerUserID       *uuid.UUID
-	FirstSeenAt      *time.Time
+	FirstSeenAt       *time.Time
 	LastSeenAt        *time.Time
 	Role              Role
 	IsSlimModel       bool

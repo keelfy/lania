@@ -8,14 +8,23 @@ import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 
-export default function SignInButton() {
+type Props = {
+  // Current value of the username input, carried through sign-in in the `u` query param.
+  username?: string
+}
+
+export default function SignInButton({ username }: Props) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const t = useTranslations()
 
   const returnTo = React.useMemo(() => {
-    return `${pathname}?${searchParams.toString()}`
-  }, [pathname, searchParams])
+    const params = new URLSearchParams(searchParams)
+    if (username) {
+      params.set('u', username)
+    }
+    return `${pathname}?${params.toString()}`
+  }, [pathname, searchParams, username])
 
   return (
     <Button asChild>

@@ -18,6 +18,7 @@ var IsAvatarSize = validation.In(
 
 var AccessSource = validation.In(
 	domain.AccessSourceFree,
+	domain.AccessSourceRegistration,
 	domain.AccessSourceFreekassa,
 )
 

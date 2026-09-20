@@ -157,6 +157,12 @@ func IsPreRegistrationEnabled() bool {
 	return os.Getenv("PREREGISTRATION") == "true"
 }
 
+// IsFreeRegistrationEnabled reports whether players may claim access to the
+// active season for free, without buying a season pass.
+func IsFreeRegistrationEnabled() bool {
+	return os.Getenv("FREE_REGISTRATION") == "true"
+}
+
 /** Freekassa */
 
 func GetFreekassaBasePaymentURL() string {

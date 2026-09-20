@@ -154,6 +154,11 @@ variable "preregistration" {
   default = false
 }
 
+variable "free_registration" {
+  type    = bool
+  default = false
+}
+
 variable "freekassa_base_payment_url" {
   type    = string
   default = ""

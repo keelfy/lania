@@ -19,6 +19,7 @@ import (
 type AccessHandler interface {
 	CheckUsernames(w http.ResponseWriter, r *http.Request)
 	ObtainFreeAccessForProfiles(w http.ResponseWriter, r *http.Request)
+	RegisterProfilesForSeason(w http.ResponseWriter, r *http.Request)
 	ObtainAccessForProfiles(w http.ResponseWriter, r *http.Request)
 }
 
@@ -120,6 +121,27 @@ func (h *accessHandler) ObtainFreeAccessForProfiles(w http.ResponseWriter, r *ht
 		return
 	}
 
+	h.grantFreeAccess(w, r, domain.AccessSourceFree)
+}
+
+// RegisterProfilesForSeason grants access to the active season right away: the
+// player only has to pick a username, no season pass involved.
+func (h *accessHandler) RegisterProfilesForSeason(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if !config.IsFreeRegistrationEnabled() {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("free registration is disabled", nil))
+		return
+	}
+
+	h.grantFreeAccess(w, r, domain.AccessSourceRegistration)
+}
+
+// grantFreeAccess creates the requested profiles if needed and hands them access
+// to the requested season without any payment.
+func (h *accessHandler) grantFreeAccess(w http.ResponseWriter, r *http.Request, source domain.AccessSource) {
+	ctx := r.Context()
+
 	cmd, err := binders.BindObtainProfileAccesses(r)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
@@ -128,6 +150,11 @@ func (h *accessHandler) ObtainFreeAccessForProfiles(w http.ResponseWriter, r *ht
 
 	if err := cmd.Validate(); err != nil {
 		utils.HttpError(ctx, w, utils.NewBadRequestError("", err))
+		return
+	}
+
+	if source == domain.AccessSourceRegistration && cmd.SeasonID != config.GetActiveSeasonID() {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("registration is only available for the active season", nil))
 		return
 	}
 
@@ -168,7 +195,7 @@ func (h *accessHandler) ObtainFreeAccessForProfiles(w http.ResponseWriter, r *ht
 			return
 		}
 
-		err = h.accessService.ObtainFreeAccessForProfile(ctx, cmd.SeasonID, profile)
+		err = h.accessService.ObtainAccessForProfile(ctx, cmd.SeasonID, profile, source, nil)
 		if err != nil {
 			utils.HttpError(ctx, w, err)
 			return
@@ -273,6 +300,10 @@ func (h *accessHandler) ObtainAccessForProfiles(w http.ResponseWriter, r *http.R
 			ProfileID: profile.ID,
 			Quantity:  1,
 		})
+		if err != nil {
+			utils.HttpError(ctx, w, err)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

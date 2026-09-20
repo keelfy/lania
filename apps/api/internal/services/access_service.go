@@ -14,7 +14,6 @@ import (
 
 type AccessService interface {
 	GetAccessesByMinecraftUUIDs(ctx context.Context, minecraftUUIDs uuid.UUIDs) (map[uuid.UUID][]*domain.ProfileAccess, error)
-	ObtainFreeAccessForProfile(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
 	ObtainAccessForProfile(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, source domain.AccessSource, orderItemID *uuid.UUID) error
 	CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, seasonID uuid.UUID) (bool, error)
 	GetProfileIDsWithAccessBySeasonIDAndOwnerUserID(ctx context.Context, seasonID uuid.UUID, ownerUserID uuid.UUID) (uuid.UUIDs, error)
@@ -52,10 +51,6 @@ func (s *accessService) CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(ctx co
 		return false, utils.NewInternalServerError("failed to check if profile has access", err)
 	}
 	return res, nil
-}
-
-func (s *accessService) ObtainFreeAccessForProfile(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error {
-	return s.ObtainAccessForProfile(ctx, seasonID, profile, domain.AccessSourceFree, nil)
 }
 
 func (s *accessService) ObtainAccessForProfile(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, source domain.AccessSource, orderItemID *uuid.UUID) error {

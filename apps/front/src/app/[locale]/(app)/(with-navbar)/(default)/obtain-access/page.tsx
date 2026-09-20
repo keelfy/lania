@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { requestAccess } from '@/lib/api-endpoints'
+import { registerForActiveSeason, requestAccess } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
 import { useAuthStore } from '@/providers/auth-store'
@@ -24,12 +24,13 @@ import {
   CreditCardIcon,
   Gamepad2Icon,
   UserCheckIcon,
+  ZapIcon,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { parseAsString, useQueryState } from 'nuqs'
 import React from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import z from 'zod'
 import SignInButton from '../../components/sign-in-button'
@@ -43,9 +44,14 @@ type Props = {
   }>
 }
 
+// When free registration is open, picking a username is enough to play the
+// active season - no season pass, no basket.
+const isFreeRegistration = process.env.NEXT_PUBLIC_FREE_REGISTRATION === 'true'
+
 export default function ObtainAccessPage({ params }: Props) {
   const { locale } = React.use(params)
   const t = useTranslations('obtainAccess')
+  const lastStep = isFreeRegistration ? 'steps.step3Free' : 'steps.step3'
 
   const [queryUsernames] = useQueryState('u', parseAsString.withDefault(''))
   const session = useAuthStore((state) => state.session)
@@ -59,11 +65,33 @@ export default function ObtainAccessPage({ params }: Props) {
     },
   })
 
+  const username = useWatch({ control: form.control, name: 'username' })
+
   const [isSubmitting, startObtainingAccess] = React.useTransition()
 
   const onSubmit = form.handleSubmit((data) => {
+    if (!session?.active) {
+      // Send the guest to sign in and bring them back with the username
+      // prefilled through the `u` query param.
+      const returnTo = `${process.env.NEXT_PUBLIC_DOMAIN}/${locale}/obtain-access?${new URLSearchParams({ u: data.username })}`
+      const signInParams = new URLSearchParams({ return_to: returnTo })
+      // External Ory URL, not an internal Next.js page.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign(
+        `${process.env.NEXT_PUBLIC_ORY_SDK_URL}/self-service/login/browser?${signInParams}`,
+      )
+      return
+    }
+
     startObtainingAccess(async () => {
       try {
+        if (isFreeRegistration) {
+          await registerForActiveSeason(clientApiFetcher, [data.username])
+          toast.success(t('successFree'))
+          router.push(`/${locale}/profiles`)
+          return
+        }
+
         await requestAccess(clientApiFetcher, [data.username])
         toast.success(t('success'))
         await refresh()
@@ -96,7 +124,7 @@ export default function ObtainAccessPage({ params }: Props) {
                 <p className="mb-4 text-base font-normal text-gray-500 dark:text-gray-400">
                   {t('steps.step1.description')}
                 </p>
-                <SignInButton />
+                <SignInButton username={username} />
               </li>
             )}
             {/** step 2: specify username */}
@@ -112,17 +140,22 @@ export default function ObtainAccessPage({ params }: Props) {
               </p>
               <UsernameField form={form} />
             </li>
-            {/** step 3: create profile, add access to the basket and redirect to the basket  */}
+            {/** step 3: create the profile and either grant access right away
+             * (free registration) or add the season pass to the basket */}
             <li className="ms-6 mb-10">
               <span className="bg-primary-foreground absolute -start-3 flex h-6 w-6 items-center justify-center rounded-full ring-8 ring-teal-900/30">
-                <CreditCardIcon className="size-4" />
+                {isFreeRegistration ? (
+                  <ZapIcon className="size-4" />
+                ) : (
+                  <CreditCardIcon className="size-4" />
+                )}
               </span>
               <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-                {t('steps.step3.title')}
+                {t(`${lastStep}.title`)}
               </h3>
               <p className="mb-6 text-base font-normal text-gray-500 dark:text-gray-400">
                 <RichText>
-                  {(tags) => t.rich('steps.step3.description', { ...tags })}
+                  {(tags) => t.rich(`${lastStep}.description`, { ...tags })}
                 </RichText>
               </p>
               <div className="flex flex-col gap-4">
@@ -188,7 +221,7 @@ export default function ObtainAccessPage({ params }: Props) {
                     Оплатить&nbsp;
                     <span className="font-bold">{totalPrice} ₽</span>
                   </p> */}
-                  <p>{t('steps.step3.action')}</p>
+                  <p>{t(`${lastStep}.action`)}</p>
                 </Button>
               </div>
             </li>
