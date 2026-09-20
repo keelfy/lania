@@ -194,6 +194,7 @@ type grantFixture struct {
 	fulfillment *stubFulfillmentService
 	access      *stubAccessService
 	minecraft   *recordingMinecraftService
+	notify      *recordingNotificationService
 	profile     *domain.Profile
 	season      uuid.UUID
 	defaultDye  uuid.UUID
@@ -207,6 +208,7 @@ func newGrantFixture(t *testing.T) *grantFixture {
 		fulfillment: &stubFulfillmentService{},
 		access:      &stubAccessService{},
 		minecraft:   &recordingMinecraftService{},
+		notify:      &recordingNotificationService{},
 		season:      uuid.New(),
 		defaultDye:  uuid.New(),
 		profile:     &domain.Profile{ID: uuid.New(), MinecraftUUID: uuid.New(), NameColorID: uuid.New()},
@@ -225,6 +227,7 @@ func newGrantFixture(t *testing.T) *grantFixture {
 		f.access,
 		NewProfileCosmeticsService(f.storage),
 		f.minecraft,
+		f.notify,
 	)
 	return f
 }

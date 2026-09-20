@@ -47,6 +47,8 @@ type Queries interface {
 	FindNameColors(ctx context.Context) ([]*domain.NameColor, error)
 	// FindNamePrefixes returns every name prefix ordered by name.
 	FindNamePrefixes(ctx context.Context) ([]*domain.NamePrefix, error)
+	FindNameColorByID(ctx context.Context, nameColorID uuid.UUID) (*domain.NameColor, error)
+	FindNamePrefixByID(ctx context.Context, namePrefixID uuid.UUID) (*domain.NamePrefix, error)
 	InsertProfileNameColorOption(ctx context.Context, arg InsertProfileNameColorOptionParams) error
 	InsertProfileNamePrefixOption(ctx context.Context, arg InsertProfileNamePrefixOptionParams) error
 	FindProfileNameColorOptionsByProfileID(ctx context.Context, profileID uuid.UUID, seasonID *uuid.UUID) ([]*domain.ProfileNameColorOption, error)
@@ -112,6 +114,14 @@ type Queries interface {
 
 	// Easy Donate
 	FindEDProductsByProductIDs(ctx context.Context, productIDs uuid.UUIDs) ([]int64, error)
+
+	// Notification
+	InsertNotification(ctx context.Context, arg InsertNotificationParams) error
+	// FindNotificationsByUserID returns the notifications of the user, newest first.
+	FindNotificationsByUserID(ctx context.Context, userID uuid.UUID, limit int) ([]*domain.Notification, error)
+	CountUnreadNotificationsByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
+	// MarkNotificationsRead stamps the unread notifications of the user. Empty ids marks all of them.
+	MarkNotificationsRead(ctx context.Context, userID uuid.UUID, ids uuid.UUIDs) error
 }
 
 type queryable interface {

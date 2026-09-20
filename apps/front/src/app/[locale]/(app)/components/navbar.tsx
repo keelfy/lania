@@ -138,7 +138,7 @@ export default async function Navbar({
         </div>
       </div>
       <div className="absolute right-4 flex items-center gap-2 lg:right-0">
-        <NotificationsMenu>
+        <NotificationsMenu sessionActive={isSessionActive}>
           <Button variant="ghost" size="icon">
             <span className="sr-only">{t('notifications.title')}</span>
             <BellIcon className="size-4" />

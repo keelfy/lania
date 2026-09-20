@@ -308,7 +308,19 @@
     },
     "notifications": {
       "title": "Уведомления",
-      "noNotifications": "Уведомлений нет"
+      "noNotifications": "Уведомлений нет",
+      "loading": "Загрузка...",
+      "items": {
+        "openProfiles": "Мои профили",
+        "cosmeticGranted": {
+          "title": "Новое украшение",
+          "body": "{item} для профиля {profile}"
+        },
+        "cosmeticRevoked": {
+          "title": "Украшение отозвано",
+          "body": "{item} у профиля {profile}"
+        }
+      }
     },
     "signIn": "Войти",
     "userDropdown": {

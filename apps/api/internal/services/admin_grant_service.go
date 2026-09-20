@@ -41,6 +41,7 @@ type adminGrantService struct {
 	accessService           AccessService
 	profileCosmeticsService ProfileCosmeticsService
 	minecraftService        MinecraftService
+	notificationService     NotificationService
 }
 
 func NewAdminGrantService(
@@ -52,6 +53,7 @@ func NewAdminGrantService(
 	accessService AccessService,
 	profileCosmeticsService ProfileCosmeticsService,
 	minecraftService MinecraftService,
+	notificationService NotificationService,
 ) AdminGrantService {
 	return &adminGrantService{
 		storage:                 storage,
@@ -62,6 +64,7 @@ func NewAdminGrantService(
 		accessService:           accessService,
 		profileCosmeticsService: profileCosmeticsService,
 		minecraftService:        minecraftService,
+		notificationService:     notificationService,
 	}
 }
 
@@ -152,7 +155,11 @@ func (s *adminGrantService) GrantCosmetic(ctx context.Context, profileID uuid.UU
 		}
 
 		return s.storage.BeginTx(ctx, func(queries sql.Queries) error {
-			return s.profileCosmeticsService.AddProfileNameColorOption(ctx, queries, profile.ID, itemID, seasonID, nil)
+			if err := s.profileCosmeticsService.AddProfileNameColorOption(ctx, queries, profile.ID, itemID, seasonID, nil); err != nil {
+				return err
+			}
+			s.notificationService.NotifyCosmeticGranted(ctx, queries, profile, grantType, itemID, "", seasonID)
+			return nil
 		})
 	case domain.GrantTypeNamePrefix:
 		if prefixType != domain.ProfilePrefixTypeGlyth && prefixType != domain.ProfilePrefixTypeSpecial {
@@ -174,7 +181,11 @@ func (s *adminGrantService) GrantCosmetic(ctx context.Context, profileID uuid.UU
 		}
 
 		return s.storage.BeginTx(ctx, func(queries sql.Queries) error {
-			return s.profileCosmeticsService.AddProfileNamePrefixOption(ctx, queries, profile.ID, itemID, prefixType, seasonID, nil)
+			if err := s.profileCosmeticsService.AddProfileNamePrefixOption(ctx, queries, profile.ID, itemID, prefixType, seasonID, nil); err != nil {
+				return err
+			}
+			s.notificationService.NotifyCosmeticGranted(ctx, queries, profile, grantType, itemID, prefixType, seasonID)
+			return nil
 		})
 	}
 	return utils.NewBadRequestError("grant type must be name-color or name-prefix", nil)
@@ -200,7 +211,13 @@ func (s *adminGrantService) RevokeGrant(ctx context.Context, profileID uuid.UUID
 
 	if !grant.IsRevoked() {
 		err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
-			return s.revoke(ctx, queries, profile, grant)
+			if err := s.revoke(ctx, queries, profile, grant); err != nil {
+				return err
+			}
+			if grant.Type == domain.GrantTypeNameColor || grant.Type == domain.GrantTypeNamePrefix {
+				s.notificationService.NotifyCosmeticRevoked(ctx, queries, profile, grant.Type, grant.ItemID, grant.PrefixType, grant.SeasonID)
+			}
+			return nil
 		})
 		if err != nil {
 			return err

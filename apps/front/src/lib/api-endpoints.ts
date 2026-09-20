@@ -10,6 +10,7 @@ import {
   GrantType,
 } from '@/models/admin'
 import { BasketItem } from '@/models/basket'
+import { NotificationList } from '@/models/notification'
 import {
   CreateOrderReq,
   CreateOrderRes,
@@ -43,7 +44,7 @@ export function getProfiles(
   dir: string = 'asc',
   page: number = 0,
   search: string = '',
-  size: number = 40,
+  size: number = 25,
   onlineOnly: boolean = false,
   staffOnly: boolean = false,
 ): Promise<Paginated<PublicProfile>> {
@@ -451,4 +452,25 @@ export function revokeGrant(
     undefined,
     { method: 'DELETE' },
   )
+}
+
+export function getNotifications(
+  fetcher: ApiFetcher,
+  limit: number = 20,
+): Promise<NotificationList> {
+  const params = new URLSearchParams()
+  params.set('limit', limit.toString())
+  return fetcher<NotificationList>('/v1/notifications', params)
+}
+
+// An empty ids list marks every unread notification as read.
+export function markNotificationsRead(
+  fetcher: ApiFetcher,
+  ids: string[] = [],
+): Promise<NotificationList> {
+  return fetcher<NotificationList>('/v1/notifications/read', undefined, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
 }

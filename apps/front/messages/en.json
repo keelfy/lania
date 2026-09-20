@@ -309,7 +309,19 @@
     },
     "notifications": {
       "title": "Notifications",
-      "noNotifications": "No notifications"
+      "noNotifications": "No notifications",
+      "loading": "Loading...",
+      "items": {
+        "openProfiles": "My profiles",
+        "cosmeticGranted": {
+          "title": "New cosmetic",
+          "body": "{item} for the profile {profile}"
+        },
+        "cosmeticRevoked": {
+          "title": "Cosmetic revoked",
+          "body": "{item} of the profile {profile}"
+        }
+      }
     },
     "signIn": "Sign in",
     "userDropdown": {

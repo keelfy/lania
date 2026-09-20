@@ -22,30 +22,33 @@ type fulfillmentService struct {
 	accessService           AccessService
 	profileCosmeticsService ProfileCosmeticsService
 	profileService          ProfileService
+	notificationService     NotificationService
 }
 
 func NewFulfillmentService(
 	accessService AccessService,
 	profileCosmeticsService ProfileCosmeticsService,
 	profileService ProfileService,
+	notificationService NotificationService,
 ) FulfillmentService {
 	return &fulfillmentService{
 		accessService:           accessService,
 		profileCosmeticsService: profileCosmeticsService,
 		profileService:          profileService,
+		notificationService:     notificationService,
 	}
 }
 
 func (s *fulfillmentService) GrantProduct(ctx context.Context, queries sql.Queries, profileID, seasonID uuid.UUID, product *domain.Product, accessSource domain.AccessSource, orderItemID *uuid.UUID) error {
+	profile, err := s.profileService.GetProfileByID(ctx, profileID)
+	if err != nil {
+		return err
+	}
+
 	switch product.Category {
 	case domain.ProductCategoryUpgrade:
 		var metadata domain.UpgradeProductMetadata
 		err := json.Unmarshal(product.Metadata, &metadata)
-		if err != nil {
-			return err
-		}
-
-		profile, err := s.profileService.GetProfileByID(ctx, profileID)
 		if err != nil {
 			return err
 		}
@@ -62,14 +65,22 @@ func (s *fulfillmentService) GrantProduct(ctx context.Context, queries sql.Queri
 		if err != nil {
 			return err
 		}
-		return s.profileCosmeticsService.AddProfileNameColorOption(ctx, queries, profileID, metadata.NameColorID, &seasonID, orderItemID)
+		if err := s.profileCosmeticsService.AddProfileNameColorOption(ctx, queries, profileID, metadata.NameColorID, &seasonID, orderItemID); err != nil {
+			return err
+		}
+		s.notificationService.NotifyCosmeticGranted(ctx, queries, profile, domain.GrantTypeNameColor, metadata.NameColorID, "", &seasonID)
+		return nil
 	case domain.ProductCategoryNamePrefix:
 		var metadata domain.NamePrefixProductMetadata
 		err := json.Unmarshal(product.Metadata, &metadata)
 		if err != nil {
 			return err
 		}
-		return s.profileCosmeticsService.AddProfileNameGlythOption(ctx, queries, profileID, metadata.NamePrefixID, &seasonID, orderItemID)
+		if err := s.profileCosmeticsService.AddProfileNameGlythOption(ctx, queries, profileID, metadata.NamePrefixID, &seasonID, orderItemID); err != nil {
+			return err
+		}
+		s.notificationService.NotifyCosmeticGranted(ctx, queries, profile, domain.GrantTypeNamePrefix, metadata.NamePrefixID, domain.ProfilePrefixTypeGlyth, &seasonID)
+		return nil
 	default:
 		return fmt.Errorf("unknown product category: %s", product.Category)
 	}
