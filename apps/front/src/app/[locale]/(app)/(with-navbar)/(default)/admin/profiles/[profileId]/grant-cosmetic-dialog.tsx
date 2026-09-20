@@ -198,6 +198,7 @@ export default function GrantCosmeticDialog({
                 {seasons.map((season) => (
                   <SelectItem key={season.id} value={season.id}>
                     {season.name}
+                    {season.isPrimary ? ` (${t('primarySeason')})` : ''}
                     {season.isActive ? ` (${t('activeSeason')})` : ''}
                   </SelectItem>
                 ))}

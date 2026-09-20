@@ -19,8 +19,8 @@ type Queries interface {
 	InsertSeason(ctx context.Context, arg InsertSeasonParams) error
 	UpdateSeason(ctx context.Context, arg UpdateSeasonParams) error
 	DeleteSeason(ctx context.Context, seasonID uuid.UUID) (bool, error)
-	ClearActiveSeasons(ctx context.Context) error
-	SetSeasonActive(ctx context.Context, seasonID uuid.UUID) (bool, error)
+	ClearPrimarySeasons(ctx context.Context) error
+	SetSeasonPrimary(ctx context.Context, seasonID uuid.UUID) (bool, error)
 
 	// Game Profile
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)

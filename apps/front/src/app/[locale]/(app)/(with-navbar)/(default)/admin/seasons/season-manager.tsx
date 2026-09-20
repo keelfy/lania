@@ -69,7 +69,24 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
   const [isActive, setIsActive] = React.useState(season?.isActive ?? false)
+  const [isPrimary, setIsPrimary] = React.useState(season?.isPrimary ?? false)
+  const [preregistration, setPreregistration] = React.useState(
+    season?.preregistration ?? false,
+  )
+  const [freeRegistration, setFreeRegistration] = React.useState(
+    season?.freeRegistration ?? false,
+  )
   const [isPending, startTransition] = React.useTransition()
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen)
+    if (nextOpen) {
+      setIsActive(season?.isActive ?? false)
+      setIsPrimary(season?.isPrimary ?? false)
+      setPreregistration(season?.preregistration ?? false)
+      setFreeRegistration(season?.freeRegistration ?? false)
+    }
+  }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -78,16 +95,19 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
     const form = new FormData(event.currentTarget)
     const password = optionalString(form, 'rconPassword')
     const clearPassword = form.get('clearRconPassword') === 'on'
-    const serverPort = optionalString(form, 'serverPort')
+    const rconPort = optionalString(form, 'rconPort')
     const payload: SaveSeason = {
-      seasonNumber: Number(form.get('seasonNumber')),
       name: String(form.get('name') ?? '').trim(),
       previewImage: optionalString(form, 'previewImage'),
       startDate: String(form.get('startDate') ?? ''),
       endDate: optionalString(form, 'endDate'),
-      serverIp: optionalString(form, 'serverIp'),
-      serverPort: serverPort ? Number(serverPort) : undefined,
+      publicAddress: optionalString(form, 'publicAddress'),
+      systemAddress: optionalString(form, 'systemAddress'),
+      rconPort: rconPort ? Number(rconPort) : undefined,
       isActive,
+      isPrimary,
+      preregistration,
+      freeRegistration,
       ...(password !== undefined
         ? { rconPassword: password }
         : clearPassword
@@ -113,7 +133,7 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant={season ? 'outline' : 'default'} size="sm">
           {season ? (
@@ -133,20 +153,7 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <FieldGroup>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor={`season-number-${season?.id ?? 'new'}`}>
-                  {t('fields.number')}
-                </FieldLabel>
-                <Input
-                  id={`season-number-${season?.id ?? 'new'}`}
-                  name="seasonNumber"
-                  type="number"
-                  min={1}
-                  required
-                  defaultValue={season?.seasonNumber}
-                />
-              </Field>
+            <FieldGroup className="grid gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor={`season-name-${season?.id ?? 'new'}`}>
                   {t('fields.name')}
@@ -182,7 +189,7 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
                   defaultValue={dateInputValue(season?.endDate)}
                 />
               </Field>
-            </div>
+            </FieldGroup>
             <Field>
               <FieldLabel htmlFor={`season-preview-${season?.id ?? 'new'}`}>
                 {t('fields.previewImage')}
@@ -194,29 +201,44 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
                 placeholder="s3://bucket/image.jpg"
               />
             </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <FieldGroup className="grid gap-4 sm:grid-cols-2">
               <Field>
-                <FieldLabel htmlFor={`season-ip-${season?.id ?? 'new'}`}>
-                  {t('fields.serverIp')}
+                <FieldLabel
+                  htmlFor={`season-public-address-${season?.id ?? 'new'}`}
+                >
+                  {t('fields.publicAddress')}
                 </FieldLabel>
                 <Input
-                  id={`season-ip-${season?.id ?? 'new'}`}
-                  name="serverIp"
-                  defaultValue={season?.serverIp}
-                  placeholder="203.0.113.10"
+                  id={`season-public-address-${season?.id ?? 'new'}`}
+                  name="publicAddress"
+                  defaultValue={season?.publicAddress}
+                  placeholder="play.example.com"
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor={`season-port-${season?.id ?? 'new'}`}>
-                  {t('fields.serverPort')}
+                <FieldLabel
+                  htmlFor={`season-system-address-${season?.id ?? 'new'}`}
+                >
+                  {t('fields.systemAddress')}
                 </FieldLabel>
                 <Input
-                  id={`season-port-${season?.id ?? 'new'}`}
-                  name="serverPort"
+                  id={`season-system-address-${season?.id ?? 'new'}`}
+                  name="systemAddress"
+                  defaultValue={season?.systemAddress}
+                  placeholder="minecraft.internal"
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor={`season-rcon-port-${season?.id ?? 'new'}`}>
+                  {t('fields.rconPort')}
+                </FieldLabel>
+                <Input
+                  id={`season-rcon-port-${season?.id ?? 'new'}`}
+                  name="rconPort"
                   type="number"
                   min={1}
                   max={65535}
-                  defaultValue={season?.serverPort}
+                  defaultValue={season?.rconPort}
                 />
               </Field>
               <Field>
@@ -241,7 +263,7 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
                   <FieldDescription>{t('passwordHint')}</FieldDescription>
                 )}
               </Field>
-            </div>
+            </FieldGroup>
             {season?.rconPasswordSet && (
               <Field orientation="horizontal">
                 <Checkbox
@@ -258,14 +280,59 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
                 id={`season-active-${season?.id ?? 'new'}`}
                 checked={isActive}
                 onCheckedChange={setIsActive}
-                disabled={season?.isActive}
               />
               <div className="flex flex-col gap-1">
                 <FieldLabel htmlFor={`season-active-${season?.id ?? 'new'}`}>
                   {t('fields.active')}
                 </FieldLabel>
+                <FieldDescription>{t('activeHint')}</FieldDescription>
+              </div>
+            </Field>
+            <Field orientation="horizontal">
+              <Switch
+                id={`season-primary-${season?.id ?? 'new'}`}
+                checked={isPrimary}
+                onCheckedChange={setIsPrimary}
+                disabled={season?.isPrimary}
+              />
+              <div className="flex flex-col gap-1">
+                <FieldLabel htmlFor={`season-primary-${season?.id ?? 'new'}`}>
+                  {t('fields.primary')}
+                </FieldLabel>
+                <FieldDescription>{t('primaryHint')}</FieldDescription>
+              </div>
+            </Field>
+            <Field orientation="horizontal">
+              <Switch
+                id={`season-preregistration-${season?.id ?? 'new'}`}
+                checked={preregistration}
+                onCheckedChange={setPreregistration}
+              />
+              <div className="flex flex-col gap-1">
+                <FieldLabel
+                  htmlFor={`season-preregistration-${season?.id ?? 'new'}`}
+                >
+                  {t('fields.preregistration')}
+                </FieldLabel>
                 <FieldDescription>
-                  {season?.isActive ? t('activeHint') : t('inactiveHint')}
+                  {t('preregistrationHint')}
+                </FieldDescription>
+              </div>
+            </Field>
+            <Field orientation="horizontal">
+              <Switch
+                id={`season-free-registration-${season?.id ?? 'new'}`}
+                checked={freeRegistration}
+                onCheckedChange={setFreeRegistration}
+              />
+              <div className="flex flex-col gap-1">
+                <FieldLabel
+                  htmlFor={`season-free-registration-${season?.id ?? 'new'}`}
+                >
+                  {t('fields.freeRegistration')}
+                </FieldLabel>
+                <FieldDescription>
+                  {t('freeRegistrationHint')}
                 </FieldDescription>
               </div>
             </Field>
@@ -309,7 +376,7 @@ function DeleteSeasonDialog({ season }: { season: AdminSeason }) {
         <Button
           variant="destructive"
           size="sm"
-          disabled={season.isActive || isPending}
+          disabled={season.isActive || season.isPrimary || isPending}
           aria-label={t('delete')}
         >
           <Trash2Icon />
@@ -367,10 +434,16 @@ export default function SeasonManager({ seasons, locale }: Props) {
                 <TableCell>
                   <div className="flex flex-col gap-1">
                     <span className="font-medium">{season.name}</span>
-                    <span className="text-muted-foreground text-sm">
-                      #{season.seasonNumber}
-                    </span>
                     {season.isActive && <Badge>{t('active')}</Badge>}
+                    {season.isPrimary && (
+                      <Badge variant="secondary">{t('primary')}</Badge>
+                    )}
+                    {season.preregistration && (
+                      <Badge variant="outline">{t('preregistration')}</Badge>
+                    )}
+                    {season.freeRegistration && (
+                      <Badge variant="outline">{t('freeRegistration')}</Badge>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -378,14 +451,19 @@ export default function SeasonManager({ seasons, locale }: Props) {
                   {season.endDate ? date.format(season.endDate) : '—'}
                 </TableCell>
                 <TableCell>
-                  {season.serverIp && season.serverPort
-                    ? `${season.serverIp}:${season.serverPort}`
-                    : '—'}
+                  <div className="flex flex-col gap-1">
+                    <span>
+                      {season.publicAddress ?? '—'}
+                    </span>
+                    <span className="text-muted-foreground text-sm">
+                      {season.systemAddress && season.rconPort
+                        ? `${season.systemAddress}:${season.rconPort}`
+                        : '—'}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell>
-                  {season.rconPasswordSet
-                    ? t('passwordOnly')
-                    : '—'}
+                  {season.rconPasswordSet ? t('passwordOnly') : '—'}
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">

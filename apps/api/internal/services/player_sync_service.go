@@ -77,7 +77,7 @@ func (s *playerSyncService) syncPlayers(ctx context.Context, sinceMs int64) (int
 		return 0, err
 	}
 
-	seasonID := config.GetActiveSeasonID()
+	seasonID := config.GetPrimarySeasonID()
 	var latestMs int64
 	err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
 		for mcUUID, playtime := range playtimes {

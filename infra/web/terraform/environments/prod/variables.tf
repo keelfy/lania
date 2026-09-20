@@ -134,6 +134,12 @@ variable "shell_token" {
   sensitive   = true
 }
 
+variable "primary_season_id" {
+  type    = string
+  default = ""
+}
+
+# Deprecated deployment fallback. Remove after production tfvars uses primary_season_id.
 variable "active_season_id" {
   type    = string
   default = "00000000-0000-0000-0000-000000000000"
@@ -147,16 +153,6 @@ variable "max_profiles_per_user" {
 variable "default_name_color_id" {
   type    = string
   default = "2628bf9d-5b7c-438b-900a-67753261a823"
-}
-
-variable "preregistration" {
-  type    = bool
-  default = false
-}
-
-variable "free_registration" {
-  type    = bool
-  default = false
 }
 
 variable "freekassa_base_payment_url" {

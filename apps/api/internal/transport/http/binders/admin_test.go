@@ -72,7 +72,7 @@ func TestBindSaveSeason_RCONPasswordSemantics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			body := `{"seasonNumber":5,"name":" Lania V ","startDate":"2026-10-09"` + tt.password + `}`
+			body := `{"name":" Lania V ","startDate":"2026-10-09","preregistration":true,"freeRegistration":true` + tt.password + `}`
 			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 			cmd, err := BindSaveSeason(req)
 			if err != nil {
@@ -84,7 +84,7 @@ func TestBindSaveSeason_RCONPasswordSemantics(t *testing.T) {
 			if tt.wantPassword != nil && *cmd.RCONPassword != *tt.wantPassword {
 				t.Fatalf("password = %q, want %q", *cmd.RCONPassword, *tt.wantPassword)
 			}
-			if cmd.Name != "Lania V" || cmd.Validate() != nil {
+			if cmd.Name != "Lania V" || !cmd.Preregistration || !cmd.FreeRegistration || cmd.Validate() != nil {
 				t.Fatalf("got invalid command: %+v", cmd)
 			}
 		})

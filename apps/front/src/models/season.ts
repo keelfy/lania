@@ -6,25 +6,30 @@ export type Season = {
   previewImage?: string
   startDate: number
   endDate?: number
-  // The season that runs on the game server.
+  publicAddress?: string
   isActive: boolean
+  isPrimary: boolean
+  preregistration: boolean
+  freeRegistration: boolean
 }
 
 export type AdminSeason = Season & {
-  seasonNumber: number
-  serverIp?: string
-  serverPort?: number
+  systemAddress?: string
+  rconPort?: number
   rconPasswordSet: boolean
 }
 
 export type SaveSeason = {
-  seasonNumber: number
   name: string
   previewImage?: string
   startDate: string
   endDate?: string
-  serverIp?: string
-  serverPort?: number
+  publicAddress?: string
+  systemAddress?: string
+  rconPort?: number
   isActive: boolean
+  isPrimary: boolean
+  preregistration: boolean
+  freeRegistration: boolean
   rconPassword?: string
 }

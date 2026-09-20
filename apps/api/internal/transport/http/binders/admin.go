@@ -64,16 +64,19 @@ func BindSaveSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 	}
 
 	return &commands.SaveSeasonCommand{
-		SeasonNumber:    req.SeasonNumber,
-		Name:            strings.TrimSpace(req.Name),
-		PreviewImage:    optionalTrimmed(req.PreviewImage),
-		StartDate:       startDate,
-		EndDate:         endDate,
-		ServerIP:        optionalTrimmed(req.ServerIP),
-		ServerPort:      req.ServerPort,
-		IsActive:        req.IsActive,
-		RCONPassword:    optionalTrimmed(req.RCONPassword),
-		SetRCONPassword: req.RCONPassword != nil,
+		Name:             strings.TrimSpace(req.Name),
+		PreviewImage:     optionalTrimmed(req.PreviewImage),
+		StartDate:        startDate,
+		EndDate:          endDate,
+		PublicAddress:    optionalTrimmed(req.PublicAddress),
+		SystemAddress:    optionalTrimmed(req.SystemAddress),
+		RCONPort:         req.RCONPort,
+		IsActive:         req.IsActive,
+		IsPrimary:        req.IsPrimary,
+		Preregistration:  req.Preregistration,
+		FreeRegistration: req.FreeRegistration,
+		RCONPassword:     optionalTrimmed(req.RCONPassword),
+		SetRCONPassword:  req.RCONPassword != nil,
 	}, nil
 }
 

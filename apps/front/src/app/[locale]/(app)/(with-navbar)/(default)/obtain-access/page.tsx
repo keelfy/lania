@@ -13,9 +13,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { accessMode, isFreeAccess } from '@/lib/access-mode'
+import { getAccessMode, isFreeAccess } from '@/lib/access-mode'
 import {
-  registerForActiveSeason,
+  getPrimarySeason,
+  registerForPrimarySeason,
   requestAccess,
   requestFreeAccess,
 } from '@/lib/api-endpoints'
@@ -42,6 +43,7 @@ import SignInButton from '../../components/sign-in-button'
 import { obtainAccessFormSchema } from './form'
 import { UsernameField } from './username-field'
 import { useBasket } from '@/context/basket'
+import { Season } from '@/models/season'
 
 type Props = {
   params: Promise<{
@@ -58,6 +60,20 @@ const lastSteps = {
 export default function ObtainAccessPage({ params }: Props) {
   const { locale } = React.use(params)
   const t = useTranslations('obtainAccess')
+  const [primarySeason, setPrimarySeason] = React.useState<Season>()
+  React.useEffect(() => {
+    let cancelled = false
+    getPrimarySeason(clientApiFetcher)
+      .then((season) => {
+        if (!cancelled) setPrimarySeason(season)
+      })
+      .catch(console.error)
+    return () => {
+      cancelled = true
+    }
+  }, [])
+  const accessMode = getAccessMode(primarySeason)
+  const freeAccess = isFreeAccess(accessMode)
   const lastStep = lastSteps[accessMode]
 
   const [queryUsernames] = useQueryState('u', parseAsString.withDefault(''))
@@ -92,19 +108,25 @@ export default function ObtainAccessPage({ params }: Props) {
 
     startObtainingAccess(async () => {
       try {
-        if (isFreeAccess) {
+        const selectedSeason =
+          primarySeason ?? (await getPrimarySeason(clientApiFetcher))
+        if (freeAccess) {
           if (accessMode === 'preregistration') {
-            await requestFreeAccess(clientApiFetcher, [data.username])
+            await requestFreeAccess(clientApiFetcher, selectedSeason.id, [
+              data.username,
+            ])
             toast.success(t('successPre'))
           } else {
-            await registerForActiveSeason(clientApiFetcher, [data.username])
+            await registerForPrimarySeason(clientApiFetcher, selectedSeason.id, [
+              data.username,
+            ])
             toast.success(t('successFree'))
           }
           router.push(`/${locale}/profiles`)
           return
         }
 
-        await requestAccess(clientApiFetcher, [data.username])
+        await requestAccess(clientApiFetcher, selectedSeason.id, [data.username])
         toast.success(t('success'))
         await refresh()
         router.push(`/${locale}/basket`)
@@ -156,7 +178,7 @@ export default function ObtainAccessPage({ params }: Props) {
              * (free registration) or add the season pass to the basket */}
             <li className="ms-6 mb-10">
               <span className="bg-primary-foreground absolute -start-3 flex h-6 w-6 items-center justify-center rounded-full ring-8 ring-teal-900/30">
-                {isFreeAccess ? (
+                {freeAccess ? (
                   <ZapIcon className="size-4" />
                 ) : (
                   <CreditCardIcon className="size-4" />
@@ -222,7 +244,7 @@ export default function ObtainAccessPage({ params }: Props) {
                 <Button
                   className="w-full"
                   type="submit"
-                  // disabled={isSubmitting || !session?.active}
+                  disabled={isSubmitting || !primarySeason}
                 >
                   {isSubmitting ? (
                     <LoadingSpinner className="size-4" />

@@ -85,7 +85,7 @@ func NewLaniaAPI(
 }
 
 func (api *laniaAPI) BuildAPI(ctx context.Context) (*chi.Mux, error) {
-	if err := api.seasonHandler.InitializeActiveSeason(ctx); err != nil {
+	if err := api.seasonHandler.InitializePrimarySeason(ctx); err != nil {
 		return nil, err
 	}
 	r := chi.NewRouter()

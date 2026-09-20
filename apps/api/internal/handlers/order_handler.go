@@ -110,7 +110,7 @@ func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	seasonID := config.GetActiveSeasonID()
+	seasonID := config.GetPrimarySeasonID()
 	purchases, err := h.purchaseService.GetPurchasesByProducts(ctx, cmd.UserID, seasonID, products)
 	if err != nil {
 		utils.HttpError(ctx, w, err)

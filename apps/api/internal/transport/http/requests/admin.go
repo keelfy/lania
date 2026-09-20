@@ -22,14 +22,17 @@ type GrantCosmetic struct {
 }
 
 type SaveSeason struct {
-	SeasonNumber int     `json:"seasonNumber"`
-	Name         string  `json:"name"`
-	PreviewImage *string `json:"previewImage"`
-	StartDate    string  `json:"startDate"`
-	EndDate      *string `json:"endDate"`
-	ServerIP     *string `json:"serverIp"`
-	ServerPort   *uint16 `json:"serverPort"`
-	IsActive     bool    `json:"isActive"`
+	Name             string  `json:"name"`
+	PreviewImage     *string `json:"previewImage"`
+	StartDate        string  `json:"startDate"`
+	EndDate          *string `json:"endDate"`
+	PublicAddress    *string `json:"publicAddress"`
+	SystemAddress    *string `json:"systemAddress"`
+	RCONPort         *uint16 `json:"rconPort"`
+	IsActive         bool    `json:"isActive"`
+	IsPrimary        bool    `json:"isPrimary"`
+	Preregistration  bool    `json:"preregistration"`
+	FreeRegistration bool    `json:"freeRegistration"`
 	// Nil keeps the current password during update. Empty clears it.
 	RCONPassword *string `json:"rconPassword"`
 }

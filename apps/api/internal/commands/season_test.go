@@ -9,8 +9,10 @@ func TestSaveSeasonCommand_Validate(t *testing.T) {
 	t.Parallel()
 
 	validIP := "203.0.113.10"
-	invalidIP := "minecraft.example.com"
+	validHostname := "minecraft.internal"
+	invalidAddress := "bad host!"
 	port := uint16(25565)
+	zeroPort := uint16(0)
 	start := time.Date(2026, 10, 9, 0, 0, 0, 0, time.UTC)
 	beforeStart := start.AddDate(0, 0, -1)
 
@@ -22,29 +24,31 @@ func TestSaveSeasonCommand_Validate(t *testing.T) {
 		{
 			name: "valid technical settings",
 			command: SaveSeasonCommand{
-				SeasonNumber: 5, Name: "Lania V", StartDate: start,
-				ServerIP: &validIP, ServerPort: &port,
+				Name: "Lania V", StartDate: start,
+				PublicAddress: &validIP,
+				SystemAddress: &validHostname, RCONPort: &port,
 			},
 		},
 		{
-			name: "port without IP",
+			name: "invalid address",
 			command: SaveSeasonCommand{
-				SeasonNumber: 5, Name: "Lania V", StartDate: start, ServerPort: &port,
+				Name: "Lania V", StartDate: start,
+				PublicAddress: &invalidAddress,
 			},
 			wantErr: true,
 		},
 		{
-			name: "invalid IP",
+			name: "zero port",
 			command: SaveSeasonCommand{
-				SeasonNumber: 5, Name: "Lania V", StartDate: start,
-				ServerIP: &invalidIP, ServerPort: &port,
+				Name: "Lania V", StartDate: start,
+				SystemAddress: &validHostname, RCONPort: &zeroPort,
 			},
 			wantErr: true,
 		},
 		{
 			name: "end before start",
 			command: SaveSeasonCommand{
-				SeasonNumber: 5, Name: "Lania V", StartDate: start, EndDate: &beforeStart,
+				Name: "Lania V", StartDate: start, EndDate: &beforeStart,
 			},
 			wantErr: true,
 		},

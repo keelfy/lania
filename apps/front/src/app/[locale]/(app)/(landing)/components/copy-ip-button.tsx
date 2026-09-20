@@ -3,26 +3,32 @@
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { CheckIcon, LinkIcon } from 'lucide-react'
+import { Season } from '@/models/season'
 import { useTranslations } from 'next-intl'
 import React from 'react'
 
 type Props = React.ComponentProps<typeof Button> & {
-  locale: string
+  season?: Season
 }
 
-export default function CopyIPButton({ className, ...props }: Props) {
+function serverAddress(season?: Season) {
+  return season?.publicAddress
+}
+
+export default function CopyIPButton({ className, season, ...props }: Props) {
   const [copied, setCopied] = React.useState(false)
   const t = useTranslations('landing')
+  const address = serverAddress(season)
 
   const copyLink = React.useCallback(() => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(`play.lania.network`)
+    if (address && typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(address)
       setCopied(true)
       setTimeout(() => {
         setCopied(false)
       }, 2000)
     }
-  }, [])
+  }, [address])
 
   return (
     <Button
@@ -32,9 +38,7 @@ export default function CopyIPButton({ className, ...props }: Props) {
       {...props}
       onClick={copyLink}
       disabled={
-        !process.env.NEXT_PUBLIC_ACTIVE_SEASON_ID ||
-        process.env.NEXT_PUBLIC_ACTIVE_SEASON_ID.length === 0 ||
-        process.env.NEXT_PUBLIC_PREREGISTRATION === 'true'
+        !season?.isActive || !address || season.preregistration
       }
     >
       <div className="relative h-4 w-4">

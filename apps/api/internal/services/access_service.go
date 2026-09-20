@@ -66,8 +66,8 @@ func (s *accessService) ObtainAccessForProfile(ctx context.Context, seasonID uui
 		return utils.NewInternalServerError("failed to insert profile access", err)
 	}
 
-	// Only the active season runs on the Minecraft server.
-	if seasonID == config.GetActiveSeasonID() {
+	// The primary season remains the default business context.
+	if seasonID == config.GetPrimarySeasonID() {
 		return s.minecraftService.AddToWhitelist(ctx, profile)
 	}
 	return nil

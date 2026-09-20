@@ -264,7 +264,7 @@ func (s *adminGrantService) profileHasProduct(ctx context.Context, profile *doma
 // revoke marks the grant revoked and drops the selection of a name color or a name prefix that the profile can no longer use.
 func (s *adminGrantService) revoke(ctx context.Context, queries sql.Queries, profile *domain.Profile, grant *domain.Grant) error {
 	revokedBy := utils.GetUserIDFromContextOrNil(ctx)
-	activeSeasonID := config.GetActiveSeasonID()
+	primarySeasonID := config.GetPrimarySeasonID()
 
 	switch grant.Type {
 	case domain.GrantTypeAccess:
@@ -277,7 +277,7 @@ func (s *adminGrantService) revoke(ctx context.Context, queries sql.Queries, pro
 			return nil
 		}
 
-		remaining, err := queries.FindProfileNameColorOptionsByProfileID(ctx, profile.ID, &activeSeasonID)
+		remaining, err := queries.FindProfileNameColorOptionsByProfileID(ctx, profile.ID, &primarySeasonID)
 		if err != nil {
 			return utils.NewInternalServerError("failed to find profile name color options", err)
 		}
@@ -300,7 +300,7 @@ func (s *adminGrantService) revoke(ctx context.Context, queries sql.Queries, pro
 			return nil
 		}
 
-		remaining, err := queries.FindProfileNamePrefixOptionsByProfileIDAndType(ctx, profile.ID, grant.PrefixType, &activeSeasonID)
+		remaining, err := queries.FindProfileNamePrefixOptionsByProfileIDAndType(ctx, profile.ID, grant.PrefixType, &primarySeasonID)
 		if err != nil {
 			return utils.NewInternalServerError("failed to find profile name prefix options", err)
 		}
@@ -325,13 +325,13 @@ func (s *adminGrantService) updateGame(ctx context.Context, profile *domain.Prof
 		return s.updatePrefix(ctx, profile.ID)
 	}
 
-	// Only the active season runs on the Minecraft server.
-	activeSeasonID := config.GetActiveSeasonID()
-	if grant.SeasonID == nil || *grant.SeasonID != activeSeasonID {
+	// The primary season remains the default business context.
+	primarySeasonID := config.GetPrimarySeasonID()
+	if grant.SeasonID == nil || *grant.SeasonID != primarySeasonID {
 		return nil
 	}
 
-	hasAccess, err := s.accessService.CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(ctx, profile.MinecraftUUID, activeSeasonID)
+	hasAccess, err := s.accessService.CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(ctx, profile.MinecraftUUID, primarySeasonID)
 	if err != nil || hasAccess {
 		return err
 	}

@@ -70,7 +70,7 @@ func (h *profileCosmeticsHandler) GetProfileCosmeticOptions(w http.ResponseWrite
 		return
 	}
 
-	seasonID := config.GetActiveSeasonID()
+	seasonID := config.GetPrimarySeasonID()
 
 	var nameColorOptions []*domain.ProfileNameColorOption
 	var glythPrefixOptions []*domain.ProfileNamePrefixOption
@@ -136,7 +136,7 @@ func (h *profileCosmeticsHandler) SelectProfileNameColor(w http.ResponseWriter, 
 		return
 	}
 
-	seasonID := config.GetActiveSeasonID()
+	seasonID := config.GetPrimarySeasonID()
 	nameColorOption, err := h.profileCosmeticsService.GetProfileNameColorOptionByIDAndProfileID(ctx, req.OptionID, profileID, &seasonID)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
@@ -223,7 +223,7 @@ func (h *profileCosmeticsHandler) SelectProfileNamePrefix(w http.ResponseWriter,
 		return
 	}
 
-	seasonID := config.GetActiveSeasonID()
+	seasonID := config.GetPrimarySeasonID()
 	var namePrefixOption *domain.ProfileNamePrefixOption
 
 	if req.OptionID != uuid.Nil {

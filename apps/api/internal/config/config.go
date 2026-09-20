@@ -142,18 +142,22 @@ func GetIGDBImageURLFormat() string {
 
 /** Business Constraints */
 
-var activeSeasonID atomic.Value
+var primarySeasonID atomic.Value
 
-func GetActiveSeasonID() uuid.UUID {
-	if value := activeSeasonID.Load(); value != nil {
+func GetPrimarySeasonID() uuid.UUID {
+	if value := primarySeasonID.Load(); value != nil {
 		return value.(uuid.UUID)
 	}
+	if value := os.Getenv("PRIMARY_SEASON_ID"); value != "" {
+		return uuid.MustParse(value)
+	}
+	// ACTIVE_SEASON_ID remains a deployment fallback during the rename.
 	return uuid.MustParse(os.Getenv("ACTIVE_SEASON_ID"))
 }
 
-// SetActiveSeasonID updates the runtime value after the database-backed admin setting changes.
-func SetActiveSeasonID(id uuid.UUID) {
-	activeSeasonID.Store(id)
+// SetPrimarySeasonID updates the runtime value after the database-backed admin setting changes.
+func SetPrimarySeasonID(id uuid.UUID) {
+	primarySeasonID.Store(id)
 }
 
 func GetMaxProfilesPerUser() int {
@@ -167,16 +171,6 @@ func GetMaxProfilesPerUser() int {
 
 func GetDefaultNameColorID() uuid.UUID {
 	return uuid.MustParse(os.Getenv("DEFAULT_NAME_COLOR_ID"))
-}
-
-func IsPreRegistrationEnabled() bool {
-	return os.Getenv("PREREGISTRATION") == "true"
-}
-
-// IsFreeRegistrationEnabled reports whether players may claim access to the
-// active season for free, without buying a season pass.
-func IsFreeRegistrationEnabled() bool {
-	return os.Getenv("FREE_REGISTRATION") == "true"
 }
 
 /** Freekassa */

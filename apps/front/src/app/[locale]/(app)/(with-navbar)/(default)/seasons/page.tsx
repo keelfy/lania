@@ -47,14 +47,17 @@ export default async function SeasonsPage({ params }: Props) {
             key={season.id}
             className="bg-card flex w-full max-w-sm flex-col items-start justify-between gap-2 justify-self-center rounded-md p-6 shadow-md"
           >
-            <div className="flex flex-col gap-4">
-              <AspectRatio ratio={16 / 9}>
+            <div className="flex w-full flex-col gap-4">
+              <AspectRatio
+                ratio={16 / 9}
+                className="relative w-full overflow-hidden rounded-md"
+              >
                 <Image
                   src={season.previewImage}
                   alt={season.name}
-                  width={640}
-                  height={360}
-                  className="rounded-md object-cover transition-transform duration-300 hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-300 hover:scale-105"
                 />
               </AspectRatio>
               <h2

@@ -26,11 +26,9 @@ resource "local_sensitive_file" "env" {
     rcon_address            = var.rcon_address
     rcon_password           = var.rcon_password
 
-    active_season_id      = var.active_season_id
+    primary_season_id     = var.primary_season_id != "" ? var.primary_season_id : var.active_season_id
     max_profiles_per_user = var.max_profiles_per_user
     default_name_color_id = var.default_name_color_id
-    preregistration       = var.preregistration
-    free_registration     = var.free_registration
 
     freekassa_base_payment_url    = var.freekassa_base_payment_url
     freekassa_merchant_id         = var.freekassa_merchant_id

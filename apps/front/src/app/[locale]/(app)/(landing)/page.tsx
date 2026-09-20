@@ -6,6 +6,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
+import { getPrimarySeason } from '@/lib/api-endpoints'
+import { serverApiFetcher } from '@/lib/server'
 import {
   HoverCard,
   HoverCardContent,
@@ -141,7 +143,7 @@ const gallery = [
     alt: 'Airship (Lania Spinoff I)',
     name: 'LANIA SPINOFF I',
     authors: ['TheGwarx'],
-  }
+  },
 ]
 
 const features = [
@@ -339,7 +341,10 @@ type Props = {
 
 export default async function LandingPage({ params }: Props) {
   const { locale } = await params
-  const t = await getTranslations({ locale, namespace: 'landing' })
+  const [t, primarySeason] = await Promise.all([
+    getTranslations({ locale, namespace: 'landing' }),
+    getPrimarySeason(serverApiFetcher).catch(() => undefined),
+  ])
   return (
     <div className="w-full">
       <LandingSidebar />
@@ -384,7 +389,7 @@ export default async function LandingPage({ params }: Props) {
                 </Button>
                 <CopyIPButton
                   className="hidden sm:inline-flex"
-                  locale={locale}
+                  season={primarySeason}
                 />
               </div>
             </div>
@@ -519,7 +524,7 @@ export default async function LandingPage({ params }: Props) {
                 {t('becomePartner')}
               </Link>
             </Button>
-            <CopyIPButton className="w-full lg:w-auto" locale={locale} />
+            <CopyIPButton className="w-full lg:w-auto" season={primarySeason} />
           </div>
         </div>
       </SidebarSection>

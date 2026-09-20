@@ -54,7 +54,7 @@ func (h *purchaseHandler) GetPurchasedProducts(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	seasonID := config.GetActiveSeasonID()
+	seasonID := config.GetPrimarySeasonID()
 
 	products, err := h.productService.GetProductsByIDs(ctx, productIDs)
 	if err != nil {

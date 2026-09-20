@@ -45,7 +45,7 @@ export default function GrantProductDialog({
   const [open, setOpen] = React.useState(false)
   const [productId, setProductId] = React.useState('')
   const [seasonId, setSeasonId] = React.useState(
-    seasons.find((season) => season.isActive)?.id ?? '',
+    seasons.find((season) => season.isPrimary)?.id ?? '',
   )
   const [isPending, startTransition] = React.useTransition()
 
@@ -55,7 +55,10 @@ export default function GrantProductDialog({
 
     startTransition(async () => {
       try {
-        await grantProduct(clientApiFetcher, profileId, { productId, seasonId })
+        await grantProduct(clientApiFetcher, profileId, {
+          productId,
+          seasonId,
+        })
         toast.success(t('granted'))
         setProductId('')
         setOpen(false)
@@ -105,6 +108,7 @@ export default function GrantProductDialog({
                 {seasons.map((season) => (
                   <SelectItem key={season.id} value={season.id}>
                     {season.name}
+                    {season.isPrimary ? ` (${t('primarySeason')})` : ''}
                     {season.isActive ? ` (${t('activeSeason')})` : ''}
                   </SelectItem>
                 ))}

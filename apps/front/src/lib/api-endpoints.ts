@@ -58,7 +58,7 @@ export function getProfiles(
   return fetcher<Paginated<PublicProfile>>('/v1/profiles', params)
 }
 
-// Playtime of the returned profiles is counted in the active season only.
+// Playtime of the returned profiles is counted in the primary season only.
 export function getTopPlaytimeProfiles(
   fetcher: ApiFetcher,
   limit: number = 10,
@@ -168,52 +168,36 @@ export function checkUsername(
 
 export function requestFreeAccess(
   fetcher: ApiFetcher,
+  seasonId: string,
   usernames: string[],
 ): Promise<void> {
-  const activeSeason = process.env.NEXT_PUBLIC_ACTIVE_SEASON_ID
-  if (!activeSeason || activeSeason.length === 0) {
-    throw new Error('No active season')
-  }
-
   const params = new URLSearchParams()
   params.set('username', usernames.join(','))
-  return fetcher<void>(
-    `/v1/seasons/${activeSeason}/access/pre-register`,
-    params,
-    {
-      method: 'POST',
-    },
-  )
+  return fetcher<void>(`/v1/seasons/${seasonId}/access/pre-register`, params, {
+    method: 'POST',
+  })
 }
 
-export function registerForActiveSeason(
+export function registerForPrimarySeason(
   fetcher: ApiFetcher,
+  seasonId: string,
   usernames: string[],
 ): Promise<void> {
-  const activeSeason = process.env.NEXT_PUBLIC_ACTIVE_SEASON_ID
-  if (!activeSeason || activeSeason.length === 0) {
-    throw new Error('No active season')
-  }
-
   const params = new URLSearchParams()
   params.set('username', usernames.join(','))
-  return fetcher<void>(`/v1/seasons/${activeSeason}/access/register`, params, {
+  return fetcher<void>(`/v1/seasons/${seasonId}/access/register`, params, {
     method: 'POST',
   })
 }
 
 export function requestAccess(
   fetcher: ApiFetcher,
+  seasonId: string,
   usernames: string[],
 ): Promise<void> {
-  const activeSeason = process.env.NEXT_PUBLIC_ACTIVE_SEASON_ID
-  if (!activeSeason || activeSeason.length === 0) {
-    throw new Error('No active season')
-  }
-
   const params = new URLSearchParams()
   params.set('username', usernames.join(','))
-  return fetcher<void>(`/v1/seasons/${activeSeason}/get-access`, params, {
+  return fetcher<void>(`/v1/seasons/${seasonId}/get-access`, params, {
     method: 'POST',
   })
 }
@@ -369,6 +353,13 @@ export function releaseProfileOwner(
 
 export function getSeasons(fetcher: ApiFetcher): Promise<Season[]> {
   return fetcher<Season[]>('/v1/seasons')
+}
+
+export async function getPrimarySeason(fetcher: ApiFetcher): Promise<Season> {
+  const seasons = await getSeasons(fetcher)
+  const primary = seasons.find((season) => season.isPrimary)
+  if (!primary) throw new Error('No primary season')
+  return primary
 }
 
 export function getAdminSeasons(fetcher: ApiFetcher): Promise<AdminSeason[]> {

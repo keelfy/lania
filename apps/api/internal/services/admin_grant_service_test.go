@@ -211,7 +211,7 @@ func newGrantFixture(t *testing.T) *grantFixture {
 		defaultDye:  uuid.New(),
 		profile:     &domain.Profile{ID: uuid.New(), MinecraftUUID: uuid.New(), NameColorID: uuid.New()},
 	}
-	t.Setenv("ACTIVE_SEASON_ID", f.season.String())
+	t.Setenv("PRIMARY_SEASON_ID", f.season.String())
 	t.Setenv("DEFAULT_NAME_COLOR_ID", f.defaultDye.String())
 
 	f.storage = &fakeGrantStorage{queries: f.queries}

@@ -94,7 +94,7 @@ func (h *accessHandler) CheckUsernames(w http.ResponseWriter, r *http.Request) {
 		if status == responses.UsernameStatusOwnedByYou {
 			seasonID := cmd.SeasonID
 			if seasonID == nil {
-				id := config.GetActiveSeasonID()
+				id := config.GetPrimarySeasonID()
 				seasonID = &id
 			}
 
@@ -115,46 +115,68 @@ func (h *accessHandler) CheckUsernames(w http.ResponseWriter, r *http.Request) {
 
 func (h *accessHandler) ObtainFreeAccessForProfiles(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	if !config.IsPreRegistrationEnabled() {
+	cmd, season, ok := h.bindFreeAccess(w, r)
+	if !ok {
+		return
+	}
+	if !season.Preregistration {
 		utils.HttpError(ctx, w, utils.NewBadRequestError("pre registration is disabled", nil))
 		return
 	}
 
-	h.grantFreeAccess(w, r, domain.AccessSourceFree)
+	h.grantFreeAccess(w, r, cmd, domain.AccessSourceFree)
 }
 
-// RegisterProfilesForSeason grants access to the active season right away: the
+// RegisterProfilesForSeason grants access to the primary season right away: the
 // player only has to pick a username, no season pass involved.
 func (h *accessHandler) RegisterProfilesForSeason(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	if !config.IsFreeRegistrationEnabled() {
+	cmd, season, ok := h.bindFreeAccess(w, r)
+	if !ok {
+		return
+	}
+	if !season.FreeRegistration {
 		utils.HttpError(ctx, w, utils.NewBadRequestError("free registration is disabled", nil))
 		return
 	}
 
-	h.grantFreeAccess(w, r, domain.AccessSourceRegistration)
+	h.grantFreeAccess(w, r, cmd, domain.AccessSourceRegistration)
+}
+
+func (h *accessHandler) bindFreeAccess(
+	w http.ResponseWriter,
+	r *http.Request,
+) (*commands.ObtainAccessByUsernamesCommand, *domain.Season, bool) {
+	ctx := r.Context()
+	cmd, err := binders.BindObtainProfileAccesses(r)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return nil, nil, false
+	}
+	if err := cmd.Validate(); err != nil {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("", err))
+		return nil, nil, false
+	}
+	season, err := h.seasonService.GetSeasonByID(ctx, cmd.SeasonID)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return nil, nil, false
+	}
+	return cmd, season, true
 }
 
 // grantFreeAccess creates the requested profiles if needed and hands them access
 // to the requested season without any payment.
-func (h *accessHandler) grantFreeAccess(w http.ResponseWriter, r *http.Request, source domain.AccessSource) {
+func (h *accessHandler) grantFreeAccess(
+	w http.ResponseWriter,
+	r *http.Request,
+	cmd *commands.ObtainAccessByUsernamesCommand,
+	source domain.AccessSource,
+) {
 	ctx := r.Context()
 
-	cmd, err := binders.BindObtainProfileAccesses(r)
-	if err != nil {
-		utils.HttpError(ctx, w, err)
-		return
-	}
-
-	if err := cmd.Validate(); err != nil {
-		utils.HttpError(ctx, w, utils.NewBadRequestError("", err))
-		return
-	}
-
-	if source == domain.AccessSourceRegistration && cmd.SeasonID != config.GetActiveSeasonID() {
-		utils.HttpError(ctx, w, utils.NewBadRequestError("registration is only available for the active season", nil))
+	if source == domain.AccessSourceRegistration && cmd.SeasonID != config.GetPrimarySeasonID() {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("registration is only available for the primary season", nil))
 		return
 	}
 
@@ -191,7 +213,7 @@ func (h *accessHandler) grantFreeAccess(w http.ResponseWriter, r *http.Request, 
 		}
 
 		if hasAccess {
-			utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the active season", nil))
+			utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the primary season", nil))
 			return
 		}
 
@@ -277,7 +299,7 @@ func (h *accessHandler) ObtainAccessForProfiles(w http.ResponseWriter, r *http.R
 		}
 
 		if hasAccess {
-			utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the active season", nil))
+			utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the primary season", nil))
 			return
 		}
 
@@ -289,7 +311,7 @@ func (h *accessHandler) ObtainAccessForProfiles(w http.ResponseWriter, r *http.R
 
 		for _, basketItem := range basketItems {
 			if basketItem.ProductID == seasonAccessProduct.ID && basketItem.ProfileID == profile.ID {
-				utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the active season", nil))
+				utils.HttpError(ctx, w, utils.NewBadRequestError("profile already has access for the primary season", nil))
 				return
 			}
 		}

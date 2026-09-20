@@ -27,7 +27,7 @@ func BindCreateOrder(r *http.Request) (*commands.CreateOrderCommand, error) {
 		products[i] = &commands.OrderItemCommand{
 			ProductID: product.ID,
 			ProfileID: product.ProfileID,
-			SeasonID:  config.GetActiveSeasonID(),
+			SeasonID:  config.GetPrimarySeasonID(),
 			Quantity:  1,
 		}
 	}

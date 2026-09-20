@@ -17,11 +17,11 @@ type SeasonHandler interface {
 	CreateSeason(w http.ResponseWriter, r *http.Request)
 	UpdateSeason(w http.ResponseWriter, r *http.Request)
 	DeleteSeason(w http.ResponseWriter, r *http.Request)
-	InitializeActiveSeason(ctx context.Context) error
+	InitializePrimarySeason(ctx context.Context) error
 }
 
-func (h *seasonHandler) InitializeActiveSeason(ctx context.Context) error {
-	return h.seasonService.InitializeActiveSeason(ctx)
+func (h *seasonHandler) InitializePrimarySeason(ctx context.Context) error {
+	return h.seasonService.InitializePrimarySeason(ctx)
 }
 
 type seasonHandler struct {

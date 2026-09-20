@@ -23,7 +23,7 @@ rcon_password = ""
 database_password = "CHANGEME"
 mariadb_root_password = "CHANGEME" # same value as database_password
 
-active_season_id      = "00000000-0000-0000-0000-000000000000"
+primary_season_id     = "00000000-0000-0000-0000-000000000000"
 default_name_color_id = "2628bf9d-5b7c-438b-900a-67753261a823"
 
 postgres_password = "CHANGEME"

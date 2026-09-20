@@ -97,9 +97,6 @@ jobs:
           context: apps/front
           push: true
           build-args: |
-            NEXT_PUBLIC_PREREGISTRATION=${{ vars.NEXT_PUBLIC_PREREGISTRATION }}
-            NEXT_PUBLIC_FREE_REGISTRATION=${{ vars.NEXT_PUBLIC_FREE_REGISTRATION }}
-            NEXT_PUBLIC_ACTIVE_SEASON_ID=${{ vars.NEXT_PUBLIC_ACTIVE_SEASON_ID }}
             NEXT_PUBLIC_DOMAIN=https://www.lania.network
             NEXT_PUBLIC_IMGPROXY_ENDPOINT=https://images.lania.network
             NEXT_PUBLIC_BACKEND_URL=https://api.lania.network

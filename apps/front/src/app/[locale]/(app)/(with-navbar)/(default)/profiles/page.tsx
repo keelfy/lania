@@ -8,7 +8,11 @@ import {
 } from '@/components/ui/card'
 import PlayerCard from '@/components/ui/player-card'
 import RichText from '@/components/ui/rich-text'
-import { getProfileCosmeticOptions, getUserProfiles } from '@/lib/api-endpoints'
+import {
+  getPrimarySeason,
+  getProfileCosmeticOptions,
+  getUserProfiles,
+} from '@/lib/api-endpoints'
 import { getCurrentSession } from '@/lib/get-current-session'
 import { serverApiFetcher } from '@/lib/server'
 import { cn } from '@/lib/utils'
@@ -29,7 +33,7 @@ import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import NameColorOptionSelect from './name-color-option-select'
 import NameGlythOptionSelect from './name-glyth-option-select'
-import { isFreeAccess } from '@/lib/access-mode'
+import { getAccessMode, isFreeAccess } from '@/lib/access-mode'
 import ProfileSelectWrapper from './profile-select-wrapper'
 
 const accessStatusColors = {
@@ -108,7 +112,11 @@ export default async function ProfilePage({ searchParams, params }: Props) {
   const { id } = await searchParams
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'profiles' })
-  const session = await getCurrentSession()
+  const [session, primarySeason] = await Promise.all([
+    getCurrentSession(),
+    getPrimarySeason(serverApiFetcher).catch(() => undefined),
+  ])
+  const freeAccess = isFreeAccess(getAccessMode(primarySeason))
 
   const [profiles, cosmeticOptions] = await fetchProfiles(
     id,
@@ -203,13 +211,13 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                               },
                             }}
                           >
-                            {isFreeAccess ? (
+                            {freeAccess ? (
                               <ZapIcon className="size-4" />
                             ) : (
                               <ShoppingBagIcon className="size-4" />
                             )}
                             {t(
-                              isFreeAccess
+                              freeAccess
                                 ? 'accessStatus.obtainFree'
                                 : 'accessStatus.obtain',
                             )}
@@ -338,7 +346,7 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                   <RichText>
                     {(tags) =>
                       t.rich(
-                        isFreeAccess ? 'selectProfileFree' : 'selectProfile',
+                        freeAccess ? 'selectProfileFree' : 'selectProfile',
                         {
                           ...tags,
                           obtainAccess: (chunks: React.ReactNode) => (

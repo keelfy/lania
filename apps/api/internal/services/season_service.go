@@ -23,7 +23,7 @@ type SeasonService interface {
 	CreateSeason(ctx context.Context, cmd *commands.SaveSeasonCommand) (*domain.Season, error)
 	UpdateSeason(ctx context.Context, cmd *commands.SaveSeasonCommand) (*domain.Season, error)
 	DeleteSeason(ctx context.Context, seasonID uuid.UUID) error
-	InitializeActiveSeason(ctx context.Context) error
+	InitializePrimarySeason(ctx context.Context) error
 }
 
 type seasonService struct {
@@ -62,25 +62,31 @@ func (s *seasonService) GetSeasons(ctx context.Context) ([]*domain.Season, error
 
 func insertSeasonParams(id uuid.UUID, cmd *commands.SaveSeasonCommand) sql.InsertSeasonParams {
 	return sql.InsertSeasonParams{
-		ID: id, SeasonNumber: cmd.SeasonNumber, Name: cmd.Name, PreviewImage: cmd.PreviewImage,
-		StartDate: cmd.StartDate, EndDate: cmd.EndDate, ServerIP: cmd.ServerIP, ServerPort: cmd.ServerPort,
-		RCONPassword: cmd.RCONPassword,
+		ID: id, Name: cmd.Name, PreviewImage: cmd.PreviewImage,
+		StartDate: cmd.StartDate, EndDate: cmd.EndDate,
+		PublicAddress: cmd.PublicAddress,
+		SystemAddress: cmd.SystemAddress, RCONPort: cmd.RCONPort,
+		IsActive: cmd.IsActive, Preregistration: cmd.Preregistration,
+		FreeRegistration: cmd.FreeRegistration, RCONPassword: cmd.RCONPassword,
 	}
 }
 
 func updateSeasonParams(cmd *commands.SaveSeasonCommand) sql.UpdateSeasonParams {
 	return sql.UpdateSeasonParams{
-		ID: cmd.ID, SeasonNumber: cmd.SeasonNumber, Name: cmd.Name, PreviewImage: cmd.PreviewImage,
-		StartDate: cmd.StartDate, EndDate: cmd.EndDate, ServerIP: cmd.ServerIP, ServerPort: cmd.ServerPort,
+		ID: cmd.ID, Name: cmd.Name, PreviewImage: cmd.PreviewImage,
+		StartDate: cmd.StartDate, EndDate: cmd.EndDate,
+		PublicAddress: cmd.PublicAddress,
+		SystemAddress: cmd.SystemAddress, RCONPort: cmd.RCONPort, IsActive: cmd.IsActive,
+		Preregistration: cmd.Preregistration, FreeRegistration: cmd.FreeRegistration,
 		RCONPassword: cmd.RCONPassword, SetRCONPassword: cmd.SetRCONPassword,
 	}
 }
 
-func activateSeason(ctx context.Context, queries sql.Queries, seasonID uuid.UUID) error {
-	if err := queries.ClearActiveSeasons(ctx); err != nil {
+func setPrimarySeason(ctx context.Context, queries sql.Queries, seasonID uuid.UUID) error {
+	if err := queries.ClearPrimarySeasons(ctx); err != nil {
 		return err
 	}
-	found, err := queries.SetSeasonActive(ctx, seasonID)
+	found, err := queries.SetSeasonPrimary(ctx, seasonID)
 	if err != nil {
 		return err
 	}
@@ -96,16 +102,16 @@ func (s *seasonService) CreateSeason(ctx context.Context, cmd *commands.SaveSeas
 		if err := queries.InsertSeason(ctx, insertSeasonParams(id, cmd)); err != nil {
 			return err
 		}
-		if cmd.IsActive {
-			return activateSeason(ctx, queries, id)
+		if cmd.IsPrimary {
+			return setPrimarySeason(ctx, queries, id)
 		}
 		return nil
 	})
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to create season", err)
 	}
-	if cmd.IsActive {
-		config.SetActiveSeasonID(id)
+	if cmd.IsPrimary {
+		config.SetPrimarySeasonID(id)
 	}
 	return s.GetSeasonByID(ctx, id)
 }
@@ -115,24 +121,24 @@ func (s *seasonService) UpdateSeason(ctx context.Context, cmd *commands.SaveSeas
 	if err != nil {
 		return nil, err
 	}
-	if current.IsActive && !cmd.IsActive {
-		return nil, utils.NewConflictError("activate another season before deactivating this one", nil)
+	if current.IsPrimary && !cmd.IsPrimary {
+		return nil, utils.NewConflictError("select another primary season before removing this one", nil)
 	}
 
 	err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
 		if err := queries.UpdateSeason(ctx, updateSeasonParams(cmd)); err != nil {
 			return err
 		}
-		if cmd.IsActive && !current.IsActive {
-			return activateSeason(ctx, queries, cmd.ID)
+		if cmd.IsPrimary && !current.IsPrimary {
+			return setPrimarySeason(ctx, queries, cmd.ID)
 		}
 		return nil
 	})
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to update season", err)
 	}
-	if cmd.IsActive {
-		config.SetActiveSeasonID(cmd.ID)
+	if cmd.IsPrimary {
+		config.SetPrimarySeasonID(cmd.ID)
 	}
 	return s.GetSeasonByID(ctx, cmd.ID)
 }
@@ -141,6 +147,9 @@ func (s *seasonService) DeleteSeason(ctx context.Context, seasonID uuid.UUID) er
 	season, err := s.GetSeasonByID(ctx, seasonID)
 	if err != nil {
 		return err
+	}
+	if season.IsPrimary {
+		return utils.NewConflictError("primary season cannot be deleted", nil)
 	}
 	if season.IsActive {
 		return utils.NewConflictError("active season cannot be deleted", nil)
@@ -155,6 +164,9 @@ func (s *seasonService) DeleteSeason(ctx context.Context, seasonID uuid.UUID) er
 	}
 	if !deleted {
 		current, lookupErr := s.storage.Queries().FindSeasonByID(ctx, seasonID)
+		if lookupErr == nil && current.IsPrimary {
+			return utils.NewConflictError("primary season cannot be deleted", nil)
+		}
 		if lookupErr == nil && current.IsActive {
 			return utils.NewConflictError("active season cannot be deleted", nil)
 		}
@@ -166,25 +178,25 @@ func (s *seasonService) DeleteSeason(ctx context.Context, seasonID uuid.UUID) er
 	return nil
 }
 
-// InitializeActiveSeason makes the database setting authoritative while preserving old deployments.
-func (s *seasonService) InitializeActiveSeason(ctx context.Context) error {
+// InitializePrimarySeason makes the database setting authoritative while preserving old deployments.
+func (s *seasonService) InitializePrimarySeason(ctx context.Context) error {
 	seasons, err := s.GetSeasons(ctx)
 	if err != nil {
 		return err
 	}
 	for _, season := range seasons {
-		if season.IsActive {
-			config.SetActiveSeasonID(season.ID)
+		if season.IsPrimary {
+			config.SetPrimarySeasonID(season.ID)
 			return nil
 		}
 	}
 
-	fallback := config.GetActiveSeasonID()
+	fallback := config.GetPrimarySeasonID()
 	if err := s.storage.BeginTx(ctx, func(queries sql.Queries) error {
-		return activateSeason(ctx, queries, fallback)
+		return setPrimarySeason(ctx, queries, fallback)
 	}); err != nil {
-		return utils.NewInternalServerError("failed to initialize active season", err)
+		return utils.NewInternalServerError("failed to initialize primary season", err)
 	}
-	config.SetActiveSeasonID(fallback)
+	config.SetPrimarySeasonID(fallback)
 	return nil
 }

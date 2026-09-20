@@ -1,13 +1,19 @@
-// How a player gets access to the active season. Both flags are inlined at
-// build time. Pre-registration wins if both are set.
+import { Season } from '@/models/season'
+
+// How a player gets access to a season. Pre-registration wins if both flags are set.
 export type AccessMode = 'preregistration' | 'free' | 'paid'
 
-export const accessMode: AccessMode =
-  process.env.NEXT_PUBLIC_PREREGISTRATION === 'true'
+export function getAccessMode(
+  season?: Pick<Season, 'preregistration' | 'freeRegistration'>,
+): AccessMode {
+  return season?.preregistration
     ? 'preregistration'
-    : process.env.NEXT_PUBLIC_FREE_REGISTRATION === 'true'
+    : season?.freeRegistration
       ? 'free'
       : 'paid'
+}
 
 // Nothing to buy: access is granted right away.
-export const isFreeAccess = accessMode !== 'paid'
+export function isFreeAccess(mode: AccessMode) {
+  return mode !== 'paid'
+}

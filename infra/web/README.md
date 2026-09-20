@@ -70,10 +70,7 @@ left out of this stack. Add them later if a feature actually needs them.
    - `DEPLOY_SSH_HOST` — server IP
    - `DEPLOY_SSH_USER` — deploy SSH user
    - `DEPLOY_SSH_KEY` — private key matching an authorized key on the server
-   - Repo **variables** (not secrets): `NEXT_PUBLIC_PREREGISTRATION`,
-     `NEXT_PUBLIC_FREE_REGISTRATION`,
-     `NEXT_PUBLIC_ACTIVE_SEASON_ID` — the rest of the `NEXT_PUBLIC_*` build args
-     are hardcoded to the production domain in the workflow.
+   - Frontend public build args are hardcoded to production endpoints in workflow.
 
 ## Ongoing deploys
 
