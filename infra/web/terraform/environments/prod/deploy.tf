@@ -21,7 +21,6 @@ resource "local_sensitive_file" "env" {
     database_plan_name     = var.database_plan_name
 
     database_luckperms_name = var.database_luckperms_name
-    database_whitelist_name = var.database_whitelist_name
     shell_token             = var.shell_token
     rcon_address            = var.rcon_address
     rcon_password           = var.rcon_password

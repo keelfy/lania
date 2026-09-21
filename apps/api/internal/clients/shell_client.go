@@ -27,7 +27,7 @@ type ShellAPI interface {
 	SetPlayerRoles(ctx context.Context, roleGroups []string, roles map[uuid.UUID]string) error
 	AddToWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error
 	// RemoveFromWhitelist forbids the player to join. It does nothing for a player that is not whitelisted.
-	RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID) error
+	RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error
 }
 
 // ShellPool gives the ShellAPI of a season by the address of its shell service.
@@ -187,9 +187,10 @@ func (api *shellAPI) AddToWhitelist(ctx context.Context, mcUUID uuid.UUID, usern
 	return err
 }
 
-func (api *shellAPI) RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID) error {
+func (api *shellAPI) RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error {
 	_, err := api.whitelist.RemovePlayer(ctx, &shellv1.RemovePlayerRequest{
-		MinecraftUuid: mcUUID.String(),
+		MinecraftUuid:     mcUUID.String(),
+		MinecraftUsername: username,
 	})
 	return err
 }

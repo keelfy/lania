@@ -110,10 +110,11 @@ func (*AddPlayerResponse) Descriptor() ([]byte, []int) {
 }
 
 type RemovePlayerRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MinecraftUuid string                 `protobuf:"bytes,1,opt,name=minecraft_uuid,json=minecraftUuid,proto3" json:"minecraft_uuid,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	MinecraftUuid     string                 `protobuf:"bytes,1,opt,name=minecraft_uuid,json=minecraftUuid,proto3" json:"minecraft_uuid,omitempty"`
+	MinecraftUsername string                 `protobuf:"bytes,2,opt,name=minecraft_username,json=minecraftUsername,proto3" json:"minecraft_username,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *RemovePlayerRequest) Reset() {
@@ -149,6 +150,13 @@ func (*RemovePlayerRequest) Descriptor() ([]byte, []int) {
 func (x *RemovePlayerRequest) GetMinecraftUuid() string {
 	if x != nil {
 		return x.MinecraftUuid
+	}
+	return ""
+}
+
+func (x *RemovePlayerRequest) GetMinecraftUsername() string {
+	if x != nil {
+		return x.MinecraftUsername
 	}
 	return ""
 }
@@ -197,9 +205,10 @@ const file_lania_shell_v1_whitelist_proto_rawDesc = "" +
 	"\x10AddPlayerRequest\x12%\n" +
 	"\x0eminecraft_uuid\x18\x01 \x01(\tR\rminecraftUuid\x12-\n" +
 	"\x12minecraft_username\x18\x02 \x01(\tR\x11minecraftUsername\"\x13\n" +
-	"\x11AddPlayerResponse\"<\n" +
+	"\x11AddPlayerResponse\"k\n" +
 	"\x13RemovePlayerRequest\x12%\n" +
-	"\x0eminecraft_uuid\x18\x01 \x01(\tR\rminecraftUuid\"\x16\n" +
+	"\x0eminecraft_uuid\x18\x01 \x01(\tR\rminecraftUuid\x12-\n" +
+	"\x12minecraft_username\x18\x02 \x01(\tR\x11minecraftUsername\"\x16\n" +
 	"\x14RemovePlayerResponse2\xbf\x01\n" +
 	"\x10WhitelistService\x12P\n" +
 	"\tAddPlayer\x12 .lania.shell.v1.AddPlayerRequest\x1a!.lania.shell.v1.AddPlayerResponse\x12Y\n" +

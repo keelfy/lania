@@ -13,8 +13,8 @@ prefixed `lania-` to avoid clashing with anything else on the box.
   (and `lania.network` redirects to it) via Traefik labels.
 - **api** — Go backend (`ghcr.io/lania-smp/backend`), routed at `api.lania.network`.
 - **shell** — Go gRPC service (`ghcr.io/lania-smp/shell`), the API's only way to
-  reach the Minecraft server and its plugin data (Plan, Flectone, LuckPerms,
-  whitelist). Internal only.
+  reach the Minecraft server (RCON whitelist) and its plugin data (Plan,
+  Flectone, LuckPerms). Internal only.
 - **mariadb** — shared instance: API database `lania` plus the Minecraft plugin
   databases (`flectone`, `plan`) that only `shell` reads. Internal only.
 - **redis** — API cache. Internal only.
@@ -38,7 +38,7 @@ Elasticsearch and imgproxy env vars exist in the API's config package but are
 not wired into any service today (see `apps/api/cmd/wire_gen.go`), so they're
 left out of this stack. Add them later if a feature actually needs them.
 
-> **Plugin databases**: `flectone`, `plan`, LuckPerms and whitelist tables are
+> **Plugin databases**: `flectone`, `plan` and LuckPerms tables are
 > written by the Minecraft plugins. Only `shell` touches them; the API talks to
 > `shell` over gRPC (`SHELL_ADDRESS`, `SHELL_TOKEN`).
 

@@ -109,14 +109,8 @@ variable "database_luckperms_name" {
   default     = "lania"
 }
 
-variable "database_whitelist_name" {
-  description = "Database holding the VelocityWhitelist table"
-  type        = string
-  default     = "lania"
-}
-
 variable "rcon_address" {
-  description = "host:port of the Minecraft server RCON reachable from the shell container. Empty disables live permission sync"
+  description = "host:port of the Minecraft server RCON reachable from the shell container. Empty disables live permission sync and fails whitelist changes"
   type        = string
   default     = ""
 }

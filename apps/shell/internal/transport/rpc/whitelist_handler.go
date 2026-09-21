@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"errors"
 
 	shellv1 "github.com/lania-smp/shell/internal/gen/lania/shell/v1"
 	"github.com/lania-smp/shell/internal/services"
@@ -23,12 +24,9 @@ func (h *WhitelistHandler) AddPlayer(ctx context.Context, req *shellv1.AddPlayer
 	if err != nil {
 		return nil, err
 	}
-	if req.GetMinecraftUsername() == "" {
-		return nil, status.Error(codes.InvalidArgument, "minecraft username is required")
-	}
 
 	if err := h.whitelistService.AddPlayer(ctx, mcUUID, req.GetMinecraftUsername()); err != nil {
-		return nil, internalError(err)
+		return nil, whitelistError(err)
 	}
 	return &shellv1.AddPlayerResponse{}, nil
 }
@@ -39,8 +37,15 @@ func (h *WhitelistHandler) RemovePlayer(ctx context.Context, req *shellv1.Remove
 		return nil, err
 	}
 
-	if err := h.whitelistService.RemovePlayer(ctx, mcUUID); err != nil {
-		return nil, internalError(err)
+	if err := h.whitelistService.RemovePlayer(ctx, mcUUID, req.GetMinecraftUsername()); err != nil {
+		return nil, whitelistError(err)
 	}
 	return &shellv1.RemovePlayerResponse{}, nil
+}
+
+func whitelistError(err error) error {
+	if errors.Is(err, services.ErrInvalidUsername) {
+		return status.Error(codes.InvalidArgument, err.Error())
+	}
+	return internalError(err)
 }

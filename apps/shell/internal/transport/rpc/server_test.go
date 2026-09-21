@@ -99,20 +99,6 @@ func (c *fakeConsole) Execute(_ context.Context, command string) (string, error)
 	return "", nil
 }
 
-type fakeWhitelistStorage struct {
-	usernames map[uuid.UUID]string
-}
-
-func (s *fakeWhitelistStorage) Upsert(_ context.Context, mcUUID uuid.UUID, username string) error {
-	s.usernames[mcUUID] = username
-	return nil
-}
-
-func (s *fakeWhitelistStorage) Delete(_ context.Context, mcUUID uuid.UUID) error {
-	delete(s.usernames, mcUUID)
-	return nil
-}
-
 var (
 	knownUUID   = uuid.MustParse("0f0c2a3e-5a4b-4d4c-9f6e-3b1a2c3d4e5f")
 	unknownUUID = uuid.MustParse("1a2b3c4d-5e6f-4a1b-8c2d-3e4f5a6b7c8d")
@@ -122,7 +108,6 @@ type testEnv struct {
 	conn      *grpc.ClientConn
 	luckperms *fakeLuckpermsStorage
 	console   *fakeConsole
-	whitelist *fakeWhitelistStorage
 }
 
 func newTestEnv(t *testing.T) *testEnv {
@@ -132,7 +117,6 @@ func newTestEnv(t *testing.T) *testEnv {
 	last := int64(5000)
 	luckperms := &fakeLuckpermsStorage{nodes: map[uuid.UUID][]string{knownUUID: {"group.admin", "group.default"}}}
 	console := &fakeConsole{}
-	whitelist := &fakeWhitelistStorage{usernames: map[uuid.UUID]string{}}
 
 	server := NewServer(
 		NewPlayerHandler(services.NewPlayerService(
@@ -140,7 +124,7 @@ func newTestEnv(t *testing.T) *testEnv {
 			&fakeFlectoneStorage{online: map[uuid.UUID]bool{knownUUID: true}},
 		)),
 		NewPermissionHandler(services.NewPermissionService(luckperms, console)),
-		NewWhitelistHandler(services.NewWhitelistService(whitelist)),
+		NewWhitelistHandler(services.NewWhitelistService(console)),
 	)
 
 	listener := bufconn.Listen(1024 * 1024)
@@ -161,7 +145,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	}
 	t.Cleanup(func() { _ = conn.Close() })
 
-	return &testEnv{conn: conn, luckperms: luckperms, console: console, whitelist: whitelist}
+	return &testEnv{conn: conn, luckperms: luckperms, console: console}
 }
 
 func TestPlayerService(t *testing.T) {
@@ -268,16 +252,22 @@ func TestWhitelistService(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if env.whitelist.usernames[knownUUID] != "Steve" {
-		t.Errorf("player must be whitelisted")
-	}
-
-	_, err = client.RemovePlayer(ctx, &shellv1.RemovePlayerRequest{MinecraftUuid: knownUUID.String()})
+	_, err = client.RemovePlayer(ctx, &shellv1.RemovePlayerRequest{MinecraftUuid: knownUUID.String(), MinecraftUsername: "Steve"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := env.whitelist.usernames[knownUUID]; ok {
-		t.Errorf("player must be removed from whitelist")
+	if want := []string{"whitelist add Steve", "whitelist remove Steve"}; !slices.Equal(env.console.commands, want) {
+		t.Errorf("expected commands %v, got %v", want, env.console.commands)
+	}
+
+	for _, username := range []string{"", "St", "Steve\nop Steve", "Steve; stop"} {
+		_, err = client.AddPlayer(ctx, &shellv1.AddPlayerRequest{MinecraftUuid: knownUUID.String(), MinecraftUsername: username})
+		if status.Code(err) != codes.InvalidArgument {
+			t.Errorf("username %q: expected InvalidArgument, got %v", username, err)
+		}
+	}
+	if len(env.console.commands) != 2 {
+		t.Errorf("invalid usernames must not reach the console, got %v", env.console.commands)
 	}
 
 	_, err = client.AddPlayer(ctx, &shellv1.AddPlayerRequest{MinecraftUuid: "not-a-uuid", MinecraftUsername: "Steve"})

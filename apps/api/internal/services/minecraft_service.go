@@ -219,7 +219,7 @@ func (s *minecraftService) RemoveFromWhitelist(ctx context.Context, seasonID uui
 	} else if err != nil {
 		return err
 	}
-	if err := api.RemoveFromWhitelist(ctx, profile.MinecraftUUID); err != nil {
+	if err := api.RemoveFromWhitelist(ctx, profile.MinecraftUUID, profile.MinecraftUsername); err != nil {
 		return utils.NewInternalServerError("failed to remove profile from whitelist", err)
 	}
 	return nil

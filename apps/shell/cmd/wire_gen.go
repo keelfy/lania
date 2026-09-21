@@ -42,18 +42,10 @@ func InitializeServer(ctx context.Context) (*grpc.Server, func(), error) {
 	console := clients.NewConsole()
 	permissionService := services.NewPermissionService(luckpermsStorage, console)
 	permissionHandler := rpc.NewPermissionHandler(permissionService)
-	whitelistStorage, cleanup4, err := storage.NewWhitelistStorage(ctx)
-	if err != nil {
-		cleanup3()
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
-	whitelistService := services.NewWhitelistService(whitelistStorage)
+	whitelistService := services.NewWhitelistService(console)
 	whitelistHandler := rpc.NewWhitelistHandler(whitelistService)
 	server := rpc.NewServer(playerHandler, permissionHandler, whitelistHandler)
 	return server, func() {
-		cleanup4()
 		cleanup3()
 		cleanup2()
 		cleanup()

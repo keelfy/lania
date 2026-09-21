@@ -29,7 +29,7 @@ const (
 //
 // WhitelistService manages who may join the Minecraft server.
 type WhitelistServiceClient interface {
-	// AddPlayer allows the player to join. Idempotent, updates the username.
+	// AddPlayer allows the player to join. Idempotent.
 	AddPlayer(ctx context.Context, in *AddPlayerRequest, opts ...grpc.CallOption) (*AddPlayerResponse, error)
 	// RemovePlayer forbids the player to join. Idempotent.
 	RemovePlayer(ctx context.Context, in *RemovePlayerRequest, opts ...grpc.CallOption) (*RemovePlayerResponse, error)
@@ -69,7 +69,7 @@ func (c *whitelistServiceClient) RemovePlayer(ctx context.Context, in *RemovePla
 //
 // WhitelistService manages who may join the Minecraft server.
 type WhitelistServiceServer interface {
-	// AddPlayer allows the player to join. Idempotent, updates the username.
+	// AddPlayer allows the player to join. Idempotent.
 	AddPlayer(context.Context, *AddPlayerRequest) (*AddPlayerResponse, error)
 	// RemovePlayer forbids the player to join. Idempotent.
 	RemovePlayer(context.Context, *RemovePlayerRequest) (*RemovePlayerResponse, error)

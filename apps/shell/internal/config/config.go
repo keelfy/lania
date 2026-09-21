@@ -27,7 +27,7 @@ func GetToken() string {
 
 /** RCON */
 
-// GetRconAddress returns host:port of the Minecraft server RCON. Empty disables live sync.
+// GetRconAddress returns host:port of the Minecraft server RCON. Empty disables permission sync and fails whitelist changes.
 func GetRconAddress() string {
 	return os.Getenv("RCON_ADDRESS")
 }
@@ -43,6 +43,26 @@ func GetLuckpermsSyncCommand() string {
 	command := os.Getenv("LUCKPERMS_SYNC_COMMAND")
 	if command == "" {
 		return "lp sync"
+	}
+	return command
+}
+
+// GetWhitelistAddCommand returns the console command template that whitelists
+// a player. {username} and {uuid} are replaced with the player values.
+// Override it when a whitelist plugin replaces the vanilla whitelist.
+func GetWhitelistAddCommand() string {
+	command := os.Getenv("WHITELIST_ADD_COMMAND")
+	if command == "" {
+		return "whitelist add {username}"
+	}
+	return command
+}
+
+// GetWhitelistRemoveCommand is the counterpart of GetWhitelistAddCommand.
+func GetWhitelistRemoveCommand() string {
+	command := os.Getenv("WHITELIST_REMOVE_COMMAND")
+	if command == "" {
+		return "whitelist remove {username}"
 	}
 	return command
 }
@@ -77,22 +97,10 @@ func GetDatabaseLuckpermsName() string {
 	return os.Getenv("DATABASE_LUCKPERMS_NAME")
 }
 
-func GetDatabaseWhitelistName() string {
-	return os.Getenv("DATABASE_WHITELIST_NAME")
-}
-
 func GetLuckpermsUserPermissionsTableName() string {
 	tableName := os.Getenv("LUCKPERMS_USER_PERMISSIONS_TABLE_NAME")
 	if tableName == "" {
 		return "luckperms_user_permissions"
-	}
-	return tableName
-}
-
-func GetWhitelistTableName() string {
-	tableName := os.Getenv("WHITELIST_TABLE_NAME")
-	if tableName == "" {
-		return "whitelist"
 	}
 	return tableName
 }
