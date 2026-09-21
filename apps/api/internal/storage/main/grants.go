@@ -143,3 +143,24 @@ func (q *queries) RevokeProfileNamePrefixOption(ctx context.Context, profileID, 
 	_, err := q.x.ExecContext(ctx, revokeProfileNamePrefixOption, revokedBy, optionID, profileID)
 	return err
 }
+
+const revokeProfileNameColorOptions = `
+UPDATE profile_name_color_options
+SET revoked_at = NOW(), revoked_by = ?
+WHERE profile_id = ? AND name_color_id <> ? AND revoked_at IS NULL
+`
+
+const revokeProfileNamePrefixOptions = `
+UPDATE profile_name_prefix_options
+SET revoked_at = NOW(), revoked_by = ?
+WHERE profile_id = ? AND revoked_at IS NULL
+`
+
+// RevokeProfileCosmetics revokes every name color and name prefix the profile still has, except the name color keepNameColorID.
+func (q *queries) RevokeProfileCosmetics(ctx context.Context, profileID, keepNameColorID uuid.UUID, revokedBy *uuid.UUID) error {
+	if _, err := q.x.ExecContext(ctx, revokeProfileNameColorOptions, revokedBy, profileID, keepNameColorID); err != nil {
+		return err
+	}
+	_, err := q.x.ExecContext(ctx, revokeProfileNamePrefixOptions, revokedBy, profileID)
+	return err
+}

@@ -409,6 +409,12 @@ export function resyncProfileAsAdmin(
   })
 }
 
+// Deletes the account of the signed in user and releases the game profiles.
+// It fails with session_refresh_required when the user signed in too long ago.
+export function deleteAccount(fetcher: ApiFetcher): Promise<void> {
+  return fetcher<void>('/v1/account', undefined, { method: 'DELETE' })
+}
+
 export function getSeasons(fetcher: ApiFetcher): Promise<Season[]> {
   return fetcher<Season[]>('/v1/seasons')
 }

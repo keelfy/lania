@@ -77,10 +77,12 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	adminGrantHandler := handlers.NewAdminGrantHandler(adminGrantService)
 	seasonHandler := handlers.NewSeasonHandler(seasonService)
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
+	accountService := services.NewAccountService(mainStorage, oryAPI, profileService, profileCosmeticsService, profileResyncService)
+	accountHandler := handlers.NewAccountHandler(accountService)
 	integrationService := services.NewIntegrationService(mainStorage, orderService)
 	playerSyncService := services.NewPlayerSyncService(mainStorage, seasonService, minecraftService)
 	roleSyncService := services.NewRoleSyncService(mainStorage, minecraftService)
-	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, seasonHandler, notificationHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
+	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, seasonHandler, notificationHandler, accountHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
 	return laniaAPI, func() {
 		cleanup2()
 		cleanup()

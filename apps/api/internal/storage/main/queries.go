@@ -84,6 +84,8 @@ type Queries interface {
 	RevokeProfileAccess(ctx context.Context, mcUUID, accessID uuid.UUID, revokedBy *uuid.UUID) error
 	RevokeProfileNameColorOption(ctx context.Context, profileID, optionID uuid.UUID, revokedBy *uuid.UUID) error
 	RevokeProfileNamePrefixOption(ctx context.Context, profileID, optionID uuid.UUID, revokedBy *uuid.UUID) error
+	// RevokeProfileCosmetics revokes every name color and name prefix the profile still has, except the name color keepNameColorID.
+	RevokeProfileCosmetics(ctx context.Context, profileID, keepNameColorID uuid.UUID, revokedBy *uuid.UUID) error
 
 	// Profile Playtime
 	FindProfilePlaytimesByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) ([]*domain.ProfilePlaytime, error)
@@ -131,6 +133,7 @@ type Queries interface {
 	CountUnreadNotificationsByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
 	// MarkNotificationsRead stamps the unread notifications of the user. Empty ids marks all of them.
 	MarkNotificationsRead(ctx context.Context, userID uuid.UUID, ids uuid.UUIDs) error
+	DeleteNotificationsByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
 type queryable interface {

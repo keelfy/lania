@@ -27,6 +27,7 @@ import {
 import { useLocale, useTranslations } from 'next-intl'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import React from 'react'
+import DeleteAccountCard from './delete-account-card'
 
 // Must match selfservice.methods.oidc.config.providers in kratos.yml.
 // Kratos sends no node for the only linked provider, so this list is the only way to show it.
@@ -144,6 +145,7 @@ export default function AccountSettings() {
       <FlowMessages messages={flow.ui.messages} />
       <EmailCard flow={flow} />
       <LinkedAccountsCard flow={flow} />
+      <DeleteAccountCard />
     </div>
   )
 }

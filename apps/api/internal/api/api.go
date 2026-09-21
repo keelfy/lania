@@ -38,6 +38,7 @@ type laniaAPI struct {
 	adminGrantHandler       handlers.AdminGrantHandler
 	seasonHandler           handlers.SeasonHandler
 	notificationHandler     handlers.NotificationHandler
+	accountHandler          handlers.AccountHandler
 	integrationService      services.IntegrationService
 	mojangService           services.MojangService
 	playerSyncService       services.PlayerSyncService
@@ -62,6 +63,7 @@ func NewLaniaAPI(
 	adminGrantHandler handlers.AdminGrantHandler,
 	seasonHandler handlers.SeasonHandler,
 	notificationHandler handlers.NotificationHandler,
+	accountHandler handlers.AccountHandler,
 	integrationService services.IntegrationService,
 	mojangService services.MojangService,
 	playerSyncService services.PlayerSyncService,
@@ -84,6 +86,7 @@ func NewLaniaAPI(
 		adminGrantHandler:       adminGrantHandler,
 		seasonHandler:           seasonHandler,
 		notificationHandler:     notificationHandler,
+		accountHandler:          accountHandler,
 		integrationService:      integrationService,
 		mojangService:           mojangService,
 		playerSyncService:       playerSyncService,
@@ -273,6 +276,12 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 
 		r.Get("/", api.notificationHandler.GetNotifications)
 		r.Post("/read", api.notificationHandler.MarkNotificationsRead)
+	})
+
+	r.Route("/account", func(r chi.Router) {
+		api.useProtectedRoutes(r)
+
+		r.Delete("/", api.accountHandler.DeleteAccount)
 	})
 
 	r.Route("/purchases", func(r chi.Router) {

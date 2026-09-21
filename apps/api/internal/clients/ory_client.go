@@ -23,6 +23,9 @@ type OryAPI interface {
 	ListIdentities(ctx context.Context, pageSize int64, pageToken, credentialsIdentifier string) ([]ory.Identity, string, error)
 	// PatchIdentityMetadataPublic merges the values into metadata_public of the identity and keeps other keys.
 	PatchIdentityMetadataPublic(ctx context.Context, identityID string, values map[string]any) error
+	// DeleteIdentity deletes the identity with its credentials and sessions.
+	// It returns ErrIdentityNotFound when there is no such identity.
+	DeleteIdentity(ctx context.Context, identityID string) error
 }
 
 type oryAPI struct {
@@ -98,6 +101,14 @@ func (api *oryAPI) PatchIdentityMetadataPublic(ctx context.Context, identityID s
 	_, _, err = api.adminClient.IdentityAPI.PatchIdentity(ctx, identityID).
 		JsonPatch([]ory.JsonPatch{{Op: "add", Path: "/metadata_public", Value: merged}}).
 		Execute()
+	return err
+}
+
+func (api *oryAPI) DeleteIdentity(ctx context.Context, identityID string) error {
+	res, err := api.adminClient.IdentityAPI.DeleteIdentity(ctx, identityID).Execute()
+	if err != nil && res != nil && res.StatusCode == http.StatusNotFound {
+		return ErrIdentityNotFound
+	}
 	return err
 }
 

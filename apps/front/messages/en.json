@@ -265,6 +265,23 @@
       "unlink": "Unlink",
       "lastMethod": "Only sign-in method",
       "unavailable": "Unavailable"
+    },
+    "deleteAccount": {
+      "title": "Delete account",
+      "description": "The account is deleted for good, it cannot be restored.",
+      "consequences": {
+        "cosmetics": "All cosmetics your game profiles bought or got are lost.",
+        "roles": "The roles of your game profiles are reset to player.",
+        "username": "Your game profiles are released: another user can take their usernames.",
+        "access": "Season access and stats stay with the username and go to whoever takes it."
+      },
+      "button": "Delete account",
+      "confirmTitle": "Delete the account?",
+      "confirmDescription": "This cannot be undone. Type “{word}” to confirm.",
+      "confirmWord": "delete",
+      "confirm": "Delete for good",
+      "cancel": "Cancel",
+      "error": "Failed to delete the account"
     }
   },
   "playerCard": {

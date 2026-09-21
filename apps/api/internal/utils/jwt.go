@@ -34,6 +34,15 @@ func GetUserIDFromContextOrNil(ctx context.Context) *uuid.UUID {
 	return &userID
 }
 
+// GetSessionFromCtx returns the Ory session the request was made with.
+func GetSessionFromCtx(ctx context.Context) (*ory.Session, error) {
+	session, ok := ctx.Value("req.session").(*ory.Session)
+	if !ok || session == nil || session.Identity == nil {
+		return nil, ErrJWTMissing
+	}
+	return session, nil
+}
+
 func GetLocaleFromCtx(ctx context.Context) string {
 	locale, ok := ctx.Value("req.locale").(string)
 	if !ok || locale == "" {

@@ -121,3 +121,13 @@ func (q *queries) MarkNotificationsRead(ctx context.Context, userID uuid.UUID, i
 	_, err := q.x.ExecContext(ctx, query, userID)
 	return err
 }
+
+const deleteNotificationsByUserID = `
+DELETE FROM notifications
+WHERE user_id = ?
+`
+
+func (q *queries) DeleteNotificationsByUserID(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.x.ExecContext(ctx, deleteNotificationsByUserID, userID)
+	return err
+}
