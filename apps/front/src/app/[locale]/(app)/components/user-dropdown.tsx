@@ -33,7 +33,6 @@ const menuItems = [
     label: 'settings',
     href: '/settings',
     icon: SettingsIcon,
-    disabled: true,
   },
   {
     label: 'support',

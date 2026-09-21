@@ -4,7 +4,7 @@ import { routing } from './i18n/routing'
 import { isCurrentSessionActive } from './lib/get-current-session'
 import { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALES } from './lib/locale'
 
-const privateRoutes = ['profiles']
+const privateRoutes = ['profiles', 'settings']
 
 const handleI18nRouting = createMiddleware(routing)
 

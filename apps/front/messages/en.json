@@ -242,6 +242,31 @@
     "success": "The game profile is synchronized",
     "error": "Failed to synchronize the game profile"
   },
+  "accountSettings": {
+    "metadata": {
+      "title": "Account settings - Lania Network"
+    },
+    "title": "Account settings",
+    "loadFailed": "Failed to load the settings. Reload the page.",
+    "messages": {
+      "saved": "Changes are saved"
+    },
+    "email": {
+      "title": "Email",
+      "description": "The contact address of the account. You do not sign in with it, only with the sign-in methods below.",
+      "label": "Email address",
+      "save": "Save"
+    },
+    "sso": {
+      "title": "Sign-in methods",
+      "description": "Link several services so that you do not lose access to the account. You cannot unlink the last sign-in method.",
+      "linked": "Linked",
+      "link": "Link",
+      "unlink": "Unlink",
+      "lastMethod": "Only sign-in method",
+      "unavailable": "Unavailable"
+    }
+  },
   "playerCard": {
     "noProfile": "Failed to load profile information",
     "copyUsername": "Copy username",

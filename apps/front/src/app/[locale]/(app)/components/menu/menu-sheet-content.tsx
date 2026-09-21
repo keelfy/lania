@@ -71,7 +71,6 @@ const menuItems = [
       label: 'userDropdown.settings',
       href: '/settings',
       icon: SettingsIcon,
-      disabled: true,
     },
     {
       label: 'userDropdown.support',

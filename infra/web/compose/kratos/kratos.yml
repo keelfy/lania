@@ -103,8 +103,9 @@ selfservice:
       ui_url: https://www.lania.network/auth/recovery
       use: code
 
+    # No SMTP in production yet: a changed email stays unverified and no code is sent.
     verification:
-      enabled: true
+      enabled: false
       ui_url: https://www.lania.network/auth/verification
       use: code
       after:
