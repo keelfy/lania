@@ -13,6 +13,9 @@ func TestSaveSeasonCommand_Validate(t *testing.T) {
 	shellWithoutPort := "shell.internal"
 	invalidAddress := "bad host!"
 	zeroPortShell := "shell.internal:0"
+	validPlan := "https://plan.example.com/server/Lania"
+	planWithoutScheme := "plan.example.com"
+	planWithScriptScheme := "javascript:alert(1)"
 	start := time.Date(2026, 10, 9, 0, 0, 0, 0, time.UTC)
 	beforeStart := start.AddDate(0, 0, -1)
 
@@ -50,6 +53,29 @@ func TestSaveSeasonCommand_Validate(t *testing.T) {
 			command: SaveSeasonCommand{
 				Name: "Lania V", StartDate: start,
 				ShellAddress: &zeroPortShell,
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid plan url",
+			command: SaveSeasonCommand{
+				Name: "Lania V", StartDate: start,
+				PlanURL: &validPlan,
+			},
+		},
+		{
+			name: "plan url without scheme",
+			command: SaveSeasonCommand{
+				Name: "Lania V", StartDate: start,
+				PlanURL: &planWithoutScheme,
+			},
+			wantErr: true,
+		},
+		{
+			name: "plan url with script scheme",
+			command: SaveSeasonCommand{
+				Name: "Lania V", StartDate: start,
+				PlanURL: &planWithScriptScheme,
 			},
 			wantErr: true,
 		},

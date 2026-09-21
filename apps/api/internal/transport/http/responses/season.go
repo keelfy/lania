@@ -20,4 +20,5 @@ type Season struct {
 type AdminSeason struct {
 	Season
 	ShellAddress *string `json:"shellAddress,omitempty"`
+	PlanURL      *string `json:"planUrl,omitempty"`
 }

@@ -721,6 +721,8 @@
       "preregistrationHint": "Игроки могут пройти предрегистрацию на этот сезон без оплаты.",
       "freeRegistrationHint": "Игроки могут зарегистрироваться на этот сезон без покупки пропуска.",
       "shellAddressHint": "host:port shell-сервиса, который обслуживает этот сезон. Доступ к RCON настраивается в shell.",
+      "planUrlHint": "Адрес веб-интерфейса Plan этого сезона. Ссылка видна только администраторам.",
+      "openPlan": "Открыть Plan",
       "fields": {
         "name": "Название",
         "startDate": "Дата начала",
@@ -728,6 +730,7 @@
         "previewImage": "Изображение",
         "publicAddress": "Публичный адрес",
         "shellAddress": "Адрес shell",
+        "planUrl": "Ссылка на Plan",
         "active": "Активен",
         "primary": "Основной сезон",
         "preregistration": "Предрегистрация",
@@ -738,6 +741,7 @@
         "dates": "Даты",
         "server": "Сервер",
         "shell": "Shell",
+        "plan": "Plan",
         "actions": "Действия"
       }
     }

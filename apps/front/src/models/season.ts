@@ -16,6 +16,8 @@ export type Season = {
 export type AdminSeason = Season & {
   // host:port of the shell service that serves the season server.
   shellAddress?: string
+  // Plan web interface of the season server.
+  planUrl?: string
 }
 
 export type SaveSeason = {
@@ -25,6 +27,7 @@ export type SaveSeason = {
   endDate?: string
   publicAddress?: string
   shellAddress?: string
+  planUrl?: string
   isActive: boolean
   isPrimary: boolean
   preregistration: boolean

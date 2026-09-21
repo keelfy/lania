@@ -43,7 +43,12 @@ import { createSeason, deleteSeason, updateSeason } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
 import { AdminSeason, SaveSeason } from '@/models/season'
-import { PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react'
+import {
+  ExternalLinkIcon,
+  PencilIcon,
+  PlusIcon,
+  Trash2Icon,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React from 'react'
@@ -99,6 +104,7 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
       endDate: optionalString(form, 'endDate'),
       publicAddress: optionalString(form, 'publicAddress'),
       shellAddress: optionalString(form, 'shellAddress'),
+      planUrl: optionalString(form, 'planUrl'),
       isActive,
       isPrimary,
       preregistration,
@@ -220,6 +226,20 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
                 <FieldDescription>{t('shellAddressHint')}</FieldDescription>
               </Field>
             </FieldGroup>
+            <Field>
+              <FieldLabel htmlFor={`season-plan-url-${season?.id ?? 'new'}`}>
+                {t('fields.planUrl')}
+              </FieldLabel>
+              <Input
+                id={`season-plan-url-${season?.id ?? 'new'}`}
+                name="planUrl"
+                type="url"
+                maxLength={2048}
+                defaultValue={season?.planUrl}
+                placeholder="https://plan.example.com"
+              />
+              <FieldDescription>{t('planUrlHint')}</FieldDescription>
+            </Field>
             <Field orientation="horizontal">
               <Switch
                 id={`season-active-${season?.id ?? 'new'}`}
@@ -364,6 +384,7 @@ export default function SeasonManager({ seasons, locale }: Props) {
               <TableHead>{t('columns.dates')}</TableHead>
               <TableHead>{t('columns.server')}</TableHead>
               <TableHead>{t('columns.shell')}</TableHead>
+              <TableHead>{t('columns.plan')}</TableHead>
               <TableHead className="text-right">
                 {t('columns.actions')}
               </TableHead>
@@ -393,6 +414,22 @@ export default function SeasonManager({ seasons, locale }: Props) {
                 </TableCell>
                 <TableCell>{season.publicAddress ?? '—'}</TableCell>
                 <TableCell>{season.shellAddress ?? '—'}</TableCell>
+                <TableCell>
+                  {season.planUrl ? (
+                    <Button asChild variant="outline" size="sm">
+                      <a
+                        href={season.planUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t('openPlan')}
+                        <ExternalLinkIcon data-icon="inline-end" />
+                      </a>
+                    </Button>
+                  ) : (
+                    '—'
+                  )}
+                </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
                     <SeasonDialog season={season} />

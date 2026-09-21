@@ -33,6 +33,7 @@ type SaveSeason struct {
 	EndDate          *string `json:"endDate"`
 	PublicAddress    *string `json:"publicAddress"`
 	ShellAddress     *string `json:"shellAddress"`
+	PlanURL          *string `json:"planUrl"`
 	IsActive         bool    `json:"isActive"`
 	IsPrimary        bool    `json:"isPrimary"`
 	Preregistration  bool    `json:"preregistration"`

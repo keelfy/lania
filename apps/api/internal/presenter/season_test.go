@@ -40,11 +40,15 @@ func TestPresentAdminSeason_ShowsShellAddress(t *testing.T) {
 	t.Parallel()
 
 	address := "shell:9090"
+	planURL := "https://plan.example.com"
 	season := PresentAdminSeason(&domain.Season{
-		ID: uuid.New(), Name: "Lania V", StartDate: time.Now(), ShellAddress: &address,
+		ID: uuid.New(), Name: "Lania V", StartDate: time.Now(), ShellAddress: &address, PlanURL: &planURL,
 	})
 
 	if season.ShellAddress == nil || *season.ShellAddress != address {
 		t.Fatalf("ShellAddress = %v, want %q", season.ShellAddress, address)
+	}
+	if season.PlanURL == nil || *season.PlanURL != planURL {
+		t.Fatalf("PlanURL = %v, want %q", season.PlanURL, planURL)
 	}
 }

@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ type SaveSeasonCommand struct {
 	EndDate          *time.Time
 	PublicAddress    *string
 	ShellAddress     *string
+	PlanURL          *string
 	IsActive         bool
 	IsPrimary        bool
 	Preregistration  bool
@@ -40,6 +42,7 @@ func (c *SaveSeasonCommand) Validate() error {
 			validation.By(validateAddress(c.PublicAddress)),
 		),
 		validation.Field(&c.ShellAddress, validation.By(validateShellAddress(c.ShellAddress))),
+		validation.Field(&c.PlanURL, validation.By(validatePlanURL(c.PlanURL))),
 	)
 }
 
@@ -68,6 +71,23 @@ func validateShellAddress(address *string) validation.RuleFunc {
 		}
 		if !isServerAddress(host) {
 			return errors.New("must be a valid IP address or hostname")
+		}
+		return nil
+	}
+}
+
+// validatePlanURL requires an absolute http(s) URL, the form a browser link opens.
+func validatePlanURL(planURL *string) validation.RuleFunc {
+	return func(value any) error {
+		if planURL == nil {
+			return nil
+		}
+		if len(*planURL) > 2048 {
+			return errors.New("must be at most 2048 characters")
+		}
+		parsed, err := url.Parse(*planURL)
+		if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Hostname() == "" {
+			return errors.New("must be an http or https URL")
 		}
 		return nil
 	}

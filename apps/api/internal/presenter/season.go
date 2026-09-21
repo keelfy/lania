@@ -29,6 +29,7 @@ func PresentAdminSeason(season *domain.Season) *responses.AdminSeason {
 			Preregistration: season.Preregistration, FreeRegistration: season.FreeRegistration,
 		},
 		ShellAddress: season.ShellAddress,
+		PlanURL:      season.PlanURL,
 	}
 }
 

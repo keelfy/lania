@@ -722,6 +722,8 @@
       "preregistrationHint": "Players can pre-register for this season without payment.",
       "freeRegistrationHint": "Players can register for this season without buying a season pass.",
       "shellAddressHint": "host:port of the shell service that serves this season. RCON access is configured in shell.",
+      "planUrlHint": "Address of the Plan web interface of this season. Only admins see the link.",
+      "openPlan": "Open Plan",
       "fields": {
         "name": "Name",
         "startDate": "Start date",
@@ -729,6 +731,7 @@
         "previewImage": "Preview image",
         "publicAddress": "Public address",
         "shellAddress": "Shell address",
+        "planUrl": "Plan link",
         "active": "Active",
         "primary": "Primary season",
         "preregistration": "Pre-registration",
@@ -739,6 +742,7 @@
         "dates": "Dates",
         "server": "Server",
         "shell": "Shell",
+        "plan": "Plan",
         "actions": "Actions"
       }
     }

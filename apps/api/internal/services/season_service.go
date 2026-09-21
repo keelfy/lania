@@ -66,6 +66,7 @@ func insertSeasonParams(id uuid.UUID, cmd *commands.SaveSeasonCommand) sql.Inser
 		StartDate: cmd.StartDate, EndDate: cmd.EndDate,
 		PublicAddress: cmd.PublicAddress,
 		ShellAddress:  cmd.ShellAddress,
+		PlanURL:       cmd.PlanURL,
 		IsActive:      cmd.IsActive, Preregistration: cmd.Preregistration,
 		FreeRegistration: cmd.FreeRegistration,
 	}
@@ -75,8 +76,10 @@ func updateSeasonParams(cmd *commands.SaveSeasonCommand) sql.UpdateSeasonParams 
 	return sql.UpdateSeasonParams{
 		ID: cmd.ID, Name: cmd.Name, PreviewImage: cmd.PreviewImage,
 		StartDate: cmd.StartDate, EndDate: cmd.EndDate,
-		PublicAddress: cmd.PublicAddress,
-		ShellAddress:  cmd.ShellAddress, IsActive: cmd.IsActive,
+		PublicAddress:   cmd.PublicAddress,
+		ShellAddress:    cmd.ShellAddress,
+		PlanURL:         cmd.PlanURL,
+		IsActive:        cmd.IsActive,
 		Preregistration: cmd.Preregistration, FreeRegistration: cmd.FreeRegistration,
 	}
 }

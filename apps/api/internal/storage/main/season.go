@@ -16,6 +16,7 @@ const seasonColumns = `
 	end_date,
 	public_address,
 	shell_address,
+	plan_url,
 	is_active,
 	is_primary,
 	preregistration,
@@ -31,6 +32,7 @@ func scanSeason(row interface{ Scan(...any) error }) (*domain.Season, error) {
 		&season.EndDate,
 		&season.PublicAddress,
 		&season.ShellAddress,
+		&season.PlanURL,
 		&season.IsActive,
 		&season.IsPrimary,
 		&season.Preregistration,
@@ -98,6 +100,7 @@ type InsertSeasonParams struct {
 	EndDate          *time.Time
 	PublicAddress    *string
 	ShellAddress     *string
+	PlanURL          *string
 	IsActive         bool
 	Preregistration  bool
 	FreeRegistration bool
@@ -107,11 +110,12 @@ func (q *queries) InsertSeason(ctx context.Context, arg InsertSeasonParams) erro
 	_, err := q.x.ExecContext(ctx, `
 INSERT INTO seasons (
 	id, name, preview_image, start_date, end_date,
-	public_address, shell_address, is_active, preregistration, free_registration
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	public_address, shell_address, plan_url, is_active, preregistration, free_registration
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		arg.ID, arg.Name, arg.PreviewImage, arg.StartDate, arg.EndDate,
 		arg.PublicAddress,
 		arg.ShellAddress,
+		arg.PlanURL,
 		arg.IsActive,
 		arg.Preregistration,
 		arg.FreeRegistration,
@@ -127,6 +131,7 @@ type UpdateSeasonParams struct {
 	EndDate          *time.Time
 	PublicAddress    *string
 	ShellAddress     *string
+	PlanURL          *string
 	IsActive         bool
 	Preregistration  bool
 	FreeRegistration bool
@@ -136,12 +141,13 @@ func (q *queries) UpdateSeason(ctx context.Context, arg UpdateSeasonParams) erro
 	_, err := q.x.ExecContext(ctx, `
 UPDATE seasons SET
 	name = ?, preview_image = ?, start_date = ?, end_date = ?,
-	public_address = ?, shell_address = ?, is_active = ?,
+	public_address = ?, shell_address = ?, plan_url = ?, is_active = ?,
 	preregistration = ?, free_registration = ?
 WHERE id = ?`,
 		arg.Name, arg.PreviewImage, arg.StartDate, arg.EndDate,
 		arg.PublicAddress,
 		arg.ShellAddress,
+		arg.PlanURL,
 		arg.IsActive,
 		arg.Preregistration,
 		arg.FreeRegistration,

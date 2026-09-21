@@ -15,7 +15,9 @@ type Season struct {
 	EndDate       *time.Time
 	PublicAddress *string
 	// ShellAddress is host:port of the shell service that reaches the season server.
-	ShellAddress     *string
+	ShellAddress *string
+	// PlanURL is the Plan web interface of the season server, shown to admins only.
+	PlanURL          *string
 	IsActive         bool
 	IsPrimary        bool
 	Preregistration  bool

@@ -70,6 +70,7 @@ func BindSaveSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 		EndDate:          endDate,
 		PublicAddress:    optionalTrimmed(req.PublicAddress),
 		ShellAddress:     optionalTrimmed(req.ShellAddress),
+		PlanURL:          optionalTrimmed(req.PlanURL),
 		IsActive:         req.IsActive,
 		IsPrimary:        req.IsPrimary,
 		Preregistration:  req.Preregistration,
