@@ -14,6 +14,13 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
   Dialog,
   DialogClose,
   DialogContent,
@@ -39,6 +46,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { createSeason, deleteSeason, updateSeason } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
@@ -68,7 +80,13 @@ function optionalString(form: FormData, name: string) {
   return value || undefined
 }
 
-function SeasonDialog({ season }: { season?: AdminSeason }) {
+function SeasonDialog({
+  season,
+  compact = false,
+}: {
+  season?: AdminSeason
+  compact?: boolean
+}) {
   const t = useTranslations('admin.seasons')
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
@@ -130,16 +148,34 @@ function SeasonDialog({ season }: { season?: AdminSeason }) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant={season ? 'outline' : 'default'} size="sm">
-          {season ? (
-            <PencilIcon data-icon="inline-start" />
-          ) : (
-            <PlusIcon data-icon="inline-start" />
-          )}
-          {season ? t('edit') : t('create')}
-        </Button>
-      </DialogTrigger>
+      {compact ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-8"
+                aria-label={t('edit')}
+              >
+                <PencilIcon />
+              </Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent>{t('edit')}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <DialogTrigger asChild>
+          <Button variant={season ? 'outline' : 'default'} size="sm">
+            {season ? (
+              <PencilIcon data-icon="inline-start" />
+            ) : (
+              <PlusIcon data-icon="inline-start" />
+            )}
+            {season ? t('edit') : t('create')}
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
@@ -319,6 +355,8 @@ function DeleteSeasonDialog({ season }: { season: AdminSeason }) {
   const router = useRouter()
   const [isPending, startTransition] = React.useTransition()
 
+  if (season.isActive || season.isPrimary) return null
+
   const handleDelete = () => {
     startTransition(async () => {
       try {
@@ -333,16 +371,22 @@ function DeleteSeasonDialog({ season }: { season: AdminSeason }) {
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="destructive"
-          size="sm"
-          disabled={season.isActive || season.isPrimary || isPending}
-          aria-label={t('delete')}
-        >
-          <Trash2Icon />
-        </Button>
-      </AlertDialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="destructive"
+              size="icon"
+              className="size-8"
+              disabled={isPending}
+              aria-label={t('delete')}
+            >
+              <Trash2Icon />
+            </Button>
+          </AlertDialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{t('delete')}</TooltipContent>
+      </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t('deleteTitle')}</AlertDialogTitle>
@@ -361,12 +405,62 @@ function DeleteSeasonDialog({ season }: { season: AdminSeason }) {
   )
 }
 
-export default function SeasonManager({ seasons, locale }: Props) {
+function SeasonBadges({ season }: { season: AdminSeason }) {
   const t = useTranslations('admin.seasons')
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' })
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-wrap items-center gap-1.5">
+      {season.isActive && <Badge>{t('active')}</Badge>}
+      {season.isPrimary && <Badge variant="secondary">{t('primary')}</Badge>}
+      {season.preregistration && (
+        <Badge variant="outline">{t('preregistration')}</Badge>
+      )}
+      {season.freeRegistration && (
+        <Badge variant="outline">{t('freeRegistration')}</Badge>
+      )}
+    </div>
+  )
+}
+
+function PlanLink({ url, label }: { url: string; label: string }) {
+  return (
+    <Button asChild variant="outline" size="sm">
+      <a href={url} target="_blank" rel="noopener noreferrer">
+        {label}
+        <ExternalLinkIcon data-icon="inline-end" />
+      </a>
+    </Button>
+  )
+}
+
+function SeasonInfo({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <dt className="text-muted-foreground text-xs">{label}</dt>
+      <dd className="text-sm">{children}</dd>
+    </div>
+  )
+}
+
+export default function SeasonManager({ seasons, locale }: Props) {
+  const t = useTranslations('admin.seasons')
+  const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' })
+  const dates = (season: AdminSeason) =>
+    season.endDate
+      ? dateFormat.formatRange(season.startDate, season.endDate)
+      : t('since', { date: dateFormat.format(season.startDate) })
+
+  const active = seasons.filter((season) => season.isActive)
+  const archive = seasons.filter((season) => !season.isActive)
+
+  return (
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-xl font-bold">{t('title')}</h2>
@@ -374,72 +468,125 @@ export default function SeasonManager({ seasons, locale }: Props) {
         </div>
         <SeasonDialog />
       </div>
-      {seasons.length === 0 ? (
+      {seasons.length === 0 && (
         <p className="text-muted-foreground py-10 text-center">{t('empty')}</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('columns.season')}</TableHead>
-              <TableHead>{t('columns.dates')}</TableHead>
-              <TableHead>{t('columns.server')}</TableHead>
-              <TableHead>{t('columns.shell')}</TableHead>
-              <TableHead>{t('columns.plan')}</TableHead>
-              <TableHead className="text-right">
-                {t('columns.actions')}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {seasons.map((season) => (
-              <TableRow key={season.id}>
-                <TableCell>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium">{season.name}</span>
-                    {season.isActive && <Badge>{t('active')}</Badge>}
-                    {season.isPrimary && (
-                      <Badge variant="secondary">{t('primary')}</Badge>
+      )}
+      {active.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h3 className="text-muted-foreground text-sm font-semibold">
+            {t('sections.active')}
+          </h3>
+          {active.map((season) => (
+            <Card key={season.id} className="gap-4 py-5">
+              <CardHeader>
+                <CardTitle className="text-lg">{season.name}</CardTitle>
+                <SeasonBadges season={season} />
+                <CardAction>
+                  <SeasonDialog season={season} />
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <SeasonInfo label={t('columns.dates')}>
+                    {dates(season)}
+                  </SeasonInfo>
+                  <SeasonInfo label={t('columns.server')}>
+                    {season.publicAddress ?? '—'}
+                  </SeasonInfo>
+                  <SeasonInfo label={t('columns.shell')}>
+                    {season.shellAddress ?? '—'}
+                  </SeasonInfo>
+                  <SeasonInfo label={t('columns.plan')}>
+                    {season.planUrl ? (
+                      <PlanLink url={season.planUrl} label={t('openPlan')} />
+                    ) : (
+                      '—'
                     )}
-                    {season.preregistration && (
-                      <Badge variant="outline">{t('preregistration')}</Badge>
-                    )}
-                    {season.freeRegistration && (
-                      <Badge variant="outline">{t('freeRegistration')}</Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {date.format(season.startDate)} –{' '}
-                  {season.endDate ? date.format(season.endDate) : '—'}
-                </TableCell>
-                <TableCell>{season.publicAddress ?? '—'}</TableCell>
-                <TableCell>{season.shellAddress ?? '—'}</TableCell>
-                <TableCell>
-                  {season.planUrl ? (
-                    <Button asChild variant="outline" size="sm">
-                      <a
-                        href={season.planUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {t('openPlan')}
-                        <ExternalLinkIcon data-icon="inline-end" />
-                      </a>
-                    </Button>
-                  ) : (
-                    '—'
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-2">
-                    <SeasonDialog season={season} />
-                    <DeleteSeasonDialog season={season} />
-                  </div>
-                </TableCell>
+                  </SeasonInfo>
+                </dl>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      )}
+      {archive.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h3 className="text-muted-foreground text-sm font-semibold">
+            {t('sections.archive')}
+          </h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('columns.season')}</TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  {t('columns.dates')}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t('columns.actions')}
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {archive.map((season) => {
+                const addresses = [season.publicAddress, season.shellAddress]
+                  .filter(Boolean)
+                  .join(' · ')
+
+                return (
+                  <TableRow key={season.id}>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium">{season.name}</span>
+                          <SeasonBadges season={season} />
+                        </div>
+                        <span className="text-muted-foreground text-xs sm:hidden">
+                          {dates(season)}
+                        </span>
+                        {addresses && (
+                          <span className="text-muted-foreground text-xs">
+                            {addresses}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {dates(season)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        {season.planUrl && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                asChild
+                                variant="outline"
+                                size="icon"
+                                className="size-8"
+                                aria-label={t('openPlan')}
+                              >
+                                <a
+                                  href={season.planUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <ExternalLinkIcon />
+                                </a>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t('openPlan')}</TooltipContent>
+                          </Tooltip>
+                        )}
+                        <SeasonDialog season={season} compact />
+                        <DeleteSeasonDialog season={season} />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </section>
       )}
     </div>
   )

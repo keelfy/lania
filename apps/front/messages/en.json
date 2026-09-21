@@ -744,7 +744,12 @@
         "shell": "Shell",
         "plan": "Plan",
         "actions": "Actions"
-      }
+      },
+      "sections": {
+        "active": "Active",
+        "archive": "Archive"
+      },
+      "since": "since {date}"
     }
   }
 }

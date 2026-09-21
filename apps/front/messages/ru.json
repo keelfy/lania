@@ -743,7 +743,12 @@
         "shell": "Shell",
         "plan": "Plan",
         "actions": "Действия"
-      }
+      },
+      "sections": {
+        "active": "Активные",
+        "archive": "Архив"
+      },
+      "since": "с {date}"
     }
   }
 }
