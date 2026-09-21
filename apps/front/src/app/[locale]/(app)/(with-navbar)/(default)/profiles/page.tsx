@@ -173,7 +173,7 @@ export default async function ProfilePage({ searchParams, params }: Props) {
       <Card className="px-6">
         <ProfileSeasonStats
           profileId={selectedProfile.id}
-          colors={selectedProfile.cosmetics.name.colors.colors}
+          colors={selectedProfile.cosmetics.name.colors?.colors}
           locale={locale}
         />
       </Card>

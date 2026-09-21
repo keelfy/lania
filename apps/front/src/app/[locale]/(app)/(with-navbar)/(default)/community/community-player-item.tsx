@@ -48,7 +48,7 @@ export default function CommunityPlayerItem({
           <NamePrefixes cosmetics={profile.cosmetics.name} />
           <McUsername
             username={profile.username}
-            colors={profile.cosmetics.name.colors.colors}
+            colors={profile.cosmetics.name.colors?.colors}
             className="truncate text-xl"
           />
         </div>

@@ -71,7 +71,7 @@ export default async function CommunityProfilePage({
   const profile = await getProfile(decodeURIComponent(username), season)
   if (!profile) return notFound()
 
-  const nameColors = profile.cosmetics.name.colors.colors
+  const nameColors = profile.cosmetics.name.colors?.colors ?? []
   const status = profile.isOnline ? 'online' : 'offline'
 
   return (

@@ -57,7 +57,7 @@ export default async function CommunityOnlineNow({ locale, season }: Props) {
                 <PlayerFace player={profile} className="size-10" />
                 <McUsername
                   username={profile.username}
-                  colors={profile.cosmetics.name.colors.colors}
+                  colors={profile.cosmetics.name.colors?.colors}
                   className="w-full truncate text-center text-xs"
                 />
               </Link>

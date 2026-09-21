@@ -30,7 +30,7 @@ export default function NameColorOptionSelect({
   seasonId,
 }: Props) {
   const [optimisticNameColorId, setOptimisticNameColorId] = React.useOptimistic(
-    selectedProfile.cosmetics.name.colors.id,
+    selectedProfile.cosmetics.name.colors?.id,
     (_state, nameColorId: string) => nameColorId,
   )
   const [isPending, startTransition] = React.useTransition()

@@ -192,7 +192,10 @@ func (s *profileCosmeticsService) GetProfilesCosmetics(ctx context.Context, prof
 func (s *profileCosmeticsService) findCosmetics(ctx context.Context, queries sql.Queries, profileIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]*domain.ProfileCosmetics, error) {
 	cosmetics, err := queries.FindProfilesSeasonCosmetics(ctx, profileIDs, seasonID, config.GetDefaultNameColorID())
 	if err != nil {
-		return nil, utils.NewInternalServerError("failed to get profiles cosmetics", err)
+		// Callers fall back to empty cosmetics and log the message only, so the cause is logged here.
+		wrapped := utils.NewInternalServerError("failed to get profiles cosmetics", err)
+		utils.LogCustomError(ctx, wrapped)
+		return nil, wrapped
 	}
 	return cosmetics, nil
 }

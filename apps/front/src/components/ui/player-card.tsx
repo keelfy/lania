@@ -126,8 +126,8 @@ export default function PlayerCard({
             username={displayName ?? 'Steve'}
             className="text-xl"
             colors={
-              nameCosmetics?.colors.colors ??
-              profile?.cosmetics.name.colors.colors
+              nameCosmetics?.colors?.colors ??
+              profile?.cosmetics.name.colors?.colors
             }
           />
           {displayName && (

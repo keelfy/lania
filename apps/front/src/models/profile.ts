@@ -80,7 +80,8 @@ export type NamePrefix = {
 }
 
 export type NameCosmetics = {
-  colors: NameColor
+  // Missing when the API could not read the cosmetics of the profile.
+  colors?: NameColor
   glythPrefix?: NamePrefix
   specialPrefix?: NamePrefix
 }

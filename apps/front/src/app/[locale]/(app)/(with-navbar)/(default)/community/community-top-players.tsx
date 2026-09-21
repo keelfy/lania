@@ -72,7 +72,7 @@ export default async function CommunityTopPlayers({ locale, season }: Props) {
                     />
                     <McUsername
                       username={profile.username}
-                      colors={profile.cosmetics.name.colors.colors}
+                      colors={profile.cosmetics.name.colors?.colors}
                       className="truncate text-base"
                     />
                   </div>

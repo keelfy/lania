@@ -34,7 +34,7 @@ export default function ProfileSelect({
             <PlayerFace player={player} className="size-4" />
             <McUsername
               username={player.username}
-              colors={player.cosmetics.name.colors.colors}
+              colors={player.cosmetics.name.colors?.colors}
               className="text-md"
             />
           </div>

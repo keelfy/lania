@@ -27,7 +27,7 @@ export default function ProfileUsername({
           <McUsername
             className={cn(className)}
             username={profile?.username ?? ''}
-            colors={colors ?? profile?.cosmetics.name.colors.colors}
+            colors={colors ?? profile?.cosmetics.name.colors?.colors}
             {...props}
           />
         </span>

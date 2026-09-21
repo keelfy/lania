@@ -375,9 +375,9 @@ func (q *queries) FindProfileNamePrefixOptionsByProfileOwnerUserIDAndType(ctx co
 const findProfilesSeasonCosmetics = `
 SELECT
 	p.id,
-	nc.id,
-	nc.name,
-	nc.colors,
+	COALESCE(nc.id, dnc.id),
+	COALESCE(nc.name, dnc.name),
+	COALESCE(nc.colors, dnc.colors),
 	gp.id,
 	gp.name,
 	gp.metadata,
@@ -386,7 +386,8 @@ SELECT
 	sp.metadata
 FROM profiles p
 LEFT JOIN profile_season_cosmetics psc ON psc.profile_id = p.id AND psc.season_id = ?
-LEFT JOIN name_colors nc ON nc.id = COALESCE(psc.name_color_id, ?)
+LEFT JOIN name_colors nc ON nc.id = psc.name_color_id
+LEFT JOIN name_colors dnc ON dnc.id = ?
 LEFT JOIN name_prefixes gp ON gp.id = psc.glyth_prefix_id
 LEFT JOIN name_prefixes sp ON sp.id = psc.special_prefix_id
 WHERE p.id IN (%s)
