@@ -90,13 +90,6 @@ func (s *profileResyncService) startOwnerResync(profileID uuid.UUID) bool {
 	return true
 }
 
-// shellWrite is what one shell answered for the parts that do not depend on the season.
-// Seasons that share a shell address share one write.
-type shellWrite struct {
-	role      error
-	cosmetics error
-}
-
 func (s *profileResyncService) ResyncProfile(ctx context.Context, profileID uuid.UUID) (*domain.ProfileResync, error) {
 	profile, err := s.profileService.GetProfileByID(ctx, profileID)
 	if err != nil {
@@ -112,21 +105,16 @@ func (s *profileResyncService) ResyncProfile(ctx context.Context, profileID uuid
 	accessed, accessErr := s.accessedSeasons(ctx, profile)
 
 	report := &domain.ProfileResync{}
-	writes := make(map[string]shellWrite)
 	for _, season := range seasons {
 		// A season without shell has no server to write to.
 		if !season.IsActive || season.ShellAddress == nil {
 			continue
 		}
 
-		write, written := writes[*season.ShellAddress]
-		if !written {
-			write.role = s.minecraftService.SetPlayerRolesInSeason(ctx, season.ID, map[uuid.UUID]domain.Role{profile.MinecraftUUID: profile.Role})
-			write.cosmetics = prefixErr
-			if prefixErr == nil {
-				write.cosmetics = s.minecraftService.SetPrefixInSeason(ctx, season.ID, profile.MinecraftUUID, prefix)
-			}
-			writes[*season.ShellAddress] = write
+		roleErr := s.minecraftService.SetPlayerRolesInSeason(ctx, season.ID, map[uuid.UUID]domain.Role{profile.MinecraftUUID: profile.Role})
+		cosmeticsErr := prefixErr
+		if prefixErr == nil {
+			cosmeticsErr = s.minecraftService.SetPrefixInSeason(ctx, season.ID, profile.MinecraftUUID, prefix)
 		}
 
 		// Match the whitelist to the access, so a player whose access was revoked while
@@ -142,8 +130,8 @@ func (s *profileResyncService) ResyncProfile(ctx context.Context, profileID uuid
 			SeasonID:   season.ID,
 			SeasonName: season.Name,
 			Parts: []domain.PartResync{
-				{Part: domain.ResyncPartRole, Err: write.role},
-				{Part: domain.ResyncPartCosmetics, Err: write.cosmetics},
+				{Part: domain.ResyncPartRole, Err: roleErr},
+				{Part: domain.ResyncPartCosmetics, Err: cosmeticsErr},
 				{Part: domain.ResyncPartAccess, Err: whitelistErr},
 			},
 		}

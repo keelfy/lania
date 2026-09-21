@@ -90,8 +90,8 @@ func TestMinecraftService_OnlineIsUnionOfActiveServers(t *testing.T) {
 		"b:1": {online: uuid.UUIDs{first, second}},
 		"c:1": {online: uuid.UUIDs{uuid.New()}},
 	}
-	// The season with c:1 is not active, and a:1 is shared by two seasons.
-	seasons := &fakeSeasons{seasons: []*domain.Season{season("a:1", true), season("a:1", true), season("b:1", true), season("c:1", false), season("", true)}}
+	// The season with c:1 is not active, and the last season has no shell.
+	seasons := &fakeSeasons{seasons: []*domain.Season{season("a:1", true), season("b:1", true), season("c:1", false), season("", true)}}
 	service := NewMinecraftService(seasons, pool)
 	ctx := context.Background()
 

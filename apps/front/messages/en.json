@@ -728,7 +728,7 @@
       "primaryHint": "The primary season is used for registration, purchases, and rankings. Selecting a new one replaces the current primary.",
       "preregistrationHint": "Players can pre-register for this season without payment.",
       "freeRegistrationHint": "Players can register for this season without buying a season pass.",
-      "shellAddressHint": "host:port of the shell service that serves this season. RCON access is configured in shell.",
+      "shellAddressHint": "host:port of the shell service that serves this season. One shell serves one season, so the address cannot repeat. RCON access is configured in shell.",
       "planUrlHint": "Address of the Plan web interface of this season. Only admins see the link.",
       "openPlan": "Open Plan",
       "fields": {

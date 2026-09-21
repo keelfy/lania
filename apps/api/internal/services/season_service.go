@@ -4,6 +4,7 @@ import (
 	"context"
 	stdsql "database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	mysql "github.com/go-sql-driver/mysql"
@@ -136,8 +137,46 @@ func setPrimarySeason(ctx context.Context, queries sql.Queries, seasonID uuid.UU
 	return nil
 }
 
+// ensureShellAddressFree fails with a conflict when another season already uses the shell address.
+// The unique index has the last word, this check only names the season that holds the address.
+func (s *seasonService) ensureShellAddressFree(ctx context.Context, address *string, seasonID uuid.UUID) error {
+	if address == nil {
+		return nil
+	}
+	seasons, err := s.GetSeasons(ctx)
+	if err != nil {
+		return err
+	}
+	if holder := seasonWithShellAddress(seasons, *address, seasonID); holder != nil {
+		return utils.NewConflictError("shell address is used by season "+holder.Name, nil)
+	}
+	return nil
+}
+
+// seasonWithShellAddress returns the season other than exceptID that uses the shell address.
+func seasonWithShellAddress(seasons []*domain.Season, address string, exceptID uuid.UUID) *domain.Season {
+	for _, season := range seasons {
+		if season.ID != exceptID && season.ShellAddress != nil && *season.ShellAddress == address {
+			return season
+		}
+	}
+	return nil
+}
+
+// seasonWriteError maps a write that hit the unique shell address index to a conflict.
+func seasonWriteError(msg string, err error) error {
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 && strings.Contains(mysqlErr.Message, "idx_seasons_shell_address") {
+		return utils.NewConflictError("shell address is used by another season", err)
+	}
+	return utils.NewInternalServerError(msg, err)
+}
+
 func (s *seasonService) CreateSeason(ctx context.Context, cmd *commands.SaveSeasonCommand) (*domain.Season, error) {
 	id := uuid.New()
+	if err := s.ensureShellAddressFree(ctx, cmd.ShellAddress, id); err != nil {
+		return nil, err
+	}
 	err := s.storage.BeginTx(ctx, func(queries sql.Queries) error {
 		if err := queries.InsertSeason(ctx, insertSeasonParams(id, cmd)); err != nil {
 			return err
@@ -148,7 +187,7 @@ func (s *seasonService) CreateSeason(ctx context.Context, cmd *commands.SaveSeas
 		return nil
 	})
 	if err != nil {
-		return nil, utils.NewInternalServerError("failed to create season", err)
+		return nil, seasonWriteError("failed to create season", err)
 	}
 	if cmd.IsPrimary {
 		s.dropPrimarySeasonCache(ctx)
@@ -164,6 +203,9 @@ func (s *seasonService) UpdateSeason(ctx context.Context, cmd *commands.SaveSeas
 	if current.IsPrimary && !cmd.IsPrimary {
 		return nil, utils.NewConflictError("select another primary season before removing this one", nil)
 	}
+	if err := s.ensureShellAddressFree(ctx, cmd.ShellAddress, cmd.ID); err != nil {
+		return nil, err
+	}
 
 	becomesPrimary := cmd.IsPrimary && !current.IsPrimary
 	err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
@@ -176,7 +218,7 @@ func (s *seasonService) UpdateSeason(ctx context.Context, cmd *commands.SaveSeas
 		return nil
 	})
 	if err != nil {
-		return nil, utils.NewInternalServerError("failed to update season", err)
+		return nil, seasonWriteError("failed to update season", err)
 	}
 	if becomesPrimary {
 		s.dropPrimarySeasonCache(ctx)
@@ -227,16 +269,21 @@ func (s *seasonService) InitializePrimarySeason(ctx context.Context) error {
 	}
 	for _, season := range seasons {
 		if season.IsPrimary {
-			return s.seedShellAddress(ctx, season)
+			return s.seedShellAddress(ctx, season, seasons)
 		}
 	}
 	return nil
 }
 
 // seedShellAddress moves the deployment-wide SHELL_ADDRESS into a primary season that has none yet.
-func (s *seasonService) seedShellAddress(ctx context.Context, season *domain.Season) error {
+// It leaves the season alone when another season already serves the address, because a shell serves one season.
+func (s *seasonService) seedShellAddress(ctx context.Context, season *domain.Season, seasons []*domain.Season) error {
 	address := config.GetShellAddress()
 	if season.ShellAddress != nil || address == "" {
+		return nil
+	}
+	if holder := seasonWithShellAddress(seasons, address, season.ID); holder != nil {
+		logger.Warnf(ctx, "[SEASON] Shell address %s is used by season %s, primary season keeps none", address, holder.Name)
 		return nil
 	}
 	if err := s.storage.Queries().SetSeasonShellAddress(ctx, season.ID, address); err != nil {

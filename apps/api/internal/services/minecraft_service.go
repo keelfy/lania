@@ -68,23 +68,18 @@ func (s *minecraftService) seasonShell(ctx context.Context, seasonID uuid.UUID) 
 }
 
 // activeShells returns one client for every shell service that serves an active season.
-// Seasons that share a shell address give it once.
+// A shell serves one season, so every season gives its own client.
 func (s *minecraftService) activeShells(ctx context.Context) ([]clients.ShellAPI, error) {
 	seasons, err := s.seasonService.GetSeasons(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	seen := make(map[string]struct{})
 	apis := make([]clients.ShellAPI, 0, len(seasons))
 	for _, season := range seasons {
 		if !season.IsActive || season.ShellAddress == nil {
 			continue
 		}
-		if _, ok := seen[*season.ShellAddress]; ok {
-			continue
-		}
-		seen[*season.ShellAddress] = struct{}{}
 
 		api, err := s.shellPool.Get(*season.ShellAddress)
 		if err != nil {

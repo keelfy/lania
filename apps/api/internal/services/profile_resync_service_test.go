@@ -178,24 +178,6 @@ func TestProfileResyncService(t *testing.T) {
 		}
 	})
 
-	t.Run("seasons that share a shell get one role and prefix write", func(t *testing.T) {
-		first, second := season("shared:1", true), season("shared:1", true)
-		shared := &fakeSeasons{seasons: []*domain.Season{first, second}}
-		minecraft := newResyncMinecraft()
-		minecraft.roleErr = map[uuid.UUID]error{first.ID: errors.New("shell down")}
-		report, err := NewProfileResyncService(profiles, &resyncCosmetics{}, access, shared, minecraft).ResyncProfile(ctx, profile.ID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if minecraft.roleWrites[first.ID]+minecraft.roleWrites[second.ID] != 1 || minecraft.prefixWrites[first.ID]+minecraft.prefixWrites[second.ID] != 1 {
-			t.Errorf("role writes = %v, prefix writes = %v, want one of each", minecraft.roleWrites, minecraft.prefixWrites)
-		}
-		if partErrors(t, report, first.ID)[domain.ResyncPartRole] == nil || partErrors(t, report, second.ID)[domain.ResyncPartRole] == nil {
-			t.Error("both seasons must show the role failure of their shared shell")
-		}
-	})
-
 	t.Run("an unknown profile is not found", func(t *testing.T) {
 		_, err := newService(newResyncMinecraft(), &resyncCosmetics{}).ResyncProfile(ctx, uuid.New())
 		if utils.MapCustomErrorToHttpStatus(err) != http.StatusNotFound {
