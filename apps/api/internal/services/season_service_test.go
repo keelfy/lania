@@ -11,6 +11,7 @@ import (
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/storage"
 	sql "github.com/lania-smp/backend/internal/storage/main"
+	"github.com/redis/go-redis/v9"
 )
 
 type fakeSeasonQueries struct {
@@ -56,6 +57,30 @@ func (q *fakeSeasonQueries) SetSeasonPrimary(_ context.Context, id uuid.UUID) (b
 	return found, nil
 }
 
+type fakeCache struct {
+	storage.CacheStorage
+	values map[string]string
+}
+
+func newFakeCache() *fakeCache { return &fakeCache{values: map[string]string{}} }
+
+func (c *fakeCache) GetKey(_ context.Context, key string) (string, error) {
+	if value, ok := c.values[key]; ok {
+		return value, nil
+	}
+	return "", redis.Nil
+}
+
+func (c *fakeCache) SetKey(_ context.Context, key string, value interface{}, _ time.Duration) error {
+	c.values[key] = value.(string)
+	return nil
+}
+
+func (c *fakeCache) DeleteKey(_ context.Context, key string) error {
+	delete(c.values, key)
+	return nil
+}
+
 type fakeSeasonStorage struct {
 	storage.MainStorage
 	queries *fakeSeasonQueries
@@ -81,7 +106,7 @@ func TestSeasonService_UpdateSeason_ActivityAndPrimaryAreIndependent(t *testing.
 			IsActive: true,
 		},
 	}}
-	service := NewSeasonService(&fakeSeasonStorage{queries: queries})
+	service := NewSeasonService(&fakeSeasonStorage{queries: queries}, newFakeCache())
 
 	updated, err := service.UpdateSeason(t.Context(), &commands.SaveSeasonCommand{
 		ID: primaryID, Name: "Primary", StartDate: start,
@@ -106,7 +131,7 @@ func TestSeasonService_UpdateSeason_SelectsInactivePrimary(t *testing.T) {
 		oldPrimaryID: {ID: oldPrimaryID, Name: "Old", StartDate: start, IsPrimary: true},
 		newPrimaryID: {ID: newPrimaryID, Name: "New", StartDate: start},
 	}}
-	service := NewSeasonService(&fakeSeasonStorage{queries: queries})
+	service := NewSeasonService(&fakeSeasonStorage{queries: queries}, newFakeCache())
 
 	updated, err := service.UpdateSeason(t.Context(), &commands.SaveSeasonCommand{
 		ID: newPrimaryID, Name: "New", StartDate: start,
@@ -129,7 +154,8 @@ func TestSeasonService_GetPrimarySeasonID(t *testing.T) {
 		primaryID:  {ID: primaryID, IsPrimary: true},
 		uuid.New(): {},
 	}}
-	service := NewSeasonService(&fakeSeasonStorage{queries: queries})
+	cache := newFakeCache()
+	service := NewSeasonService(&fakeSeasonStorage{queries: queries}, cache)
 
 	got, err := service.GetPrimarySeasonID(t.Context())
 	if err != nil {
@@ -138,9 +164,46 @@ func TestSeasonService_GetPrimarySeasonID(t *testing.T) {
 	if got != primaryID {
 		t.Fatalf("primary season id = %v, want %v", got, primaryID)
 	}
+	if cache.values[primarySeasonCacheKey] != primaryID.String() {
+		t.Fatalf("cache = %v, want primary season id stored", cache.values)
+	}
 
 	queries.seasons[primaryID].IsPrimary = false
+	if got, _ := service.GetPrimarySeasonID(t.Context()); got != primaryID {
+		t.Fatal("cached primary season id was not served")
+	}
+
+	delete(cache.values, primarySeasonCacheKey)
 	if _, err := service.GetPrimarySeasonID(t.Context()); err == nil {
 		t.Fatal("expected error when no season is primary")
+	}
+}
+
+func TestSeasonService_UpdateSeason_DropsPrimaryCache(t *testing.T) {
+	oldPrimaryID := uuid.New()
+	newPrimaryID := uuid.New()
+	start := time.Date(2026, 10, 9, 0, 0, 0, 0, time.UTC)
+	queries := &fakeSeasonQueries{seasons: map[uuid.UUID]*domain.Season{
+		oldPrimaryID: {ID: oldPrimaryID, StartDate: start, IsPrimary: true},
+		newPrimaryID: {ID: newPrimaryID, StartDate: start},
+	}}
+	cache := newFakeCache()
+	service := NewSeasonService(&fakeSeasonStorage{queries: queries}, cache)
+
+	if _, err := service.GetPrimarySeasonID(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.UpdateSeason(t.Context(), &commands.SaveSeasonCommand{
+		ID: newPrimaryID, StartDate: start, IsPrimary: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := service.GetPrimarySeasonID(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != newPrimaryID {
+		t.Fatalf("primary season id = %v, want %v after switch", got, newPrimaryID)
 	}
 }

@@ -4,12 +4,14 @@ import (
 	"context"
 	stdsql "database/sql"
 	"errors"
+	"time"
 
 	mysql "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/commands"
 	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
+	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/storage"
 	sql "github.com/lania-smp/backend/internal/storage/main"
 	"github.com/lania-smp/backend/internal/utils"
@@ -28,12 +30,19 @@ type SeasonService interface {
 	InitializePrimarySeason(ctx context.Context) error
 }
 
+// The cache is dropped whenever the primary season changes, the TTL only covers a missed drop.
+const (
+	primarySeasonCacheKey = "primary_season_id"
+	primarySeasonCacheTTL = 5 * time.Minute
+)
+
 type seasonService struct {
 	storage storage.MainStorage
+	cache   storage.CacheStorage
 }
 
-func NewSeasonService(storage storage.MainStorage) SeasonService {
-	return &seasonService{storage: storage}
+func NewSeasonService(storage storage.MainStorage, cache storage.CacheStorage) SeasonService {
+	return &seasonService{storage: storage, cache: cache}
 }
 
 func (s *seasonService) GetSeasonByID(ctx context.Context, seasonID uuid.UUID) (*domain.Season, error) {
@@ -46,14 +55,31 @@ func (s *seasonService) GetSeasonByID(ctx context.Context, seasonID uuid.UUID) (
 	return season, nil
 }
 
+// GetPrimarySeasonID reads through the cache, a cache failure only costs a database query.
 func (s *seasonService) GetPrimarySeasonID(ctx context.Context) (uuid.UUID, error) {
+	if cached, err := s.cache.GetKey(ctx, primarySeasonCacheKey); err == nil {
+		if id, err := uuid.Parse(cached); err == nil {
+			return id, nil
+		}
+	}
+
 	id, err := s.storage.Queries().FindPrimarySeasonID(ctx)
 	if errors.Is(err, stdsql.ErrNoRows) {
 		return uuid.Nil, utils.NewInternalServerError("primary season is not set", err)
 	} else if err != nil {
 		return uuid.Nil, utils.NewInternalServerError("failed to get primary season", err)
 	}
+
+	if err := s.cache.SetKey(ctx, primarySeasonCacheKey, id.String(), primarySeasonCacheTTL); err != nil {
+		logger.Debugf(ctx, "[SEASON] Error caching primary season: %v", err)
+	}
 	return id, nil
+}
+
+func (s *seasonService) dropPrimarySeasonCache(ctx context.Context) {
+	if err := s.cache.DeleteKey(ctx, primarySeasonCacheKey); err != nil {
+		logger.Errorf(ctx, "[SEASON] Error dropping primary season cache: %v", err)
+	}
 }
 
 func (s *seasonService) GetPublicSeasons(ctx context.Context) ([]*domain.Season, error) {
@@ -124,6 +150,9 @@ func (s *seasonService) CreateSeason(ctx context.Context, cmd *commands.SaveSeas
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to create season", err)
 	}
+	if cmd.IsPrimary {
+		s.dropPrimarySeasonCache(ctx)
+	}
 	return s.GetSeasonByID(ctx, id)
 }
 
@@ -136,17 +165,21 @@ func (s *seasonService) UpdateSeason(ctx context.Context, cmd *commands.SaveSeas
 		return nil, utils.NewConflictError("select another primary season before removing this one", nil)
 	}
 
+	becomesPrimary := cmd.IsPrimary && !current.IsPrimary
 	err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
 		if err := queries.UpdateSeason(ctx, updateSeasonParams(cmd)); err != nil {
 			return err
 		}
-		if cmd.IsPrimary && !current.IsPrimary {
+		if becomesPrimary {
 			return setPrimarySeason(ctx, queries, cmd.ID)
 		}
 		return nil
 	})
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to update season", err)
+	}
+	if becomesPrimary {
+		s.dropPrimarySeasonCache(ctx)
 	}
 	return s.GetSeasonByID(ctx, cmd.ID)
 }

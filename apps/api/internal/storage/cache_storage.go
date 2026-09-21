@@ -53,7 +53,9 @@ func (storage *cacheStorage) GetKey(ctx context.Context, key string) (string, er
 	}
 
 	value, err := stringCmd.Result()
-	if err != nil {
+	if errors.Is(err, redis.Nil) {
+		return "", err
+	} else if err != nil {
 		logger.Errorf(ctx, "failed to get key '%s': %v", key, err)
 		return "", err
 	}

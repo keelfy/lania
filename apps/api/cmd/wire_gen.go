@@ -34,7 +34,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	}
 	statusHandler := handlers.NewStatusHandler(mainStorage, cacheStorage)
 	profileCosmeticsService := services.NewProfileCosmeticsService(mainStorage)
-	seasonService := services.NewSeasonService(mainStorage)
+	seasonService := services.NewSeasonService(mainStorage, cacheStorage)
 	shellPool, cleanup2, err := clients.NewShellPool(ctx)
 	if err != nil {
 		cleanup()
