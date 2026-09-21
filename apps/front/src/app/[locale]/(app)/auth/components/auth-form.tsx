@@ -1,223 +1,205 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import LaniaLogo from '@/components/ui/lania-logo'
-import { Separator } from '@/components/ui/separator'
+import { Label } from '@/components/ui/label'
+import LoadingSpinner from '@/components/ui/loading-spinner'
+import { Link } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
-import { zodResolver } from '@hookform/resolvers/zod'
-import {} from '@icons-pack/react-simple-icons'
 import {
   isUiNodeInputAttributes,
-  LoginFlow,
-  RegistrationFlow,
   UiNode,
-  UiNodeInputAttributes,
+  UiNodeGroupEnum,
+  UiText,
 } from '@ory/client-fetch'
-import Link from 'next/link'
-import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs'
-import React from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { groupUiNodes, mapUiNode } from './ory-nodes'
+import { useTranslations } from 'next-intl'
+import ProviderIcon from './provider-icon'
+import { AuthFlow, AuthFlowType, useAuthFlow } from './use-auth-flow'
 
 type Props = {
   className?: string
-  flow: LoginFlow | RegistrationFlow | undefined
-  flowType: 'login' | 'registration' | 'refresh'
+  type: AuthFlowType
 }
 
-const formSchema = z
-  .object({
-    flowType: z.enum(['login', 'registration', 'refresh']),
-    csrfToken: z.string().optional(),
-    email: z.email({ message: 'Invalid email address' }),
-    password: z
-      .string()
-      .min(6, { message: 'Password must be at least 6 characters' }),
-    repeatPassword: z.string(),
-  })
-  .refine(
-    (data) =>
-      data.flowType !== 'registration' || data.password === data.repeatPassword,
-    { message: "Passwords don't match", path: ['repeatPassword'] },
-  )
-
-const getOryUiNodeByGroupAndName = (
-  nodes: UiNode[],
-  group: string,
-  name: string,
-) => {
-  return nodes.find(
-    (node) =>
-      node.group === group &&
-      (node.attributes as UiNodeInputAttributes).name === name,
-  )
+// Kratos message ids with a translation. Other messages are shown in the Kratos text.
+const TRANSLATED_MESSAGES: Record<number, string> = {
+  4010001: 'flowExpired',
+  4040001: 'flowExpired',
+  4000008: 'duplicateAccount',
+  4000028: 'duplicateAccount',
+  4000029: 'duplicateAccount',
 }
 
-const AuthForm = ({ flowType, className, flow }: Props) => {
-  const [goto] = useQueryState('goto', parseAsString.withDefault(''))
+// The page already tells the user to sign in again.
+const HIDDEN_MESSAGES = [1010003]
 
-  const [refresh] = useQueryState('refresh', parseAsBoolean.withDefault(false))
-  const [flowResult] = React.useState<LoginFlow>()
-  const groupedNodes = React.useMemo(
-    () => groupUiNodes(flow?.ui.nodes ?? []),
-    [flow?.ui.nodes],
-  )
+// Traits the provider fills in. They are sent back as they are and never shown.
+const HIDDEN_TRAITS = ['traits.username', 'traits.avatarUrl']
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      csrfToken: '',
-      flowType,
-      email: '',
-      password: '',
-      repeatPassword: '',
-    },
-  })
+// Kratos button label ids.
+const LABEL_WITH_PROVIDER = [1010002, 1040002]
+const LABEL_SIGN_IN = [1010001]
+const LABEL_SIGN_UP = [1040001]
+const LABEL_CONTINUE = [1010013, 1040003]
 
-  React.useEffect(() => {
-    if (!flow) return
-    form.reset({
-      csrfToken:
-        (
-          getOryUiNodeByGroupAndName(flow.ui.nodes, 'default', 'csrf_token')
-            ?.attributes as UiNodeInputAttributes
-        )?.value ?? '',
-      flowType,
-      email:
-        (
-          getOryUiNodeByGroupAndName(flow.ui.nodes, 'default', 'identifier')
-            ?.attributes as UiNodeInputAttributes
-        )?.value ?? '',
-      password: '',
-      repeatPassword: '',
-    })
-  }, [flow?.id])
-
-  React.useEffect(() => {
-    const msg = flowResult?.ui?.messages?.find(
-      (message) => message.type === 'error',
-    )?.text
-    if (msg) {
-      form.setError('root', {
-        message: msg,
-      })
-    } else {
-      form.clearErrors('root')
-    }
-  }, [flowResult?.ui?.messages])
+export default function AuthForm({ type, className }: Props) {
+  const t = useTranslations('auth')
+  const { flow, failed, refresh } = useAuthFlow(type)
+  const mode =
+    type === 'registration' ? 'registration' : refresh ? 'refresh' : 'login'
 
   return (
     <Card className={cn('max-w-sm', className)}>
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-2">
-          {flowType === 'registration'
-            ? 'Sign Up'
-            : flowType === 'refresh'
-              ? 'Confirm your identity'
-              : 'Sign In'}
+          {t(`${mode}.title`)}
           <Link href="/" className="hover:opacity-80">
             <LaniaLogo />
           </Link>
         </CardTitle>
-        <CardDescription>
-          {flowType === 'registration'
-            ? 'Sign up using a social provider'
-            : flowType === 'refresh'
-              ? 'Prove your identity using a social provider'
-              : 'Sign in using a social provider'}
-        </CardDescription>
+        <CardDescription>{t(`${mode}.description`)}</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
-        {Object.entries(groupedNodes).map(([group, nodes], index) => (
-          <div
-            key={group}
-            className={cn(
-              'flex flex-col gap-4',
-              index > 0 && Object.keys(groupedNodes).length > 2 && 'pt-4',
-            )}
-          >
-            {index > 0 && Object.keys(groupedNodes).length > 2 && <Separator />}
-            <form
-              key={group}
-              noValidate
-              action={flow?.ui.action}
-              method={flow?.ui.method}
-              className="flex flex-col"
-            >
-              {nodes.map((node, index) => {
-                if (
-                  'value' in node.attributes &&
-                  node.attributes.value === 'twitch-extended'
-                ) {
-                  return null
-                }
-                return (
-                  <div
-                    key={node.type + index}
-                    className={cn(
-                      'pt-4',
-                      index === 0 && 'pt-0',
-                      isUiNodeInputAttributes(node.attributes) &&
-                        (['traits.username', 'traits.avatar_url'].includes(
-                          node.attributes.name,
-                        ) ||
-                          node.attributes.type === 'hidden') &&
-                        'pt-0',
-                    )}
-                  >
-                    {mapUiNode(flow, node)}
-                  </div>
-                )
-              })}
-            </form>
-          </div>
-        ))}
-        {flow?.ui.messages?.map((message) => (
-          <p
-            key={message.id}
-            className={cn(
-              'text-muted-foreground text-sm',
-              message.type === 'error' && 'text-destructive',
-            )}
-          >
-            {message.text}
-          </p>
-        ))}
-      </CardContent>
-      <CardFooter className="flex flex-col gap-2">
-        {!refresh && (
-          <div className="text-center text-sm">
-            {flowType === 'registration'
-              ? 'Already have an account?'
-              : "Don't have an account?"}
-            &nbsp;
-            <Link
-              href={{
-                pathname:
-                  flowType === 'registration'
-                    ? `${process.env.NEXT_PUBLIC_ORY_SDK_URL}/self-service/login/browser`
-                    : `${process.env.NEXT_PUBLIC_ORY_SDK_URL}/self-service/registration/browser`,
-                query: {
-                  return_to: flow?.return_to ?? goto,
-                },
-              }}
-              className="underline"
-            >
-              {flowType === 'registration' ? 'Sign in' : 'Sign up'}
-            </Link>
+      <CardContent>
+        {failed ? (
+          <p className="text-destructive text-sm">{t('loadFailed')}</p>
+        ) : flow ? (
+          <FlowForm flow={flow} />
+        ) : (
+          <div className="flex min-h-24 items-center justify-center">
+            <LoadingSpinner />
           </div>
         )}
-      </CardFooter>
+      </CardContent>
     </Card>
   )
 }
 
-export default AuthForm
+function FlowMessages({
+  messages,
+  className,
+}: {
+  messages?: UiText[]
+  className?: string
+}) {
+  const t = useTranslations('auth.messages')
+  const shown = messages?.filter(
+    (message) => !HIDDEN_MESSAGES.includes(message.id),
+  )
+  if (!shown?.length) return null
+  return (
+    <div className={cn('flex flex-col gap-1', className)}>
+      {shown.map((message) => (
+        <p
+          key={message.id}
+          className={cn(
+            'text-muted-foreground text-sm',
+            message.type === 'error' && 'text-destructive',
+          )}
+        >
+          {TRANSLATED_MESSAGES[message.id]
+            ? t(TRANSLATED_MESSAGES[message.id])
+            : message.text}
+        </p>
+      ))}
+    </div>
+  )
+}
+
+function FlowForm({ flow }: { flow: AuthFlow }) {
+  return (
+    <form
+      noValidate
+      action={flow.ui.action}
+      method={flow.ui.method}
+      className="flex flex-col gap-4"
+    >
+      {flow.ui.nodes.map((node, index) => (
+        <FlowNode key={`${node.group}-${index}`} node={node} />
+      ))}
+      <FlowMessages messages={flow.ui.messages} />
+    </form>
+  )
+}
+
+function FlowNode({ node }: { node: UiNode }) {
+  const t = useTranslations('auth')
+  if (!isUiNodeInputAttributes(node.attributes)) return null
+  const attrs = node.attributes
+  const label = node.meta.label
+  const provider = (label?.context as { provider?: string } | undefined)
+    ?.provider
+
+  // Providers like twitch-extended only differ by the scopes they ask for.
+  if (
+    node.group === UiNodeGroupEnum.Oidc &&
+    attrs.value?.includes('extended')
+  ) {
+    return null
+  }
+
+  if (attrs.type === 'hidden' || HIDDEN_TRAITS.includes(attrs.name)) {
+    return (
+      <input type="hidden" name={attrs.name} defaultValue={attrs.value ?? ''} />
+    )
+  }
+
+  switch (attrs.type) {
+    case 'submit':
+    case 'button': {
+      const text =
+        label && LABEL_WITH_PROVIDER.includes(label.id)
+          ? t('continueWith', { provider: provider ?? '' })
+          : label && LABEL_SIGN_IN.includes(label.id)
+            ? t('signIn')
+            : label && LABEL_SIGN_UP.includes(label.id)
+              ? t('createAccount')
+              : label && LABEL_CONTINUE.includes(label.id)
+                ? t('continue')
+                : label?.text
+      return (
+        <Button
+          type={attrs.type}
+          name={attrs.name}
+          value={attrs.value}
+          disabled={attrs.disabled}
+          className="flex w-full items-center gap-2 px-2"
+        >
+          {attrs.name === 'provider' && (
+            <ProviderIcon providerId={attrs.value} className="size-5" />
+          )}
+          {text}
+        </Button>
+      )
+    }
+    case 'email':
+    case 'text':
+      return (
+        <div className="grid gap-2">
+          <Label htmlFor={attrs.name}>
+            {attrs.name === 'traits.email' ? t('fields.email') : label?.text}
+          </Label>
+          <Input
+            id={attrs.name}
+            type={attrs.type}
+            name={attrs.name}
+            required={attrs.required}
+            disabled={attrs.disabled}
+            maxLength={attrs.maxlength}
+            autoComplete={attrs.autocomplete}
+            defaultValue={attrs.value}
+          />
+          <FlowMessages messages={node.messages} />
+        </div>
+      )
+    default:
+      return null
+  }
+}

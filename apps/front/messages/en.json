@@ -242,6 +242,38 @@
     "success": "The game profile is synchronized",
     "error": "Failed to synchronize the game profile"
   },
+  "auth": {
+    "loadFailed": "Could not load the sign-in form. Reload the page.",
+    "continueWith": "Continue with {provider}",
+    "continue": "Continue",
+    "signIn": "Sign in",
+    "createAccount": "Create account",
+    "login": {
+      "title": "Sign in",
+      "description": "Choose a service to sign in with. An account is created automatically if you do not have one yet."
+    },
+    "refresh": {
+      "title": "Confirm your identity",
+      "description": "This action needs a fresh sign-in through one of your linked services."
+    },
+    "registration": {
+      "title": "Finish signing up",
+      "description": "The service did not share a verified email. Enter it to create your account."
+    },
+    "fields": {
+      "email": "Email"
+    },
+    "messages": {
+      "flowExpired": "The sign-in took too long. Try again.",
+      "duplicateAccount": "An account with this email already exists. Sign in with the service you registered with, then link the other service in your account settings."
+    },
+    "error": {
+      "title": "Could not sign in",
+      "description": "Something went wrong while processing your request. Try signing in again.",
+      "details": "Technical details",
+      "retry": "Back to sign in"
+    }
+  },
   "accountSettings": {
     "metadata": {
       "title": "Account settings - Lania Network"
