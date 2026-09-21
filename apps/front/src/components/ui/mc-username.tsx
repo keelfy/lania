@@ -15,7 +15,7 @@ export default function McUsername({
   return (
     <p
       className={cn(
-        'tracking-mc w-fit translate-y-0.5 font-[Minecraft] text-transparent drop-shadow-[0_1.2px_1.2px_rgba(255,255,255,0.2)]',
+        'tracking-mc font-minecraft w-fit translate-y-0.5 text-transparent drop-shadow-[0_1.2px_1.2px_rgba(255,255,255,0.2)]',
         colorsArray.length > 1
           ? 'bg-gradient-to-r bg-clip-text'
           : 'text-primary',

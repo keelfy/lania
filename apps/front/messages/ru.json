@@ -375,7 +375,6 @@
       "title": "Лучшие игроки сезона"
     },
     "profile": {
-      "open": "Открыть профиль",
       "metadata": {
         "title": "{username} — профиль игрока",
         "description": "Время игры, активность и скин игрока {username} на Lania Network."

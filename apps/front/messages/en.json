@@ -376,7 +376,6 @@
       "title": "Top players this season"
     },
     "profile": {
-      "open": "Open profile",
       "metadata": {
         "title": "{username} — player profile",
         "description": "Playtime, activity and skin of {username} on Lania Network."

@@ -68,7 +68,7 @@ export default async function CommunityTopPlayers({ locale }: Props) {
                     <McUsername
                       username={profile.username}
                       colors={profile.cosmetics.name.colors.colors}
-                      className="truncate text-base font-semibold"
+                      className="truncate text-base"
                     />
                   </div>
                   <span className="text-muted-foreground text-sm">
