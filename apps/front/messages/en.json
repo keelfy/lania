@@ -192,8 +192,8 @@
     "selectProfile": "Select a profile to view its information <br></br> --- or --- <br></br> <obtainAccess>obtain access for the game profile</obtainAccess>",
     "selectProfileFree": "Select a profile to view its information <br></br> --- or --- <br></br> <obtainAccess>get access for the game profile</obtainAccess>",
     "accessStatus": {
-      "title": "Access",
-      "description": "Information about the access to this game profile",
+      "title": "Server access",
+      "description": "The access of this game profile and the violations marked by moderation",
       "status": "Status",
       "season": "Season",
       "names": {
@@ -205,6 +205,7 @@
       "obtainFree": "Get access"
     },
     "violations": {
+      "title": "Violations",
       "noViolations": "No violations"
     },
     "cosmetics": {
@@ -230,7 +231,8 @@
     },
     "nav": {
       "overview": "Overview",
-      "settings": "Settings"
+      "settings": "Settings",
+      "viewPublic": "Public profile"
     }
   },
   "profileResync": {
@@ -303,9 +305,7 @@
         "running": "Running now",
         "since": "Since {date}",
         "empty": "This player has not spent time on the servers yet.",
-        "loadError": "Could not load the statistics",
-        "summaryTitle": "Time on the server",
-        "viewPublic": "Public profile"
+        "loadError": "Could not load the statistics"
       }
     },
     "sort": {
