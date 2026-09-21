@@ -140,7 +140,9 @@
   },
   "seasonSelect": {
     "placeholder": "Season",
-    "primary": "primary"
+    "primary": "primary",
+    "active": "active",
+    "inactive": "inactive"
   },
   "basket": {
     "title": "Your basket",

@@ -139,7 +139,9 @@
   },
   "seasonSelect": {
     "placeholder": "Сезон",
-    "primary": "основной"
+    "primary": "основной",
+    "active": "активен",
+    "inactive": "завершён"
   },
   "basket": {
     "title": "Ваша корзина",

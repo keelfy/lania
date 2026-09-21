@@ -49,7 +49,6 @@ export default function CommunityFilters({
       {onlineAvailable && (
         <Button
           variant={online ? 'default' : 'outline'}
-          size="sm"
           aria-pressed={!!online}
           disabled={isPending}
           onClick={() => toggle({ online: !online })}
@@ -60,7 +59,6 @@ export default function CommunityFilters({
       )}
       <Button
         variant={staff ? 'default' : 'outline'}
-        size="sm"
         aria-pressed={!!staff}
         disabled={isPending}
         onClick={() => toggle({ staff: !staff })}

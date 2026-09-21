@@ -1,5 +1,6 @@
 'use client'
 
+import { cn } from '@/lib/utils'
 import { Season } from '@/models/season'
 import { useTranslations } from 'next-intl'
 import {
@@ -31,6 +32,15 @@ export default function SeasonSelect({
       <SelectContent>
         {seasons.map((season) => (
           <SelectItem key={season.id} value={season.id}>
+            <span
+              role="img"
+              aria-label={t(season.isActive ? 'active' : 'inactive')}
+              title={t(season.isActive ? 'active' : 'inactive')}
+              className={cn(
+                'size-2 shrink-0 rounded-full',
+                season.isActive ? 'bg-green-500' : 'bg-muted-foreground/40',
+              )}
+            />
             {season.name}
             {season.isPrimary ? ` (${t('primary')})` : ''}
           </SelectItem>
