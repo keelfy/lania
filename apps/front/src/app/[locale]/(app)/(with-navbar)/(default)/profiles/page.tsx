@@ -1,5 +1,5 @@
-import ProfileResyncCard from '@/components/profile-resync-card'
 import ProfileSeasonStats from '@/components/profile-season-stats'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -8,38 +8,24 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import PlayerCard from '@/components/ui/player-card'
-import RichText from '@/components/ui/rich-text'
-import {
-  getProfileCosmeticOptions,
-  getSeasons,
-  getUserProfiles,
-} from '@/lib/api-endpoints'
-import { getCurrentSession } from '@/lib/get-current-session'
-import { serverApiFetcher } from '@/lib/server'
+import { getAccessMode, isFreeAccess } from '@/lib/access-mode'
+import { pickSeason } from '@/lib/seasons'
 import { cn } from '@/lib/utils'
-import { Profile, ProfileCosmeticOptions } from '@/models/profile'
 import {
   ActivityIcon,
   CalendarIcon,
-  CannabisIcon,
   CheckIcon,
   ClockIcon,
-  PaletteIcon,
   ShieldCheckIcon,
-  ShieldIcon,
   ShoppingBagIcon,
   XIcon,
   ZapIcon,
 } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
-import NameColorOptionSelect from './name-color-option-select'
-import NameGlythOptionSelect from './name-glyth-option-select'
-import { getAccessMode, isFreeAccess } from '@/lib/access-mode'
-import { pickSeason } from '@/lib/seasons'
 import AccessSeasonSelect from './access-season-select'
-import ProfileSelectWrapper from './profile-select-wrapper'
+import { loadProfilePage } from './load-profile-page'
+import ProfileShell from './profile-shell'
 
 const accessStatusColors = {
   active: 'text-primary',
@@ -59,10 +45,6 @@ const accessStatusIconColors = {
   expired: 'text-orange-500',
 }
 
-const DEFAULT_COSMETIC_OPTIONS: ProfileCosmeticOptions = {
-  name: { colors: [], glythPrefixes: [], specialPrefixes: [] },
-}
-
 type Props = {
   searchParams: Promise<{
     id: string | undefined
@@ -74,66 +56,15 @@ type Props = {
   }>
 }
 
-const fetchProfiles = async (
-  profileId: string | undefined,
-  userId: string | undefined,
-): Promise<[Profile[], ProfileCosmeticOptions]> => {
-  if (profileId) {
-    return await Promise.all([
-      getUserProfiles(serverApiFetcher, userId).catch((error) => {
-        console.error(error)
-        return []
-      }),
-      getProfileCosmeticOptions(serverApiFetcher, profileId).catch((error) => {
-        console.error(error)
-        return DEFAULT_COSMETIC_OPTIONS
-      }),
-    ])
-  }
-
-  const profiles = await getUserProfiles(serverApiFetcher, userId).catch(
-    (error) => {
-      console.error(error)
-      return []
-    },
-  )
-
-  let cosmeticOptions: ProfileCosmeticOptions = {
-    name: DEFAULT_COSMETIC_OPTIONS.name,
-  }
-
-  if (profiles.length > 0) {
-    cosmeticOptions = await getProfileCosmeticOptions(
-      serverApiFetcher,
-      profiles[0].id,
-    ).catch((error) => {
-      console.error(error)
-      return DEFAULT_COSMETIC_OPTIONS
-    })
-  }
-
-  return [profiles, cosmeticOptions]
-}
-
+// What a game profile is: its access, its violations and what it did on the servers.
+// What can be changed is on the settings page.
 export default async function ProfilePage({ searchParams, params }: Props) {
   const { id, s: seasonParam } = await searchParams
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'profiles' })
-  const [session, seasons] = await Promise.all([
-    getCurrentSession(),
-    getSeasons(serverApiFetcher).catch(() => []),
-  ])
-  const primarySeason = seasons.find((season) => season.isPrimary)
-  const freeAccess = isFreeAccess(getAccessMode(primarySeason))
+  const data = await loadProfilePage(id)
+  const { seasons, selectedProfile } = data
 
-  const [profiles, cosmeticOptions] = await fetchProfiles(
-    id,
-    session?.identity?.id,
-  )
-
-  const profileId = id ?? (profiles.length > 0 ? profiles[0].id : undefined)
-
-  const selectedProfile = profiles.find((profile) => profile.id === profileId)
   // The profile lists a status for every running season and every ended season it has access to.
   const accessSeasons = seasons.filter((season) =>
     selectedProfile?.accesses.some((access) => access.seasonId === season.id),
@@ -150,267 +81,106 @@ export default async function ProfilePage({ searchParams, params }: Props) {
   const Icon = accessStatusIcons[accessStatus]
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <div className="flex flex-col items-center gap-2 lg:hidden lg:flex-row lg:justify-between">
-          <div className="flex items-center gap-2">
-            <p className="text-xl font-bold">{t('title')}</p>
-            <p className="text-muted-foreground text-sm font-bold">
-              {`(${profiles.length}/2)`}
-            </p>
+    <ProfileShell
+      locale={locale}
+      active="overview"
+      data={data}
+      seasonId={accessSeason?.id}
+    >
+      {selectedProfile && (
+        <>
+          {/* Violations are not tracked yet, so there is never a list to show. */}
+          <div>
+            <Badge variant="outline" className="gap-1.5">
+              <ShieldCheckIcon className="size-3.5 text-green-500" />
+              {t('violations.noViolations')}
+            </Badge>
           </div>
-          <ProfileSelectWrapper
-            profiles={profiles}
-            selectedProfileId={profileId}
-          />
-        </div>
-        <PlayerCard
-          profileId={profileId}
-          username={selectedProfile?.username}
-          nameCosmetics={selectedProfile?.cosmetics.name}
-          locale={locale}
-          className="flex-1"
-        />
-        <div className="flex flex-1 flex-col gap-4">
-          <div className="hidden flex-col items-center gap-2 lg:flex lg:flex-row lg:justify-between">
-            <h2 className="mb-2 text-xl font-bold">
-              {t('title')}&nbsp;
-              <span className="text-muted-foreground text-sm">
-                {`(${profiles.length}/2)`}
-              </span>
-            </h2>
-            <ProfileSelectWrapper
-              profiles={profiles}
-              selectedProfileId={profileId}
-            />
-          </div>
-          <div className="flex w-full flex-1 flex-col gap-4">
-            {profileId && profiles.length > 0 && selectedProfile ? (
-              <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      {t('accessStatus.title')}
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground text-sm">
-                      {t('accessStatus.description')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-2">
-                      {accessSeasons.length > 1 && (
-                        <>
-                          <div className="flex flex-nowrap items-center gap-2">
-                            <CalendarIcon className="text-muted-foreground size-4 stroke-3" />
-                            <p className="text-md font-semibold tracking-tight">
-                              {t('accessStatus.season')}
-                            </p>
-                          </div>
-                          <AccessSeasonSelect
-                            seasons={accessSeasons}
-                            selectedSeasonId={accessSeason?.id}
-                            profileId={selectedProfile.id}
-                          />
-                        </>
-                      )}
-                      <div className="flex flex-nowrap items-center gap-2">
-                        <ActivityIcon className="text-muted-foreground size-4 stroke-3" />
-                        <p className="text-md font-semibold tracking-tight">
-                          {t('accessStatus.status')}
-                        </p>
-                      </div>
-                      <div className="flex flex-nowrap items-center justify-end gap-2">
-                        <p className={cn('font-semibold', accessStatusColor)}>
-                          {t(`accessStatus.names.${accessStatus}`)}
-                        </p>
-                        <Icon
-                          className={cn(
-                            'size-4',
-                            accessStatusIconColors[accessStatus],
-                          )}
-                        />
-                      </div>
-                      {accessStatus !== 'active' && canObtainAccess && (
-                        <Button
-                          variant="outline"
-                          asChild
-                          size="sm"
-                          className="col-span-2 mt-2"
-                        >
-                          <Link
-                            href={{
-                              pathname: '/obtain-access',
-                              query: {
-                                u: selectedProfile?.username,
-                                s: accessSeason?.id,
-                              },
-                            }}
-                          >
-                            {accessSeasonFree ? (
-                              <ZapIcon className="size-4" />
-                            ) : (
-                              <ShoppingBagIcon className="size-4" />
-                            )}
-                            {t(
-                              accessSeasonFree
-                                ? 'accessStatus.obtainFree'
-                                : 'accessStatus.obtain',
-                            )}
-                          </Link>
-                        </Button>
-                      )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">
+                {t('accessStatus.title')}
+              </CardTitle>
+              <CardDescription className="text-muted-foreground text-sm">
+                {t('accessStatus.description')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-2">
+                {accessSeasons.length > 1 && (
+                  <>
+                    <div className="flex flex-nowrap items-center gap-2">
+                      <CalendarIcon className="text-muted-foreground size-4 stroke-3" />
+                      <p className="text-md font-semibold tracking-tight">
+                        {t('accessStatus.season')}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
-                <Card className="px-6">
-                  <ProfileSeasonStats
-                    profileId={selectedProfile.id}
-                    colors={selectedProfile.cosmetics.name.colors.colors}
-                    locale={locale}
+                    <AccessSeasonSelect
+                      seasons={accessSeasons}
+                      selectedSeasonId={accessSeason?.id}
+                      profileId={selectedProfile.id}
+                    />
+                  </>
+                )}
+                <div className="flex flex-nowrap items-center gap-2">
+                  <ActivityIcon className="text-muted-foreground size-4 stroke-3" />
+                  <p className="text-md font-semibold tracking-tight">
+                    {t('accessStatus.status')}
+                  </p>
+                </div>
+                <div className="flex flex-nowrap items-center justify-end gap-2">
+                  <p className={cn('font-semibold', accessStatusColor)}>
+                    {t(`accessStatus.names.${accessStatus}`)}
+                  </p>
+                  <Icon
+                    className={cn(
+                      'size-4',
+                      accessStatusIconColors[accessStatus],
+                    )}
                   />
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      {t('violations.title')}
-                    </CardTitle>
-                    <CardDescription>
-                      {t('violations.description')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex flex-nowrap items-center gap-2">
-                        <ShieldIcon className="text-muted-foreground size-4 stroke-3" />
-                        <p className="text-md font-semibold tracking-tight">
-                          {t('violations.status')}
-                        </p>
-                      </div>
-                      <div className="flex flex-nowrap items-center gap-2">
-                        <p className={cn('text-primary font-semibold')}>
-                          {t('violations.noViolations')}
-                        </p>
-                        <ShieldCheckIcon className="size-4 text-green-500" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      {t('cosmetics.title')}
-                    </CardTitle>
-                    <CardDescription>
-                      {t('cosmetics.description')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex flex-nowrap items-center gap-2">
-                          <PaletteIcon className="text-muted-foreground size-4 stroke-3" />
-                          <p className="text-md font-semibold tracking-tight">
-                            {t('cosmetics.nameColor.title')}
-                          </p>
-                        </div>
-                        <div className="flex w-1/3 items-center justify-end gap-2">
-                          <NameColorOptionSelect
-                            selectedProfile={selectedProfile}
-                            cosmeticOptions={cosmeticOptions}
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-4 flex items-center justify-between gap-2">
-                        <div className="flex flex-nowrap items-center gap-2">
-                          <CannabisIcon className="text-muted-foreground size-4 stroke-3" />
-                          <p className="text-md font-semibold tracking-tight">
-                            {t('cosmetics.glyth.title')}
-                          </p>
-                        </div>
-                        <div className="flex w-1/3 items-center justify-end gap-2">
-                          <NameGlythOptionSelect
-                            selectedProfile={selectedProfile}
-                            cosmeticOptions={cosmeticOptions.name}
-                          />
-                        </div>
-                      </div>
-                      <div className="text-muted-foreground mt-4 flex min-h-20 flex-1 flex-col items-center justify-center gap-2">
-                        <p className="text-center text-sm">
-                          {t('cosmetics.wantToStandOut')}
-                          <br />
-                          <Button variant="link" asChild className="h-auto p-0">
-                            <Link
-                              href={{
-                                pathname: '/products',
-                                query: {
-                                  u: selectedProfile?.username,
-                                },
-                              }}
-                            >
-                              {t('cosmetics.buyInStore')}
-                            </Link>
-                          </Button>
-                        </p>
-                      </div>
-                      {/* <div className="grid w-full flex-1 grid-cols-2 gap-2 self-center lg:grid-cols-4">
-                    <div className="flex h-fit w-fit flex-col items-center justify-start gap-2 justify-self-center rounded-sm border px-4 py-2">
-                      <PaperclipIcon className="size-16" />
-                      <p className={cn('text-primary font-semibold')}>
-                        Бумажка 1
-                      </p>
-                    </div>
-                    <div className="flex h-fit w-fit flex-col items-center justify-start gap-2 justify-self-center rounded-sm border px-4 py-2">
-                      <PaperclipIcon className="size-16" />
-                      <p className={cn('text-primary font-semibold')}>
-                        Бумажка 2
-                      </p>
-                    </div>
-                    <div className="flex h-fit w-fit flex-col items-center justify-start gap-2 justify-self-center rounded-sm border px-4 py-2">
-                      <PaperclipIcon className="size-16" />
-                      <p className={cn('text-primary font-semibold')}>
-                        Бумажка 3
-                      </p>
-                    </div>
-                    <div className="flex h-fit w-fit flex-col items-center justify-start gap-2 justify-self-center rounded-sm border px-4 py-2">
-                      <PaperclipIcon className="size-16" />
-                      <p className={cn('text-primary font-semibold')}>
-                        Бумажка 4
-                      </p>
-                    </div>
-                  </div> */}
-                    </div>
-                  </CardContent>
-                </Card>
-                <ProfileResyncCard profileId={selectedProfile.id} />
-              </>
-            ) : (
-              <div className="flex flex-1 flex-col items-center justify-center gap-2">
-                <p className="text-muted-foreground text-center text-base">
-                  <RichText>
-                    {(tags) =>
-                      t.rich(
-                        freeAccess ? 'selectProfileFree' : 'selectProfile',
-                        {
-                          ...tags,
-                          obtainAccess: (chunks: React.ReactNode) => (
-                            <Button
-                              variant="link"
-                              asChild
-                              className="h-auto p-0"
-                            >
-                              <Link href="/obtain-access">{chunks}</Link>
-                            </Button>
-                          ),
+                </div>
+                {accessStatus !== 'active' && canObtainAccess && (
+                  <Button
+                    variant="outline"
+                    asChild
+                    size="sm"
+                    className="col-span-2 mt-2"
+                  >
+                    <Link
+                      href={{
+                        pathname: '/obtain-access',
+                        query: {
+                          u: selectedProfile.username,
+                          s: accessSeason?.id,
                         },
-                      )
-                    }
-                  </RichText>
-                </p>
+                      }}
+                    >
+                      {accessSeasonFree ? (
+                        <ZapIcon className="size-4" />
+                      ) : (
+                        <ShoppingBagIcon className="size-4" />
+                      )}
+                      {t(
+                        accessSeasonFree
+                          ? 'accessStatus.obtainFree'
+                          : 'accessStatus.obtain',
+                      )}
+                    </Link>
+                  </Button>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+            </CardContent>
+          </Card>
+          <Card className="px-6">
+            <ProfileSeasonStats
+              variant="summary"
+              profileId={selectedProfile.id}
+              username={selectedProfile.username}
+              locale={locale}
+            />
+          </Card>
+        </>
+      )}
+    </ProfileShell>
   )
 }

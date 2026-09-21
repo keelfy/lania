@@ -1,16 +1,22 @@
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { getProfileStats } from '@/lib/api-endpoints'
 import { formatPlaytime } from '@/lib/playtime'
 import { serverApiFetcher } from '@/lib/server'
 import { cn } from '@/lib/utils'
 import { getTranslations } from 'next-intl/server'
+import Link from 'next/link'
 
 type Props = React.ComponentProps<'section'> & {
   profileId: string
   // The name colors of the profile. The playtime bars are drawn in them.
   colors?: string[]
   locale: string
-}
+} & (
+    | { variant?: 'full'; username?: string }
+    // The summary only shows the total and links to the public profile, where the full list is.
+    | { variant: 'summary'; username: string }
+  )
 
 // The bar is cut into blocks, like the experience bar in the game.
 const BLOCKS_MASK =
@@ -45,6 +51,8 @@ export default async function ProfileSeasonStats({
   profileId,
   colors = [],
   locale,
+  variant = 'full',
+  username,
   className,
   ...props
 }: Props) {
@@ -76,6 +84,41 @@ export default async function ProfileSeasonStats({
 
   const longest = Math.max(...(stats?.seasons.map((s) => s.playtime) ?? [0]))
   const total = playtimeText(stats?.totalPlaytime ?? 0)
+
+  if (variant === 'summary') {
+    return (
+      <section
+        className={cn('flex items-center justify-between gap-4', className)}
+        {...props}
+      >
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold tracking-tight">
+            {t('summaryTitle')}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {!stats ? (
+              t('loadError')
+            ) : stats.seasons.length === 0 ? (
+              t('empty')
+            ) : (
+              <>
+                {t('total')}&nbsp;
+                <span className="text-foreground font-semibold tabular-nums">
+                  {total.value}
+                </span>
+                &nbsp;{total.unit}
+              </>
+            )}
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm" className="shrink-0">
+          <Link href={`/${locale}/community/${username}`}>
+            {t('viewPublic')}
+          </Link>
+        </Button>
+      </section>
+    )
+  }
 
   return (
     <section className={cn('flex flex-col gap-2', className)} {...props}>

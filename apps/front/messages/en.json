@@ -205,9 +205,6 @@
       "obtainFree": "Get access"
     },
     "violations": {
-      "title": "Violations",
-      "description": "List of violations marked by moderation on the servers",
-      "status": "Status",
       "noViolations": "No violations"
     },
     "cosmetics": {
@@ -230,6 +227,10 @@
       },
       "wantToStandOut": "Do you want your game profile to stand out?",
       "buyInStore": "buy cosmetics in the store"
+    },
+    "nav": {
+      "overview": "Overview",
+      "settings": "Settings"
     }
   },
   "profileResync": {
@@ -302,7 +303,9 @@
         "running": "Running now",
         "since": "Since {date}",
         "empty": "This player has not spent time on the servers yet.",
-        "loadError": "Could not load the statistics"
+        "loadError": "Could not load the statistics",
+        "summaryTitle": "Time on the server",
+        "viewPublic": "Public profile"
       }
     },
     "sort": {

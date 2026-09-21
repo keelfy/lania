@@ -18,15 +18,15 @@ import { toast } from 'sonner'
 
 type Props = {
   profileId: string
-  // Admins can resync any profile, and there is no cooldown for them.
   asAdmin?: boolean
 }
 
-export default function ProfileResyncCard({ profileId, asAdmin }: Props) {
+// Runs the resync. Admins can resync any profile, and there is no cooldown for them.
+function useResync({ profileId, asAdmin }: Props) {
   const t = useTranslations('profileResync')
   const [isPending, startTransition] = React.useTransition()
 
-  const handleResync = () => {
+  const resync = () => {
     startTransition(async () => {
       try {
         await (asAdmin ? resyncProfileAsAdmin : resyncProfile)(
@@ -40,6 +40,32 @@ export default function ProfileResyncCard({ profileId, asAdmin }: Props) {
     })
   }
 
+  return { resync, isPending }
+}
+
+// A small button for a place where the card is too big.
+export function ProfileResyncButton(props: Props) {
+  const t = useTranslations('profileResync')
+  const { resync, isPending } = useResync(props)
+
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      title={t('description')}
+      aria-label={t('button')}
+      onClick={resync}
+      disabled={isPending}
+    >
+      <RefreshCwIcon className={isPending ? 'animate-spin' : undefined} />
+    </Button>
+  )
+}
+
+export default function ProfileResyncCard(props: Props) {
+  const t = useTranslations('profileResync')
+  const { resync, isPending } = useResync(props)
+
   return (
     <Card>
       <CardHeader>
@@ -50,7 +76,7 @@ export default function ProfileResyncCard({ profileId, asAdmin }: Props) {
         <Button
           variant="outline"
           className="w-full sm:w-fit"
-          onClick={handleResync}
+          onClick={resync}
           disabled={isPending}
         >
           <RefreshCwIcon className={isPending ? 'animate-spin' : undefined} />
