@@ -26,10 +26,14 @@ type Props = {
     locale: string
     username: string
   }>
+  searchParams: Promise<{
+    // The season the cosmetics, the last seen date and the online status are of, the primary one when missing.
+    season?: string
+  }>
 }
 
-function getProfile(username: string) {
-  return getProfileDetailsByUsername(serverApiFetcher, username).catch(
+function getProfile(username: string, season?: string) {
+  return getProfileDetailsByUsername(serverApiFetcher, username, season).catch(
     (err) => {
       console.error(err)
       return undefined
@@ -56,11 +60,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function CommunityProfilePage({ params }: Props) {
+export default async function CommunityProfilePage({
+  params,
+  searchParams,
+}: Props) {
   const { locale, username } = await params
+  const { season } = await searchParams
   const t = await getTranslations({ locale, namespace: 'community' })
   const tCard = await getTranslations({ locale, namespace: 'playerCard' })
-  const profile = await getProfile(decodeURIComponent(username))
+  const profile = await getProfile(decodeURIComponent(username), season)
   if (!profile) return notFound()
 
   const nameColors = profile.cosmetics.name.colors.colors
@@ -71,7 +79,9 @@ export default async function CommunityProfilePage({ params }: Props) {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href={`/${locale}/community`}>
+            <BreadcrumbLink
+              href={`/${locale}/community${season ? `?season=${season}` : ''}`}
+            >
               {t('title')}
             </BreadcrumbLink>
           </BreadcrumbItem>

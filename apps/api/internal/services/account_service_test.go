@@ -73,17 +73,11 @@ func (p *accountProfiles) GetProfilesByOwnerUserID(context.Context, uuid.UUID) (
 
 type accountCosmetics struct {
 	ProfileCosmeticsService
-	selectedColors  []uuid.UUID
-	clearedPrefixes []domain.ProfilePrefixType
+	prunedProfiles []uuid.UUID
 }
 
-func (c *accountCosmetics) SelectProfileNameColor(_ context.Context, _ sql.Queries, _ uuid.UUID, nameColorID uuid.UUID) error {
-	c.selectedColors = append(c.selectedColors, nameColorID)
-	return nil
-}
-
-func (c *accountCosmetics) ClearProfilePrefixByType(_ context.Context, _ sql.Queries, _ uuid.UUID, prefixType domain.ProfilePrefixType) error {
-	c.clearedPrefixes = append(c.clearedPrefixes, prefixType)
+func (c *accountCosmetics) PruneProfileSelections(_ context.Context, _ sql.Queries, profileID uuid.UUID) error {
+	c.prunedProfiles = append(c.prunedProfiles, profileID)
 	return nil
 }
 
@@ -158,13 +152,8 @@ func TestDeleteAccountReleasesProfilesAndDeletesIdentity(t *testing.T) {
 			t.Errorf("kept color %s, want the default color", kept)
 		}
 	}
-	for _, selected := range f.cosmetics.selectedColors {
-		if selected != defaultColorID {
-			t.Errorf("selected color %s, want the default color", selected)
-		}
-	}
-	if len(f.cosmetics.clearedPrefixes) != 4 {
-		t.Errorf("cleared %d prefixes, want both types of both profiles", len(f.cosmetics.clearedPrefixes))
+	if len(f.cosmetics.prunedProfiles) != 2 {
+		t.Errorf("reset the selection of %d profiles, want both", len(f.cosmetics.prunedProfiles))
 	}
 	if role, ok := f.queries.roles[staff.ID]; !ok || role != domain.RolePlayer {
 		t.Errorf("staff profile role is %q, want player", role)

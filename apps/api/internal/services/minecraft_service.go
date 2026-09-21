@@ -7,25 +7,26 @@ import (
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/clients"
 	"github.com/lania-smp/backend/internal/domain"
-	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/utils"
 )
 
 // errSeasonHasNoShell means the season has no shell address, so its server cannot be reached.
 var errSeasonHasNoShell = errors.New("season has no shell address")
 
+// ErrOnlineUnavailable means nobody can tell who is online in the season: it is over or it has no server.
+var ErrOnlineUnavailable = errors.New("online status is unavailable in the season")
+
 // MinecraftService reads and changes state of the season servers through their shell services.
 //
-// Online status, roles and chat prefixes belong to the player, not to a season. Online status is read from
-// every active server. A role and a prefix are written to every active server. A whitelist and playtime
-// belong to one season and use its own shell.
+// A role belongs to the player, not to a season, and is written to every active server. Online status, a chat
+// prefix, a whitelist and playtime belong to one season and use its own shell.
 type MinecraftService interface {
-	// GetOnlineStatusByMinecraftUUIDs marks a player online when the player is on at least one active server.
-	GetOnlineStatusByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
-	// ListOnlineMinecraftUUIDs returns players that are online on at least one active server.
-	ListOnlineMinecraftUUIDs(ctx context.Context) (uuid.UUIDs, error)
-	// SetPrefixByMinecraftUUID writes the prefix to every active server.
-	SetPrefixByMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, prefix string) error
+	// GetOnlineStatusInSeason marks a player online when the player is on the server of the season.
+	// It fails with ErrOnlineUnavailable when the season is over or has no server.
+	GetOnlineStatusInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
+	// ListOnlineInSeason returns players that are on the server of the season.
+	// It fails with ErrOnlineUnavailable when the season is over or has no server.
+	ListOnlineInSeason(ctx context.Context, seasonID uuid.UUID) (uuid.UUIDs, error)
 	// SetPlayerRoles writes the roles to every active server. Every server is tried, even when one fails.
 	SetPlayerRoles(ctx context.Context, roles map[uuid.UUID]domain.Role) error
 	// SetPrefixInSeason writes the prefix to the server of one season. It does nothing when the season has
@@ -93,78 +94,44 @@ func (s *minecraftService) activeShells(ctx context.Context) ([]clients.ShellAPI
 	return apis, nil
 }
 
-// readFromActiveShells runs read on every active shell. A shell that fails is skipped with a warning,
-// so one server down does not hide the players of the others. It fails only when every shell fails.
-func (s *minecraftService) readFromActiveShells(ctx context.Context, what string, read func(clients.ShellAPI) error) error {
-	apis, err := s.activeShells(ctx)
-	if err != nil {
-		return err
-	}
-
-	var failures []error
-	for _, api := range apis {
-		if err := read(api); err != nil {
-			logger.Warnf(ctx, "[SHELL] Failed to %s on one server: %v", what, err)
-			failures = append(failures, err)
-		}
-	}
-	if len(failures) == len(apis) {
-		return utils.NewInternalServerError("failed to "+what, errors.Join(failures...))
-	}
-	return nil
-}
-
-func (s *minecraftService) GetOnlineStatusByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error) {
-	online := make(map[uuid.UUID]bool, len(mcUUIDs))
-	err := s.readFromActiveShells(ctx, "get online status by minecraft uuids", func(api clients.ShellAPI) error {
-		status, err := api.GetOnlineStatus(ctx, mcUUIDs)
-		for mcUUID, isOnline := range status {
-			online[mcUUID] = online[mcUUID] || isOnline
-		}
-		return err
-	})
+// onlineShell returns the client of the shell that knows who is online in the season.
+func (s *minecraftService) onlineShell(ctx context.Context, seasonID uuid.UUID) (clients.ShellAPI, error) {
+	season, err := s.seasonService.GetSeasonByID(ctx, seasonID)
 	if err != nil {
 		return nil, err
 	}
-	return online, nil
+	if !season.IsActive || season.ShellAddress == nil {
+		return nil, ErrOnlineUnavailable
+	}
+	api, err := s.shellPool.Get(*season.ShellAddress)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to connect to season shell", err)
+	}
+	return api, nil
 }
 
-func (s *minecraftService) ListOnlineMinecraftUUIDs(ctx context.Context) (uuid.UUIDs, error) {
-	seen := make(map[uuid.UUID]struct{})
-	online := uuid.UUIDs{}
-	err := s.readFromActiveShells(ctx, "list online minecraft uuids", func(api clients.ShellAPI) error {
-		players, err := api.ListOnlinePlayers(ctx)
-		for _, mcUUID := range players {
-			if _, ok := seen[mcUUID]; !ok {
-				seen[mcUUID] = struct{}{}
-				online = append(online, mcUUID)
-			}
-		}
-		return err
-	})
+func (s *minecraftService) GetOnlineStatusInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error) {
+	api, err := s.onlineShell(ctx, seasonID)
 	if err != nil {
 		return nil, err
 	}
-	return online, nil
+	status, err := api.GetOnlineStatus(ctx, mcUUIDs)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get online status by minecraft uuids", err)
+	}
+	return status, nil
 }
 
-func (s *minecraftService) SetPrefixByMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, prefix string) error {
-	apis, err := s.activeShells(ctx)
+func (s *minecraftService) ListOnlineInSeason(ctx context.Context, seasonID uuid.UUID) (uuid.UUIDs, error) {
+	api, err := s.onlineShell(ctx, seasonID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	// Every server is tried, so one server down does not keep the others on the old prefix.
-	var failures []error
-	for _, api := range apis {
-		if err := api.SetPlayerPrefix(ctx, mcUUID, prefix); err != nil {
-			failures = append(failures, err)
-		}
+	online, err := api.ListOnlinePlayers(ctx)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to list online minecraft uuids", err)
 	}
-	if len(failures) > 0 {
-		return utils.NewInternalServerError("failed to set prefix by minecraft uuid", errors.Join(failures...))
-	}
-	return nil
+	return online, nil
 }
 
 // roleGroupsFor maps the roles to the role groups of the server. A staff role is a group on the server,

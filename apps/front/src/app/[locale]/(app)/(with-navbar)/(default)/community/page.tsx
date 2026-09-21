@@ -7,7 +7,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import { getProfiles } from '@/lib/api-endpoints'
+import { getProfiles, getSeasons } from '@/lib/api-endpoints'
+import { pickSeason } from '@/lib/seasons'
 import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
 import { communityHref, DEFAULT_COMMUNITY_SORT } from './community-href'
@@ -17,6 +18,7 @@ import CommunityStats from './community-stats'
 import CommunityTopPlayers from './community-top-players'
 import CommunityPlayerList from './community-player-list'
 import CommunitySearch from './community-search'
+import SelectCommunitySeason from './select-community-season'
 import SelectCommunitySort from './select-profile-sort'
 
 type Props = {
@@ -28,6 +30,8 @@ type Props = {
     q?: string
     online?: string
     staff?: string
+    // The season the page is shown for, the primary one when missing.
+    season?: string
     page?: string
   }>
 }
@@ -40,6 +44,7 @@ function GetPaginationItems({
   search,
   online,
   staff,
+  season,
 }: {
   page: number
   totalPages: number
@@ -48,10 +53,19 @@ function GetPaginationItems({
   search: string
   online: boolean
   staff: boolean
+  season?: string
 }) {
   const items = []
   const hrefFor = (target: number) =>
-    communityHref({ locale, sort, search, online, staff, page: target })
+    communityHref({
+      locale,
+      sort,
+      search,
+      online,
+      staff,
+      season,
+      page: target,
+    })
 
   if (page > 0) {
     items.push(
@@ -115,13 +129,23 @@ export default async function CommunityPage({ params, searchParams }: Props) {
     q: searchParam,
     online: onlineParam,
     staff: staffParam,
+    season: seasonParam,
     page: pageParam,
   } = await searchParams
   const t = await getTranslations({ locale, namespace: 'community' })
   const sort = sortParam ?? DEFAULT_COMMUNITY_SORT
   const search = searchParam?.trim() ?? ''
-  const online = onlineParam === 'true'
   const staff = staffParam === 'true'
+  const seasons = await getSeasons(serverApiFetcher).catch((err) => {
+    console.error(err)
+    return []
+  })
+  // Everything on the page is of one season: the requested one, or the primary one.
+  const contextSeason = pickSeason(seasons, seasonParam)
+  const season = contextSeason?.isPrimary ? undefined : contextSeason?.id
+  // Nobody is known to be online in a season without a running server.
+  const onlineAvailable = contextSeason?.onlineAvailable ?? true
+  const online = onlineParam === 'true' && onlineAvailable
   const page = Math.max(0, (parseInt(pageParam ?? '') || 1) - 1)
   const [col, dir] = sort.split('.')
   // The online ribbon and the season top are only shown on the untouched list, so they do not get in the way of searching.
@@ -136,6 +160,7 @@ export default async function CommunityPage({ params, searchParams }: Props) {
     undefined,
     online,
     staff,
+    contextSeason?.id,
   ).catch((err) => {
     console.error(err)
     return { content: [], page: 0, size: 0, totalPages: 0, totalElements: 0 }
@@ -143,17 +168,36 @@ export default async function CommunityPage({ params, searchParams }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-4xl font-extrabold tracking-tight">{t('title')}</h1>
-      <CommunityStats locale={locale} />
-      {isDefaultView && <CommunityOnlineNow locale={locale} />}
-      {isDefaultView && <CommunityTopPlayers locale={locale} />}
+      <CommunityStats locale={locale} season={season} />
+      {isDefaultView && onlineAvailable && (
+        <CommunityOnlineNow locale={locale} season={season} />
+      )}
+      {isDefaultView && <CommunityTopPlayers locale={locale} season={season} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <CommunityFilters
-          sort={sort}
-          search={search}
-          locale={locale}
-          online={online}
-          staff={staff}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          {seasons.length > 1 && (
+            <SelectCommunitySeason
+              seasons={[...seasons].sort(
+                (a, b) => Number(b.isPrimary) - Number(a.isPrimary),
+              )}
+              selectedSeasonId={contextSeason?.id}
+              sort={sort}
+              search={search}
+              locale={locale}
+              online={online}
+              staff={staff}
+            />
+          )}
+          <CommunityFilters
+            sort={sort}
+            search={search}
+            locale={locale}
+            online={online}
+            staff={staff}
+            season={season}
+            onlineAvailable={onlineAvailable}
+          />
+        </div>
         <div className="flex w-full items-center gap-2 sm:w-auto">
           <CommunitySearch
             defaultValue={search}
@@ -161,6 +205,7 @@ export default async function CommunityPage({ params, searchParams }: Props) {
             locale={locale}
             online={online}
             staff={staff}
+            season={season}
           />
           <SelectCommunitySort
             defaultValue={sort}
@@ -168,6 +213,7 @@ export default async function CommunityPage({ params, searchParams }: Props) {
             locale={locale}
             online={online}
             staff={staff}
+            season={season}
           />
         </div>
       </div>
@@ -175,6 +221,7 @@ export default async function CommunityPage({ params, searchParams }: Props) {
         <CommunityPlayerList
           profiles={paginatedProfiles.content}
           locale={locale}
+          season={season}
         />
       ) : (
         <p className="text-muted-foreground py-10 text-center">
@@ -192,6 +239,7 @@ export default async function CommunityPage({ params, searchParams }: Props) {
               search={search}
               online={online}
               staff={staff}
+              season={season}
             />
           </PaginationContent>
         </Pagination>

@@ -16,6 +16,8 @@ type Season struct {
 	PublicAddress *string
 	// ShellAddress is host:port of the shell service that reaches the season server.
 	ShellAddress *string
+	// HasServer tells that the API can reach the season server, so it knows who is online there.
+	HasServer bool
 	// PlanURL is the Plan web interface of the season server, shown to admins only.
 	PlanURL          *string
 	IsActive         bool

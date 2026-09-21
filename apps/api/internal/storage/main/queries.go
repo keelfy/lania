@@ -26,7 +26,8 @@ type Queries interface {
 
 	// Game Profile
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
-	FindPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, size, from int) ([]*domain.Profile, error)
+	// FindPublicProfiles sorts by last_seen_at in seasonID, or over every season when seasonID is uuid.Nil.
+	FindPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, seasonID uuid.UUID, size, from int) ([]*domain.Profile, error)
 	CountPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs) (int64, error)
 	// CountRecentProfiles returns the number of profiles created within the last days.
 	CountRecentProfiles(ctx context.Context, days int) (int64, error)
@@ -63,14 +64,16 @@ type Queries interface {
 	FindProfileNamePrefixOptionsByProfileIDAndType(ctx context.Context, profileID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) ([]*domain.ProfileNamePrefixOption, error)
 	FindProfileNameColorOptionByIDAndProfileID(ctx context.Context, optionID uuid.UUID, profileID uuid.UUID, seasonID *uuid.UUID) (*domain.ProfileNameColorOption, error)
 	FindProfileNamePrefixOptionByIDAndProfileIDAndType(ctx context.Context, optionID uuid.UUID, profileID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) (*domain.ProfileNamePrefixOption, error)
-	UpdateProfileNameColorByID(ctx context.Context, profileID uuid.UUID, nameColorID uuid.UUID) error
-	InsertProfilePrefix(ctx context.Context, arg InsertProfilePrefixParams) error
-	FindProfilePrefixesByProfileID(ctx context.Context, profileID uuid.UUID) ([]*domain.ProfilePrefix, error)
-	FindProfilePrefixesByProfileIDs(ctx context.Context, profileIDs uuid.UUIDs) ([]*domain.ProfilePrefix, error)
+	// FindProfilesSeasonCosmetics returns what every profile shows in the season, keyed by profile ID.
+	// A profile that picked no name color gets defaultNameColorID.
+	FindProfilesSeasonCosmetics(ctx context.Context, profileIDs uuid.UUIDs, seasonID, defaultNameColorID uuid.UUID) (map[uuid.UUID]*domain.ProfileCosmetics, error)
+	SetProfileSeasonNameColor(ctx context.Context, profileID, seasonID, nameColorID uuid.UUID) error
+	// SetProfileSeasonPrefix selects the name prefix of the type. A nil namePrefixID clears it.
+	SetProfileSeasonPrefix(ctx context.Context, profileID, seasonID uuid.UUID, prefixType domain.ProfilePrefixType, namePrefixID *uuid.UUID) error
+	// PruneProfileSeasonCosmetics resets every selection of the profile in every season that no unrevoked option covers.
+	PruneProfileSeasonCosmetics(ctx context.Context, profileID uuid.UUID) error
 	FindProfileNameColorOptionsByProfileOwnerUserID(ctx context.Context, ownerUserID uuid.UUID, seasonID *uuid.UUID) ([]*domain.ProfileNameColorOption, error)
 	FindProfileNamePrefixOptionsByProfileOwnerUserIDAndType(ctx context.Context, ownerUserID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) ([]*domain.ProfileNamePrefixOption, error)
-	UpdateProfileNamePrefixByProfileIDAndType(ctx context.Context, profileID uuid.UUID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType) error
-	DeleteProfilePrefixByProfileIDAndType(ctx context.Context, profileID uuid.UUID, prefixType domain.ProfilePrefixType) error
 
 	// Profile Access
 	InsertProfileAccess(ctx context.Context, arg InsertProfileAccessParams) error
@@ -93,7 +96,12 @@ type Queries interface {
 	SumProfilePlaytimesByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error)
 	// FindProfileSeasonStats returns the stats of the profile in every season it played in, the newest season first.
 	FindProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) ([]*domain.ProfileSeasonStats, error)
-	UpsertProfilePlaytime(ctx context.Context, mcUUID, seasonID uuid.UUID, playtime int64) error
+	// UpsertProfilePlaytime stores the playtime and moves the last seen date of the profile in the season forward.
+	// A nil lastSeenAt keeps the stored date.
+	UpsertProfilePlaytime(ctx context.Context, mcUUID, seasonID uuid.UUID, playtime int64, lastSeenAt *time.Time) error
+	// FindProfilesLastSeenInSeason returns when every profile was last seen in the season.
+	// Profiles with no known date are missing from the result.
+	FindProfilesLastSeenInSeason(ctx context.Context, mcUUIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]time.Time, error)
 	UpdateProfileSeenAt(ctx context.Context, mcUUID uuid.UUID, firstSeenAt, lastSeenAt *time.Time) error
 
 	// Product

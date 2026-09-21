@@ -9,6 +9,8 @@ export type Season = {
   publicAddress?: string
   isActive: boolean
   isPrimary: boolean
+  // Whether the site knows who is online in the season: it is running and has a server.
+  onlineAvailable: boolean
   preregistration: boolean
   freeRegistration: boolean
 }

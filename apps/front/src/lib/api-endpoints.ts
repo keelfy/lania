@@ -34,11 +34,21 @@ import {
 import { ApiFetcher } from './fetcher'
 import { Paginated, TokenPaginated } from '@/models/types'
 
+// Cosmetics belong to a season, so the endpoints that show or change them take the season.
+// The API falls back to the primary season without a seasonId.
+function seasonParams(seasonId?: string): URLSearchParams | undefined {
+  return seasonId ? new URLSearchParams({ seasonId }) : undefined
+}
+
 export function getUserProfiles(
   fetcher: ApiFetcher,
   userId: string = 'undefined',
+  seasonId?: string,
 ): Promise<Profile[]> {
-  return fetcher<Profile[]>(`/v1/users/${userId}/profiles`)
+  return fetcher<Profile[]>(
+    `/v1/users/${userId}/profiles`,
+    seasonParams(seasonId),
+  )
 }
 
 export function getProfiles(
@@ -50,6 +60,8 @@ export function getProfiles(
   size: number = 25,
   onlineOnly: boolean = false,
   staffOnly: boolean = false,
+  // The season the cosmetics, the last seen date and the online status are of.
+  seasonId?: string,
 ): Promise<Paginated<PublicProfile>> {
   const params = new URLSearchParams()
   params.set('column', col)
@@ -59,28 +71,39 @@ export function getProfiles(
   if (search) params.set('search', search)
   if (onlineOnly) params.set('online', 'true')
   if (staffOnly) params.set('staff', 'true')
+  if (seasonId) params.set('seasonId', seasonId)
   return fetcher<Paginated<PublicProfile>>('/v1/profiles', params)
 }
 
-// Playtime of the returned profiles is counted in the primary season only.
+// Playtime of the returned profiles is counted in the season.
 export function getTopPlaytimeProfiles(
   fetcher: ApiFetcher,
   limit: number = 10,
+  seasonId?: string,
 ): Promise<PublicProfile[]> {
   const params = new URLSearchParams()
   params.set('limit', limit.toString())
+  if (seasonId) params.set('seasonId', seasonId)
   return fetcher<PublicProfile[]>('/v1/profiles/top-playtime', params)
 }
 
-export function getProfilesStats(fetcher: ApiFetcher): Promise<ProfilesStats> {
-  return fetcher<ProfilesStats>('/v1/profiles/stats')
+// Online is the number of players on the server of the season, and is missing when that is unknown.
+export function getProfilesStats(
+  fetcher: ApiFetcher,
+  seasonId?: string,
+): Promise<ProfilesStats> {
+  return fetcher<ProfilesStats>('/v1/profiles/stats', seasonParams(seasonId))
 }
 
 export function getProfileCosmeticOptions(
   fetcher: ApiFetcher,
   id: string,
+  seasonId?: string,
 ): Promise<ProfileCosmeticOptions> {
-  return fetcher<ProfileCosmeticOptions>(`/v1/profiles/${id}/cosmetics/options`)
+  return fetcher<ProfileCosmeticOptions>(
+    `/v1/profiles/${id}/cosmetics/options`,
+    seasonParams(seasonId),
+  )
 }
 
 export function getBasket(fetcher: ApiFetcher): Promise<BasketItem[]> {
@@ -221,8 +244,9 @@ export function requestAccess(
 export function getProfileDetails(
   fetcher: ApiFetcher,
   id: string,
+  seasonId?: string,
 ): Promise<ProfileDetails> {
-  return fetcher<ProfileDetails>(`/v1/profiles/${id}`)
+  return fetcher<ProfileDetails>(`/v1/profiles/${id}`, seasonParams(seasonId))
 }
 
 // Playtime of the profile in every season it played in.
@@ -236,9 +260,11 @@ export function getProfileStats(
 export function getProfileDetailsByUsername(
   fetcher: ApiFetcher,
   username: string,
+  seasonId?: string,
 ): Promise<ProfileDetails> {
   return fetcher<ProfileDetails>(
     `/v1/profiles/by-username/${encodeURIComponent(username)}`,
+    seasonParams(seasonId),
   )
 }
 
@@ -256,11 +282,16 @@ export function updateProfileNameColor(
   fetcher: ApiFetcher,
   id: string,
   option: SelectCosmeticOptionReq,
+  seasonId?: string,
 ): Promise<void> {
-  return fetcher<void>(`/v1/profiles/${id}/cosmetics/name-color`, undefined, {
-    method: 'POST',
-    body: JSON.stringify(option),
-  })
+  return fetcher<void>(
+    `/v1/profiles/${id}/cosmetics/name-color`,
+    seasonParams(seasonId),
+    {
+      method: 'POST',
+      body: JSON.stringify(option),
+    },
+  )
 }
 
 export function updateProfileNamePrefix(
@@ -268,10 +299,11 @@ export function updateProfileNamePrefix(
   id: string,
   type: 'glyth' | 'special',
   option: SelectCosmeticOptionReq,
+  seasonId?: string,
 ): Promise<void> {
   return fetcher<void>(
     `/v1/profiles/${id}/cosmetics/name-prefix/${type}`,
-    undefined,
+    seasonParams(seasonId),
     {
       method: 'POST',
       body: JSON.stringify(option),

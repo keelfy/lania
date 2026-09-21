@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"slices"
 
 	"github.com/google/uuid"
@@ -278,7 +279,8 @@ func (s *adminGrantService) profileHasProduct(ctx context.Context, profile *doma
 	return false, utils.NewBadRequestError("product has an unknown category", nil)
 }
 
-// revoke marks the grant revoked and drops the selection of a name color or a name prefix that the profile can no longer use.
+// revoke marks the grant revoked and resets the selection of a name color or a name prefix that the profile can no longer use.
+// A season grant only affects that season. A permanent grant affects every season where no other option keeps the item.
 func (s *adminGrantService) revoke(ctx context.Context, queries sql.Queries, profile *domain.Profile, grant *domain.Grant) error {
 	revokedBy := utils.GetUserIDFromContextOrNil(ctx)
 
@@ -289,49 +291,12 @@ func (s *adminGrantService) revoke(ctx context.Context, queries sql.Queries, pro
 		if err := queries.RevokeProfileNameColorOption(ctx, profile.ID, grant.ID, revokedBy); err != nil {
 			return wrapRevokeError(err)
 		}
-		if profile.NameColorID != grant.ItemID {
-			return nil
-		}
-
-		primarySeasonID, err := s.seasonService.GetPrimarySeasonID(ctx)
-		if err != nil {
-			return err
-		}
-		remaining, err := queries.FindProfileNameColorOptionsByProfileID(ctx, profile.ID, &primarySeasonID)
-		if err != nil {
-			return utils.NewInternalServerError("failed to find profile name color options", err)
-		}
-		if slices.ContainsFunc(remaining, func(option *domain.ProfileNameColorOption) bool { return option.NameColorID == grant.ItemID }) {
-			return nil
-		}
-		return s.profileCosmeticsService.SelectProfileNameColor(ctx, queries, profile.ID, config.GetDefaultNameColorID())
+		return s.profileCosmeticsService.PruneProfileSelections(ctx, queries, profile.ID)
 	case domain.GrantTypeNamePrefix:
 		if err := queries.RevokeProfileNamePrefixOption(ctx, profile.ID, grant.ID, revokedBy); err != nil {
 			return wrapRevokeError(err)
 		}
-
-		selected, err := queries.FindProfilePrefixesByProfileID(ctx, profile.ID)
-		if err != nil {
-			return utils.NewInternalServerError("failed to find profile prefixes", err)
-		}
-		if !slices.ContainsFunc(selected, func(prefix *domain.ProfilePrefix) bool {
-			return prefix.Type == grant.PrefixType && prefix.NamePrefixID == grant.ItemID
-		}) {
-			return nil
-		}
-
-		primarySeasonID, err := s.seasonService.GetPrimarySeasonID(ctx)
-		if err != nil {
-			return err
-		}
-		remaining, err := queries.FindProfileNamePrefixOptionsByProfileIDAndType(ctx, profile.ID, grant.PrefixType, &primarySeasonID)
-		if err != nil {
-			return utils.NewInternalServerError("failed to find profile name prefix options", err)
-		}
-		if slices.ContainsFunc(remaining, func(option *domain.ProfileNamePrefixOption) bool { return option.NamePrefixID == grant.ItemID }) {
-			return nil
-		}
-		return s.profileCosmeticsService.ClearProfilePrefixByType(ctx, queries, profile.ID, grant.PrefixType)
+		return s.profileCosmeticsService.PruneProfileSelections(ctx, queries, profile.ID)
 	}
 	return utils.NewBadRequestError("unknown grant type", nil)
 }
@@ -346,7 +311,7 @@ func wrapRevokeError(err error) error {
 // updateGame makes the Minecraft server match the database after a revoke.
 func (s *adminGrantService) updateGame(ctx context.Context, profile *domain.Profile, grant *domain.Grant) error {
 	if grant.Type != domain.GrantTypeAccess {
-		return s.updatePrefix(ctx, profile.ID)
+		return s.updatePrefixes(ctx, profile, grant.SeasonID)
 	}
 
 	// The whitelist of a season is kept on the server of that season.
@@ -361,16 +326,26 @@ func (s *adminGrantService) updateGame(ctx context.Context, profile *domain.Prof
 	return s.minecraftService.RemoveFromWhitelist(ctx, *grant.SeasonID, profile)
 }
 
-// updatePrefix sends the chat prefix built from the selected name color and prefixes to the Minecraft server.
-func (s *adminGrantService) updatePrefix(ctx context.Context, profileID uuid.UUID) error {
-	profile, err := s.profileService.GetProfileByID(ctx, profileID)
+// updatePrefixes sends the chat prefix of the profile to the server of the season, or to the server of every
+// active season when seasonID is nil. Every server is tried, so one server down does not keep the others on the old prefix.
+func (s *adminGrantService) updatePrefixes(ctx context.Context, profile *domain.Profile, seasonID *uuid.UUID) error {
+	seasons, err := s.seasonService.GetSeasons(ctx)
 	if err != nil {
 		return err
 	}
 
-	formattedPrefix, err := s.profileCosmeticsService.GetProfileChatPrefix(ctx, profile)
-	if err != nil {
-		return err
+	var failures []error
+	for _, season := range seasons {
+		if !season.IsActive || season.ShellAddress == nil || (seasonID != nil && *seasonID != season.ID) {
+			continue
+		}
+		prefix, err := s.profileCosmeticsService.GetProfileChatPrefix(ctx, profile.ID, season.ID)
+		if err == nil {
+			err = s.minecraftService.SetPrefixInSeason(ctx, season.ID, profile.MinecraftUUID, prefix)
+		}
+		if err != nil {
+			failures = append(failures, err)
+		}
 	}
-	return s.minecraftService.SetPrefixByMinecraftUUID(ctx, profile.MinecraftUUID, formattedPrefix)
+	return errors.Join(failures...)
 }

@@ -8,17 +8,25 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { CannabisIcon, PaletteIcon } from 'lucide-react'
+import { getSelectableSeasons, pickSeason } from '@/lib/seasons'
+import { CalendarIcon, CannabisIcon, PaletteIcon } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { loadCosmeticOptions, loadProfilePage } from '../load-profile-page'
+import {
+  loadCosmeticOptions,
+  loadProfileInSeason,
+  loadProfilePage,
+} from '../load-profile-page'
 import NameColorOptionSelect from '../name-color-option-select'
 import NameGlythOptionSelect from '../name-glyth-option-select'
+import CosmeticsSeasonSelect from './cosmetics-season-select'
 
 type Props = {
   searchParams: Promise<{
     id: string | undefined
+    // The season the cosmetics are chosen for.
+    s: string | undefined
   }>
   params: Promise<{
     locale: string
@@ -30,12 +38,24 @@ export default async function ProfileSettingsPage({
   searchParams,
   params,
 }: Props) {
-  const { id } = await searchParams
+  const { id, s: seasonParam } = await searchParams
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'profiles' })
-  const { selectedProfile } = await loadProfilePage(id)
-  if (!selectedProfile) notFound()
-  const cosmeticOptions = await loadCosmeticOptions(selectedProfile.id)
+  const { seasons, selectedProfile: primaryProfile } = await loadProfilePage(id)
+  if (!primaryProfile) notFound()
+
+  // Every season keeps its own selection, and only a running season can be changed.
+  const cosmeticSeasons = getSelectableSeasons(seasons)
+  const cosmeticSeason = pickSeason(cosmeticSeasons, seasonParam)
+  const selectedProfile =
+    cosmeticSeason && !cosmeticSeason.isPrimary
+      ? ((await loadProfileInSeason(primaryProfile.id, cosmeticSeason.id)) ??
+        primaryProfile)
+      : primaryProfile
+  const cosmeticOptions = await loadCosmeticOptions(
+    selectedProfile.id,
+    cosmeticSeason?.id,
+  )
 
   return (
     <>
@@ -49,6 +69,28 @@ export default async function ProfileSettingsPage({
         </CardHeader>
         <CardContent>
           <div>
+            {cosmeticSeasons.length > 1 && (
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <div className="flex flex-nowrap items-center gap-2">
+                  <CalendarIcon className="text-muted-foreground size-4 stroke-3" />
+                  <div>
+                    <p className="text-md font-semibold tracking-tight">
+                      {t('cosmetics.season.title')}
+                    </p>
+                    <p className="text-muted-foreground text-sm">
+                      {t('cosmetics.season.description')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex w-1/3 items-center justify-end gap-2">
+                  <CosmeticsSeasonSelect
+                    seasons={cosmeticSeasons}
+                    selectedSeasonId={cosmeticSeason?.id}
+                    profileId={selectedProfile.id}
+                  />
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-nowrap items-center gap-2">
                 <PaletteIcon className="text-muted-foreground size-4 stroke-3" />
@@ -60,6 +102,7 @@ export default async function ProfileSettingsPage({
                 <NameColorOptionSelect
                   selectedProfile={selectedProfile}
                   cosmeticOptions={cosmeticOptions}
+                  seasonId={cosmeticSeason?.id}
                 />
               </div>
             </div>
@@ -74,6 +117,7 @@ export default async function ProfileSettingsPage({
                 <NameGlythOptionSelect
                   selectedProfile={selectedProfile}
                   cosmeticOptions={cosmeticOptions.name}
+                  seasonId={cosmeticSeason?.id}
                 />
               </div>
             </div>

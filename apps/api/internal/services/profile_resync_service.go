@@ -101,7 +101,6 @@ func (s *profileResyncService) ResyncProfile(ctx context.Context, profileID uuid
 	}
 
 	// What cannot be read is a failure of its part on every server, not a reason to skip the servers.
-	prefix, prefixErr := s.profileCosmeticsService.GetProfileChatPrefix(ctx, profile)
 	accessed, accessErr := s.accessedSeasons(ctx, profile)
 
 	report := &domain.ProfileResync{}
@@ -112,8 +111,9 @@ func (s *profileResyncService) ResyncProfile(ctx context.Context, profileID uuid
 		}
 
 		roleErr := s.minecraftService.SetPlayerRolesInSeason(ctx, season.ID, map[uuid.UUID]domain.Role{profile.MinecraftUUID: profile.Role})
-		cosmeticsErr := prefixErr
-		if prefixErr == nil {
+		// Every season keeps its own selection, so the prefix is built for each one.
+		prefix, cosmeticsErr := s.profileCosmeticsService.GetProfileChatPrefix(ctx, profile.ID, season.ID)
+		if cosmeticsErr == nil {
 			cosmeticsErr = s.minecraftService.SetPrefixInSeason(ctx, season.ID, profile.MinecraftUUID, prefix)
 		}
 

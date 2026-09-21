@@ -112,7 +112,6 @@ type Profile struct {
 	LastSeenAt        *time.Time
 	Role              Role
 	IsSlimModel       bool
-	NameColorID       uuid.UUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	UpdatedBy         *uuid.UUID
@@ -120,7 +119,6 @@ type Profile struct {
 	Accesses   []*ProfileAccess
 	Playtimes  []*ProfilePlaytime
 	Violations []*ProfileViolation
-	NameColor  *NameColor
 }
 
 type ProfileAccess struct {
@@ -180,15 +178,12 @@ const (
 	ProfilePrefixTypeSpecial ProfilePrefixType = "special"
 )
 
-type ProfilePrefix struct {
-	ProfileID    uuid.UUID
-	NamePrefixID uuid.UUID
-	Type         ProfilePrefixType
-	CreatedAt    time.Time
-	CreatedBy    *uuid.UUID
-	// relations
-	Profile    *Profile
-	NamePrefix *NamePrefix
+// ProfileCosmetics is what one profile shows in one season.
+type ProfileCosmetics struct {
+	// NameColor is the default name color when the player picked none.
+	NameColor *NameColor
+	Glyth     *NamePrefix
+	Special   *NamePrefix
 }
 
 type ProfileNameColorOption struct {

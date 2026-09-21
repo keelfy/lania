@@ -22,11 +22,14 @@ import { toast } from 'sonner'
 type Props = {
   selectedProfile: Profile
   cosmeticOptions: ProfileNameCosmeticOptions
+  // The season the glyth is changed in.
+  seasonId?: string
 }
 
 export default function NameGlythOptionSelect({
   selectedProfile,
   cosmeticOptions,
+  seasonId,
 }: Props) {
   const [optimisticNamePrefixId, setOptimisticNamePrefixId] =
     React.useOptimistic(
@@ -56,6 +59,7 @@ export default function NameGlythOptionSelect({
           {
             optionId: namePrefixId === 'none' ? undefined : option?.id,
           },
+          seasonId,
         )
         toast.success(
           t.rich('changed', {

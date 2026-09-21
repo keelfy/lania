@@ -7,9 +7,12 @@ import { serverApiFetcher } from '@/lib/server'
 import { cn } from '@/lib/utils'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
+import { communityProfileHref } from './community-href'
 
 type Props = {
   locale: string
+  // The season the playtime is counted in, missing for the primary one.
+  season?: string
 }
 
 // On phones the list is one column, so only the first places are shown to keep it short.
@@ -21,18 +24,20 @@ const PODIUM_COLORS = [
   'text-amber-700', // bronze
 ]
 
-export default async function CommunityTopPlayers({ locale }: Props) {
+export default async function CommunityTopPlayers({ locale, season }: Props) {
   const t = await getTranslations({ locale, namespace: 'community.top' })
   const tPlaytime = await getTranslations({
     locale,
     namespace: 'playerCard.playtime',
   })
-  const profiles = await getTopPlaytimeProfiles(serverApiFetcher).catch(
-    (err) => {
-      console.error(err)
-      return []
-    },
-  )
+  const profiles = await getTopPlaytimeProfiles(
+    serverApiFetcher,
+    undefined,
+    season,
+  ).catch((err) => {
+    console.error(err)
+    return []
+  })
   if (profiles.length === 0) return null
 
   return (
@@ -47,7 +52,7 @@ export default async function CommunityTopPlayers({ locale }: Props) {
               className={cn(index >= PHONE_VISIBLE_PLACES && 'hidden sm:block')}
             >
               <Link
-                href={`/${locale}/community/${encodeURIComponent(profile.username)}`}
+                href={communityProfileHref(locale, profile.username, season)}
                 className="hover:bg-accent flex items-center gap-3 rounded-md border p-3 transition-colors"
               >
                 <span

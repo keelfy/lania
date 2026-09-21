@@ -9,6 +9,7 @@ import {
   PROFILE_STATUS_COLORS,
 } from '@/lib/profile-colors'
 import { PublicProfile } from '@/models/profile'
+import { communityProfileHref } from './community-href'
 import { ClockIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useTimeAgo } from 'next-timeago'
@@ -17,15 +18,20 @@ import Link from 'next/link'
 type Props = {
   profile: PublicProfile
   locale: string
+  season?: string
 }
 
-export default function CommunityPlayerItem({ profile, locale }: Props) {
+export default function CommunityPlayerItem({
+  profile,
+  locale,
+  season,
+}: Props) {
   const t = useTranslations('playerCard')
   const { TimeAgo } = useTimeAgo()
   const playtime = formatPlaytime(profile.playtime)
   return (
     <Link
-      href={`/${locale}/community/${encodeURIComponent(profile.username)}`}
+      href={communityProfileHref(locale, profile.username, season)}
       className="hover:bg-accent/50 hover:border-foreground/20 flex items-center gap-4 rounded-lg border p-4 transition-colors"
     >
       <div className="relative shrink-0">

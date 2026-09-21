@@ -14,8 +14,10 @@ import (
 
 type resyncMinecraft struct {
 	MinecraftService
-	roles     map[uuid.UUID]domain.Role
-	prefix    string
+	roles  map[uuid.UUID]domain.Role
+	prefix string
+	// prefixes holds the last prefix written per season.
+	prefixes  map[uuid.UUID]string
 	whitelist map[uuid.UUID]string
 	// roleWrites and prefixWrites count the writes per season.
 	roleWrites   map[uuid.UUID]int
@@ -33,6 +35,7 @@ func (m *resyncMinecraft) SetPlayerRolesInSeason(_ context.Context, seasonID uui
 
 func (m *resyncMinecraft) SetPrefixInSeason(_ context.Context, seasonID, _ uuid.UUID, prefix string) error {
 	m.prefix = prefix
+	m.prefixes[seasonID] = prefix
 	m.prefixWrites[seasonID]++
 	return m.prefixErr[seasonID]
 }
@@ -50,9 +53,14 @@ func (m *resyncMinecraft) RemoveFromWhitelist(_ context.Context, seasonID uuid.U
 type resyncCosmetics struct {
 	ProfileCosmeticsService
 	err error
+	// prefixes overrides the prefix of a season.
+	prefixes map[uuid.UUID]string
 }
 
-func (c *resyncCosmetics) GetProfileChatPrefix(context.Context, *domain.Profile) (string, error) {
+func (c *resyncCosmetics) GetProfileChatPrefix(_ context.Context, _, seasonID uuid.UUID) (string, error) {
+	if prefix, ok := c.prefixes[seasonID]; ok {
+		return prefix, c.err
+	}
 	return "<reset>[X]", c.err
 }
 
@@ -70,6 +78,7 @@ func newResyncMinecraft() *resyncMinecraft {
 		whitelist:    make(map[uuid.UUID]string),
 		roleWrites:   make(map[uuid.UUID]int),
 		prefixWrites: make(map[uuid.UUID]int),
+		prefixes:     make(map[uuid.UUID]string),
 	}
 }
 
@@ -175,6 +184,18 @@ func TestProfileResyncService(t *testing.T) {
 			if minecraft.prefixWrites[season.ID] != 0 {
 				t.Errorf("season %s got a prefix that could not be built", season.Name)
 			}
+		}
+	})
+
+	t.Run("every season gets the prefix of its own selection", func(t *testing.T) {
+		minecraft := newResyncMinecraft()
+		cosmetics := &resyncCosmetics{prefixes: map[uuid.UUID]string{withAccess.ID: "<reset>[A]", withoutAccess.ID: "<reset>[B]"}}
+		if _, err := newService(minecraft, cosmetics).ResyncProfile(ctx, profile.ID); err != nil {
+			t.Fatal(err)
+		}
+
+		if minecraft.prefixes[withAccess.ID] != "<reset>[A]" || minecraft.prefixes[withoutAccess.ID] != "<reset>[B]" {
+			t.Errorf("prefixes = %v, want one prefix per season", minecraft.prefixes)
 		}
 	})
 

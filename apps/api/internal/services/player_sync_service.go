@@ -115,10 +115,12 @@ func (s *playerSyncService) syncPlayers(ctx context.Context, seasonID uuid.UUID,
 }
 
 func syncPlayer(ctx context.Context, queries sql.Queries, seasonID, mcUUID uuid.UUID, playtime *domain.Playtime) error {
-	if err := queries.UpsertProfilePlaytime(ctx, mcUUID, seasonID, playtime.TotalPlaytime); err != nil {
+	lastSeenAt := millisToTime(playtime.LastSessionEnd)
+	if err := queries.UpsertProfilePlaytime(ctx, mcUUID, seasonID, playtime.TotalPlaytime, lastSeenAt); err != nil {
 		return err
 	}
-	return queries.UpdateProfileSeenAt(ctx, mcUUID, millisToTime(playtime.FirstSessionStart), millisToTime(playtime.LastSessionEnd))
+	// The profile keeps the latest date over every season for the admin panel, the public pages read the season one.
+	return queries.UpdateProfileSeenAt(ctx, mcUUID, millisToTime(playtime.FirstSessionStart), lastSeenAt)
 }
 
 func millisToTime(millis *int64) *time.Time {

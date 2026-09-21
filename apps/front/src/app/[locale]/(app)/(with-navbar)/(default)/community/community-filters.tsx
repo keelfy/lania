@@ -11,6 +11,8 @@ type Props = Filters & {
   sort: string
   search: string
   locale: string
+  // The online filter is hidden for a season that has no running server.
+  onlineAvailable: boolean
 }
 
 export default function CommunityFilters({
@@ -19,6 +21,8 @@ export default function CommunityFilters({
   locale,
   online,
   staff,
+  season,
+  onlineAvailable,
 }: Props) {
   const t = useTranslations('community.filters')
   const router = useRouter()
@@ -27,23 +31,33 @@ export default function CommunityFilters({
   const toggle = (filters: Filters) => {
     startTransition(() => {
       router.push(
-        communityHref({ locale, sort, search, online, staff, ...filters }),
+        communityHref({
+          locale,
+          sort,
+          search,
+          online,
+          staff,
+          season,
+          ...filters,
+        }),
       )
     })
   }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button
-        variant={online ? 'default' : 'outline'}
-        size="sm"
-        aria-pressed={!!online}
-        disabled={isPending}
-        onClick={() => toggle({ online: !online })}
-      >
-        <RadioIcon className="size-4" />
-        {t('online')}
-      </Button>
+      {onlineAvailable && (
+        <Button
+          variant={online ? 'default' : 'outline'}
+          size="sm"
+          aria-pressed={!!online}
+          disabled={isPending}
+          onClick={() => toggle({ online: !online })}
+        >
+          <RadioIcon className="size-4" />
+          {t('online')}
+        </Button>
+      )}
       <Button
         variant={staff ? 'default' : 'outline'}
         size="sm"

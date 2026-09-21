@@ -3,7 +3,6 @@ package sql
 import (
 	"context"
 	stdsql "database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -14,8 +13,6 @@ import (
 
 func scanProfileRow(row *stdsql.Row) (*domain.Profile, error) {
 	var profile domain.Profile
-	var nameColor domain.NameColor
-	var colors json.RawMessage
 	err := row.Scan(
 		&profile.ID,
 		&profile.MinecraftUUID,
@@ -28,29 +25,16 @@ func scanProfileRow(row *stdsql.Row) (*domain.Profile, error) {
 		&profile.CreatedAt,
 		&profile.UpdatedAt,
 		&profile.UpdatedBy,
-		&profile.NameColorID,
-		&colors,
 	)
 	if err != nil {
 		return nil, err
 	}
-
-	profile.NameColor = &nameColor
-	metadata := domain.NameColorMetadata{}
-	err = json.Unmarshal(colors, &metadata)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal name color metadata for profile %s: %w", profile.ID, err)
-	}
-	nameColor.ID = profile.NameColorID
-	nameColor.Metadata = metadata
-	return &profile, err
+	return &profile, nil
 }
 
 // scanProfileRows scans the profile columns followed by extra destinations for columns selected after them.
 func scanProfileRows(rows *stdsql.Rows, extra ...any) (*domain.Profile, error) {
 	var profile domain.Profile
-	var nameColor domain.NameColor
-	var colors json.RawMessage
 	err := rows.Scan(append([]any{
 		&profile.ID,
 		&profile.MinecraftUUID,
@@ -63,22 +47,11 @@ func scanProfileRows(rows *stdsql.Rows, extra ...any) (*domain.Profile, error) {
 		&profile.CreatedAt,
 		&profile.UpdatedAt,
 		&profile.UpdatedBy,
-		&profile.NameColorID,
-		&colors,
 	}, extra...)...)
 	if err != nil {
 		return nil, err
 	}
-
-	profile.NameColor = &nameColor
-	metadata := domain.NameColorMetadata{}
-	err = json.Unmarshal(colors, &metadata)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal name color metadata for profile %s: %w", profile.ID, err)
-	}
-	nameColor.ID = profile.NameColorID
-	nameColor.Metadata = metadata
-	return &profile, err
+	return &profile, nil
 }
 
 const getProfilesByOwnerUserID = `
@@ -93,11 +66,8 @@ SELECT
 	p.is_slim,
 	p.created_at,
 	p.updated_at,
-	p.updated_by,
-	p.name_color_id,
-	nc.colors AS name_colors
+	p.updated_by
 FROM profiles p
-LEFT JOIN name_colors nc ON p.name_color_id = nc.id
 WHERE owner_user_id = ? 
 ORDER BY created_at ASC
 `
@@ -156,11 +126,8 @@ SELECT
 	p.is_slim,
 	p.created_at,
 	p.updated_at,
-	p.updated_by,
-	p.name_color_id,
-	nc.colors AS name_colors
+	p.updated_by
 FROM profiles p
-LEFT JOIN name_colors nc ON p.name_color_id = nc.id
 %s
 %s
 ORDER BY %s
@@ -214,28 +181,39 @@ func getProfileSortDirection(direction string) string {
 	}
 }
 
-// profileOrderBy returns the join needed by the sort column and the ORDER BY expression.
+// Last seen is per season: the list shows the date in the season the visitor looks at.
+const profileSeasonLastSeenJoin = `
+LEFT JOIN profile_playtimes lspt ON lspt.mc_uuid = p.mc_uuid AND lspt.season_id = ?
+`
+
+// profileOrderBy returns the join needed by the sort column, the arguments of that join and the ORDER BY expression.
+// Last seen is sorted in seasonID, and by the latest date over every season when seasonID is uuid.Nil.
 // Profiles without a value are always listed last, and id keeps the order stable between pages.
-func profileOrderBy(sortCol, direction string) (join string, orderBy string) {
+func profileOrderBy(sortCol, direction string, seasonID uuid.UUID) (join string, joinArgs []any, orderBy string) {
 	dir := getProfileSortDirection(direction)
 	switch sortCol {
 	case "username":
-		return "", fmt.Sprintf("p.mc_username %s, p.id", dir)
+		return "", nil, fmt.Sprintf("p.mc_username %s, p.id", dir)
 	case "first_seen_at":
-		return "", fmt.Sprintf("p.first_seen_at IS NULL, p.first_seen_at %s, p.id", dir)
+		return "", nil, fmt.Sprintf("p.first_seen_at IS NULL, p.first_seen_at %s, p.id", dir)
 	case "last_seen_at":
-		return "", fmt.Sprintf("p.last_seen_at IS NULL, p.last_seen_at %s, p.id", dir)
+		if seasonID == uuid.Nil {
+			return "", nil, fmt.Sprintf("p.last_seen_at IS NULL, p.last_seen_at %s, p.id", dir)
+		}
+		return profileSeasonLastSeenJoin, []any{seasonID}, fmt.Sprintf("lspt.last_seen_at IS NULL, lspt.last_seen_at %s, p.id", dir)
 	case "playtime":
-		return profilePlaytimeJoin, fmt.Sprintf("COALESCE(pt.total_playtime, 0) %s, p.id", dir)
+		return profilePlaytimeJoin, nil, fmt.Sprintf("COALESCE(pt.total_playtime, 0) %s, p.id", dir)
 	default:
-		return "", fmt.Sprintf("p.created_at %s, p.id", dir)
+		return "", nil, fmt.Sprintf("p.created_at %s, p.id", dir)
 	}
 }
 
-func (q *queries) FindPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, size, from int) ([]*domain.Profile, error) {
-	join, orderBy := profileOrderBy(sortCol, direction)
-	where, args := profileWhereClause(search, only)
+func (q *queries) FindPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, seasonID uuid.UUID, size, from int) ([]*domain.Profile, error) {
+	join, joinArgs, orderBy := profileOrderBy(sortCol, direction, seasonID)
+	where, whereArgs := profileWhereClause(search, only)
 	query := fmt.Sprintf(findPublicProfiles, join, where, orderBy)
+	// The join comes before the WHERE clause in the query.
+	args := append(joinArgs, whereArgs...)
 	args = append(args, size, from)
 	rows, err := q.x.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -267,12 +245,9 @@ SELECT
 	p.created_at,
 	p.updated_at,
 	p.updated_by,
-	p.name_color_id,
-	nc.colors AS name_colors,
 	pt.playtime
 FROM profile_playtimes pt
 JOIN profiles p ON p.mc_uuid = pt.mc_uuid
-LEFT JOIN name_colors nc ON p.name_color_id = nc.id
 WHERE pt.season_id = ? AND pt.playtime > 0
 ORDER BY pt.playtime DESC, p.id
 LIMIT ?
@@ -308,12 +283,10 @@ INSERT INTO profiles (
 	owner_user_id,
 	role,
 	is_slim,
-	name_color_id,
 	created_at,
 	updated_at,
 	updated_by
 ) VALUES (
-	?,
 	?,
 	?,
 	?,
@@ -328,7 +301,6 @@ INSERT INTO profiles (
   mc_username = VALUES(mc_username),
 	owner_user_id = COALESCE(owner_user_id, VALUES(owner_user_id)),
 	is_slim = VALUES(is_slim),
-	name_color_id = VALUES(name_color_id),
 	updated_at = NOW(),
 	updated_by = VALUES(updated_by);
 `
@@ -340,7 +312,6 @@ type InsertProfileParams struct {
 	OwnerUserID       *uuid.UUID
 	Role              string
 	IsSlim            bool
-	NameColorID       uuid.UUID
 	UpdatedBy         uuid.UUID
 }
 
@@ -352,7 +323,6 @@ func (q *queries) InsertProfile(ctx context.Context, arg InsertProfileParams) er
 		arg.OwnerUserID,
 		arg.Role,
 		arg.IsSlim,
-		arg.NameColorID,
 		arg.UpdatedBy,
 	)
 	return err
@@ -400,11 +370,8 @@ SELECT
 	p.is_slim,
 	p.created_at,
 	p.updated_at,
-	p.updated_by,
-	p.name_color_id,
-	nc.colors AS name_colors
+	p.updated_by
 FROM profiles p
-LEFT JOIN name_colors nc ON p.name_color_id = nc.id
 WHERE p.id = ?
 `
 
@@ -426,11 +393,8 @@ SELECT
 	p.is_slim,
 	p.created_at,
 	p.updated_at,
-	p.updated_by,
-	p.name_color_id,
-	nc.colors AS name_colors
+	p.updated_by
 FROM profiles p
-LEFT JOIN name_colors nc ON p.name_color_id = nc.id
 WHERE p.mc_uuid = ?
 `
 

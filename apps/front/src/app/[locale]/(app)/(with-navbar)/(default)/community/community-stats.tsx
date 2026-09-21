@@ -4,14 +4,18 @@ import { getTranslations } from 'next-intl/server'
 
 type Props = {
   locale: string
+  // The season the online count is of, missing for the primary one.
+  season?: string
 }
 
-export default async function CommunityStats({ locale }: Props) {
+export default async function CommunityStats({ locale, season }: Props) {
   const t = await getTranslations({ locale, namespace: 'community.stats' })
-  const stats = await getProfilesStats(serverApiFetcher).catch((err) => {
-    console.error(err)
-    return null
-  })
+  const stats = await getProfilesStats(serverApiFetcher, season).catch(
+    (err) => {
+      console.error(err)
+      return null
+    },
+  )
   if (!stats) return null
 
   const items = [

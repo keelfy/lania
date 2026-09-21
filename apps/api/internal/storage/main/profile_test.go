@@ -19,12 +19,16 @@ func TestProfileOrderBy(t *testing.T) {
 		{"unknown direction", "created_at", "sideways", false, "p.created_at ASC, p.id"},
 		{"username", "username", "desc", false, "p.mc_username DESC, p.id"},
 		{"first seen", "first_seen_at", "asc", false, "p.first_seen_at IS NULL, p.first_seen_at ASC, p.id"},
-		{"last seen", "last_seen_at", "DESC", false, "p.last_seen_at IS NULL, p.last_seen_at DESC, p.id"},
+		{"last seen", "last_seen_at", "DESC", true, "lspt.last_seen_at IS NULL, lspt.last_seen_at DESC, p.id"},
 		{"playtime", "playtime", "desc", true, "COALESCE(pt.total_playtime, 0) DESC, p.id"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			join, got := profileOrderBy(tt.col, tt.dir)
+			seasonID := uuid.New()
+			join, joinArgs, got := profileOrderBy(tt.col, tt.dir, seasonID)
+			if tt.col == "last_seen_at" && (len(joinArgs) != 1 || joinArgs[0] != seasonID) {
+				t.Errorf("joinArgs = %v, want the season", joinArgs)
+			}
 			if got != tt.want {
 				t.Errorf("orderBy = %q, want %q", got, tt.want)
 			}
@@ -32,6 +36,13 @@ func TestProfileOrderBy(t *testing.T) {
 				t.Errorf("join = %q, wantJoin %v", join, tt.wantJoin)
 			}
 		})
+	}
+}
+
+func TestProfileOrderByLastSeenOverEverySeason(t *testing.T) {
+	join, joinArgs, got := profileOrderBy("last_seen_at", "desc", uuid.Nil)
+	if join != "" || len(joinArgs) != 0 || got != "p.last_seen_at IS NULL, p.last_seen_at DESC, p.id" {
+		t.Errorf("join = %q %v, orderBy = %q, want the profile date without a join", join, joinArgs, got)
 	}
 }
 

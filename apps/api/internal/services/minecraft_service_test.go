@@ -83,67 +83,51 @@ func season(address string, active bool) *domain.Season {
 	return season
 }
 
-func TestMinecraftService_OnlineIsUnionOfActiveServers(t *testing.T) {
-	first, second := uuid.New(), uuid.New()
+func TestMinecraftService_OnlineReadsOnlyTheServerOfTheSeason(t *testing.T) {
+	first, second, other := uuid.New(), uuid.New(), uuid.New()
 	pool := fakeShellPool{
 		"a:1": {online: uuid.UUIDs{first}},
-		"b:1": {online: uuid.UUIDs{first, second}},
-		"c:1": {online: uuid.UUIDs{uuid.New()}},
+		"b:1": {online: uuid.UUIDs{second}},
 	}
-	// The season with c:1 is not active, and the last season has no shell.
-	seasons := &fakeSeasons{seasons: []*domain.Season{season("a:1", true), season("b:1", true), season("c:1", false), season("", true)}}
-	service := NewMinecraftService(seasons, pool)
+	seasonA, seasonB := season("a:1", true), season("b:1", true)
+	service := NewMinecraftService(&fakeSeasons{seasons: []*domain.Season{seasonA, seasonB}}, pool)
 	ctx := context.Background()
 
-	online, err := service.ListOnlineMinecraftUUIDs(ctx)
-	if err != nil || len(online) != 2 {
-		t.Fatalf("online = %v %v, want 2 distinct players", online, err)
+	online, err := service.ListOnlineInSeason(ctx, seasonA.ID)
+	if err != nil || len(online) != 1 || online[0] != first {
+		t.Fatalf("online in season A = %v %v, want only the player of its server", online, err)
 	}
 
-	status, err := service.GetOnlineStatusByMinecraftUUIDs(ctx, uuid.UUIDs{first, second})
-	if err != nil || !status[first] || !status[second] {
-		t.Fatalf("status = %v %v, want both online", status, err)
+	status, err := service.GetOnlineStatusInSeason(ctx, seasonB.ID, uuid.UUIDs{first, second, other})
+	if err != nil || status[first] || !status[second] || status[other] {
+		t.Fatalf("status in season B = %v %v, want only the player of its server online", status, err)
 	}
 }
 
-func TestMinecraftService_OnlineSurvivesOneServerDown(t *testing.T) {
-	player := uuid.New()
-	pool := fakeShellPool{
-		"a:1": {err: errors.New("down")},
-		"b:1": {online: uuid.UUIDs{player}},
-	}
-	seasons := &fakeSeasons{seasons: []*domain.Season{season("a:1", true), season("b:1", true)}}
-	service := NewMinecraftService(seasons, pool)
+func TestMinecraftService_OnlineIsUnavailableWithoutRunningServer(t *testing.T) {
+	pool := fakeShellPool{"a:1": {online: uuid.UUIDs{uuid.New()}}, "c:1": {}}
+	ended, noShell := season("c:1", false), season("", true)
+	service := NewMinecraftService(&fakeSeasons{seasons: []*domain.Season{season("a:1", true), ended, noShell}}, pool)
+	ctx := context.Background()
 
-	online, err := service.ListOnlineMinecraftUUIDs(context.Background())
-	if err != nil || len(online) != 1 || online[0] != player {
-		t.Fatalf("online = %v %v, want the player of the working server", online, err)
-	}
-
-	pool["b:1"].err = errors.New("down")
-	if _, err := service.ListOnlineMinecraftUUIDs(context.Background()); err == nil {
-		t.Fatal("want an error when every server is down")
+	for name, seasonID := range map[string]uuid.UUID{"ended": ended.ID, "without shell": noShell.ID} {
+		if _, err := service.ListOnlineInSeason(ctx, seasonID); !errors.Is(err, ErrOnlineUnavailable) {
+			t.Errorf("list in a season %s: error = %v, want ErrOnlineUnavailable", name, err)
+		}
+		if _, err := service.GetOnlineStatusInSeason(ctx, seasonID, uuid.UUIDs{uuid.New()}); !errors.Is(err, ErrOnlineUnavailable) {
+			t.Errorf("status in a season %s: error = %v, want ErrOnlineUnavailable", name, err)
+		}
 	}
 }
 
-func TestMinecraftService_PrefixGoesToEveryActiveServer(t *testing.T) {
-	pool := fakeShellPool{"a:1": {}, "b:1": {}, "c:1": {}}
-	seasons := &fakeSeasons{seasons: []*domain.Season{season("a:1", true), season("b:1", true), season("c:1", false)}}
-	service := NewMinecraftService(seasons, pool)
+func TestMinecraftService_OnlineFailsWhenServerIsDown(t *testing.T) {
+	pool := fakeShellPool{"a:1": {err: errors.New("down")}}
+	active := season("a:1", true)
+	service := NewMinecraftService(&fakeSeasons{seasons: []*domain.Season{active}}, pool)
 
-	if err := service.SetPrefixByMinecraftUUID(context.Background(), uuid.New(), "[X]"); err != nil {
-		t.Fatal(err)
-	}
-	if len(pool["a:1"].prefixes) != 1 || len(pool["b:1"].prefixes) != 1 || len(pool["c:1"].prefixes) != 0 {
-		t.Fatalf("prefix calls a=%d b=%d c=%d, want 1 1 0", len(pool["a:1"].prefixes), len(pool["b:1"].prefixes), len(pool["c:1"].prefixes))
-	}
-
-	pool["a:1"].err = errors.New("down")
-	if err := service.SetPrefixByMinecraftUUID(context.Background(), uuid.New(), "[Y]"); err == nil {
-		t.Fatal("want an error when a server rejects the prefix")
-	}
-	if len(pool["b:1"].prefixes) != 2 {
-		t.Fatal("the other server must still get the prefix")
+	_, err := service.ListOnlineInSeason(context.Background(), active.ID)
+	if err == nil || errors.Is(err, ErrOnlineUnavailable) {
+		t.Fatalf("error = %v, want a failure that is not ErrOnlineUnavailable", err)
 	}
 }
 

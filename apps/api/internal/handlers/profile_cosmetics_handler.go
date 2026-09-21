@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"sync"
@@ -72,7 +73,7 @@ func (h *profileCosmeticsHandler) GetProfileCosmeticOptions(w http.ResponseWrite
 		return
 	}
 
-	seasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	seasonID, err := seasonIDFromRequest(r, h.seasonService)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
@@ -142,7 +143,7 @@ func (h *profileCosmeticsHandler) SelectProfileNameColor(w http.ResponseWriter, 
 		return
 	}
 
-	seasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	seasonID, err := activeSeasonIDFromRequest(r, h.seasonService)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
@@ -154,38 +155,11 @@ func (h *profileCosmeticsHandler) SelectProfileNameColor(w http.ResponseWriter, 
 		return
 	}
 
-	profilePrefixes, err := h.profileCosmeticsService.GetProfilePrefixes(ctx, profileID)
-	if err != nil {
-		utils.HttpError(ctx, w, err)
-		return
-	}
-
-	var glythPrefix *domain.NamePrefix
-	var specialPrefix *domain.NamePrefix
-
-	for _, prefix := range profilePrefixes {
-		switch prefix.Type {
-		case domain.ProfilePrefixTypeGlyth:
-			glythPrefix = prefix.NamePrefix
-		case domain.ProfilePrefixTypeSpecial:
-			specialPrefix = prefix.NamePrefix
-		}
-	}
-
-	formattedPrefix := h.profileCosmeticsService.GetProfileFullPrefix(ctx, nameColorOption.NameColor, glythPrefix, specialPrefix)
-
 	err = h.storage.BeginTx(ctx, func(queries sql.Queries) error {
-		err = h.profileCosmeticsService.SelectProfileNameColor(ctx, queries, profileID, nameColorOption.NameColorID)
-		if err != nil {
+		if err := h.profileCosmeticsService.SelectProfileNameColor(ctx, queries, profileID, seasonID, nameColorOption.NameColorID); err != nil {
 			return err
 		}
-
-		err = h.minecraftService.SetPrefixByMinecraftUUID(ctx, profile.MinecraftUUID, formattedPrefix)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return h.pushPrefix(ctx, queries, profile, seasonID)
 	})
 	if err != nil {
 		utils.HttpError(ctx, w, err)
@@ -234,14 +208,14 @@ func (h *profileCosmeticsHandler) SelectProfileNamePrefix(w http.ResponseWriter,
 		return
 	}
 
-	seasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	seasonID, err := activeSeasonIDFromRequest(r, h.seasonService)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
 	}
 
+	// A nil UUID clears the prefix of the type.
 	var namePrefixOption *domain.ProfileNamePrefixOption
-
 	if req.OptionID != uuid.Nil {
 		namePrefixOption, err = h.profileCosmeticsService.GetProfileNamePrefixOptionByIDAndProfileIDAndType(ctx, req.OptionID, profileID, prefixType, &seasonID)
 		if err != nil {
@@ -250,61 +224,16 @@ func (h *profileCosmeticsHandler) SelectProfileNamePrefix(w http.ResponseWriter,
 		}
 	}
 
-	profilePrefixes, err := h.profileCosmeticsService.GetProfilePrefixes(ctx, profileID)
-	if err != nil {
-		utils.HttpError(ctx, w, err)
-		return
-	}
-
-	var glythPrefix *domain.NamePrefix
-	var specialPrefix *domain.NamePrefix
-
-	for _, prefix := range profilePrefixes {
-		switch prefix.Type {
-		case domain.ProfilePrefixTypeGlyth:
-			glythPrefix = prefix.NamePrefix
-		case domain.ProfilePrefixTypeSpecial:
-			specialPrefix = prefix.NamePrefix
-		}
-	}
-
-	if namePrefixOption != nil {
-		switch prefixType {
-		case domain.ProfilePrefixTypeGlyth:
-			glythPrefix = namePrefixOption.NamePrefix
-		case domain.ProfilePrefixTypeSpecial:
-			specialPrefix = namePrefixOption.NamePrefix
-		}
-	} else {
-		switch prefixType {
-		case domain.ProfilePrefixTypeGlyth:
-			glythPrefix = nil
-		case domain.ProfilePrefixTypeSpecial:
-			specialPrefix = nil
-		}
-	}
-
-	formattedPrefix := h.profileCosmeticsService.GetProfileFullPrefix(ctx, profile.NameColor, glythPrefix, specialPrefix)
-
 	err = h.storage.BeginTx(ctx, func(queries sql.Queries) error {
 		if namePrefixOption != nil {
-			err = h.profileCosmeticsService.SelectProfileNamePrefix(ctx, queries, profileID, namePrefixOption.NamePrefixID, prefixType)
-			if err != nil {
-				return err
-			}
+			err = h.profileCosmeticsService.SelectProfileNamePrefix(ctx, queries, profileID, seasonID, namePrefixOption.NamePrefixID, prefixType)
 		} else {
-			err = h.profileCosmeticsService.ClearProfilePrefixByType(ctx, queries, profileID, prefixType)
-			if err != nil {
-				return err
-			}
+			err = h.profileCosmeticsService.ClearProfilePrefixByType(ctx, queries, profileID, seasonID, prefixType)
 		}
-
-		err = h.minecraftService.SetPrefixByMinecraftUUID(ctx, profile.MinecraftUUID, formattedPrefix)
 		if err != nil {
 			return err
 		}
-
-		return nil
+		return h.pushPrefix(ctx, queries, profile, seasonID)
 	})
 	if err != nil {
 		utils.HttpError(ctx, w, err)
@@ -312,4 +241,13 @@ func (h *profileCosmeticsHandler) SelectProfileNamePrefix(w http.ResponseWriter,
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// pushPrefix builds the chat prefix from the selection in the season, as queries sees it, and sends it to the season server.
+func (h *profileCosmeticsHandler) pushPrefix(ctx context.Context, queries sql.Queries, profile *domain.Profile, seasonID uuid.UUID) error {
+	prefix, err := h.profileCosmeticsService.GetProfileChatPrefixWithQueries(ctx, queries, profile.ID, seasonID)
+	if err != nil {
+		return err
+	}
+	return h.minecraftService.SetPrefixInSeason(ctx, seasonID, profile.MinecraftUUID, prefix)
 }

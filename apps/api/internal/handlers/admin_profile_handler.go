@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/presenter"
 	"github.com/lania-smp/backend/internal/services"
@@ -45,7 +46,7 @@ func (h *adminProfileHandler) GetProfiles(w http.ResponseWriter, r *http.Request
 	}
 
 	filter := domain.ProfileFilter{Search: binders.BindSearch(r)}
-	profiles, count, err := h.profileService.GetPublicProfiles(ctx, filter, pagination, binders.BindSort(r))
+	profiles, count, err := h.profileService.GetPublicProfiles(ctx, filter, pagination, binders.BindSort(r), uuid.Nil)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return

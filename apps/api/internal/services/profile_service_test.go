@@ -21,9 +21,12 @@ type stubMinecraftService struct {
 	roles  map[uuid.UUID]domain.Role
 	err    error
 	calls  int
+	// onlineSeason is the season the last online list was asked for.
+	onlineSeason uuid.UUID
 }
 
-func (s *stubMinecraftService) ListOnlineMinecraftUUIDs(context.Context) (uuid.UUIDs, error) {
+func (s *stubMinecraftService) ListOnlineInSeason(_ context.Context, seasonID uuid.UUID) (uuid.UUIDs, error) {
+	s.onlineSeason = seasonID
 	return s.online, s.err
 }
 
@@ -72,22 +75,23 @@ func (q *stubRoleQueries) FindProfileRolesChangedSince(_ context.Context, since 
 
 func TestFilterMinecraftUUIDs(t *testing.T) {
 	first, second, third := uuid.New(), uuid.New(), uuid.New()
+	seasonID := uuid.New()
 	minecraft := &stubMinecraftService{online: uuid.UUIDs{first, second}}
 	queries := &stubRoleQueries{staff: uuid.UUIDs{second, third}}
 	service := &profileService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
 	ctx := context.Background()
 
-	only, err := service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{Search: "a"})
+	only, err := service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{Search: "a"}, seasonID)
 	if err != nil || only != nil {
 		t.Errorf("filter without server state = %v %v, want no restriction", only, err)
 	}
 
-	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true})
+	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true}, seasonID)
 	if err != nil || only == nil || len(*only) != 2 {
 		t.Errorf("online = %v %v, want 2 players", only, err)
 	}
 
-	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{StaffOnly: true})
+	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{StaffOnly: true}, seasonID)
 	if err != nil || only == nil || len(*only) != 2 {
 		t.Errorf("staff = %v %v, want 2 players", only, err)
 	}
@@ -95,22 +99,33 @@ func TestFilterMinecraftUUIDs(t *testing.T) {
 		t.Errorf("roles = %v, want %v", queries.lastRoles, want)
 	}
 
-	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true, StaffOnly: true})
+	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true, StaffOnly: true}, seasonID)
 	if err != nil || only == nil || len(*only) != 1 || (*only)[0] != second {
 		t.Errorf("online staff = %v %v, want only the second player", only, err)
 	}
 
 	queries.staff = uuid.UUIDs{third}
-	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true, StaffOnly: true})
+	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true, StaffOnly: true}, seasonID)
 	if err != nil || only == nil || len(*only) != 0 {
 		t.Errorf("no online staff = %v %v, want an empty restriction", only, err)
 	}
 
+	if minecraft.onlineSeason != seasonID {
+		t.Errorf("online players were asked for season %s, want %s", minecraft.onlineSeason, seasonID)
+	}
+
 	minecraft.err = errors.New("shell down")
-	if _, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true}); err == nil {
+	if _, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true}, seasonID); err == nil {
 		t.Error("online filter must fail when the server is unreachable")
 	}
-	if only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{StaffOnly: true}); err != nil || only == nil {
+
+	minecraft.err = ErrOnlineUnavailable
+	only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{OnlineOnly: true}, seasonID)
+	if err != nil || only == nil || len(*only) != 0 {
+		t.Errorf("online in a season without server = %v %v, want an empty restriction", only, err)
+	}
+	minecraft.err = errors.New("shell down")
+	if only, err = service.filterMinecraftUUIDs(ctx, domain.ProfileFilter{StaffOnly: true}, seasonID); err != nil || only == nil {
 		t.Errorf("staff = %v %v, want the staff filter to work without the server", only, err)
 	}
 }
@@ -185,7 +200,7 @@ func TestGetProfilesStats(t *testing.T) {
 		minecraft := &stubMinecraftService{online: uuid.UUIDs{first, second}}
 		service := &profileService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
 
-		stats, err := service.GetProfilesStats(ctx)
+		stats, err := service.GetProfilesStats(ctx, uuid.New())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -202,12 +217,23 @@ func TestGetProfilesStats(t *testing.T) {
 		minecraft := &stubMinecraftService{err: errors.New("shell down")}
 		service := &profileService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
 
-		stats, err := service.GetProfilesStats(ctx)
+		stats, err := service.GetProfilesStats(ctx, uuid.New())
 		if err != nil {
 			t.Fatalf("stats must not fail without the server: %v", err)
 		}
 		if stats.Total != 120 || stats.NewLastWeek != 7 || stats.Online != nil {
 			t.Errorf("stats = %+v, want totals without online", stats)
+		}
+	})
+
+	t.Run("online is left out in a season without a running server", func(t *testing.T) {
+		queries := &stubStatsQueries{total: 120, recent: 7, online: 1}
+		minecraft := &stubMinecraftService{err: ErrOnlineUnavailable}
+		service := &profileService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
+
+		stats, err := service.GetProfilesStats(ctx, uuid.New())
+		if err != nil || stats.Online != nil {
+			t.Errorf("stats = %+v %v, want totals without online", stats, err)
 		}
 	})
 }

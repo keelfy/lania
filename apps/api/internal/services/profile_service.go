@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	stdsql "database/sql"
+	"errors"
 	"slices"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/config"
@@ -17,9 +19,15 @@ import (
 type ProfileService interface {
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
 	// GetPublicProfiles returns a page of profiles and the total number of profiles matching the filter.
-	GetPublicProfiles(ctx context.Context, filter domain.ProfileFilter, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, int64, error)
-	// GetProfilesStats returns community totals. Online is left empty when the Minecraft server cannot be reached.
-	GetProfilesStats(ctx context.Context) (*domain.ProfilesStats, error)
+	// Online players and the last seen sort are those of the season. Sorting by last seen over every season
+	// needs uuid.Nil, and then there is no online filter.
+	GetPublicProfiles(ctx context.Context, filter domain.ProfileFilter, pagination *domain.Pagination, sort *domain.Sort, seasonID uuid.UUID) ([]*domain.Profile, int64, error)
+	// GetProfilesStats returns community totals. Online is those on the server of the season, and is left empty
+	// when the season has no running server or the server cannot be reached.
+	GetProfilesStats(ctx context.Context, seasonID uuid.UUID) (*domain.ProfilesStats, error)
+	// GetProfilesLastSeenInSeason returns when every profile was last seen in the season.
+	// Profiles with no known date are missing from the result.
+	GetProfilesLastSeenInSeason(ctx context.Context, mcUUIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]time.Time, error)
 	// GetTopPlaytimeProfiles returns players with the most playtime in the season, each with its Profile.
 	GetTopPlaytimeProfiles(ctx context.Context, seasonID uuid.UUID, limit int) ([]*domain.ProfilePlaytime, error)
 	GetOrCreateProfileByUsername(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) (*domain.Profile, error)
@@ -65,13 +73,13 @@ func (s *profileService) GetProfilesByOwnerUserID(ctx context.Context, ownerUser
 	return profiles, nil
 }
 
-func (s *profileService) GetPublicProfiles(ctx context.Context, filter domain.ProfileFilter, pagination *domain.Pagination, sort *domain.Sort) ([]*domain.Profile, int64, error) {
-	only, err := s.filterMinecraftUUIDs(ctx, filter)
+func (s *profileService) GetPublicProfiles(ctx context.Context, filter domain.ProfileFilter, pagination *domain.Pagination, sort *domain.Sort, seasonID uuid.UUID) ([]*domain.Profile, int64, error) {
+	only, err := s.filterMinecraftUUIDs(ctx, filter, seasonID)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	profiles, err := s.storage.Queries().FindPublicProfiles(ctx, filter.Search, only, sort.Column, sort.Direction, pagination.Size, pagination.From)
+	profiles, err := s.storage.Queries().FindPublicProfiles(ctx, filter.Search, only, sort.Column, sort.Direction, seasonID, pagination.Size, pagination.From)
 	if err == stdsql.ErrNoRows {
 		profiles = []*domain.Profile{}
 	} else if err != nil {
@@ -89,7 +97,7 @@ func (s *profileService) GetPublicProfiles(ctx context.Context, filter domain.Pr
 
 const newProfilesDays = 7
 
-func (s *profileService) GetProfilesStats(ctx context.Context) (*domain.ProfilesStats, error) {
+func (s *profileService) GetProfilesStats(ctx context.Context, seasonID uuid.UUID) (*domain.ProfilesStats, error) {
 	total, err := s.storage.Queries().CountPublicProfiles(ctx, "", nil)
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to count profiles", err)
@@ -101,9 +109,11 @@ func (s *profileService) GetProfilesStats(ctx context.Context) (*domain.Profiles
 
 	stats := &domain.ProfilesStats{Total: total, NewLastWeek: recent}
 	// Only players with a profile count, the same as in the online filter of the list.
-	onlineUUIDs, err := s.minecraftService.ListOnlineMinecraftUUIDs(ctx)
+	onlineUUIDs, err := s.minecraftService.ListOnlineInSeason(ctx, seasonID)
 	if err != nil {
-		logger.Warnf(ctx, "failed to list online players for stats: %v", err)
+		if !errors.Is(err, ErrOnlineUnavailable) {
+			logger.Warnf(ctx, "failed to list online players for stats: %v", err)
+		}
 		return stats, nil
 	}
 	online, err := s.storage.Queries().CountPublicProfiles(ctx, "", &onlineUUIDs)
@@ -125,8 +135,9 @@ func (s *profileService) GetTopPlaytimeProfiles(ctx context.Context, seasonID uu
 }
 
 // filterMinecraftUUIDs resolves filters that depend on the Minecraft server into the players they keep.
-// It returns nil when no such filter is set. Online players need the server, so that filter fails without it.
-func (s *profileService) filterMinecraftUUIDs(ctx context.Context, filter domain.ProfileFilter) (*uuid.UUIDs, error) {
+// It returns nil when no such filter is set. Online players need the server of the season, so that filter fails
+// when the server cannot be reached. A season with no running server has nobody online.
+func (s *profileService) filterMinecraftUUIDs(ctx context.Context, filter domain.ProfileFilter, seasonID uuid.UUID) (*uuid.UUIDs, error) {
 	var only *uuid.UUIDs
 	keep := func(mcUUIDs uuid.UUIDs) {
 		if only == nil {
@@ -143,8 +154,10 @@ func (s *profileService) filterMinecraftUUIDs(ctx context.Context, filter domain
 	}
 
 	if filter.OnlineOnly {
-		online, err := s.minecraftService.ListOnlineMinecraftUUIDs(ctx)
-		if err != nil {
+		online, err := s.minecraftService.ListOnlineInSeason(ctx, seasonID)
+		if errors.Is(err, ErrOnlineUnavailable) {
+			online = uuid.UUIDs{}
+		} else if err != nil {
 			return nil, err
 		}
 		keep(online)
@@ -157,6 +170,14 @@ func (s *profileService) filterMinecraftUUIDs(ctx context.Context, filter domain
 		keep(staff)
 	}
 	return only, nil
+}
+
+func (s *profileService) GetProfilesLastSeenInSeason(ctx context.Context, mcUUIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]time.Time, error) {
+	lastSeen, err := s.storage.Queries().FindProfilesLastSeenInSeason(ctx, mcUUIDs, seasonID)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to find profiles last seen in season", err)
+	}
+	return lastSeen, nil
 }
 
 func (s *profileService) GetProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error) {
@@ -289,7 +310,6 @@ func (s *profileService) createProfile(ctx context.Context, queries sql.Queries,
 		OwnerUserID:       &ownerUserID,
 		Role:              string(domain.RolePlayer),
 		IsSlim:            false,
-		NameColorID:       config.GetDefaultNameColorID(),
 		UpdatedBy:         authUserID,
 	})
 	if err != nil {

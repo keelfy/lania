@@ -128,20 +128,62 @@ func (q *queries) FindProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) 
 // Profiles unknown to the API are skipped, so players outside of the API never break the sync.
 // updated_at goes first because MySQL applies assignments left to right.
 // Columns are qualified, because profiles has updated_at too and the SELECT makes a bare name ambiguous.
+// last_seen_at never moves back, and a NULL date keeps the stored one.
 const upsertProfilePlaytime = `
-INSERT INTO profile_playtimes (mc_uuid, season_id, playtime, updated_at)
-SELECT mc_uuid, ?, ?, now()
+INSERT INTO profile_playtimes (mc_uuid, season_id, playtime, updated_at, last_seen_at)
+SELECT mc_uuid, ?, ?, now(), ?
 FROM profiles
 WHERE mc_uuid = ?
 ON DUPLICATE KEY UPDATE
 	profile_playtimes.updated_at = IF(profile_playtimes.playtime <> VALUES(playtime), VALUES(updated_at), profile_playtimes.updated_at),
-	profile_playtimes.playtime = VALUES(playtime)
+	profile_playtimes.playtime = VALUES(playtime),
+	profile_playtimes.last_seen_at = GREATEST(
+		COALESCE(profile_playtimes.last_seen_at, VALUES(last_seen_at)),
+		COALESCE(VALUES(last_seen_at), profile_playtimes.last_seen_at)
+	)
 `
 
-// UpsertProfilePlaytime stores playtime of the profile in the season, in milliseconds.
-func (q *queries) UpsertProfilePlaytime(ctx context.Context, mcUUID, seasonID uuid.UUID, playtime int64) error {
-	_, err := q.x.ExecContext(ctx, upsertProfilePlaytime, seasonID, playtime, mcUUID)
+// UpsertProfilePlaytime stores playtime of the profile in the season, in milliseconds,
+// and moves the last seen date of the profile in the season forward.
+func (q *queries) UpsertProfilePlaytime(ctx context.Context, mcUUID, seasonID uuid.UUID, playtime int64, lastSeenAt *time.Time) error {
+	_, err := q.x.ExecContext(ctx, upsertProfilePlaytime, seasonID, playtime, lastSeenAt, mcUUID)
 	return err
+}
+
+const findProfilesLastSeenInSeason = `
+SELECT mc_uuid, last_seen_at
+FROM profile_playtimes
+WHERE season_id = ? AND last_seen_at IS NOT NULL AND mc_uuid IN (%s)
+`
+
+func (q *queries) FindProfilesLastSeenInSeason(ctx context.Context, mcUUIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]time.Time, error) {
+	lastSeen := make(map[uuid.UUID]time.Time, len(mcUUIDs))
+	if len(mcUUIDs) == 0 {
+		return lastSeen, nil
+	}
+
+	placeholders := make([]string, len(mcUUIDs))
+	args := make([]any, 0, len(mcUUIDs)+1)
+	args = append(args, seasonID)
+	for i, mcUUID := range mcUUIDs {
+		placeholders[i] = "?"
+		args = append(args, mcUUID)
+	}
+	rows, err := q.x.QueryContext(ctx, fmt.Sprintf(findProfilesLastSeenInSeason, strings.Join(placeholders, ", ")), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var mcUUID uuid.UUID
+		var seenAt time.Time
+		if err := rows.Scan(&mcUUID, &seenAt); err != nil {
+			return nil, err
+		}
+		lastSeen[mcUUID] = seenAt
+	}
+	return lastSeen, rows.Err()
 }
 
 // first_seen_at is only filled when empty, so dates imported from earlier seasons are kept.

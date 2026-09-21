@@ -22,6 +22,7 @@ export default function CommunitySearch({
   locale,
   online,
   staff,
+  season,
 }: Props) {
   const t = useTranslations('community')
   const router = useRouter()
@@ -30,8 +31,10 @@ export default function CommunitySearch({
 
   React.useEffect(() => {
     if (search === (defaultValue ?? '')) return
-    router.replace(communityHref({ locale, sort, search, online, staff }))
-  }, [search, defaultValue, sort, locale, online, staff, router])
+    router.replace(
+      communityHref({ locale, sort, search, online, staff, season }),
+    )
+  }, [search, defaultValue, sort, locale, online, staff, season, router])
 
   return (
     <Input

@@ -211,6 +211,10 @@
     "cosmetics": {
       "title": "Cosmetics",
       "description": "List of cosmetics belonging to this game profile",
+      "season": {
+        "title": "Season",
+        "description": "Each season keeps its own selection"
+      },
       "nameColor": {
         "title": "Name color",
         "select": "Select name color",

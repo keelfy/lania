@@ -45,10 +45,28 @@ export async function loadProfilePage(profileIdParam: string | undefined) {
   return { seasons, selectedProfile }
 }
 
+// The profile with what it wears in the season. The profiles of getProfiles() wear the primary season.
+export async function loadProfileInSeason(
+  profileId: string,
+  seasonId: string,
+): Promise<Profile | undefined> {
+  const session = await getCurrentSession()
+  const profiles = await getUserProfiles(
+    serverApiFetcher,
+    session?.identity?.id,
+    seasonId,
+  ).catch((error) => {
+    console.error(error)
+    return []
+  })
+  return profiles.find((profile) => profile.id === profileId)
+}
+
 export function loadCosmeticOptions(
   profileId: string,
+  seasonId?: string,
 ): Promise<ProfileCosmeticOptions> {
-  return getProfileCosmeticOptions(serverApiFetcher, profileId).catch(
+  return getProfileCosmeticOptions(serverApiFetcher, profileId, seasonId).catch(
     (error) => {
       console.error(error)
       return DEFAULT_COSMETIC_OPTIONS

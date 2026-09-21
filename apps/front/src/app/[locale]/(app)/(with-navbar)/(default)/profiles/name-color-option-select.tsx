@@ -20,11 +20,14 @@ import { toast } from 'sonner'
 type Props = {
   selectedProfile: Profile
   cosmeticOptions: ProfileCosmeticOptions
+  // The season the color is changed in.
+  seasonId?: string
 }
 
 export default function NameColorOptionSelect({
   selectedProfile,
   cosmeticOptions,
+  seasonId,
 }: Props) {
   const [optimisticNameColorId, setOptimisticNameColorId] = React.useOptimistic(
     selectedProfile.cosmetics.name.colors.id,
@@ -44,9 +47,12 @@ export default function NameColorOptionSelect({
       setOptimisticNameColorId(nameColorId)
 
       try {
-        await updateProfileNameColor(clientApiFetcher, selectedProfile.id, {
-          optionId: option.id,
-        })
+        await updateProfileNameColor(
+          clientApiFetcher,
+          selectedProfile.id,
+          { optionId: option.id },
+          seasonId,
+        )
         toast.success(
           t.rich('changed', {
             username: () => <>{selectedProfile?.username}</>,

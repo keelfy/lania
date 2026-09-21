@@ -13,6 +13,7 @@ func PresentSeasons(seasons []*domain.Season) []*responses.Season {
 			StartDate: season.StartDate.UnixMilli(), EndDate: timeToMillis(season.EndDate),
 			PublicAddress: season.PublicAddress,
 			IsActive:      season.IsActive, IsPrimary: season.IsPrimary,
+			OnlineAvailable: season.IsActive && season.HasServer,
 			Preregistration: season.Preregistration, FreeRegistration: season.FreeRegistration,
 		}
 	}
@@ -26,6 +27,7 @@ func PresentAdminSeason(season *domain.Season) *responses.AdminSeason {
 			StartDate: season.StartDate.UnixMilli(), EndDate: timeToMillis(season.EndDate),
 			PublicAddress: season.PublicAddress,
 			IsActive:      season.IsActive, IsPrimary: season.IsPrimary,
+			OnlineAvailable: season.IsActive && season.HasServer,
 			Preregistration: season.Preregistration, FreeRegistration: season.FreeRegistration,
 		},
 		ShellAddress: season.ShellAddress,

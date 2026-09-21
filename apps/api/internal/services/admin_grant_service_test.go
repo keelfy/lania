@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"slices"
 	"testing"
 	"time"
 
@@ -16,13 +17,11 @@ import (
 
 type fakeGrantQueries struct {
 	sql.Queries
-	grants           []*domain.Grant
-	colorOptions     []*domain.ProfileNameColorOption
-	prefixOptions    []*domain.ProfileNamePrefixOption
-	selectedPrefixes []*domain.ProfilePrefix
-	revokeCalls      int
-	colorUpdates     []uuid.UUID
-	deletedPrefixes  []domain.ProfilePrefixType
+	grants        []*domain.Grant
+	colorOptions  []*domain.ProfileNameColorOption
+	prefixOptions []*domain.ProfileNamePrefixOption
+	revokeCalls   int
+	pruneCalls    int
 
 	nameColors          []*domain.NameColor
 	namePrefixes        []*domain.NamePrefix
@@ -89,22 +88,17 @@ func (q *fakeGrantQueries) FindProfileNamePrefixOptionsByProfileIDAndType(_ cont
 	return q.prefixOptions, nil
 }
 
-func (q *fakeGrantQueries) FindProfilePrefixesByProfileID(context.Context, uuid.UUID) ([]*domain.ProfilePrefix, error) {
-	return q.selectedPrefixes, nil
-}
-
-func (q *fakeGrantQueries) FindProfilePrefixesByProfileIDs(context.Context, uuid.UUIDs) ([]*domain.ProfilePrefix, error) {
-	return q.selectedPrefixes, nil
-}
-
-func (q *fakeGrantQueries) UpdateProfileNameColorByID(_ context.Context, _ uuid.UUID, nameColorID uuid.UUID) error {
-	q.colorUpdates = append(q.colorUpdates, nameColorID)
+func (q *fakeGrantQueries) PruneProfileSeasonCosmetics(context.Context, uuid.UUID) error {
+	q.pruneCalls++
 	return nil
 }
 
-func (q *fakeGrantQueries) DeleteProfilePrefixByProfileIDAndType(_ context.Context, _ uuid.UUID, prefixType domain.ProfilePrefixType) error {
-	q.deletedPrefixes = append(q.deletedPrefixes, prefixType)
-	return nil
+func (q *fakeGrantQueries) FindProfilesSeasonCosmetics(_ context.Context, profileIDs uuid.UUIDs, _, _ uuid.UUID) (map[uuid.UUID]*domain.ProfileCosmetics, error) {
+	cosmetics := make(map[uuid.UUID]*domain.ProfileCosmetics, len(profileIDs))
+	for _, profileID := range profileIDs {
+		cosmetics[profileID] = &domain.ProfileCosmetics{NameColor: &domain.NameColor{}}
+	}
+	return cosmetics, nil
 }
 
 type fakeGrantStorage struct {
@@ -134,7 +128,12 @@ func (s *stubProductService) GetProductByID(_ context.Context, id uuid.UUID) (*d
 
 type stubSeasonService struct {
 	SeasonService
-	known uuid.UUID
+	known   uuid.UUID
+	seasons []*domain.Season
+}
+
+func (s *stubSeasonService) GetSeasons(context.Context) ([]*domain.Season, error) {
+	return s.seasons, nil
 }
 
 func (s *stubSeasonService) GetPrimarySeasonID(context.Context) (uuid.UUID, error) {
@@ -176,9 +175,11 @@ func (s *stubAccessService) CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(co
 
 type recordingMinecraftService struct {
 	MinecraftService
-	removed  int
-	prefixes []string
-	err      error
+	removed int
+	// prefixSeasons holds the season of every prefix write, in the order of the writes.
+	prefixSeasons []uuid.UUID
+	prefixes      []string
+	err           error
 }
 
 func (s *recordingMinecraftService) RemoveFromWhitelist(context.Context, uuid.UUID, *domain.Profile) error {
@@ -186,7 +187,8 @@ func (s *recordingMinecraftService) RemoveFromWhitelist(context.Context, uuid.UU
 	return s.err
 }
 
-func (s *recordingMinecraftService) SetPrefixByMinecraftUUID(_ context.Context, _ uuid.UUID, prefix string) error {
+func (s *recordingMinecraftService) SetPrefixInSeason(_ context.Context, seasonID, _ uuid.UUID, prefix string) error {
+	s.prefixSeasons = append(s.prefixSeasons, seasonID)
 	s.prefixes = append(s.prefixes, prefix)
 	return s.err
 }
@@ -200,7 +202,10 @@ type grantFixture struct {
 	minecraft   *recordingMinecraftService
 	notify      *recordingNotificationService
 	profile     *domain.Profile
+	// season and otherSeason are active and have a shell, endedSeason has none.
 	season      uuid.UUID
+	otherSeason uuid.UUID
+	endedSeason uuid.UUID
 	defaultDye  uuid.UUID
 }
 
@@ -214,8 +219,10 @@ func newGrantFixture(t *testing.T) *grantFixture {
 		minecraft:   &recordingMinecraftService{},
 		notify:      &recordingNotificationService{},
 		season:      uuid.New(),
+		otherSeason: uuid.New(),
+		endedSeason: uuid.New(),
 		defaultDye:  uuid.New(),
-		profile:     &domain.Profile{ID: uuid.New(), MinecraftUUID: uuid.New(), NameColorID: uuid.New()},
+		profile:     &domain.Profile{ID: uuid.New(), MinecraftUUID: uuid.New()},
 	}
 	t.Setenv("DEFAULT_NAME_COLOR_ID", f.defaultDye.String())
 
@@ -225,7 +232,11 @@ func newGrantFixture(t *testing.T) *grantFixture {
 		f.storage,
 		profiles,
 		&stubProductService{products: map[uuid.UUID]*domain.Product{}},
-		&stubSeasonService{known: f.season},
+		&stubSeasonService{known: f.season, seasons: []*domain.Season{
+			{ID: f.season, IsActive: true, ShellAddress: shellAddress("shell-a:1")},
+			{ID: f.otherSeason, IsActive: true, ShellAddress: shellAddress("shell-b:1")},
+			{ID: f.endedSeason, IsActive: false, ShellAddress: shellAddress("shell-c:1")},
+		}},
 		f.fulfillment,
 		f.access,
 		NewProfileCosmeticsService(f.storage),
@@ -246,6 +257,8 @@ func (f *grantFixture) addProduct(t *testing.T, category domain.ProductCategory,
 	f.svc.(*adminGrantService).productService.(*stubProductService).products[product.ID] = product
 	return product
 }
+
+func shellAddress(address string) *string { return &address }
 
 func statusOf(err error) int {
 	if err == nil {
@@ -507,100 +520,72 @@ func TestRevokeAccess(t *testing.T) {
 	})
 }
 
-func TestRevokeNameColor(t *testing.T) {
+func TestRevokeCosmetic(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("resets the selected color when nothing else allows it", func(t *testing.T) {
-		f := newGrantFixture(t)
-		grant := &domain.Grant{ID: uuid.New(), Type: domain.GrantTypeNameColor, ItemID: f.profile.NameColorID, SeasonID: &f.season}
-		f.queries.grants = []*domain.Grant{grant}
+	cases := map[string]struct {
+		grantType domain.GrantType
+		prefix    domain.ProfilePrefixType
+	}{
+		"name color":  {grantType: domain.GrantTypeNameColor},
+		"name prefix": {grantType: domain.GrantTypeNamePrefix, prefix: domain.ProfilePrefixTypeGlyth},
+	}
+	for name, tc := range cases {
+		t.Run(name+" of a season resets the selection and updates only that server", func(t *testing.T) {
+			f := newGrantFixture(t)
+			grant := &domain.Grant{ID: uuid.New(), Type: tc.grantType, ItemID: uuid.New(), PrefixType: tc.prefix, SeasonID: &f.season}
+			f.queries.grants = []*domain.Grant{grant}
 
-		if err := f.svc.RevokeGrant(ctx, f.profile.ID, domain.GrantTypeNameColor, grant.ID); err != nil {
-			t.Fatal(err)
-		}
-		if len(f.queries.colorUpdates) != 1 || f.queries.colorUpdates[0] != f.defaultDye {
-			t.Errorf("got color updates %v, want the default color", f.queries.colorUpdates)
-		}
-		if len(f.minecraft.prefixes) != 1 {
-			t.Errorf("got %d prefix updates, want 1", len(f.minecraft.prefixes))
-		}
-	})
+			if err := f.svc.RevokeGrant(ctx, f.profile.ID, tc.grantType, grant.ID); err != nil {
+				t.Fatal(err)
+			}
+			if f.queries.pruneCalls != 1 {
+				t.Errorf("got %d selection resets, want 1", f.queries.pruneCalls)
+			}
+			if len(f.minecraft.prefixSeasons) != 1 || f.minecraft.prefixSeasons[0] != f.season {
+				t.Errorf("got prefix writes in seasons %v, want only %v", f.minecraft.prefixSeasons, f.season)
+			}
+		})
 
-	t.Run("keeps the selected color while another option allows it", func(t *testing.T) {
-		f := newGrantFixture(t)
-		grant := &domain.Grant{ID: uuid.New(), Type: domain.GrantTypeNameColor, ItemID: f.profile.NameColorID, SeasonID: &f.season}
-		f.queries.grants = []*domain.Grant{grant}
-		f.queries.colorOptions = []*domain.ProfileNameColorOption{{NameColorID: f.profile.NameColorID}}
+		t.Run(name+" for good updates the server of every active season", func(t *testing.T) {
+			f := newGrantFixture(t)
+			grant := &domain.Grant{ID: uuid.New(), Type: tc.grantType, ItemID: uuid.New(), PrefixType: tc.prefix}
+			f.queries.grants = []*domain.Grant{grant}
 
-		if err := f.svc.RevokeGrant(ctx, f.profile.ID, domain.GrantTypeNameColor, grant.ID); err != nil {
-			t.Fatal(err)
-		}
-		if len(f.queries.colorUpdates) != 0 {
-			t.Errorf("got color updates %v, want none", f.queries.colorUpdates)
-		}
-	})
+			if err := f.svc.RevokeGrant(ctx, f.profile.ID, tc.grantType, grant.ID); err != nil {
+				t.Fatal(err)
+			}
+			if f.queries.pruneCalls != 1 {
+				t.Errorf("got %d selection resets, want 1", f.queries.pruneCalls)
+			}
+			if len(f.minecraft.prefixSeasons) != 2 || !slices.Contains(f.minecraft.prefixSeasons, f.season) || !slices.Contains(f.minecraft.prefixSeasons, f.otherSeason) {
+				t.Errorf("got prefix writes in seasons %v, want the two active seasons", f.minecraft.prefixSeasons)
+			}
+		})
 
-	t.Run("keeps a selected color that is not the revoked one", func(t *testing.T) {
-		f := newGrantFixture(t)
-		grant := &domain.Grant{ID: uuid.New(), Type: domain.GrantTypeNameColor, ItemID: uuid.New(), SeasonID: &f.season}
-		f.queries.grants = []*domain.Grant{grant}
+		t.Run(name+" of an ended season leaves every server alone", func(t *testing.T) {
+			f := newGrantFixture(t)
+			grant := &domain.Grant{ID: uuid.New(), Type: tc.grantType, ItemID: uuid.New(), PrefixType: tc.prefix, SeasonID: &f.endedSeason}
+			f.queries.grants = []*domain.Grant{grant}
 
-		if err := f.svc.RevokeGrant(ctx, f.profile.ID, domain.GrantTypeNameColor, grant.ID); err != nil {
-			t.Fatal(err)
-		}
-		if len(f.queries.colorUpdates) != 0 {
-			t.Errorf("got color updates %v, want none", f.queries.colorUpdates)
-		}
-	})
-}
+			if err := f.svc.RevokeGrant(ctx, f.profile.ID, tc.grantType, grant.ID); err != nil {
+				t.Fatal(err)
+			}
+			if f.queries.pruneCalls != 1 || len(f.minecraft.prefixSeasons) != 0 {
+				t.Errorf("got %d selection resets and prefix writes in %v, want one reset and no writes", f.queries.pruneCalls, f.minecraft.prefixSeasons)
+			}
+		})
 
-func TestRevokeNamePrefix(t *testing.T) {
-	ctx := context.Background()
-	prefixID := uuid.New()
+		t.Run(name+" keeps the grant revoked when a server fails, so the request can be repeated", func(t *testing.T) {
+			f := newGrantFixture(t)
+			grant := &domain.Grant{ID: uuid.New(), Type: tc.grantType, ItemID: uuid.New(), PrefixType: tc.prefix, SeasonID: &f.season}
+			f.queries.grants = []*domain.Grant{grant}
+			f.minecraft.err = context.DeadlineExceeded
 
-	t.Run("clears the selected prefix when nothing else allows it", func(t *testing.T) {
-		f := newGrantFixture(t)
-		grant := &domain.Grant{ID: uuid.New(), Type: domain.GrantTypeNamePrefix, ItemID: prefixID, PrefixType: domain.ProfilePrefixTypeGlyth, SeasonID: &f.season}
-		f.queries.grants = []*domain.Grant{grant}
-		f.queries.selectedPrefixes = []*domain.ProfilePrefix{{ProfileID: f.profile.ID, NamePrefixID: prefixID, Type: domain.ProfilePrefixTypeGlyth}}
-
-		if err := f.svc.RevokeGrant(ctx, f.profile.ID, domain.GrantTypeNamePrefix, grant.ID); err != nil {
-			t.Fatal(err)
-		}
-		if len(f.queries.deletedPrefixes) != 1 || f.queries.deletedPrefixes[0] != domain.ProfilePrefixTypeGlyth {
-			t.Errorf("got cleared prefixes %v, want the glyth prefix", f.queries.deletedPrefixes)
-		}
-		if len(f.minecraft.prefixes) != 1 {
-			t.Errorf("got %d prefix updates, want 1", len(f.minecraft.prefixes))
-		}
-	})
-
-	t.Run("keeps a prefix of the same type that is not the revoked one", func(t *testing.T) {
-		f := newGrantFixture(t)
-		grant := &domain.Grant{ID: uuid.New(), Type: domain.GrantTypeNamePrefix, ItemID: prefixID, PrefixType: domain.ProfilePrefixTypeGlyth, SeasonID: &f.season}
-		f.queries.grants = []*domain.Grant{grant}
-		f.queries.selectedPrefixes = []*domain.ProfilePrefix{{ProfileID: f.profile.ID, NamePrefixID: uuid.New(), Type: domain.ProfilePrefixTypeGlyth}}
-
-		if err := f.svc.RevokeGrant(ctx, f.profile.ID, domain.GrantTypeNamePrefix, grant.ID); err != nil {
-			t.Fatal(err)
-		}
-		if len(f.queries.deletedPrefixes) != 0 {
-			t.Errorf("got cleared prefixes %v, want none", f.queries.deletedPrefixes)
-		}
-	})
-
-	t.Run("keeps the selected prefix while another option allows it", func(t *testing.T) {
-		f := newGrantFixture(t)
-		grant := &domain.Grant{ID: uuid.New(), Type: domain.GrantTypeNamePrefix, ItemID: prefixID, PrefixType: domain.ProfilePrefixTypeGlyth, SeasonID: &f.season}
-		f.queries.grants = []*domain.Grant{grant}
-		f.queries.selectedPrefixes = []*domain.ProfilePrefix{{ProfileID: f.profile.ID, NamePrefixID: prefixID, Type: domain.ProfilePrefixTypeGlyth}}
-		f.queries.prefixOptions = []*domain.ProfileNamePrefixOption{{NamePrefixID: prefixID}}
-
-		if err := f.svc.RevokeGrant(ctx, f.profile.ID, domain.GrantTypeNamePrefix, grant.ID); err != nil {
-			t.Fatal(err)
-		}
-		if len(f.queries.deletedPrefixes) != 0 {
-			t.Errorf("got cleared prefixes %v, want none", f.queries.deletedPrefixes)
-		}
-	})
+			err := f.svc.RevokeGrant(ctx, f.profile.ID, tc.grantType, grant.ID)
+			if statusOf(err) != http.StatusInternalServerError || !grant.IsRevoked() {
+				t.Fatalf("got status %d and revoked %v, want an error and a revoked grant", statusOf(err), grant.IsRevoked())
+			}
+		})
+	}
 }

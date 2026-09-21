@@ -117,13 +117,9 @@ func (s *accountService) releaseProfile(ctx context.Context, queries sql.Queries
 	if err := queries.RevokeProfileCosmetics(ctx, profile.ID, defaultNameColorID, &userID); err != nil {
 		return utils.NewInternalServerError("failed to revoke profile cosmetics", err)
 	}
-	if err := s.profileCosmeticsService.SelectProfileNameColor(ctx, queries, profile.ID, defaultNameColorID); err != nil {
+	// Nothing but the default color is left, so every season falls back to it.
+	if err := s.profileCosmeticsService.PruneProfileSelections(ctx, queries, profile.ID); err != nil {
 		return err
-	}
-	for _, prefixType := range []domain.ProfilePrefixType{domain.ProfilePrefixTypeGlyth, domain.ProfilePrefixTypeSpecial} {
-		if err := s.profileCosmeticsService.ClearProfilePrefixByType(ctx, queries, profile.ID, prefixType); err != nil {
-			return err
-		}
 	}
 
 	if profile.Role != domain.RolePlayer {

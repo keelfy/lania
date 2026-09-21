@@ -38,6 +38,7 @@ func scanSeason(row interface{ Scan(...any) error }) (*domain.Season, error) {
 		&season.Preregistration,
 		&season.FreeRegistration,
 	)
+	season.HasServer = season.ShellAddress != nil
 	return &season, err
 }
 
@@ -54,7 +55,7 @@ func (q *queries) FindPrimarySeasonID(ctx context.Context) (uuid.UUID, error) {
 func (q *queries) FindPublicSeasons(ctx context.Context) ([]*domain.Season, error) {
 	rows, err := q.x.QueryContext(ctx, `
 SELECT id, name, preview_image, start_date, end_date,
-       public_address, is_active, is_primary, preregistration, free_registration
+       public_address, shell_address IS NOT NULL, is_active, is_primary, preregistration, free_registration
 FROM seasons
 ORDER BY start_date DESC, name ASC`)
 	if err != nil {
@@ -69,6 +70,7 @@ ORDER BY start_date DESC, name ASC`)
 			&season.ID, &season.Name, &season.PreviewImage,
 			&season.StartDate, &season.EndDate,
 			&season.PublicAddress,
+			&season.HasServer,
 			&season.IsActive, &season.IsPrimary,
 			&season.Preregistration, &season.FreeRegistration,
 		); err != nil {

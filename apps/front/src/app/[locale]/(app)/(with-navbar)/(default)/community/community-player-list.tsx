@@ -7,11 +7,14 @@ import React from 'react'
 type Props = React.ComponentProps<'div'> & {
   profiles: PublicProfile[]
   locale: string
+  // The season the list is shown for, missing for the primary one.
+  season?: string
 }
 
 export default function CommunityPlayerList({
   profiles,
   locale,
+  season,
   ...props
 }: Props) {
   return (
@@ -24,6 +27,7 @@ export default function CommunityPlayerList({
           key={profile.id}
           profile={profile}
           locale={locale}
+          season={season}
         />
       ))}
     </div>

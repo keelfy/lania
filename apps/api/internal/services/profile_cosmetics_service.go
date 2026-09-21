@@ -3,9 +3,11 @@ package services
 import (
 	"context"
 	stdsql "database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/storage"
 	sql "github.com/lania-smp/backend/internal/storage/main"
@@ -17,21 +19,28 @@ type ProfileCosmeticsService interface {
 	GetProfileNamePrefixOptionsByProfileIDAndType(ctx context.Context, profileID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) ([]*domain.ProfileNamePrefixOption, error)
 	GetProfileNameColorOptionByIDAndProfileID(ctx context.Context, optionID uuid.UUID, profileID uuid.UUID, seasonID *uuid.UUID) (*domain.ProfileNameColorOption, error)
 	GetProfileNamePrefixOptionByIDAndProfileIDAndType(ctx context.Context, optionID uuid.UUID, profileID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) (*domain.ProfileNamePrefixOption, error)
-	SelectProfileNameColor(ctx context.Context, queries sql.Queries, profileID uuid.UUID, nameColorID uuid.UUID) error
-	SelectProfileNamePrefix(ctx context.Context, queries sql.Queries, profileID uuid.UUID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType) error
-	ClearProfilePrefixByType(ctx context.Context, queries sql.Queries, profileID uuid.UUID, prefixType domain.ProfilePrefixType) error
+	// SelectProfileNameColor, SelectProfileNamePrefix and ClearProfilePrefixByType change what the profile
+	// shows in one season. The other seasons keep their selection.
+	SelectProfileNameColor(ctx context.Context, queries sql.Queries, profileID, seasonID, nameColorID uuid.UUID) error
+	SelectProfileNamePrefix(ctx context.Context, queries sql.Queries, profileID, seasonID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType) error
+	ClearProfilePrefixByType(ctx context.Context, queries sql.Queries, profileID, seasonID uuid.UUID, prefixType domain.ProfilePrefixType) error
+	// PruneProfileSelections resets every selection of the profile, in every season, that no unrevoked option covers.
+	// Call it after options are revoked.
+	PruneProfileSelections(ctx context.Context, queries sql.Queries, profileID uuid.UUID) error
 	AddProfileNameColorOption(ctx context.Context, queries sql.Queries, profileID uuid.UUID, nameColorID uuid.UUID, forSeasonID *uuid.UUID, orderItemID *uuid.UUID) error
 	AddProfileNameGlythOption(ctx context.Context, queries sql.Queries, profileID uuid.UUID, namePrefixID uuid.UUID, forSeasonID *uuid.UUID, orderItemID *uuid.UUID) error
 	AddProfileNamePrefixOption(ctx context.Context, queries sql.Queries, profileID uuid.UUID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType, forSeasonID *uuid.UUID, orderItemID *uuid.UUID) error
 	GetProfileNameColorOptionsByProfileOwnerUserID(ctx context.Context, ownerUserID uuid.UUID, seasonID *uuid.UUID) ([]*domain.ProfileNameColorOption, error)
 	GetProfileNamePrefixOptionsByProfileOwnerUserIDAndType(ctx context.Context, ownerUserID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) ([]*domain.ProfileNamePrefixOption, error)
-	GetProfilePrefixes(ctx context.Context, profileID uuid.UUID) ([]*domain.ProfilePrefix, error)
-	// GetProfilesPrefixes returns the selected prefixes of every profile that has any, keyed by profile ID.
-	GetProfilesPrefixes(ctx context.Context, profileIDs uuid.UUIDs) (map[uuid.UUID][]*domain.ProfilePrefix, error)
+	// GetProfilesCosmetics returns what every profile shows in the season, keyed by profile ID.
+	// A profile without a selection gets the default name color and no prefixes.
+	GetProfilesCosmetics(ctx context.Context, profileIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]*domain.ProfileCosmetics, error)
 	GetProfileFullPrefix(ctx context.Context, nameColor *domain.NameColor, glythPrefix *domain.NamePrefix, specialPrefix *domain.NamePrefix) string
-	// GetProfileChatPrefix builds the chat prefix from the selected name color and prefixes of the profile,
-	// the same one the Minecraft servers get.
-	GetProfileChatPrefix(ctx context.Context, profile *domain.Profile) (string, error)
+	// GetProfileChatPrefix builds the chat prefix the season server gets from the selection of the profile in the season.
+	GetProfileChatPrefix(ctx context.Context, profileID, seasonID uuid.UUID) (string, error)
+	// GetProfileChatPrefixWithQueries is GetProfileChatPrefix reading through queries,
+	// so it sees a selection written in the same transaction.
+	GetProfileChatPrefixWithQueries(ctx context.Context, queries sql.Queries, profileID, seasonID uuid.UUID) (string, error)
 }
 
 type profileCosmeticsService struct {
@@ -86,69 +95,41 @@ func (s *profileCosmeticsService) GetProfileNamePrefixOptionByIDAndProfileIDAndT
 	return namePrefixOption, nil
 }
 
-func (s *profileCosmeticsService) SelectProfileNameColor(ctx context.Context, queries sql.Queries, profileID uuid.UUID, nameColorID uuid.UUID) error {
-	err := queries.UpdateProfileNameColorByID(ctx, profileID, nameColorID)
-	if err != nil {
+func (s *profileCosmeticsService) SelectProfileNameColor(ctx context.Context, queries sql.Queries, profileID, seasonID, nameColorID uuid.UUID) error {
+	if err := queries.SetProfileSeasonNameColor(ctx, profileID, seasonID, nameColorID); err != nil {
 		return utils.NewInternalServerError("failed to select profile name color", err)
 	}
 	return nil
 }
 
-func (s *profileCosmeticsService) SelectProfileNamePrefix(ctx context.Context, queries sql.Queries, profileID uuid.UUID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType) error {
-	prefixes, err := queries.FindProfilePrefixesByProfileID(ctx, profileID)
-	if err != nil {
-		return utils.NewInternalServerError("failed to find profile prefixes", err)
-	}
-
-	var existingPrefix *domain.ProfilePrefix
-	for _, p := range prefixes {
-		if p.Type == prefixType {
-			existingPrefix = p
-			break
-		}
-	}
-
-	if existingPrefix != nil {
-		err = queries.UpdateProfileNamePrefixByProfileIDAndType(ctx, profileID, namePrefixID, prefixType)
-	} else {
-		err = queries.InsertProfilePrefix(ctx, sql.InsertProfilePrefixParams{
-			ProfileID:    profileID,
-			NamePrefixID: namePrefixID,
-			Type:         prefixType,
-		})
-	}
-	if err != nil {
+func (s *profileCosmeticsService) SelectProfileNamePrefix(ctx context.Context, queries sql.Queries, profileID, seasonID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType) error {
+	if err := queries.SetProfileSeasonPrefix(ctx, profileID, seasonID, prefixType, &namePrefixID); err != nil {
 		return utils.NewInternalServerError("failed to select profile name prefix by type "+string(prefixType), err)
 	}
-
 	return nil
 }
 
-func (s *profileCosmeticsService) ClearProfilePrefixByType(ctx context.Context, queries sql.Queries, profileID uuid.UUID, prefixType domain.ProfilePrefixType) error {
-	prefixes, err := queries.FindProfilePrefixesByProfileID(ctx, profileID)
-	if err != nil {
-		return utils.NewInternalServerError("failed to find profile prefixes", err)
+func (s *profileCosmeticsService) ClearProfilePrefixByType(ctx context.Context, queries sql.Queries, profileID, seasonID uuid.UUID, prefixType domain.ProfilePrefixType) error {
+	if err := queries.SetProfileSeasonPrefix(ctx, profileID, seasonID, prefixType, nil); err != nil {
+		return utils.NewInternalServerError("failed to clear profile prefix by type "+string(prefixType), err)
 	}
-
-	var existingPrefix *domain.ProfilePrefix
-	for _, p := range prefixes {
-		if p.Type == prefixType {
-			existingPrefix = p
-			break
-		}
-	}
-
-	if existingPrefix != nil {
-		err = queries.DeleteProfilePrefixByProfileIDAndType(ctx, profileID, prefixType)
-		if err != nil {
-			return utils.NewInternalServerError("failed to clear profile prefix by type "+string(prefixType), err)
-		}
-	}
-
 	return nil
 }
+
+func (s *profileCosmeticsService) PruneProfileSelections(ctx context.Context, queries sql.Queries, profileID uuid.UUID) error {
+	if err := queries.PruneProfileSeasonCosmetics(ctx, profileID); err != nil {
+		return utils.NewInternalServerError("failed to reset profile cosmetics selection", err)
+	}
+	return nil
+}
+
+// errPermanentPurchase means an option that comes from an order has no season. Only an admin grant is permanent.
+var errPermanentPurchase = errors.New("a purchased cosmetic option must be for a season")
 
 func (s *profileCosmeticsService) AddProfileNameColorOption(ctx context.Context, queries sql.Queries, profileID uuid.UUID, nameColorID uuid.UUID, forSeasonID *uuid.UUID, orderItemID *uuid.UUID) error {
+	if forSeasonID == nil && orderItemID != nil {
+		return utils.NewInternalServerError("failed to add profile name color option", errPermanentPurchase)
+	}
 	err := queries.InsertProfileNameColorOption(ctx, sql.InsertProfileNameColorOptionParams{
 		ProfileID:   profileID,
 		NameColorID: nameColorID,
@@ -167,6 +148,9 @@ func (s *profileCosmeticsService) AddProfileNameGlythOption(ctx context.Context,
 }
 
 func (s *profileCosmeticsService) AddProfileNamePrefixOption(ctx context.Context, queries sql.Queries, profileID uuid.UUID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType, forSeasonID *uuid.UUID, orderItemID *uuid.UUID) error {
+	if forSeasonID == nil && orderItemID != nil {
+		return utils.NewInternalServerError("failed to add profile name "+string(prefixType)+" option", errPermanentPurchase)
+	}
 	err := queries.InsertProfileNamePrefixOption(ctx, sql.InsertProfileNamePrefixOptionParams{
 		ProfileID:    profileID,
 		NamePrefixID: namePrefixID,
@@ -201,45 +185,32 @@ func (s *profileCosmeticsService) GetProfileNamePrefixOptionsByProfileOwnerUserI
 	return namePrefixOptions, nil
 }
 
-func (s *profileCosmeticsService) GetProfilePrefixes(ctx context.Context, profileID uuid.UUID) ([]*domain.ProfilePrefix, error) {
-	prefixes, err := s.storage.Queries().FindProfilePrefixesByProfileID(ctx, profileID)
-	if err == stdsql.ErrNoRows {
-		return []*domain.ProfilePrefix{}, nil
-	} else if err != nil {
-		return nil, utils.NewInternalServerError("failed to get profile prefixes", err)
-	}
-	return prefixes, nil
+func (s *profileCosmeticsService) GetProfilesCosmetics(ctx context.Context, profileIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]*domain.ProfileCosmetics, error) {
+	return s.findCosmetics(ctx, s.storage.Queries(), profileIDs, seasonID)
 }
 
-func (s *profileCosmeticsService) GetProfilesPrefixes(ctx context.Context, profileIDs uuid.UUIDs) (map[uuid.UUID][]*domain.ProfilePrefix, error) {
-	prefixes, err := s.storage.Queries().FindProfilePrefixesByProfileIDs(ctx, profileIDs)
-	if err != nil && err != stdsql.ErrNoRows {
-		return nil, utils.NewInternalServerError("failed to get profiles prefixes", err)
+func (s *profileCosmeticsService) findCosmetics(ctx context.Context, queries sql.Queries, profileIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]*domain.ProfileCosmetics, error) {
+	cosmetics, err := queries.FindProfilesSeasonCosmetics(ctx, profileIDs, seasonID, config.GetDefaultNameColorID())
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get profiles cosmetics", err)
 	}
-
-	byProfile := make(map[uuid.UUID][]*domain.ProfilePrefix, len(profileIDs))
-	for _, prefix := range prefixes {
-		byProfile[prefix.ProfileID] = append(byProfile[prefix.ProfileID], prefix)
-	}
-	return byProfile, nil
+	return cosmetics, nil
 }
 
-func (s *profileCosmeticsService) GetProfileChatPrefix(ctx context.Context, profile *domain.Profile) (string, error) {
-	prefixes, err := s.GetProfilePrefixes(ctx, profile.ID)
+func (s *profileCosmeticsService) GetProfileChatPrefix(ctx context.Context, profileID, seasonID uuid.UUID) (string, error) {
+	return s.GetProfileChatPrefixWithQueries(ctx, s.storage.Queries(), profileID, seasonID)
+}
+
+func (s *profileCosmeticsService) GetProfileChatPrefixWithQueries(ctx context.Context, queries sql.Queries, profileID, seasonID uuid.UUID) (string, error) {
+	cosmetics, err := s.findCosmetics(ctx, queries, uuid.UUIDs{profileID}, seasonID)
 	if err != nil {
 		return "", err
 	}
-
-	var glythPrefix, specialPrefix *domain.NamePrefix
-	for _, prefix := range prefixes {
-		switch prefix.Type {
-		case domain.ProfilePrefixTypeGlyth:
-			glythPrefix = prefix.NamePrefix
-		case domain.ProfilePrefixTypeSpecial:
-			specialPrefix = prefix.NamePrefix
-		}
+	selected, ok := cosmetics[profileID]
+	if !ok {
+		return "", utils.NewNotFoundError("profile not found", nil)
 	}
-	return s.GetProfileFullPrefix(ctx, profile.NameColor, glythPrefix, specialPrefix), nil
+	return s.GetProfileFullPrefix(ctx, selected.NameColor, selected.Glyth, selected.Special), nil
 }
 
 func (s *profileCosmeticsService) GetProfileFullPrefix(ctx context.Context, nameColor *domain.NameColor, glythPrefix *domain.NamePrefix, specialPrefix *domain.NamePrefix) string {

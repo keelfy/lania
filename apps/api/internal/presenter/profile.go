@@ -9,11 +9,20 @@ import (
 	"github.com/lania-smp/backend/internal/utils"
 )
 
-func PresentProfileCosmetics(nameColor *domain.NameColor, glyth *domain.NamePrefix, special *domain.NamePrefix) *responses.ProfileCosmetics {
-	nameColorResponse := &responses.NameColor{
-		ID:     nameColor.ID,
-		Name:   nameColor.Name,
-		Colors: nameColor.Metadata.Colors,
+// PresentProfileCosmetics shows what a profile wears. A nil cosmetics stands for a profile that could not be read.
+func PresentProfileCosmetics(cosmetics *domain.ProfileCosmetics) *responses.ProfileCosmetics {
+	if cosmetics == nil {
+		cosmetics = &domain.ProfileCosmetics{}
+	}
+	nameColor, glyth, special := cosmetics.NameColor, cosmetics.Glyth, cosmetics.Special
+
+	var nameColorResponse *responses.NameColor
+	if nameColor != nil {
+		nameColorResponse = &responses.NameColor{
+			ID:     nameColor.ID,
+			Name:   nameColor.Name,
+			Colors: nameColor.Metadata.Colors,
+		}
 	}
 	var glythResponse *responses.NamePrefix
 	if glyth != nil {
@@ -75,6 +84,8 @@ func PresentPublicProfile(
 	isOnline bool,
 	// playtime is summed over all seasons, in milliseconds.
 	playtime int64,
+	// lastSeenAt is the date in the season the list is for, nil when it is unknown.
+	lastSeenAt *time.Time,
 ) *responses.PublicProfile {
 	return &responses.PublicProfile{
 		ID:            profile.ID,
@@ -84,7 +95,7 @@ func PresentPublicProfile(
 		Role:          string(profile.Role),
 		IsOnline:      isOnline,
 		Playtime:      playtime,
-		LastSeenAt:    timeToMillis(profile.LastSeenAt),
+		LastSeenAt:    timeToMillis(lastSeenAt),
 		MojangUUID:    mojangUUID,
 	}
 }
@@ -107,6 +118,8 @@ func PresentProfileDetails(
 	isOnline bool,
 	isModelSlim bool,
 	cosmetics *responses.ProfileCosmetics,
+	// lastSeenAt is the date in the season the profile is shown for, nil when it is unknown.
+	lastSeenAt *time.Time,
 ) *responses.ProfileDetails {
 	return &responses.ProfileDetails{
 		ID:            profile.ID,
@@ -115,7 +128,7 @@ func PresentProfileDetails(
 		Cosmetics:     cosmetics,
 		IsSlimModel:   isModelSlim,
 		FirstSeenAt:   timeToMillis(profile.FirstSeenAt),
-		LastSeenAt:    timeToMillis(profile.LastSeenAt),
+		LastSeenAt:    timeToMillis(lastSeenAt),
 		Role:          string(profile.Role),
 		AccessStatus:  string(accessStatus),
 		Accesses:      presentSeasonAccesses(seasonAccesses),

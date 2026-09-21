@@ -87,6 +87,7 @@ export default function SelectCommunitySort({
   locale,
   online,
   staff,
+  season,
 }: Props) {
   const t = useTranslations('community.sort')
   const [sort, setSort] = React.useState(defaultValue ?? DEFAULT_COMMUNITY_SORT)
@@ -96,7 +97,9 @@ export default function SelectCommunitySort({
   const onSortChange = (value: string) => {
     setSort(value)
     startSortChange(() => {
-      router.push(communityHref({ locale, sort: value, search, online, staff }))
+      router.push(
+        communityHref({ locale, sort: value, search, online, staff, season }),
+      )
     })
   }
 

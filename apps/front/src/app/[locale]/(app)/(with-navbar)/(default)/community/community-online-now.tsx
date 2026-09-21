@@ -5,15 +5,17 @@ import { getProfiles } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
-import { communityHref } from './community-href'
+import { communityHref, communityProfileHref } from './community-href'
 
 type Props = {
   locale: string
+  // The season the players are online in, missing for the primary one.
+  season?: string
 }
 
 const ONLINE_NOW_LIMIT = 30
 
-export default async function CommunityOnlineNow({ locale }: Props) {
+export default async function CommunityOnlineNow({ locale, season }: Props) {
   const t = await getTranslations({ locale, namespace: 'community.onlineNow' })
   const online = await getProfiles(
     serverApiFetcher,
@@ -23,6 +25,8 @@ export default async function CommunityOnlineNow({ locale }: Props) {
     '',
     ONLINE_NOW_LIMIT,
     true,
+    false,
+    season,
   ).catch((err) => {
     console.error(err)
     return null
@@ -35,7 +39,7 @@ export default async function CommunityOnlineNow({ locale }: Props) {
         <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
         {online.totalElements > online.content.length && (
           <Link
-            href={communityHref({ locale, online: true })}
+            href={communityHref({ locale, online: true, season })}
             className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
           >
             {t('showAll')}
@@ -47,7 +51,7 @@ export default async function CommunityOnlineNow({ locale }: Props) {
           {online.content.map((profile) => (
             <li key={profile.id} className="shrink-0">
               <Link
-                href={`/${locale}/community/${encodeURIComponent(profile.username)}`}
+                href={communityProfileHref(locale, profile.username, season)}
                 className="hover:bg-accent flex w-24 flex-col items-center gap-1 rounded-md p-2 transition-colors"
               >
                 <PlayerFace player={profile} className="size-10" />

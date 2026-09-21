@@ -370,112 +370,151 @@ func (q *queries) FindProfileNamePrefixOptionsByProfileOwnerUserIDAndType(ctx co
 	return options, nil
 }
 
-const updateProfileNameColorByID = `
-UPDATE profiles SET name_color_id = ? WHERE id = ?
+// The default name color stands in for a NULL selection, so every profile has a color.
+// A profile without a row for the season gets the default color and no prefixes.
+const findProfilesSeasonCosmetics = `
+SELECT
+	p.id,
+	nc.id,
+	nc.name,
+	nc.colors,
+	gp.id,
+	gp.name,
+	gp.metadata,
+	sp.id,
+	sp.name,
+	sp.metadata
+FROM profiles p
+LEFT JOIN profile_season_cosmetics psc ON psc.profile_id = p.id AND psc.season_id = ?
+LEFT JOIN name_colors nc ON nc.id = COALESCE(psc.name_color_id, ?)
+LEFT JOIN name_prefixes gp ON gp.id = psc.glyth_prefix_id
+LEFT JOIN name_prefixes sp ON sp.id = psc.special_prefix_id
+WHERE p.id IN (%s)
 `
 
-func (q *queries) UpdateProfileNameColorByID(ctx context.Context, profileID uuid.UUID, nameColorID uuid.UUID) error {
-	_, err := q.x.ExecContext(ctx, updateProfileNameColorByID, nameColorID, profileID)
-	return err
-}
-
-const findProfilePrefixesByProfileID = `
-SELECT 
-	pp.profile_id,
-	pp.name_prefix_id,
-	pp.type,
-	np.name AS name_prefix_name,
-	np.metadata AS name_prefix_metadata
-FROM profile_prefixes pp
-LEFT JOIN name_prefixes np ON pp.name_prefix_id = np.id
-WHERE pp.profile_id IN (%s)
-`
-
-func (q *queries) FindProfilePrefixesByProfileID(ctx context.Context, profileID uuid.UUID) ([]*domain.ProfilePrefix, error) {
-	return q.FindProfilePrefixesByProfileIDs(ctx, uuid.UUIDs{profileID})
-}
-
-func (q *queries) FindProfilePrefixesByProfileIDs(ctx context.Context, profileIDs uuid.UUIDs) ([]*domain.ProfilePrefix, error) {
+// FindProfilesSeasonCosmetics returns what every profile shows in the season, keyed by profile ID.
+func (q *queries) FindProfilesSeasonCosmetics(ctx context.Context, profileIDs uuid.UUIDs, seasonID, defaultNameColorID uuid.UUID) (map[uuid.UUID]*domain.ProfileCosmetics, error) {
+	cosmetics := make(map[uuid.UUID]*domain.ProfileCosmetics, len(profileIDs))
 	if len(profileIDs) == 0 {
-		return []*domain.ProfilePrefix{}, nil
+		return cosmetics, nil
 	}
 
 	placeholders := make([]string, len(profileIDs))
-	args := make([]any, len(profileIDs))
+	args := make([]any, 0, len(profileIDs)+2)
+	args = append(args, seasonID, defaultNameColorID)
 	for i, profileID := range profileIDs {
 		placeholders[i] = "?"
-		args[i] = profileID
+		args = append(args, profileID)
 	}
-	rows, err := q.x.QueryContext(ctx, fmt.Sprintf(findProfilePrefixesByProfileID, strings.Join(placeholders, ", ")), args...)
+	rows, err := q.x.QueryContext(ctx, fmt.Sprintf(findProfilesSeasonCosmetics, strings.Join(placeholders, ", ")), args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	prefixes := make([]*domain.ProfilePrefix, 0)
 	for rows.Next() {
-		var prefix domain.ProfilePrefix
-		var namePrefix domain.NamePrefix
-		var rawMetadata json.RawMessage
+		var profileID uuid.UUID
+		var colorID, glythID, specialID uuid.NullUUID
+		var colorName, glythName, specialName stdsql.NullString
+		var colors, glythMetadata, specialMetadata json.RawMessage
 		err := rows.Scan(
-			&prefix.ProfileID,
-			&prefix.NamePrefixID,
-			&prefix.Type,
-			&namePrefix.Name,
-			&rawMetadata,
+			&profileID,
+			&colorID, &colorName, &colors,
+			&glythID, &glythName, &glythMetadata,
+			&specialID, &specialName, &specialMetadata,
 		)
 		if err != nil {
 			return nil, err
 		}
-		metadata := domain.NamePrefixMetadata{}
-		err = json.Unmarshal(rawMetadata, &metadata)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal name prefix metadata for profile prefix %s: %w", prefix.NamePrefixID, err)
+
+		selected := &domain.ProfileCosmetics{}
+		if colorID.Valid {
+			selected.NameColor = &domain.NameColor{ID: colorID.UUID, Name: colorName.String}
+			if err := json.Unmarshal(colors, &selected.NameColor.Metadata); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal name color metadata for name color %s: %w", colorID.UUID, err)
+			}
 		}
-		namePrefix.Metadata = metadata
-		namePrefix.ID = prefix.NamePrefixID
-		prefix.NamePrefix = &namePrefix
-		prefixes = append(prefixes, &prefix)
+		if selected.Glyth, err = scanSelectedNamePrefix(glythID, glythName, glythMetadata); err != nil {
+			return nil, err
+		}
+		if selected.Special, err = scanSelectedNamePrefix(specialID, specialName, specialMetadata); err != nil {
+			return nil, err
+		}
+		cosmetics[profileID] = selected
 	}
-	return prefixes, rows.Err()
+	return cosmetics, rows.Err()
 }
 
-const insertProfilePrefix = `
-INSERT INTO profile_prefixes (
-	profile_id,
-	name_prefix_id,
-	type
-) VALUES (?, ?, ?)
+// scanSelectedNamePrefix builds the name prefix of a joined row, nil when the profile selected none.
+func scanSelectedNamePrefix(id uuid.NullUUID, name stdsql.NullString, rawMetadata json.RawMessage) (*domain.NamePrefix, error) {
+	if !id.Valid {
+		return nil, nil
+	}
+	prefix := &domain.NamePrefix{ID: id.UUID, Name: name.String}
+	if err := json.Unmarshal(rawMetadata, &prefix.Metadata); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal name prefix metadata for name prefix %s: %w", id.UUID, err)
+	}
+	return prefix, nil
+}
+
+const setProfileSeasonNameColor = `
+INSERT INTO profile_season_cosmetics (profile_id, season_id, name_color_id)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE name_color_id = VALUES(name_color_id), updated_at = NOW()
 `
 
-type InsertProfilePrefixParams struct {
-	ProfileID    uuid.UUID
-	NamePrefixID uuid.UUID
-	Type         domain.ProfilePrefixType
-}
-
-func (q *queries) InsertProfilePrefix(ctx context.Context, arg InsertProfilePrefixParams) error {
-	_, err := q.x.ExecContext(ctx, insertProfilePrefix, arg.ProfileID, arg.NamePrefixID, arg.Type)
+// SetProfileSeasonNameColor selects the name color of the profile in the season.
+func (q *queries) SetProfileSeasonNameColor(ctx context.Context, profileID, seasonID, nameColorID uuid.UUID) error {
+	_, err := q.x.ExecContext(ctx, setProfileSeasonNameColor, profileID, seasonID, nameColorID)
 	return err
 }
 
-const updateProfileNamePrefixByProfileIDAndType = `
-UPDATE profile_prefixes SET name_prefix_id = ? WHERE profile_id = ? AND type = ?
-`
+// The column comes from this map, never from the caller.
+var profileSeasonPrefixColumns = map[domain.ProfilePrefixType]string{
+	domain.ProfilePrefixTypeGlyth:   "glyth_prefix_id",
+	domain.ProfilePrefixTypeSpecial: "special_prefix_id",
+}
 
-func (q *queries) UpdateProfileNamePrefixByProfileIDAndType(ctx context.Context, profileID uuid.UUID, namePrefixID uuid.UUID, prefixType domain.ProfilePrefixType) error {
-	_, err := q.x.ExecContext(ctx, updateProfileNamePrefixByProfileIDAndType, namePrefixID, profileID, prefixType)
+// SetProfileSeasonPrefix selects the name prefix of the type for the profile in the season.
+// A nil namePrefixID clears it.
+func (q *queries) SetProfileSeasonPrefix(ctx context.Context, profileID, seasonID uuid.UUID, prefixType domain.ProfilePrefixType, namePrefixID *uuid.UUID) error {
+	column, ok := profileSeasonPrefixColumns[prefixType]
+	if !ok {
+		return fmt.Errorf("unknown name prefix type %q", prefixType)
+	}
+	_, err := q.x.ExecContext(ctx, fmt.Sprintf(`
+INSERT INTO profile_season_cosmetics (profile_id, season_id, %[1]s)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE %[1]s = VALUES(%[1]s), updated_at = NOW()
+`, column), profileID, seasonID, namePrefixID)
 	return err
 }
 
-const deleteProfilePrefixByProfileIDAndType = `
-DELETE FROM profile_prefixes WHERE profile_id = ? AND type = ?
+// A selection stays valid while the profile keeps an unrevoked option for the item that is for the season or permanent.
+const pruneProfileSeasonCosmetics = `
+UPDATE profile_season_cosmetics psc
+SET
+	psc.name_color_id = IF(psc.name_color_id IS NOT NULL AND NOT EXISTS (
+		SELECT 1 FROM profile_name_color_options o
+		WHERE o.profile_id = psc.profile_id AND o.name_color_id = psc.name_color_id
+			AND o.revoked_at IS NULL AND (o.for_season_id = psc.season_id OR o.for_season_id IS NULL)
+	), NULL, psc.name_color_id),
+	psc.glyth_prefix_id = IF(psc.glyth_prefix_id IS NOT NULL AND NOT EXISTS (
+		SELECT 1 FROM profile_name_prefix_options o
+		WHERE o.profile_id = psc.profile_id AND o.name_prefix_id = psc.glyth_prefix_id AND o.type = 'glyth'
+			AND o.revoked_at IS NULL AND (o.for_season_id = psc.season_id OR o.for_season_id IS NULL)
+	), NULL, psc.glyth_prefix_id),
+	psc.special_prefix_id = IF(psc.special_prefix_id IS NOT NULL AND NOT EXISTS (
+		SELECT 1 FROM profile_name_prefix_options o
+		WHERE o.profile_id = psc.profile_id AND o.name_prefix_id = psc.special_prefix_id AND o.type = 'special'
+			AND o.revoked_at IS NULL AND (o.for_season_id = psc.season_id OR o.for_season_id IS NULL)
+	), NULL, psc.special_prefix_id)
+WHERE psc.profile_id = ?
 `
 
-func (q *queries) DeleteProfilePrefixByProfileIDAndType(ctx context.Context, profileID uuid.UUID, prefixType domain.ProfilePrefixType) error {
-	_, err := q.x.ExecContext(ctx, deleteProfilePrefixByProfileIDAndType, profileID, prefixType)
-	if err == stdsql.ErrNoRows {
-		return nil
-	}
+// PruneProfileSeasonCosmetics resets every selection of the profile that no unrevoked option covers any more,
+// in every season. It leaves the other selections alone.
+func (q *queries) PruneProfileSeasonCosmetics(ctx context.Context, profileID uuid.UUID) error {
+	_, err := q.x.ExecContext(ctx, pruneProfileSeasonCosmetics, profileID)
 	return err
 }
