@@ -25,7 +25,7 @@ export default async function ProfilesLayout({ children, params }: Props) {
   const hasProfiles = profiles.length > 0
 
   return (
-    <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr] lg:gap-x-6">
+    <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)] lg:grid-rows-[auto_auto_1fr] lg:gap-x-6">
       <div className="flex flex-col items-center gap-2 lg:col-start-2 lg:row-start-1 lg:flex-row lg:justify-between">
         <h2 className="text-xl font-bold">
           {t('title')}&nbsp;

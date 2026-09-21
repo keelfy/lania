@@ -90,10 +90,10 @@ export default async function ProfilePage({ searchParams, params }: Props) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 sm:grid-cols-2">
             {accessSeasons.length > 1 && (
               <>
-                <div className="flex flex-nowrap items-center gap-2">
+                <div className="flex min-h-9 flex-nowrap items-center gap-2">
                   <CalendarIcon className="text-muted-foreground size-4 stroke-3" />
                   <p className="text-md font-semibold tracking-tight">
                     {t('accessStatus.season')}
@@ -106,29 +106,34 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                 />
               </>
             )}
-            <div className="flex flex-nowrap items-center gap-2">
+            <div className="flex min-h-9 flex-nowrap items-center gap-2">
               <ActivityIcon className="text-muted-foreground size-4 stroke-3" />
               <p className="text-md font-semibold tracking-tight">
                 {t('accessStatus.status')}
               </p>
             </div>
-            <div className="flex flex-nowrap items-center justify-end gap-2">
-              <p className={cn('font-semibold', accessStatusColor)}>
+            <div className="flex min-h-9 flex-nowrap items-center justify-end gap-2">
+              <p
+                className={cn(
+                  'text-right text-sm font-semibold sm:text-base',
+                  accessStatusColor,
+                )}
+              >
                 {t(`accessStatus.names.${accessStatus}`)}
               </p>
               <Icon
                 className={cn('size-4', accessStatusIconColors[accessStatus])}
               />
             </div>
-            <div className="flex flex-nowrap items-center gap-2">
+            <div className="flex min-h-9 flex-nowrap items-center gap-2">
               <ShieldIcon className="text-muted-foreground size-4 stroke-3" />
               <p className="text-md font-semibold tracking-tight">
                 {t('violations.title')}
               </p>
             </div>
             {/* Violations are not tracked yet, so there is never a list to show. */}
-            <div className="flex flex-nowrap items-center justify-end gap-2">
-              <p className="text-primary font-semibold">
+            <div className="flex min-h-9 flex-nowrap items-center justify-end gap-2">
+              <p className="text-primary text-right text-sm font-semibold sm:text-base">
                 {t('violations.noViolations')}
               </p>
               <ShieldCheckIcon className="size-4 text-green-500" />
@@ -138,7 +143,7 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                 variant="outline"
                 asChild
                 size="sm"
-                className="col-span-2 mt-2"
+                className="col-span-2 mt-3"
               >
                 <Link
                   href={{
