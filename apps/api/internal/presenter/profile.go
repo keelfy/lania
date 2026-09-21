@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/transport/http/responses"
+	"github.com/lania-smp/backend/internal/utils"
 )
 
 func PresentProfileCosmetics(nameColor *domain.NameColor, glyth *domain.NamePrefix, special *domain.NamePrefix) *responses.ProfileCosmetics {
@@ -185,4 +186,22 @@ func PresentProfileCosmeticOptions(nameColorOptions []*domain.ProfileNameColorOp
 			SpecialPrefixes: specials,
 		},
 	}
+}
+
+func PresentProfileResync(resync *domain.ProfileResync) *responses.ProfileResync {
+	seasons := make([]*responses.SeasonResync, len(resync.Seasons))
+	for i, season := range resync.Seasons {
+		parts := make([]*responses.PartResync, len(season.Parts))
+		for j, part := range season.Parts {
+			parts[j] = &responses.PartResync{Part: string(part.Part), OK: part.Err == nil}
+			if part.Err != nil {
+				message := utils.ExtractErrorMessage(part.Err)
+				parts[j].Error = &message
+			}
+		}
+		seasons[i] = &responses.SeasonResync{
+			SeasonID: season.SeasonID, SeasonName: season.SeasonName, OK: season.OK(), Parts: parts,
+		}
+	}
+	return &responses.ProfileResync{OK: resync.OK(), Seasons: seasons}
 }

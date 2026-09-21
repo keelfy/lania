@@ -121,3 +121,25 @@ export type ProfileCosmeticOptions = {
 export type SelectCosmeticOptionReq = {
   optionId: string | undefined
 }
+
+export type ProfileResyncPart = 'role' | 'cosmetics' | 'access'
+
+export type PartResync = {
+  part: ProfileResyncPart
+  ok: boolean
+  // Missing when the part was written.
+  error?: string
+}
+
+export type SeasonResync = {
+  seasonId: string
+  seasonName: string
+  ok: boolean
+  parts: PartResync[]
+}
+
+// What a resync wrote to the server of every active season. The request succeeds even when some servers fail.
+export type ProfileResync = {
+  ok: boolean
+  seasons: SeasonResync[]
+}

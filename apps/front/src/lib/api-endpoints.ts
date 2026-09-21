@@ -24,6 +24,7 @@ import {
   PublicProfile,
   ProfileCosmeticOptions,
   ProfileDetails,
+  ProfileResync,
   ProfileRole,
   ProfilesStats,
   ProfileStats,
@@ -393,8 +394,12 @@ export function setProfileRole(
 
 // Writes the role, cosmetics and access of the profile to the game servers again.
 // Only the owner of the profile can call it, and it has a cooldown.
-export function resyncProfile(fetcher: ApiFetcher, id: string): Promise<void> {
-  return fetcher<void>(`/v1/profiles/${id}/resync`, undefined, {
+// The report tells per season what was written, also when some servers failed.
+export function resyncProfile(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<ProfileResync> {
+  return fetcher<ProfileResync>(`/v1/profiles/${id}/resync`, undefined, {
     method: 'POST',
   })
 }
@@ -403,8 +408,8 @@ export function resyncProfile(fetcher: ApiFetcher, id: string): Promise<void> {
 export function resyncProfileAsAdmin(
   fetcher: ApiFetcher,
   id: string,
-): Promise<void> {
-  return fetcher<void>(`/v1/admin/profiles/${id}/resync`, undefined, {
+): Promise<ProfileResync> {
+  return fetcher<ProfileResync>(`/v1/admin/profiles/${id}/resync`, undefined, {
     method: 'POST',
   })
 }

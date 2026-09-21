@@ -28,6 +28,12 @@ type MinecraftService interface {
 	SetPrefixByMinecraftUUID(ctx context.Context, mcUUID uuid.UUID, prefix string) error
 	// SetPlayerRoles writes the roles to every active server. Every server is tried, even when one fails.
 	SetPlayerRoles(ctx context.Context, roles map[uuid.UUID]domain.Role) error
+	// SetPrefixInSeason writes the prefix to the server of one season. It does nothing when the season has
+	// no shell address, because it has no server yet.
+	SetPrefixInSeason(ctx context.Context, seasonID, mcUUID uuid.UUID, prefix string) error
+	// SetPlayerRolesInSeason writes the roles to the server of one season. It does nothing when the season has
+	// no shell address, because it has no server yet.
+	SetPlayerRolesInSeason(ctx context.Context, seasonID uuid.UUID, roles map[uuid.UUID]domain.Role) error
 	// AddToWhitelist does nothing when the season has no shell address, because it has no server yet.
 	AddToWhitelist(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
 	// RemoveFromWhitelist does nothing when the season has no shell address, because it has no server yet.
@@ -166,18 +172,14 @@ func (s *minecraftService) SetPrefixByMinecraftUUID(ctx context.Context, mcUUID 
 	return nil
 }
 
-func (s *minecraftService) SetPlayerRoles(ctx context.Context, roles map[uuid.UUID]domain.Role) error {
-	apis, err := s.activeShells(ctx)
-	if err != nil {
-		return err
-	}
-
-	// A staff role is a group on the server, a player has no group.
-	roleGroups := make([]string, len(domain.StaffRoles))
+// roleGroupsFor maps the roles to the role groups of the server. A staff role is a group on the server,
+// a player has no group.
+func roleGroupsFor(roles map[uuid.UUID]domain.Role) (roleGroups []string, groups map[uuid.UUID]string) {
+	roleGroups = make([]string, len(domain.StaffRoles))
 	for i, role := range domain.StaffRoles {
 		roleGroups[i] = string(role)
 	}
-	groups := make(map[uuid.UUID]string, len(roles))
+	groups = make(map[uuid.UUID]string, len(roles))
 	for mcUUID, role := range roles {
 		group := ""
 		if role != domain.RolePlayer {
@@ -185,6 +187,16 @@ func (s *minecraftService) SetPlayerRoles(ctx context.Context, roles map[uuid.UU
 		}
 		groups[mcUUID] = group
 	}
+	return roleGroups, groups
+}
+
+func (s *minecraftService) SetPlayerRoles(ctx context.Context, roles map[uuid.UUID]domain.Role) error {
+	apis, err := s.activeShells(ctx)
+	if err != nil {
+		return err
+	}
+
+	roleGroups, groups := roleGroupsFor(roles)
 
 	// Every server is tried, so one server down does not keep the others on the old roles.
 	var failures []error
@@ -195,6 +207,33 @@ func (s *minecraftService) SetPlayerRoles(ctx context.Context, roles map[uuid.UU
 	}
 	if len(failures) > 0 {
 		return utils.NewInternalServerError("failed to set player roles", errors.Join(failures...))
+	}
+	return nil
+}
+
+func (s *minecraftService) SetPrefixInSeason(ctx context.Context, seasonID, mcUUID uuid.UUID, prefix string) error {
+	api, err := s.seasonShell(ctx, seasonID)
+	if errors.Is(err, errSeasonHasNoShell) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	if err := api.SetPlayerPrefix(ctx, mcUUID, prefix); err != nil {
+		return utils.NewInternalServerError("failed to set prefix by minecraft uuid", err)
+	}
+	return nil
+}
+
+func (s *minecraftService) SetPlayerRolesInSeason(ctx context.Context, seasonID uuid.UUID, roles map[uuid.UUID]domain.Role) error {
+	api, err := s.seasonShell(ctx, seasonID)
+	if errors.Is(err, errSeasonHasNoShell) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	roleGroups, groups := roleGroupsFor(roles)
+	if err := api.SetPlayerRoles(ctx, roleGroups, groups); err != nil {
+		return utils.NewInternalServerError("failed to set player roles", err)
 	}
 	return nil
 }

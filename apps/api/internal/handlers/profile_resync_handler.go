@@ -3,13 +3,15 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/lania-smp/backend/internal/presenter"
 	"github.com/lania-smp/backend/internal/services"
 	"github.com/lania-smp/backend/internal/transport/http/binders"
 	"github.com/lania-smp/backend/internal/utils"
 )
 
 type ProfileResyncHandler interface {
-	// ResyncProfile is for the owner of the profile, and it has a cooldown.
+	// ResyncProfile is for the owner of the profile, and it has a cooldown. It answers 200 with a report
+	// per season, also when some servers failed.
 	ResyncProfile(w http.ResponseWriter, r *http.Request)
 	// AdminResyncProfile is for admins, for any profile and without a cooldown.
 	AdminResyncProfile(w http.ResponseWriter, r *http.Request)
@@ -38,11 +40,12 @@ func (h *profileResyncHandler) ResyncProfile(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := h.profileResyncService.ResyncOwnedProfile(ctx, profileID, authUserID); err != nil {
+	resync, err := h.profileResyncService.ResyncOwnedProfile(ctx, profileID, authUserID)
+	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileResync(resync))
 }
 
 func (h *profileResyncHandler) AdminResyncProfile(w http.ResponseWriter, r *http.Request) {
@@ -54,9 +57,10 @@ func (h *profileResyncHandler) AdminResyncProfile(w http.ResponseWriter, r *http
 		return
 	}
 
-	if err := h.profileResyncService.ResyncProfile(ctx, profileID); err != nil {
+	resync, err := h.profileResyncService.ResyncProfile(ctx, profileID)
+	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileResync(resync))
 }

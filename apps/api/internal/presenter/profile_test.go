@@ -1,11 +1,13 @@
 package presenter
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
+	"github.com/lania-smp/backend/internal/utils"
 )
 
 func TestPresentProfileStats(t *testing.T) {
@@ -36,5 +38,42 @@ func TestPresentProfileStatsEmpty(t *testing.T) {
 	got := PresentProfileStats(nil)
 	if got.TotalPlaytime != 0 || got.Seasons == nil || len(got.Seasons) != 0 {
 		t.Errorf("stats = %+v, want zero total and an empty, non-nil list", got)
+	}
+}
+
+func TestPresentProfileResync(t *testing.T) {
+	fine, broken := uuid.New(), uuid.New()
+	resync := &domain.ProfileResync{Seasons: []*domain.SeasonResync{
+		{SeasonID: fine, SeasonName: "Season 1", Parts: []domain.PartResync{
+			{Part: domain.ResyncPartRole}, {Part: domain.ResyncPartAccess},
+		}},
+		{SeasonID: broken, SeasonName: "Season 2", Parts: []domain.PartResync{
+			{Part: domain.ResyncPartRole},
+			{Part: domain.ResyncPartAccess, Err: utils.NewInternalServerError("failed to add profile to whitelist", errors.New("dial tcp 10.0.0.5:9000"))},
+		}},
+	}}
+
+	got := PresentProfileResync(resync)
+
+	if got.OK || len(got.Seasons) != 2 {
+		t.Fatalf("resync = %+v, want a failure over two seasons", got)
+	}
+	if !got.Seasons[0].OK || got.Seasons[0].SeasonName != "Season 1" || got.Seasons[0].Parts[0].Error != nil {
+		t.Errorf("first season = %+v, want ok without errors", got.Seasons[0])
+	}
+	failed := got.Seasons[1].Parts[1]
+	if got.Seasons[1].OK || failed.OK || failed.Part != "access" {
+		t.Fatalf("second season = %+v, want the access part failed", got.Seasons[1])
+	}
+	if failed.Error == nil || *failed.Error != "failed to add profile to whitelist" {
+		t.Errorf("error = %v, want the message without the original error", failed.Error)
+	}
+}
+
+func TestPresentProfileResyncEmpty(t *testing.T) {
+	got := PresentProfileResync(&domain.ProfileResync{})
+
+	if !got.OK || got.Seasons == nil || len(got.Seasons) != 0 {
+		t.Fatalf("resync = %+v, want ok with an empty list that is not null", got)
 	}
 }

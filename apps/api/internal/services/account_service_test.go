@@ -92,9 +92,9 @@ type accountResync struct {
 	done chan uuid.UUID
 }
 
-func (r *accountResync) ResyncProfile(_ context.Context, profileID uuid.UUID) error {
+func (r *accountResync) ResyncProfile(_ context.Context, profileID uuid.UUID) (*domain.ProfileResync, error) {
 	r.done <- profileID
-	return nil
+	return &domain.ProfileResync{}, nil
 }
 
 type accountOry struct {

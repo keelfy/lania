@@ -240,6 +240,14 @@
     "description": "Sends the role, cosmetics and access of this game profile to every game server again. Use it when something in the game does not match the site.",
     "button": "Synchronize",
     "success": "The game profile is synchronized",
+    "partial": "Synchronized on some servers only",
+    "failed": "Failed to synchronize the game profile on any server",
+    "noServers": "No season has a game server to synchronize with",
+    "parts": {
+      "role": "Role",
+      "cosmetics": "Cosmetics",
+      "access": "Access"
+    },
     "error": "Failed to synchronize the game profile"
   },
   "auth": {

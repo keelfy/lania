@@ -198,3 +198,40 @@ func TestMinecraftService_RolesGoToEveryActiveServer(t *testing.T) {
 		t.Fatal("the other server must still get the roles")
 	}
 }
+
+func TestMinecraftService_RoleAndPrefixInSeasonUseShellOfSeason(t *testing.T) {
+	admin := uuid.New()
+	pool := fakeShellPool{"a:1": {}, "b:1": {}}
+	first, second, upcoming := season("a:1", true), season("b:1", true), season("", true)
+	service := NewMinecraftService(&fakeSeasons{seasons: []*domain.Season{first, second, upcoming}}, pool)
+	ctx := context.Background()
+
+	roles := map[uuid.UUID]domain.Role{admin: domain.RoleAdmin}
+	if err := service.SetPlayerRolesInSeason(ctx, first.ID, roles); err != nil {
+		t.Fatal(err)
+	}
+	if err := service.SetPrefixInSeason(ctx, first.ID, admin, "[X]"); err != nil {
+		t.Fatal(err)
+	}
+	if pool["a:1"].roles[admin] != "admin" || len(pool["a:1"].prefixes) != 1 {
+		t.Errorf("a:1 roles = %v, prefixes = %v, want the role and the prefix", pool["a:1"].roles, pool["a:1"].prefixes)
+	}
+	if pool["b:1"].roles != nil || len(pool["b:1"].prefixes) != 0 {
+		t.Error("the shell of another season must not be written")
+	}
+
+	if err := service.SetPlayerRolesInSeason(ctx, upcoming.ID, roles); err != nil {
+		t.Fatalf("a season without shell error = %v, want nothing to do", err)
+	}
+	if err := service.SetPrefixInSeason(ctx, upcoming.ID, admin, "[X]"); err != nil {
+		t.Fatalf("a season without shell error = %v, want nothing to do", err)
+	}
+
+	pool["b:1"].err = errors.New("down")
+	if err := service.SetPlayerRolesInSeason(ctx, second.ID, roles); err == nil {
+		t.Fatal("want an error when the server rejects the roles")
+	}
+	if err := service.SetPrefixInSeason(ctx, second.ID, admin, "[X]"); err == nil {
+		t.Fatal("want an error when the server rejects the prefix")
+	}
+}

@@ -134,3 +134,25 @@ type ProfilesStats struct {
 	Online      *int64 `json:"online,omitempty"`
 	NewLastWeek int64  `json:"newLastWeek"`
 }
+
+// ProfileResync tells per season what a resync wrote to the server of the season.
+type ProfileResync struct {
+	// OK is true when every part was written on every server.
+	OK      bool            `json:"ok"`
+	Seasons []*SeasonResync `json:"seasons"`
+}
+
+type SeasonResync struct {
+	SeasonID   uuid.UUID     `json:"seasonId"`
+	SeasonName string        `json:"seasonName"`
+	OK         bool          `json:"ok"`
+	Parts      []*PartResync `json:"parts"`
+}
+
+type PartResync struct {
+	// Part is role, cosmetics or access.
+	Part string `json:"part"`
+	OK   bool   `json:"ok"`
+	// Error is missing when the part was written.
+	Error *string `json:"error,omitempty"`
+}

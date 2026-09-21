@@ -94,7 +94,8 @@ func (s *accountService) DeleteAccount(ctx context.Context, userID uuid.UUID, si
 	resyncCtx := context.WithoutCancel(ctx)
 	go func() {
 		for _, profile := range profiles {
-			if err := s.profileResyncService.ResyncProfile(resyncCtx, profile.ID); err != nil {
+			// The service logs every part that failed.
+			if _, err := s.profileResyncService.ResyncProfile(resyncCtx, profile.ID); err != nil {
 				logger.Warnf(resyncCtx, "failed to resync profile %s released by a deleted account: %v", profile.ID, err)
 			}
 		}
