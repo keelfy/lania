@@ -417,7 +417,8 @@ func (q *queries) FindProfilesSeasonCosmetics(ctx context.Context, profileIDs uu
 		var profileID uuid.UUID
 		var colorID, glythID, specialID uuid.NullUUID
 		var colorName, glythName, specialName stdsql.NullString
-		var colors, glythMetadata, specialMetadata json.RawMessage
+		// []byte, because a NULL of an unselected prefix cannot be scanned into json.RawMessage.
+		var colors, glythMetadata, specialMetadata []byte
 		err := rows.Scan(
 			&profileID,
 			&colorID, &colorName, &colors,
@@ -447,7 +448,7 @@ func (q *queries) FindProfilesSeasonCosmetics(ctx context.Context, profileIDs uu
 }
 
 // scanSelectedNamePrefix builds the name prefix of a joined row, nil when the profile selected none.
-func scanSelectedNamePrefix(id uuid.NullUUID, name stdsql.NullString, rawMetadata json.RawMessage) (*domain.NamePrefix, error) {
+func scanSelectedNamePrefix(id uuid.NullUUID, name stdsql.NullString, rawMetadata []byte) (*domain.NamePrefix, error) {
 	if !id.Valid {
 		return nil, nil
 	}
