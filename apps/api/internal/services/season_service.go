@@ -17,6 +17,8 @@ import (
 
 type SeasonService interface {
 	GetSeasonByID(ctx context.Context, seasonID uuid.UUID) (*domain.Season, error)
+	// GetPrimarySeasonID returns the season that requests fall back to when they name none.
+	GetPrimarySeasonID(ctx context.Context) (uuid.UUID, error)
 	GetPublicSeasons(ctx context.Context) ([]*domain.Season, error)
 	// GetSeasons returns every season, the newest start first.
 	GetSeasons(ctx context.Context) ([]*domain.Season, error)
@@ -42,6 +44,16 @@ func (s *seasonService) GetSeasonByID(ctx context.Context, seasonID uuid.UUID) (
 		return nil, utils.NewInternalServerError("failed to get season by id", err)
 	}
 	return season, nil
+}
+
+func (s *seasonService) GetPrimarySeasonID(ctx context.Context) (uuid.UUID, error) {
+	id, err := s.storage.Queries().FindPrimarySeasonID(ctx)
+	if errors.Is(err, stdsql.ErrNoRows) {
+		return uuid.Nil, utils.NewInternalServerError("primary season is not set", err)
+	} else if err != nil {
+		return uuid.Nil, utils.NewInternalServerError("failed to get primary season", err)
+	}
+	return id, nil
 }
 
 func (s *seasonService) GetPublicSeasons(ctx context.Context) ([]*domain.Season, error) {
@@ -112,9 +124,6 @@ func (s *seasonService) CreateSeason(ctx context.Context, cmd *commands.SaveSeas
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to create season", err)
 	}
-	if cmd.IsPrimary {
-		config.SetPrimarySeasonID(id)
-	}
 	return s.GetSeasonByID(ctx, id)
 }
 
@@ -138,9 +147,6 @@ func (s *seasonService) UpdateSeason(ctx context.Context, cmd *commands.SaveSeas
 	})
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to update season", err)
-	}
-	if cmd.IsPrimary {
-		config.SetPrimarySeasonID(cmd.ID)
 	}
 	return s.GetSeasonByID(ctx, cmd.ID)
 }
@@ -180,7 +186,7 @@ func (s *seasonService) DeleteSeason(ctx context.Context, seasonID uuid.UUID) er
 	return nil
 }
 
-// InitializePrimarySeason makes the database setting authoritative while preserving old deployments.
+// InitializePrimarySeason moves the deployment-wide SHELL_ADDRESS into the primary season on old deployments.
 func (s *seasonService) InitializePrimarySeason(ctx context.Context) error {
 	seasons, err := s.GetSeasons(ctx)
 	if err != nil {
@@ -188,19 +194,10 @@ func (s *seasonService) InitializePrimarySeason(ctx context.Context) error {
 	}
 	for _, season := range seasons {
 		if season.IsPrimary {
-			config.SetPrimarySeasonID(season.ID)
 			return s.seedShellAddress(ctx, season)
 		}
 	}
-
-	fallback := config.GetPrimarySeasonID()
-	if err := s.storage.BeginTx(ctx, func(queries sql.Queries) error {
-		return setPrimarySeason(ctx, queries, fallback)
-	}); err != nil {
-		return utils.NewInternalServerError("failed to initialize primary season", err)
-	}
-	config.SetPrimarySeasonID(fallback)
-	return s.seedShellAddress(ctx, &domain.Season{ID: fallback})
+	return nil
 }
 
 // seedShellAddress moves the deployment-wide SHELL_ADDRESS into a primary season that has none yet.

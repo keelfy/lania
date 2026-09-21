@@ -53,7 +53,10 @@ func (h *PermissionHandler) SetPlayerPrefix(ctx context.Context, req *shellv1.Se
 		return nil, err
 	}
 
-	if err := h.permissionService.SetPlayerPrefix(ctx, mcUUID, req.GetPrefix()); err != nil {
+	err = h.permissionService.SetPlayerPrefix(ctx, mcUUID, req.GetPrefix())
+	if errors.Is(err, services.ErrInvalidPrefix) {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	} else if err != nil {
 		return nil, internalError(err)
 	}
 	return &shellv1.SetPlayerPrefixResponse{}, nil

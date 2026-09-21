@@ -281,7 +281,6 @@ func (s *adminGrantService) profileHasProduct(ctx context.Context, profile *doma
 // revoke marks the grant revoked and drops the selection of a name color or a name prefix that the profile can no longer use.
 func (s *adminGrantService) revoke(ctx context.Context, queries sql.Queries, profile *domain.Profile, grant *domain.Grant) error {
 	revokedBy := utils.GetUserIDFromContextOrNil(ctx)
-	primarySeasonID := config.GetPrimarySeasonID()
 
 	switch grant.Type {
 	case domain.GrantTypeAccess:
@@ -294,6 +293,10 @@ func (s *adminGrantService) revoke(ctx context.Context, queries sql.Queries, pro
 			return nil
 		}
 
+		primarySeasonID, err := s.seasonService.GetPrimarySeasonID(ctx)
+		if err != nil {
+			return err
+		}
 		remaining, err := queries.FindProfileNameColorOptionsByProfileID(ctx, profile.ID, &primarySeasonID)
 		if err != nil {
 			return utils.NewInternalServerError("failed to find profile name color options", err)
@@ -317,6 +320,10 @@ func (s *adminGrantService) revoke(ctx context.Context, queries sql.Queries, pro
 			return nil
 		}
 
+		primarySeasonID, err := s.seasonService.GetPrimarySeasonID(ctx)
+		if err != nil {
+			return err
+		}
 		remaining, err := queries.FindProfileNamePrefixOptionsByProfileIDAndType(ctx, profile.ID, grant.PrefixType, &primarySeasonID)
 		if err != nil {
 			return utils.NewInternalServerError("failed to find profile name prefix options", err)

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/presenter"
@@ -99,7 +98,13 @@ func (h *profileHandler) GetTopPlaytimeProfiles(w http.ResponseWriter, r *http.R
 		limit = maxTopPlaytimeLimit
 	}
 
-	top, err := h.profileService.GetTopPlaytimeProfiles(ctx, config.GetPrimarySeasonID(), limit)
+	primarySeasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	top, err := h.profileService.GetTopPlaytimeProfiles(ctx, primarySeasonID, limit)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
@@ -253,11 +258,17 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 		seasons = nil
 	}
 
+	primarySeasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
 	res := make([]*responses.Profile, len(profiles))
 	for i, profile := range profiles {
 		accessStatus := domain.AccessStatusInactive
 		for _, access := range accesses[profile.MinecraftUUID] {
-			if access.SeasonID == config.GetPrimarySeasonID() {
+			if access.SeasonID == primarySeasonID {
 				accessStatus = domain.AccessStatusActive
 				break
 			}
@@ -361,9 +372,15 @@ func (h *profileHandler) writeProfileDetails(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
+	primarySeasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
 	accessStatus := domain.AccessStatusInactive
 	for _, access := range accesses[profile.MinecraftUUID] {
-		if access.SeasonID == config.GetPrimarySeasonID() {
+		if access.SeasonID == primarySeasonID {
 			accessStatus = domain.AccessStatusActive
 			break
 		}

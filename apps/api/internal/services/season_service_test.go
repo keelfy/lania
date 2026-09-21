@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	stdsql "database/sql"
 	"testing"
 	"time"
 
@@ -19,6 +20,15 @@ type fakeSeasonQueries struct {
 
 func (q *fakeSeasonQueries) FindSeasonByID(_ context.Context, id uuid.UUID) (*domain.Season, error) {
 	return q.seasons[id], nil
+}
+
+func (q *fakeSeasonQueries) FindPrimarySeasonID(context.Context) (uuid.UUID, error) {
+	for id, season := range q.seasons {
+		if season.IsPrimary {
+			return id, nil
+		}
+	}
+	return uuid.Nil, stdsql.ErrNoRows
 }
 
 func (q *fakeSeasonQueries) UpdateSeason(_ context.Context, arg sql.UpdateSeasonParams) error {
@@ -110,5 +120,27 @@ func TestSeasonService_UpdateSeason_SelectsInactivePrimary(t *testing.T) {
 	}
 	if queries.seasons[oldPrimaryID].IsPrimary {
 		t.Fatal("old primary season remained primary")
+	}
+}
+
+func TestSeasonService_GetPrimarySeasonID(t *testing.T) {
+	primaryID := uuid.New()
+	queries := &fakeSeasonQueries{seasons: map[uuid.UUID]*domain.Season{
+		primaryID:  {ID: primaryID, IsPrimary: true},
+		uuid.New(): {},
+	}}
+	service := NewSeasonService(&fakeSeasonStorage{queries: queries})
+
+	got, err := service.GetPrimarySeasonID(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != primaryID {
+		t.Fatalf("primary season id = %v, want %v", got, primaryID)
+	}
+
+	queries.seasons[primaryID].IsPrimary = false
+	if _, err := service.GetPrimarySeasonID(t.Context()); err == nil {
+		t.Fatal("expected error when no season is primary")
 	}
 }

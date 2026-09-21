@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/shell/internal/clients"
@@ -19,11 +20,16 @@ type PermissionService interface {
 	GetPlayerGroups(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID][]string, error)
 	// ListPlayersByGroups returns players that belong to at least one of the groups.
 	ListPlayersByGroups(ctx context.Context, groups []string) (uuid.UUIDs, error)
+	// SetPlayerPrefix replaces the player's chat prefix with a console command. An empty prefix removes it.
+	// It fails when the server cannot be reached, because the console is the only way the prefix is written.
 	SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error
 	// SetPlayerRoles makes every player of roles belong to exactly the role group it maps to, among roleGroups.
 	// An empty group leaves the player in no role group. A group that is not in roleGroups is an error.
 	SetPlayerRoles(ctx context.Context, roleGroups []string, roles map[uuid.UUID]string) error
 }
+
+// ErrInvalidPrefix means the prefix cannot be passed to the console as one quoted argument.
+var ErrInvalidPrefix = errors.New("invalid prefix")
 
 // ErrUnknownRoleGroup means a role maps to a group that is not one of the role groups.
 var ErrUnknownRoleGroup = errors.New("group is not a role group")
@@ -41,8 +47,7 @@ func NewPermissionService(luckpermsStorage storage.LuckpermsStorage, console cli
 }
 
 const (
-	groupNodePrefix  = "group."
-	prefixNodePrefix = "prefix."
+	groupNodePrefix = "group."
 	// prefixPriority is the LuckPerms weight of prefixes set by the website.
 	prefixPriority = "100"
 )
@@ -73,13 +78,22 @@ func (s *permissionService) ListPlayersByGroups(ctx context.Context, groups []st
 }
 
 func (s *permissionService) SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error {
-	node := prefixNodePrefix + prefixPriority + "." + prefix
-	logger.Debugf(ctx, "setting prefix node for %s: %s", mcUUID.String(), node)
-	if err := s.luckpermsStorage.ReplacePermissionsWithPrefix(ctx, mcUUID, prefixNodePrefix, node); err != nil {
-		return err
+	// The prefix is quoted into the command, so a quote, a backslash or a control character would alter it.
+	if strings.ContainsFunc(prefix, func(r rune) bool { return r == '"' || r == '\\' || unicode.IsControl(r) }) {
+		return fmt.Errorf("%w: %q", ErrInvalidPrefix, prefix)
 	}
 
-	s.syncServer(ctx)
+	commands := []string{fmt.Sprintf("lp user %s meta clear prefix", mcUUID)}
+	if prefix != "" {
+		commands = append(commands, fmt.Sprintf("lp user %s meta addprefix %s \"%s\"", mcUUID, prefixPriority, prefix))
+	}
+	for _, command := range commands {
+		output, err := s.console.Execute(ctx, command)
+		if err != nil {
+			return fmt.Errorf("failed to run %q: %w", command, err)
+		}
+		logger.Debugf(ctx, "%q: %s", command, output)
+	}
 	return nil
 }
 
@@ -116,6 +130,7 @@ func (s *permissionService) SetPlayerRoles(ctx context.Context, roleGroups []str
 // syncServer makes the running server pick up the database change. It is best
 // effort: the database is the source of truth and the server loads it on start,
 // so an unreachable server must not fail the write.
+// Prefixes do not go through here: they are written by the server itself.
 func (s *permissionService) syncServer(ctx context.Context) {
 	command := config.GetLuckpermsSyncCommand()
 	output, err := s.console.Execute(ctx, command)

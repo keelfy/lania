@@ -25,8 +25,6 @@ type LuckpermsStorage interface {
 	FindPermissionsWithPrefix(ctx context.Context, mcUUIDs uuid.UUIDs, nodePrefix string) (map[uuid.UUID][]string, error)
 	// FindPlayersWithPermissions returns players that have at least one of the permission nodes.
 	FindPlayersWithPermissions(ctx context.Context, permissions []string) (uuid.UUIDs, error)
-	// ReplacePermissionsWithPrefix deletes the player's nodes starting with nodePrefix and inserts node.
-	ReplacePermissionsWithPrefix(ctx context.Context, mcUUID uuid.UUID, nodePrefix string, node string) error
 	// ReplacePermissions applies every replacement in one transaction. A node in both lists stays once.
 	ReplacePermissions(ctx context.Context, replacements []PermissionReplacement) error
 }
@@ -106,26 +104,10 @@ func (s *luckpermsStorage) FindPlayersWithPermissions(ctx context.Context, permi
 	return mcUUIDs, rows.Err()
 }
 
-const deletePermissionsWithPrefix = `
-DELETE FROM %s
-WHERE uuid = ? AND permission LIKE ?
-`
-
 const insertPermission = `
 INSERT INTO %s (uuid, permission, value, server, world, expiry, contexts)
 VALUES (?, ?, 1, 'global', 'global', 0, '{}')
 `
-
-func (s *luckpermsStorage) ReplacePermissionsWithPrefix(ctx context.Context, mcUUID uuid.UUID, nodePrefix string, node string) error {
-	tableName := config.GetLuckpermsUserPermissionsTableName()
-	return beginTx(ctx, s.db, func(tx *stdsql.Tx) error {
-		if _, err := tx.ExecContext(ctx, fmt.Sprintf(deletePermissionsWithPrefix, tableName), mcUUID.String(), nodePrefix+"%"); err != nil {
-			return err
-		}
-		_, err := tx.ExecContext(ctx, fmt.Sprintf(insertPermission, tableName), mcUUID.String(), node)
-		return err
-	})
-}
 
 const deletePermissions = `
 DELETE FROM %s

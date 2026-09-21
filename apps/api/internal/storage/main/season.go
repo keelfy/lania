@@ -45,6 +45,12 @@ func (q *queries) FindSeasonByID(ctx context.Context, seasonID uuid.UUID) (*doma
 	return scanSeason(q.x.QueryRowContext(ctx, "SELECT"+seasonColumns+" FROM seasons WHERE id = ?", seasonID))
 }
 
+func (q *queries) FindPrimarySeasonID(ctx context.Context) (uuid.UUID, error) {
+	var id uuid.UUID
+	err := q.x.QueryRowContext(ctx, "SELECT id FROM seasons WHERE is_primary = true LIMIT 1").Scan(&id)
+	return id, err
+}
+
 func (q *queries) FindPublicSeasons(ctx context.Context) ([]*domain.Season, error) {
 	rows, err := q.x.QueryContext(ctx, `
 SELECT id, name, preview_image, start_date, end_date,

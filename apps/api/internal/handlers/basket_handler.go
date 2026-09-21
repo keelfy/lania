@@ -19,15 +19,18 @@ type BasketHandler interface {
 
 type basketHandler struct {
 	basketService services.BasketService
+	seasonService services.SeasonService
 	storage       storage.MainStorage
 }
 
 func NewBasketHandler(
 	basketService services.BasketService,
+	seasonService services.SeasonService,
 	storage storage.MainStorage,
 ) BasketHandler {
 	return &basketHandler{
 		basketService: basketService,
+		seasonService: seasonService,
 		storage:       storage,
 	}
 }
@@ -89,7 +92,13 @@ func (h *basketHandler) DeleteBasketItem(w http.ResponseWriter, r *http.Request)
 func (h *basketHandler) AddBasketItem(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	cmd, err := binders.BindAddBasketItem(r)
+	primarySeasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	cmd, err := binders.BindAddBasketItem(r, primarySeasonID)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return

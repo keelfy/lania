@@ -57,8 +57,6 @@ func (s *fakeFlectoneStorage) FindOnlineUUIDs(_ context.Context) (uuid.UUIDs, er
 
 type fakeLuckpermsStorage struct {
 	nodes           map[uuid.UUID][]string
-	lastPrefix      string
-	lastNode        string
 	lastPermissions []string
 }
 
@@ -78,12 +76,6 @@ func (s *fakeLuckpermsStorage) FindPlayersWithPermissions(_ context.Context, per
 		}
 	}
 	return mcUUIDs, nil
-}
-
-func (s *fakeLuckpermsStorage) ReplacePermissionsWithPrefix(_ context.Context, _ uuid.UUID, nodePrefix string, node string) error {
-	s.lastPrefix = nodePrefix
-	s.lastNode = node
-	return nil
 }
 
 func (s *fakeLuckpermsStorage) ReplacePermissions(context.Context, []storage.PermissionReplacement) error {
@@ -235,11 +227,17 @@ func TestPermissionService(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if env.luckperms.lastPrefix != "prefix." || env.luckperms.lastNode != "prefix.100.<red>[A]" {
-		t.Errorf("unexpected prefix write: %q %q", env.luckperms.lastPrefix, env.luckperms.lastNode)
+	wantCommands := []string{
+		"lp user " + knownUUID.String() + " meta clear prefix",
+		"lp user " + knownUUID.String() + ` meta addprefix 100 "<red>[A]"`,
 	}
-	if len(env.console.commands) != 1 || env.console.commands[0] != "lp sync" {
-		t.Errorf("server must be synced once after the write, got %v", env.console.commands)
+	if !slices.Equal(env.console.commands, wantCommands) {
+		t.Errorf("prefix must be written with console commands, got %q want %q", env.console.commands, wantCommands)
+	}
+
+	_, err = client.SetPlayerPrefix(ctx, &shellv1.SetPlayerPrefixRequest{MinecraftUuid: knownUUID.String(), Prefix: `[A" x`})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Errorf("prefix with a quote must be invalid, got %v", err)
 	}
 }
 

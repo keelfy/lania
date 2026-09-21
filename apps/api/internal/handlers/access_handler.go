@@ -94,7 +94,11 @@ func (h *accessHandler) CheckUsernames(w http.ResponseWriter, r *http.Request) {
 		if status == responses.UsernameStatusOwnedByYou {
 			seasonID := cmd.SeasonID
 			if seasonID == nil {
-				id := config.GetPrimarySeasonID()
+				id, err := h.seasonService.GetPrimarySeasonID(ctx)
+				if err != nil {
+					utils.HttpError(ctx, w, err)
+					return
+				}
 				seasonID = &id
 			}
 
@@ -175,9 +179,16 @@ func (h *accessHandler) grantFreeAccess(
 ) {
 	ctx := r.Context()
 
-	if source == domain.AccessSourceRegistration && cmd.SeasonID != config.GetPrimarySeasonID() {
-		utils.HttpError(ctx, w, utils.NewBadRequestError("registration is only available for the primary season", nil))
-		return
+	if source == domain.AccessSourceRegistration {
+		primarySeasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+		if err != nil {
+			utils.HttpError(ctx, w, err)
+			return
+		}
+		if cmd.SeasonID != primarySeasonID {
+			utils.HttpError(ctx, w, utils.NewBadRequestError("registration is only available for the primary season", nil))
+			return
+		}
 	}
 
 	for _, username := range cmd.Usernames {

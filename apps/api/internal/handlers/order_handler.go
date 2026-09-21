@@ -72,7 +72,13 @@ type itemToOrder struct {
 func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	cmd, err := binders.BindCreateOrder(r)
+	primarySeasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	cmd, err := binders.BindCreateOrder(r, primarySeasonID)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return

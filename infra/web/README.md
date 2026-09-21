@@ -13,7 +13,7 @@ prefixed `lania-` to avoid clashing with anything else on the box.
   (and `lania.network` redirects to it) via Traefik labels.
 - **api** — Go backend (`ghcr.io/lania-smp/backend`), routed at `api.lania.network`.
 - **shell** — Go gRPC service (`ghcr.io/lania-smp/shell`), the API's only way to
-  reach the Minecraft server (RCON whitelist) and its plugin data (Plan,
+  reach the Minecraft server (RCON whitelist and prefixes) and its plugin data (Plan,
   Flectone, LuckPerms). Internal only.
 - **mariadb** — shared instance: one database `lania` holding the API tables and
   the prefixed Minecraft plugin tables (LuckPerms, Plan, Flectone) that `shell`

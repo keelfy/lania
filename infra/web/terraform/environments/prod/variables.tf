@@ -118,7 +118,7 @@ variable "flectone_player_table_name" {
 }
 
 variable "rcon_address" {
-  description = "host:port of the Minecraft server RCON reachable from the shell container. Empty disables live permission sync and fails whitelist changes"
+  description = "host:port of the Minecraft server RCON reachable from the shell container. Empty disables live role sync and fails whitelist and prefix changes"
   type        = string
   default     = ""
 }
@@ -134,17 +134,6 @@ variable "shell_token" {
   description = "Shared secret the API sends to the shell service"
   type        = string
   sensitive   = true
-}
-
-variable "primary_season_id" {
-  type    = string
-  default = ""
-}
-
-# Deprecated deployment fallback. Remove after production tfvars uses primary_season_id.
-variable "active_season_id" {
-  type    = string
-  default = "00000000-0000-0000-0000-000000000000"
 }
 
 variable "max_profiles_per_user" {

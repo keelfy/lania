@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/presenter"
 	"github.com/lania-smp/backend/internal/services"
 	"github.com/lania-smp/backend/internal/transport/http/binders"
@@ -21,6 +20,7 @@ type purchaseHandler struct {
 	productService          services.ProductService
 	profileCosmeticsService services.ProfileCosmeticsService
 	purchaseService         services.PurchaseService
+	seasonService           services.SeasonService
 }
 
 func NewPurchaseHandler(
@@ -29,6 +29,7 @@ func NewPurchaseHandler(
 	productService services.ProductService,
 	profileCosmeticsService services.ProfileCosmeticsService,
 	purchaseService services.PurchaseService,
+	seasonService services.SeasonService,
 ) PurchaseHandler {
 	return &purchaseHandler{
 		profileService:          profileService,
@@ -36,6 +37,7 @@ func NewPurchaseHandler(
 		productService:          productService,
 		profileCosmeticsService: profileCosmeticsService,
 		purchaseService:         purchaseService,
+		seasonService:           seasonService,
 	}
 }
 
@@ -54,7 +56,12 @@ func (h *purchaseHandler) GetPurchasedProducts(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	seasonID := config.GetPrimarySeasonID()
+	seasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
 	requestedSeasonID, err := binders.BindOptionalQueryParamAsUUID(r, "seasonId")
 	if err != nil {
 		utils.HttpError(ctx, w, err)

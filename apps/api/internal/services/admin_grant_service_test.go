@@ -137,6 +137,10 @@ type stubSeasonService struct {
 	known uuid.UUID
 }
 
+func (s *stubSeasonService) GetPrimarySeasonID(context.Context) (uuid.UUID, error) {
+	return s.known, nil
+}
+
 func (s *stubSeasonService) GetSeasonByID(_ context.Context, id uuid.UUID) (*domain.Season, error) {
 	if id == s.known {
 		return &domain.Season{}, nil
@@ -213,7 +217,6 @@ func newGrantFixture(t *testing.T) *grantFixture {
 		defaultDye:  uuid.New(),
 		profile:     &domain.Profile{ID: uuid.New(), MinecraftUUID: uuid.New(), NameColorID: uuid.New()},
 	}
-	t.Setenv("PRIMARY_SEASON_ID", f.season.String())
 	t.Setenv("DEFAULT_NAME_COLOR_ID", f.defaultDye.String())
 
 	f.storage = &fakeGrantStorage{queries: f.queries}

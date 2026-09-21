@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/google/uuid"
@@ -12,7 +13,6 @@ import (
 
 type stubLuckpermsStorage struct {
 	err          error
-	written      bool
 	replacements []storage.PermissionReplacement
 }
 
@@ -22,14 +22,6 @@ func (s *stubLuckpermsStorage) FindPermissionsWithPrefix(context.Context, uuid.U
 
 func (s *stubLuckpermsStorage) FindPlayersWithPermissions(context.Context, []string) (uuid.UUIDs, error) {
 	return nil, nil
-}
-
-func (s *stubLuckpermsStorage) ReplacePermissionsWithPrefix(context.Context, uuid.UUID, string, string) error {
-	if s.err != nil {
-		return s.err
-	}
-	s.written = true
-	return nil
 }
 
 func (s *stubLuckpermsStorage) ReplacePermissions(_ context.Context, replacements []storage.PermissionReplacement) error {
@@ -50,36 +42,52 @@ func (c *stubConsole) Execute(_ context.Context, command string) (string, error)
 	return "", c.err
 }
 
-func TestSetPlayerPrefixSync(t *testing.T) {
+func TestSetPlayerPrefix(t *testing.T) {
+	mcUUID := uuid.MustParse("0f0c2a3e-5a4b-4d4c-9f6e-3b1a2c3d4e5f")
+	clear := "lp user " + mcUUID.String() + " meta clear prefix"
+
 	tests := []struct {
 		name         string
-		storageErr   error
+		prefix       string
 		consoleErr   error
-		wantErr      bool
-		wantSyncRuns int
+		wantErr      error
+		wantAnyErr   bool
+		wantCommands []string
 	}{
-		{name: "syncs after write", wantSyncRuns: 1},
-		{name: "unreachable server does not fail the write", consoleErr: errors.New("connection refused"), wantSyncRuns: 1},
-		{name: "disabled rcon does not fail the write", consoleErr: clients.ErrConsoleDisabled, wantSyncRuns: 1},
-		{name: "failed write skips sync", storageErr: errors.New("db down"), wantErr: true, wantSyncRuns: 0},
+		{
+			name:   "replaces the prefix",
+			prefix: "<red>[A] ",
+			wantCommands: []string{
+				clear,
+				"lp user " + mcUUID.String() + ` meta addprefix 100 "<red>[A] "`,
+			},
+		},
+		{name: "empty prefix only clears", wantCommands: []string{clear}},
+		{name: "unreachable server fails", prefix: "[A]", consoleErr: errors.New("connection refused"), wantAnyErr: true, wantCommands: []string{clear}},
+		{name: "disabled rcon fails", prefix: "[A]", consoleErr: clients.ErrConsoleDisabled, wantErr: clients.ErrConsoleDisabled, wantCommands: []string{clear}},
+		{name: "quote is rejected", prefix: `[A" meta clear`, wantErr: ErrInvalidPrefix},
+		{name: "backslash is rejected", prefix: `[A\`, wantErr: ErrInvalidPrefix},
+		{name: "line break is rejected", prefix: "[A]\nstop", wantErr: ErrInvalidPrefix},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			store := &stubLuckpermsStorage{err: tt.storageErr}
 			console := &stubConsole{err: tt.consoleErr}
-			service := NewPermissionService(store, console)
+			service := NewPermissionService(&stubLuckpermsStorage{}, console)
 
-			err := service.SetPlayerPrefix(context.Background(), uuid.New(), "<red>[A]")
+			err := service.SetPlayerPrefix(context.Background(), mcUUID, tt.prefix)
 
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SetPlayerPrefix() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr != nil && !errors.Is(err, tt.wantErr) {
+				t.Errorf("SetPlayerPrefix() error = %v, want %v", err, tt.wantErr)
 			}
-			if len(console.commands) != tt.wantSyncRuns {
-				t.Errorf("sync commands = %v, want %d", console.commands, tt.wantSyncRuns)
+			if tt.wantAnyErr && err == nil {
+				t.Errorf("SetPlayerPrefix() must fail")
 			}
-			if !tt.wantErr && !store.written {
-				t.Errorf("prefix must be written")
+			if tt.wantErr == nil && !tt.wantAnyErr && err != nil {
+				t.Errorf("SetPlayerPrefix() unexpected error = %v", err)
+			}
+			if !slices.Equal(console.commands, tt.wantCommands) {
+				t.Errorf("commands = %q, want %q", console.commands, tt.wantCommands)
 			}
 		})
 	}

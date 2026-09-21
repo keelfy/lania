@@ -5,7 +5,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -161,24 +160,6 @@ func GetIGDBImageURLFormat() string {
 }
 
 /** Business Constraints */
-
-var primarySeasonID atomic.Value
-
-func GetPrimarySeasonID() uuid.UUID {
-	if value := primarySeasonID.Load(); value != nil {
-		return value.(uuid.UUID)
-	}
-	if value := os.Getenv("PRIMARY_SEASON_ID"); value != "" {
-		return uuid.MustParse(value)
-	}
-	// ACTIVE_SEASON_ID remains a deployment fallback during the rename.
-	return uuid.MustParse(os.Getenv("ACTIVE_SEASON_ID"))
-}
-
-// SetPrimarySeasonID updates the runtime value after the database-backed admin setting changes.
-func SetPrimarySeasonID(id uuid.UUID) {
-	primarySeasonID.Store(id)
-}
 
 func GetMaxProfilesPerUser() int {
 	value, err := strconv.Atoi(os.Getenv("MAX_PROFILES_PER_USER"))

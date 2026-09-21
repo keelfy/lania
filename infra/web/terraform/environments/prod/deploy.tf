@@ -27,7 +27,6 @@ resource "local_sensitive_file" "env" {
     rcon_address  = var.rcon_address
     rcon_password = var.rcon_password
 
-    primary_season_id     = var.primary_season_id != "" ? var.primary_season_id : var.active_season_id
     max_profiles_per_user = var.max_profiles_per_user
     default_name_color_id = var.default_name_color_id
 

@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/commands"
-	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/transport/http/requests"
 	"github.com/lania-smp/backend/internal/utils"
 )
 
-func BindAddBasketItem(r *http.Request) (*commands.AddBasketItemCommand, error) {
+// BindAddBasketItem falls back to defaultSeasonID when the request names no season.
+func BindAddBasketItem(r *http.Request, defaultSeasonID uuid.UUID) (*commands.AddBasketItemCommand, error) {
 	authUserID, err := utils.GetUserIDFromCtx(r.Context())
 	if err != nil {
 		return nil, err
@@ -21,7 +22,7 @@ func BindAddBasketItem(r *http.Request) (*commands.AddBasketItemCommand, error) 
 		return nil, err
 	}
 
-	seasonID := config.GetPrimarySeasonID()
+	seasonID := defaultSeasonID
 	if req.SeasonID != nil {
 		seasonID = *req.SeasonID
 	}

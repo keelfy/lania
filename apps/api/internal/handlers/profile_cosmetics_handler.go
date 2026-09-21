@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/presenter"
 	"github.com/lania-smp/backend/internal/services"
@@ -27,6 +26,7 @@ type profileCosmeticsHandler struct {
 	profileCosmeticsService services.ProfileCosmeticsService
 	profileService          services.ProfileService
 	minecraftService        services.MinecraftService
+	seasonService           services.SeasonService
 	storage                 storage.MainStorage
 }
 
@@ -34,12 +34,14 @@ func NewProfileCosmeticsHandler(
 	profileCosmeticsService services.ProfileCosmeticsService,
 	profileService services.ProfileService,
 	minecraftService services.MinecraftService,
+	seasonService services.SeasonService,
 	storage storage.MainStorage,
 ) ProfileCosmeticsHandler {
 	return &profileCosmeticsHandler{
 		profileCosmeticsService: profileCosmeticsService,
 		profileService:          profileService,
 		minecraftService:        minecraftService,
+		seasonService:           seasonService,
 		storage:                 storage,
 	}
 }
@@ -70,7 +72,11 @@ func (h *profileCosmeticsHandler) GetProfileCosmeticOptions(w http.ResponseWrite
 		return
 	}
 
-	seasonID := config.GetPrimarySeasonID()
+	seasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
 
 	var nameColorOptions []*domain.ProfileNameColorOption
 	var glythPrefixOptions []*domain.ProfileNamePrefixOption
@@ -136,7 +142,12 @@ func (h *profileCosmeticsHandler) SelectProfileNameColor(w http.ResponseWriter, 
 		return
 	}
 
-	seasonID := config.GetPrimarySeasonID()
+	seasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
 	nameColorOption, err := h.profileCosmeticsService.GetProfileNameColorOptionByIDAndProfileID(ctx, req.OptionID, profileID, &seasonID)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
@@ -223,7 +234,12 @@ func (h *profileCosmeticsHandler) SelectProfileNamePrefix(w http.ResponseWriter,
 		return
 	}
 
-	seasonID := config.GetPrimarySeasonID()
+	seasonID, err := h.seasonService.GetPrimarySeasonID(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
 	var namePrefixOption *domain.ProfileNamePrefixOption
 
 	if req.OptionID != uuid.Nil {
