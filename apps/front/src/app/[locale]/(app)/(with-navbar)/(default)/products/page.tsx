@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { getMetadataLocale } from '@/i18n/metadata-locale'
 import CurrencySelect from '@/components/ui/currency-select'
 import {
   Drawer,
@@ -64,7 +65,7 @@ type Props = {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = await params
+  const locale = await getMetadataLocale(params)
   const t = await getTranslations({ locale, namespace: 'products.metadata' })
 
   return {

@@ -1,4 +1,5 @@
 import DeerIcon from '@/components/icons/DeerIcon'
+import { getMetadataLocale } from '@/i18n/metadata-locale'
 import { LOCALE_NAMES, LOCALES } from '@/lib/locale'
 import { HeartIcon } from 'lucide-react'
 import { Metadata } from 'next'
@@ -17,7 +18,7 @@ type Props = {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = await params
+  const locale = await getMetadataLocale(params)
   const t = await getTranslations({ locale, namespace: 'wiki' })
 
   return {

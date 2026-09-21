@@ -1,5 +1,6 @@
 import CookieConsent from '@/components/blocks/cookie-consent'
 import { BasketProvider } from '@/context/basket'
+import { getMetadataLocale } from '@/i18n/metadata-locale'
 import { routing } from '@/i18n/routing'
 import { getBasket } from '@/lib/api-endpoints'
 import { getCurrentSession } from '@/lib/get-current-session'
@@ -35,7 +36,7 @@ type Props = {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = await params
+  const locale = await getMetadataLocale(params)
   const t = await getTranslations({ locale, namespace: 'metadata' })
 
   return {

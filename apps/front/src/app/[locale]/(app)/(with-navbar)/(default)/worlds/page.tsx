@@ -1,3 +1,4 @@
+import { getMetadataLocale } from '@/i18n/metadata-locale'
 import pinger from 'minecraft-pinger'
 import { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
@@ -21,7 +22,7 @@ const notoSans = Noto_Sans({
 })
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = await params
+  const locale = await getMetadataLocale(params)
   const t = await getTranslations({ locale, namespace: 'worlds.metadata' })
 
   return {

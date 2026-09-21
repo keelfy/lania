@@ -1,3 +1,4 @@
+import { getMetadataLocale } from '@/i18n/metadata-locale'
 import { getTranslations } from 'next-intl/server'
 import { Suspense } from 'react'
 import AccountSettings from './account-settings'
@@ -9,7 +10,7 @@ type Props = {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { locale } = await params
+  const locale = await getMetadataLocale(params)
   const t = await getTranslations({ locale, namespace: 'accountSettings' })
   return { title: t('metadata.title') }
 }
