@@ -93,20 +93,28 @@ variable "database_name" {
   default = "lania"
 }
 
-variable "database_flectone_name" {
-  type    = string
-  default = "flectone"
-}
-
-variable "database_plan_name" {
-  type    = string
-  default = "plan"
-}
-
-variable "database_luckperms_name" {
-  description = "Database holding LuckPerms tables. Defaults to the main database, where they live today"
+variable "luckperms_user_permissions_table_name" {
+  description = "LuckPerms user permissions table in the main database"
   type        = string
-  default     = "lania"
+  default     = "luckperms_user_permissions"
+}
+
+variable "plan_users_table_name" {
+  description = "Plan users table in the main database"
+  type        = string
+  default     = "plan_users"
+}
+
+variable "plan_sessions_table_name" {
+  description = "Plan sessions table in the main database"
+  type        = string
+  default     = "plan_sessions"
+}
+
+variable "flectone_player_table_name" {
+  description = "FlectonePulse player table in the main database"
+  type        = string
+  default     = "player"
 }
 
 variable "rcon_address" {

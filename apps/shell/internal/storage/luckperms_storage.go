@@ -35,12 +35,8 @@ type luckpermsStorage struct {
 	db *stdsql.DB
 }
 
-func NewLuckpermsStorage(ctx context.Context) (LuckpermsStorage, func(), error) {
-	db, cleanup, err := newMySQLStorage(ctx, config.GetDatabaseLuckpermsName())
-	if err != nil {
-		return nil, nil, err
-	}
-	return &luckpermsStorage{db: db}, cleanup, nil
+func NewLuckpermsStorage(db *stdsql.DB) LuckpermsStorage {
+	return &luckpermsStorage{db: db}
 }
 
 const findPermissionsWithPrefix = `

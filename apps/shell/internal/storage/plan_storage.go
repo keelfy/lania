@@ -22,12 +22,8 @@ type planStorage struct {
 	db *stdsql.DB
 }
 
-func NewPlanStorage(ctx context.Context) (PlanStorage, func(), error) {
-	db, cleanup, err := newMySQLStorage(ctx, config.GetDatabasePlanName())
-	if err != nil {
-		return nil, nil, err
-	}
-	return &planStorage{db: db}, cleanup, nil
+func NewPlanStorage(db *stdsql.DB) PlanStorage {
+	return &planStorage{db: db}
 }
 
 const findPlaytimes = `
@@ -36,9 +32,9 @@ SELECT
 	CAST(COALESCE(SUM(s.session_end - s.session_start - s.afk_time), 0) AS SIGNED) AS total_playtime,
 	MIN(s.session_start) AS first_session_start,
 	MAX(s.session_end) AS last_session_end
-FROM plan_users u
-LEFT JOIN plan_sessions s ON s.user_id = u.id
-WHERE u.uuid IN (%s)
+FROM %[1]s u
+LEFT JOIN %[2]s s ON s.user_id = u.id
+WHERE u.uuid IN (%[3]s)
 GROUP BY u.uuid
 `
 
@@ -49,7 +45,7 @@ func (s *planStorage) FindPlaytimes(ctx context.Context, mcUUIDs uuid.UUIDs) (ma
 	}
 
 	placeholders, args := uuidArgs(mcUUIDs)
-	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(findPlaytimes, placeholders), args...)
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(findPlaytimes, config.GetPlanUsersTableName(), config.GetPlanSessionsTableName(), placeholders), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,14 +58,14 @@ SELECT
 	CAST(SUM(s.session_end - s.session_start - s.afk_time) AS SIGNED) AS total_playtime,
 	MIN(s.session_start) AS first_session_start,
 	MAX(s.session_end) AS last_session_end
-FROM plan_users u
-JOIN plan_sessions s ON s.user_id = u.id
+FROM %[1]s u
+JOIN %[2]s s ON s.user_id = u.id
 GROUP BY u.uuid
 HAVING MAX(s.session_end) >= ?
 `
 
 func (s *planStorage) FindPlaytimesChangedSince(ctx context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error) {
-	rows, err := s.db.QueryContext(ctx, findPlaytimesChangedSince, sinceMs)
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(findPlaytimesChangedSince, config.GetPlanUsersTableName(), config.GetPlanSessionsTableName()), sinceMs)
 	if err != nil {
 		return nil, err
 	}

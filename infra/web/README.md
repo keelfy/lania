@@ -15,8 +15,9 @@ prefixed `lania-` to avoid clashing with anything else on the box.
 - **shell** — Go gRPC service (`ghcr.io/lania-smp/shell`), the API's only way to
   reach the Minecraft server (RCON whitelist) and its plugin data (Plan,
   Flectone, LuckPerms). Internal only.
-- **mariadb** — shared instance: API database `lania` plus the Minecraft plugin
-  databases (`flectone`, `plan`) that only `shell` reads. Internal only.
+- **mariadb** — shared instance: one database `lania` holding the API tables and
+  the prefixed Minecraft plugin tables (LuckPerms, Plan, Flectone) that `shell`
+  reads. Internal only.
 - **redis** — API cache. Internal only.
 - **postgres** + **kratos** — Ory Kratos auth. Public API routed at
   `accounts.lania.network`; the Kratos admin API (4434) has no route and is
@@ -38,9 +39,11 @@ Elasticsearch and imgproxy env vars exist in the API's config package but are
 not wired into any service today (see `apps/api/cmd/wire_gen.go`), so they're
 left out of this stack. Add them later if a feature actually needs them.
 
-> **Plugin databases**: `flectone`, `plan` and LuckPerms tables are
-> written by the Minecraft plugins. Only `shell` touches them; the API talks to
-> `shell` over gRPC (`SHELL_ADDRESS`, `SHELL_TOKEN`).
+> **Plugin tables**: the LuckPerms, Plan and Flectone tables live in the main
+> database and are written by the Minecraft plugins. Their names are set with
+> `LUCKPERMS_USER_PERMISSIONS_TABLE_NAME`, `PLAN_USERS_TABLE_NAME`,
+> `PLAN_SESSIONS_TABLE_NAME` and `FLECTONE_PLAYER_TABLE_NAME`. Only `shell`
+> touches them; the API talks to `shell` over gRPC (`SHELL_ADDRESS`, `SHELL_TOKEN`).
 
 ## One-time setup
 

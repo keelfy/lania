@@ -86,8 +86,6 @@ services:
     environment:
       MARIADB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
       DATABASE_NAME: ${DATABASE_NAME}
-      DATABASE_FLECTONE_NAME: ${DATABASE_FLECTONE_NAME}
-      DATABASE_PLAN_NAME: ${DATABASE_PLAN_NAME}
     volumes:
       - lania-mariadb-data:/var/lib/mysql
       - ./mariadb-init.sh:/docker-entrypoint-initdb.d/init.sh:ro

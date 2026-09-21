@@ -12,18 +12,20 @@ resource "local_sensitive_file" "env" {
     api_key    = var.api_key
     jwt_secret = var.jwt_secret
 
-    database_host          = var.database_host
-    database_port          = var.database_port
-    database_user          = var.database_user
-    database_password      = var.database_password
-    database_name          = var.database_name
-    database_flectone_name = var.database_flectone_name
-    database_plan_name     = var.database_plan_name
+    database_host     = var.database_host
+    database_port     = var.database_port
+    database_user     = var.database_user
+    database_password = var.database_password
+    database_name     = var.database_name
 
-    database_luckperms_name = var.database_luckperms_name
-    shell_token             = var.shell_token
-    rcon_address            = var.rcon_address
-    rcon_password           = var.rcon_password
+    luckperms_user_permissions_table_name = var.luckperms_user_permissions_table_name
+    plan_users_table_name                 = var.plan_users_table_name
+    plan_sessions_table_name              = var.plan_sessions_table_name
+    flectone_player_table_name            = var.flectone_player_table_name
+
+    shell_token   = var.shell_token
+    rcon_address  = var.rcon_address
+    rcon_password = var.rcon_password
 
     primary_season_id     = var.primary_season_id != "" ? var.primary_season_id : var.active_season_id
     max_profiles_per_user = var.max_profiles_per_user

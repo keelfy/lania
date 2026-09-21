@@ -85,22 +85,36 @@ func GetDatabasePassword() string {
 	return os.Getenv("DATABASE_PASSWORD")
 }
 
-func GetDatabasePlanName() string {
-	return os.Getenv("DATABASE_PLAN_NAME")
+// GetDatabaseName returns the single database holding the LuckPerms, Plan and Flectone tables.
+func GetDatabaseName() string {
+	return os.Getenv("DATABASE_NAME")
 }
 
-func GetDatabaseFlectoneName() string {
-	return os.Getenv("DATABASE_FLECTONE_NAME")
-}
+/** TABLES */
 
-func GetDatabaseLuckpermsName() string {
-	return os.Getenv("DATABASE_LUCKPERMS_NAME")
-}
+// Plugin tables share one database, so each plugin's tables carry its own prefix.
+// The defaults match the plugins' default prefixes; override them when the plugins are configured differently.
 
 func GetLuckpermsUserPermissionsTableName() string {
-	tableName := os.Getenv("LUCKPERMS_USER_PERMISSIONS_TABLE_NAME")
-	if tableName == "" {
-		return "luckperms_user_permissions"
+	return getEnvOrDefault("LUCKPERMS_USER_PERMISSIONS_TABLE_NAME", "luckperms_user_permissions")
+}
+
+func GetPlanUsersTableName() string {
+	return getEnvOrDefault("PLAN_USERS_TABLE_NAME", "plan_users")
+}
+
+func GetPlanSessionsTableName() string {
+	return getEnvOrDefault("PLAN_SESSIONS_TABLE_NAME", "plan_sessions")
+}
+
+func GetFlectonePlayerTableName() string {
+	return getEnvOrDefault("FLECTONE_PLAYER_TABLE_NAME", "player")
+}
+
+func getEnvOrDefault(key string, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
 	}
-	return tableName
+	return value
 }

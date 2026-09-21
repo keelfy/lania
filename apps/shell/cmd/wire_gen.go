@@ -22,23 +22,15 @@ import (
 // Injectors from wire.go:
 
 func InitializeServer(ctx context.Context) (*grpc.Server, func(), error) {
-	planStorage, cleanup, err := storage.NewPlanStorage(ctx)
+	db, cleanup, err := storage.NewDatabase(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	flectoneStorage, cleanup2, err := storage.NewFlectoneStorage(ctx)
-	if err != nil {
-		cleanup()
-		return nil, nil, err
-	}
+	planStorage := storage.NewPlanStorage(db)
+	flectoneStorage := storage.NewFlectoneStorage(db)
 	playerService := services.NewPlayerService(planStorage, flectoneStorage)
 	playerHandler := rpc.NewPlayerHandler(playerService)
-	luckpermsStorage, cleanup3, err := storage.NewLuckpermsStorage(ctx)
-	if err != nil {
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
+	luckpermsStorage := storage.NewLuckpermsStorage(db)
 	console := clients.NewConsole()
 	permissionService := services.NewPermissionService(luckpermsStorage, console)
 	permissionHandler := rpc.NewPermissionHandler(permissionService)
@@ -46,8 +38,6 @@ func InitializeServer(ctx context.Context) (*grpc.Server, func(), error) {
 	whitelistHandler := rpc.NewWhitelistHandler(whitelistService)
 	server := rpc.NewServer(playerHandler, permissionHandler, whitelistHandler)
 	return server, func() {
-		cleanup3()
-		cleanup2()
 		cleanup()
 	}, nil
 }

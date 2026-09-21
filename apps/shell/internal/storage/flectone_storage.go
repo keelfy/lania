@@ -21,17 +21,13 @@ type flectoneStorage struct {
 	db *stdsql.DB
 }
 
-func NewFlectoneStorage(ctx context.Context) (FlectoneStorage, func(), error) {
-	db, cleanup, err := newMySQLStorage(ctx, config.GetDatabaseFlectoneName())
-	if err != nil {
-		return nil, nil, err
-	}
-	return &flectoneStorage{db: db}, cleanup, nil
+func NewFlectoneStorage(db *stdsql.DB) FlectoneStorage {
+	return &flectoneStorage{db: db}
 }
 
 const findOnline = `
 SELECT uuid, online
-FROM player
+FROM %s
 WHERE uuid IN (%s)
 `
 
@@ -42,7 +38,7 @@ func (s *flectoneStorage) FindOnline(ctx context.Context, mcUUIDs uuid.UUIDs) (m
 	}
 
 	placeholders, args := uuidArgs(mcUUIDs)
-	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(findOnline, placeholders), args...)
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(findOnline, config.GetFlectonePlayerTableName(), placeholders), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,12 +57,12 @@ func (s *flectoneStorage) FindOnline(ctx context.Context, mcUUIDs uuid.UUIDs) (m
 
 const findOnlineUUIDs = `
 SELECT uuid
-FROM player
+FROM %s
 WHERE online = 1
 `
 
 func (s *flectoneStorage) FindOnlineUUIDs(ctx context.Context) (uuid.UUIDs, error) {
-	rows, err := s.db.QueryContext(ctx, findOnlineUUIDs)
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(findOnlineUUIDs, config.GetFlectonePlayerTableName()))
 	if err != nil {
 		return nil, err
 	}

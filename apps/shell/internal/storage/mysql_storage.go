@@ -12,7 +12,9 @@ import (
 	"github.com/lania-smp/shell/internal/logger"
 )
 
-func newMySQLStorage(ctx context.Context, databaseName string) (*stdsql.DB, func(), error) {
+// NewDatabase opens the connection pool shared by every storage.
+func NewDatabase(ctx context.Context) (*stdsql.DB, func(), error) {
+	databaseName := config.GetDatabaseName()
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", config.GetDatabaseUser(), config.GetDatabasePassword(), config.GetDatabaseHost(), config.GetDatabasePort(), databaseName)
 
 	db, err := stdsql.Open("mysql", dsn)
@@ -23,7 +25,7 @@ func newMySQLStorage(ctx context.Context, databaseName string) (*stdsql.DB, func
 		_ = db.Close()
 	}
 
-	// Plugin databases may appear after shell starts, so an unreachable
+	// The database may appear after shell starts, so an unreachable
 	// database is logged instead of failing startup.
 	if err := db.PingContext(ctx); err != nil {
 		logger.Errorf(ctx, "failed to ping connection to %s: %v", databaseName, err)
