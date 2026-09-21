@@ -127,14 +127,15 @@ func (q *queries) FindProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) 
 
 // Profiles unknown to the API are skipped, so players outside of the API never break the sync.
 // updated_at goes first because MySQL applies assignments left to right.
+// Columns are qualified, because profiles has updated_at too and the SELECT makes a bare name ambiguous.
 const upsertProfilePlaytime = `
 INSERT INTO profile_playtimes (mc_uuid, season_id, playtime, updated_at)
 SELECT mc_uuid, ?, ?, now()
 FROM profiles
 WHERE mc_uuid = ?
 ON DUPLICATE KEY UPDATE
-	updated_at = IF(playtime <> VALUES(playtime), VALUES(updated_at), updated_at),
-	playtime = VALUES(playtime)
+	profile_playtimes.updated_at = IF(profile_playtimes.playtime <> VALUES(playtime), VALUES(updated_at), profile_playtimes.updated_at),
+	profile_playtimes.playtime = VALUES(playtime)
 `
 
 // UpsertProfilePlaytime stores playtime of the profile in the season, in milliseconds.
