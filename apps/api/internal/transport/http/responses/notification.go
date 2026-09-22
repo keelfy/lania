@@ -17,9 +17,11 @@ type Notification struct {
 	CreatedAt time.Time  `json:"createdAt"`
 }
 
-// NotificationList is what the bell menu shows: the newest notifications and the unread counter.
+// NotificationList is a page of notifications and the unread counter.
 // UnreadCount counts every unread notification, also the ones past the end of Content.
 type NotificationList struct {
 	Content     []*Notification `json:"content"`
 	UnreadCount int64           `json:"unreadCount"`
+	// HasMore tells that more notifications follow past the end of Content.
+	HasMore bool `json:"hasMore"`
 }

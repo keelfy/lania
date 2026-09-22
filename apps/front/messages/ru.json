@@ -433,17 +433,23 @@
     },
     "notifications": {
       "title": "Уведомления",
-      "noNotifications": "Уведомлений нет",
       "loading": "Загрузка...",
+      "noUnread": "Новых уведомлений нет",
+      "markAllRead": "Прочитать все",
+      "all": "Все уведомления",
+      "allWithMore": "Все уведомления (ещё {count})",
       "items": {
-        "install": "Установить ->",
-        "cosmeticGranted": {
-          "title": "Новое украшение",
-          "body": "{item} для профиля {profile}"
+        "install": "Установить →",
+        "season": "Сезон: {season}",
+        "granted": {
+          "nameColor": "Новый цвет имени «{item}»",
+          "glyth": "Новый глиф «{item}»",
+          "special": "Новый особый префикс «{item}»"
         },
-        "cosmeticRevoked": {
-          "title": "Украшение отозвано",
-          "body": "{item} у профиля {profile}"
+        "revoked": {
+          "nameColor": "Цвет имени «{item}» отозван",
+          "glyth": "Глиф «{item}» отозван",
+          "special": "Особый префикс «{item}» отозван"
         }
       }
     },
@@ -460,7 +466,13 @@
   },
   "notifications": {
     "title": "Уведомления",
-    "description": "Уведомления"
+    "description": "Уведомления",
+    "markAllRead": "Прочитать все",
+    "loading": "Загрузка...",
+    "empty": "Уведомлений пока нет. Здесь появятся украшения, выданные вашим профилям.",
+    "loadMore": "Показать ещё",
+    "loadFailed": "Не удалось загрузить уведомления",
+    "markFailed": "Не удалось отметить уведомления прочитанными"
   },
   "obtainAccess": {
     "title": "Получение доступа",

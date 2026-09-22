@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/presenter"
@@ -37,12 +36,7 @@ func (h *notificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	limit, err := strconv.Atoi(binders.BindOptionalQueryParamAsString(r, binders.LimitQueryParam, strconv.Itoa(binders.DefaultLimit)))
-	if err != nil {
-		limit = binders.DefaultLimit
-	}
-
-	h.writeNotifications(w, r, authUserID, limit)
+	h.writeNotifications(w, r, authUserID)
 }
 
 func (h *notificationHandler) MarkNotificationsRead(w http.ResponseWriter, r *http.Request) {
@@ -66,14 +60,14 @@ func (h *notificationHandler) MarkNotificationsRead(w http.ResponseWriter, r *ht
 		return
 	}
 
-	h.writeNotifications(w, r, authUserID, binders.DefaultLimit)
+	h.writeNotifications(w, r, authUserID)
 }
 
-// writeNotifications answers with the current list, so the client needs no second request.
-func (h *notificationHandler) writeNotifications(w http.ResponseWriter, r *http.Request, userID uuid.UUID, limit int) {
+// writeNotifications answers with the list the query asks for, so marking as read needs no second request.
+func (h *notificationHandler) writeNotifications(w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
 	ctx := r.Context()
 
-	notifications, err := h.notificationService.GetNotifications(ctx, userID, limit)
+	notifications, hasMore, err := h.notificationService.GetNotifications(ctx, userID, binders.BindNotificationFilter(r))
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
@@ -85,5 +79,5 @@ func (h *notificationHandler) writeNotifications(w http.ResponseWriter, r *http.
 		return
 	}
 
-	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentNotificationList(notifications, unreadCount))
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentNotificationList(notifications, unreadCount, hasMore))
 }

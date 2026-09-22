@@ -137,8 +137,8 @@ type Queries interface {
 
 	// Notification
 	InsertNotification(ctx context.Context, arg InsertNotificationParams) error
-	// FindNotificationsByUserID returns the notifications of the user, newest first.
-	FindNotificationsByUserID(ctx context.Context, userID uuid.UUID, limit int) ([]*domain.Notification, error)
+	// FindNotificationsByUserID returns the notifications of the user that match the filter, newest first.
+	FindNotificationsByUserID(ctx context.Context, userID uuid.UUID, filter domain.NotificationFilter) ([]*domain.Notification, error)
 	CountUnreadNotificationsByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
 	// MarkNotificationsRead stamps the unread notifications of the user. Empty ids marks all of them.
 	MarkNotificationsRead(ctx context.Context, userID uuid.UUID, ids uuid.UUIDs) error

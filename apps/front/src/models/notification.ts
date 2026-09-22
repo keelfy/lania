@@ -12,7 +12,13 @@ export type CosmeticNotificationPayload = {
   prefixType?: 'glyth' | 'special'
   itemId: string
   itemName: string
+  // colors is set for a name color, prefixImage for a name prefix.
+  // Both are missing from the notifications made before they were added.
+  colors?: string[]
+  prefixImage?: string
   seasonId?: string
+  // seasonName is missing from the notifications made before it was added.
+  seasonName?: string
 }
 
 export type Notification = {
@@ -27,4 +33,13 @@ export type Notification = {
 export type NotificationList = {
   content: Notification[]
   unreadCount: number
+  // hasMore tells that more notifications follow past the end of content.
+  hasMore: boolean
+}
+
+export type NotificationQuery = {
+  // unread leaves out the notifications that were read.
+  unread?: boolean
+  offset?: number
+  limit?: number
 }

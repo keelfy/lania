@@ -48,13 +48,13 @@ SELECT
 	read_at,
 	created_at
 FROM notifications
-WHERE user_id = ?
+WHERE user_id = ? AND (? = FALSE OR read_at IS NULL)
 ORDER BY created_at DESC, id
-LIMIT ?
+LIMIT ? OFFSET ?
 `
 
-func (q *queries) FindNotificationsByUserID(ctx context.Context, userID uuid.UUID, limit int) ([]*domain.Notification, error) {
-	rows, err := q.x.QueryContext(ctx, findNotificationsByUserID, userID, limit)
+func (q *queries) FindNotificationsByUserID(ctx context.Context, userID uuid.UUID, filter domain.NotificationFilter) ([]*domain.Notification, error) {
+	rows, err := q.x.QueryContext(ctx, findNotificationsByUserID, userID, filter.UnreadOnly, filter.Limit, filter.Offset)
 	if err != nil {
 		return nil, err
 	}

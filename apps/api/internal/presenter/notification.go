@@ -15,10 +15,10 @@ func PresentNotification(notification *domain.Notification) *responses.Notificat
 	}
 }
 
-func PresentNotificationList(notifications []*domain.Notification, unreadCount int64) *responses.NotificationList {
+func PresentNotificationList(notifications []*domain.Notification, unreadCount int64, hasMore bool) *responses.NotificationList {
 	content := make([]*responses.Notification, len(notifications))
 	for i, notification := range notifications {
 		content[i] = PresentNotification(notification)
 	}
-	return &responses.NotificationList{Content: content, UnreadCount: unreadCount}
+	return &responses.NotificationList{Content: content, UnreadCount: unreadCount, HasMore: hasMore}
 }

@@ -17,8 +17,9 @@ import (
 const MaxNotifications = 50
 
 type NotificationService interface {
-	// GetNotifications returns the notifications of the user, newest first.
-	GetNotifications(ctx context.Context, userID uuid.UUID, limit int) ([]*domain.Notification, error)
+	// GetNotifications returns the notifications of the user that match the filter, newest first,
+	// and whether more of them follow past the end of the list.
+	GetNotifications(ctx context.Context, userID uuid.UUID, filter domain.NotificationFilter) ([]*domain.Notification, bool, error)
 	// CountUnreadNotifications returns how many notifications the user has not read yet.
 	CountUnreadNotifications(ctx context.Context, userID uuid.UUID) (int64, error)
 	// MarkNotificationsRead stamps the unread notifications of the user. Empty ids marks all of them.
@@ -39,18 +40,27 @@ func NewNotificationService(storage storage.MainStorage) NotificationService {
 	return &notificationService{storage: storage}
 }
 
-func (s *notificationService) GetNotifications(ctx context.Context, userID uuid.UUID, limit int) ([]*domain.Notification, error) {
-	if limit <= 0 || limit > MaxNotifications {
-		limit = MaxNotifications
+func (s *notificationService) GetNotifications(ctx context.Context, userID uuid.UUID, filter domain.NotificationFilter) ([]*domain.Notification, bool, error) {
+	if filter.Limit <= 0 || filter.Limit > MaxNotifications {
+		filter.Limit = MaxNotifications
+	}
+	if filter.Offset < 0 {
+		filter.Offset = 0
 	}
 
-	notifications, err := s.storage.Queries().FindNotificationsByUserID(ctx, userID, limit)
+	// One row past the limit tells whether there is more, without counting the whole table.
+	limit := filter.Limit
+	filter.Limit++
+	notifications, err := s.storage.Queries().FindNotificationsByUserID(ctx, userID, filter)
 	if err == stdsql.ErrNoRows {
-		return []*domain.Notification{}, nil
+		return []*domain.Notification{}, false, nil
 	} else if err != nil {
-		return nil, utils.NewInternalServerError("failed to find notifications", err)
+		return nil, false, utils.NewInternalServerError("failed to find notifications", err)
 	}
-	return notifications, nil
+	if len(notifications) > limit {
+		return notifications[:limit], true, nil
+	}
+	return notifications, false, nil
 }
 
 func (s *notificationService) CountUnreadNotifications(ctx context.Context, userID uuid.UUID) (int64, error) {
@@ -90,21 +100,28 @@ func (s *notificationService) notifyCosmetic(
 		return
 	}
 
-	itemName, err := s.cosmeticName(ctx, queries, grantType, itemID)
-	if err != nil {
-		logger.Errorf(ctx, "failed to read the name of cosmetic %s for a notification: %v", itemID, err)
-		return
-	}
-
-	payload, err := json.Marshal(domain.CosmeticNotificationPayload{
+	payload := domain.CosmeticNotificationPayload{
 		ProfileID:       profile.ID,
 		ProfileUsername: profile.MinecraftUsername,
 		GrantType:       grantType,
 		PrefixType:      prefixType,
 		ItemID:          itemID,
-		ItemName:        itemName,
 		SeasonID:        seasonID,
-	})
+	}
+	if err := s.fillCosmetic(ctx, queries, &payload); err != nil {
+		logger.Errorf(ctx, "failed to read cosmetic %s for a notification: %v", itemID, err)
+		return
+	}
+	if seasonID != nil {
+		// The season name is a nicety: without it the notification still reads fine.
+		if season, err := queries.FindSeasonByID(ctx, *seasonID); err != nil {
+			logger.Errorf(ctx, "failed to read season %s for a notification: %v", *seasonID, err)
+		} else {
+			payload.SeasonName = season.Name
+		}
+	}
+
+	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		logger.Errorf(ctx, "failed to build the payload of a cosmetic notification: %v", err)
 		return
@@ -113,28 +130,32 @@ func (s *notificationService) notifyCosmetic(
 	err = queries.InsertNotification(ctx, sql.InsertNotificationParams{
 		UserID:  *profile.OwnerUserID,
 		Type:    notificationType,
-		Payload: payload,
+		Payload: payloadJSON,
 	})
 	if err != nil {
 		logger.Errorf(ctx, "failed to store a %s notification for user %s: %v", notificationType, *profile.OwnerUserID, err)
 	}
 }
 
-// cosmeticName returns the name the item has right now, so the notification keeps it even after a rename.
-func (s *notificationService) cosmeticName(ctx context.Context, queries sql.Queries, grantType domain.GrantType, itemID uuid.UUID) (string, error) {
-	switch grantType {
+// fillCosmetic copies the name and the look the item has right now, so the notification keeps them even after the item changes.
+func (s *notificationService) fillCosmetic(ctx context.Context, queries sql.Queries, payload *domain.CosmeticNotificationPayload) error {
+	switch payload.GrantType {
 	case domain.GrantTypeNameColor:
-		nameColor, err := queries.FindNameColorByID(ctx, itemID)
+		nameColor, err := queries.FindNameColorByID(ctx, payload.ItemID)
 		if err != nil {
-			return "", err
+			return err
 		}
-		return nameColor.Name, nil
+		payload.ItemName = nameColor.Name
+		payload.Colors = nameColor.Metadata.Colors
+		return nil
 	case domain.GrantTypeNamePrefix:
-		namePrefix, err := queries.FindNamePrefixByID(ctx, itemID)
+		namePrefix, err := queries.FindNamePrefixByID(ctx, payload.ItemID)
 		if err != nil {
-			return "", err
+			return err
 		}
-		return namePrefix.Name, nil
+		payload.ItemName = namePrefix.Name
+		payload.PrefixImage = namePrefix.Metadata.Image
+		return nil
 	}
-	return "", utils.NewBadRequestError("cosmetic notifications cover a name color and a name prefix only", nil)
+	return utils.NewBadRequestError("cosmetic notifications cover a name color and a name prefix only", nil)
 }

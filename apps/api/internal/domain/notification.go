@@ -52,6 +52,20 @@ type CosmeticNotificationPayload struct {
 	ItemID     uuid.UUID         `json:"itemId"`
 	// ItemName is copied in so the notification survives a rename of the item.
 	ItemName string `json:"itemName"`
+	// Colors is set for a name color only, so the bell menu can paint the name without asking for the item.
+	Colors []string `json:"colors,omitempty"`
+	// PrefixImage is set for a name prefix only.
+	PrefixImage string `json:"prefixImage,omitempty"`
 	// SeasonID is empty for a cosmetic that is granted for good.
 	SeasonID *uuid.UUID `json:"seasonId,omitempty"`
+	// SeasonName is copied in next to SeasonID, so the bell menu names the season without asking for it.
+	SeasonName string `json:"seasonName,omitempty"`
+}
+
+// NotificationFilter narrows the notifications of a user.
+type NotificationFilter struct {
+	// UnreadOnly leaves out the notifications that were read.
+	UnreadOnly bool
+	Offset     int
+	Limit      int
 }

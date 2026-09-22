@@ -434,17 +434,23 @@
     },
     "notifications": {
       "title": "Notifications",
-      "noNotifications": "No notifications",
       "loading": "Loading...",
+      "noUnread": "No new notifications",
+      "markAllRead": "Mark all as read",
+      "all": "All notifications",
+      "allWithMore": "All notifications ({count} more)",
       "items": {
-        "install": "Apply ->",
-        "cosmeticGranted": {
-          "title": "New cosmetic",
-          "body": "{item} for the profile {profile}"
+        "install": "Apply →",
+        "season": "Season: {season}",
+        "granted": {
+          "nameColor": "New name color “{item}”",
+          "glyth": "New glyth “{item}”",
+          "special": "New special prefix “{item}”"
         },
-        "cosmeticRevoked": {
-          "title": "Cosmetic revoked",
-          "body": "{item} of the profile {profile}"
+        "revoked": {
+          "nameColor": "Name color “{item}” revoked",
+          "glyth": "Glyth “{item}” revoked",
+          "special": "Special prefix “{item}” revoked"
         }
       }
     },
@@ -461,7 +467,13 @@
   },
   "notifications": {
     "title": "Notifications",
-    "description": "Notifications"
+    "description": "Notifications",
+    "markAllRead": "Mark all as read",
+    "loading": "Loading...",
+    "empty": "No notifications yet. Cosmetics given to your profiles will show up here.",
+    "loadMore": "Show more",
+    "loadFailed": "Failed to load notifications",
+    "markFailed": "Failed to mark notifications as read"
   },
   "obtainAccess": {
     "title": "Obtain access",

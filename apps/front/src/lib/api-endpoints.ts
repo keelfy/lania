@@ -10,7 +10,7 @@ import {
   GrantType,
 } from '@/models/admin'
 import { BasketItem } from '@/models/basket'
-import { NotificationList } from '@/models/notification'
+import { NotificationList, NotificationQuery } from '@/models/notification'
 import {
   CreateOrderReq,
   CreateOrderRes,
@@ -554,23 +554,38 @@ export function revokeGrant(
   )
 }
 
+function notificationQueryParams(query: NotificationQuery) {
+  const params = new URLSearchParams()
+  params.set('limit', (query.limit ?? 20).toString())
+  if (query.offset) params.set('offset', query.offset.toString())
+  if (query.unread) params.set('unread', 'true')
+  return params
+}
+
 export function getNotifications(
   fetcher: ApiFetcher,
-  limit: number = 20,
+  query: NotificationQuery = {},
 ): Promise<NotificationList> {
-  const params = new URLSearchParams()
-  params.set('limit', limit.toString())
-  return fetcher<NotificationList>('/v1/notifications', params)
+  return fetcher<NotificationList>(
+    '/v1/notifications',
+    notificationQueryParams(query),
+  )
 }
 
 // An empty ids list marks every unread notification as read.
+// The answer is the list the query asks for, after the change.
 export function markNotificationsRead(
   fetcher: ApiFetcher,
   ids: string[] = [],
+  query: NotificationQuery = {},
 ): Promise<NotificationList> {
-  return fetcher<NotificationList>('/v1/notifications/read', undefined, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids }),
-  })
+  return fetcher<NotificationList>(
+    '/v1/notifications/read',
+    notificationQueryParams(query),
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    },
+  )
 }
