@@ -209,7 +209,7 @@ export default function BasketList({
                 <p className="text-muted-foreground text-xs">EasyDonate</p>
               </div>
             </Button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 hidden">
               <Button
                 variant={
                   paymentMethod === PaymentMethod.DonationAlerts
