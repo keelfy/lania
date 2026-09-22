@@ -36,6 +36,7 @@ type laniaAPI struct {
 	adminUserHandler        handlers.AdminUserHandler
 	adminProfileHandler     handlers.AdminProfileHandler
 	adminGrantHandler       handlers.AdminGrantHandler
+	adminCatalogHandler     handlers.AdminCatalogHandler
 	seasonHandler           handlers.SeasonHandler
 	notificationHandler     handlers.NotificationHandler
 	accountHandler          handlers.AccountHandler
@@ -61,6 +62,7 @@ func NewLaniaAPI(
 	adminUserHandler handlers.AdminUserHandler,
 	adminProfileHandler handlers.AdminProfileHandler,
 	adminGrantHandler handlers.AdminGrantHandler,
+	adminCatalogHandler handlers.AdminCatalogHandler,
 	seasonHandler handlers.SeasonHandler,
 	notificationHandler handlers.NotificationHandler,
 	accountHandler handlers.AccountHandler,
@@ -84,6 +86,7 @@ func NewLaniaAPI(
 		adminUserHandler:        adminUserHandler,
 		adminProfileHandler:     adminProfileHandler,
 		adminGrantHandler:       adminGrantHandler,
+		adminCatalogHandler:     adminCatalogHandler,
 		seasonHandler:           seasonHandler,
 		notificationHandler:     notificationHandler,
 		accountHandler:          accountHandler,
@@ -234,7 +237,19 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 		r.Get("/users", api.adminUserHandler.GetUsers)
 		r.Get("/users/{userId}", api.adminUserHandler.GetUserDetails)
 
-		r.Get("/cosmetics", api.adminGrantHandler.GetCosmetics)
+		r.Route("/cosmetics", func(r chi.Router) {
+			r.Get("/", api.adminCatalogHandler.GetCosmetics)
+			r.Post("/name-colors", api.adminCatalogHandler.CreateNameColor)
+			r.Put("/name-colors/{cosmeticId}", api.adminCatalogHandler.UpdateNameColor)
+			r.Post("/name-prefixes", api.adminCatalogHandler.CreateNamePrefix)
+			r.Put("/name-prefixes/{cosmeticId}", api.adminCatalogHandler.UpdateNamePrefix)
+		})
+
+		r.Route("/products", func(r chi.Router) {
+			r.Get("/", api.adminCatalogHandler.GetProducts)
+			r.Post("/", api.adminCatalogHandler.CreateProduct)
+			r.Put("/{productId}", api.adminCatalogHandler.UpdateProduct)
+		})
 
 		r.Route("/seasons", func(r chi.Router) {
 			r.Get("/", api.seasonHandler.GetAdminSeasons)

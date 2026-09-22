@@ -76,6 +76,8 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	adminProfileHandler := handlers.NewAdminProfileHandler(profileService, adminProfileService, adminProfileMergeService)
 	adminGrantService := services.NewAdminGrantService(mainStorage, profileService, productService, seasonService, fulfillmentService, accessService, profileCosmeticsService, minecraftService, notificationService)
 	adminGrantHandler := handlers.NewAdminGrantHandler(adminGrantService)
+	adminCatalogService := services.NewAdminCatalogService(mainStorage)
+	adminCatalogHandler := handlers.NewAdminCatalogHandler(adminCatalogService)
 	seasonHandler := handlers.NewSeasonHandler(seasonService)
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 	accountService := services.NewAccountService(mainStorage, oryAPI, profileService, profileCosmeticsService, profileResyncService)
@@ -83,7 +85,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	integrationService := services.NewIntegrationService(mainStorage, orderService)
 	playerSyncService := services.NewPlayerSyncService(mainStorage, seasonService, minecraftService)
 	roleSyncService := services.NewRoleSyncService(mainStorage, minecraftService)
-	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, seasonHandler, notificationHandler, accountHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
+	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminCatalogHandler, seasonHandler, notificationHandler, accountHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
 	return laniaAPI, func() {
 		cleanup2()
 		cleanup()

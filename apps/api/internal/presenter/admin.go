@@ -143,7 +143,23 @@ func PresentAdminCosmeticsCatalog(catalog *domain.CosmeticsCatalog) *responses.A
 		res.NameColors[i] = &responses.AdminNameColor{ID: nameColor.ID, Name: nameColor.Name, Colors: colors}
 	}
 	for i, namePrefix := range catalog.NamePrefixes {
-		res.NamePrefixes[i] = &responses.AdminNamePrefix{ID: namePrefix.ID, Name: namePrefix.Name, Image: namePrefix.Metadata.Image}
+		res.NamePrefixes[i] = &responses.AdminNamePrefix{ID: namePrefix.ID, Name: namePrefix.Name, Image: namePrefix.Metadata.Image, Prefix: namePrefix.Metadata.Prefix, NoSpace: namePrefix.Metadata.NoSpace}
+	}
+	return res
+}
+
+func PresentAdminProducts(products []*domain.Product) []*responses.AdminProduct {
+	res := make([]*responses.AdminProduct, len(products))
+	for i, product := range products {
+		localizations := make([]*responses.AdminProductLocalization, len(product.Localizations))
+		for j, localization := range product.Localizations {
+			localizations[j] = &responses.AdminProductLocalization{Locale: localization.Locale, Name: localization.Name, Description: localization.Description}
+		}
+		prices := make([]*responses.AdminProductPrice, len(product.Prices))
+		for j, price := range product.Prices {
+			prices[j] = &responses.AdminProductPrice{Currency: string(price.Currency), Amount: price.Amount}
+		}
+		res[i] = &responses.AdminProduct{ID: product.ID, Category: string(product.Category), PriceName: string(product.PriceName), Metadata: product.Metadata, IsActive: product.IsActive, EasyDonateProductID: product.EasyDonateProductID, SoldCount: product.SoldCount, Localizations: localizations, Prices: prices}
 	}
 	return res
 }

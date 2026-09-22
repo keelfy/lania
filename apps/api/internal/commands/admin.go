@@ -2,12 +2,16 @@ package commands
 
 import (
 	"errors"
+	"regexp"
+	"strings"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
 )
+
+var hexColorPattern = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 
 // notNilUUID rejects the zero UUID. validation.Required does not, because it reads a UUID as a non-empty string.
 var notNilUUID = validation.By(func(value any) error {
@@ -102,6 +106,97 @@ type GrantCosmeticCommand struct {
 	ItemID     uuid.UUID
 	PrefixType domain.ProfilePrefixType
 	SeasonID   *uuid.UUID
+}
+
+type SaveNameColorCommand struct {
+	ID     uuid.UUID
+	Name   string
+	Colors []string
+}
+
+func (c *SaveNameColorCommand) Validate() error {
+	return validation.ValidateStruct(c,
+		validation.Field(&c.Name, validation.Required, validation.Length(1, 255)),
+		validation.Field(&c.Colors, validation.By(func(value any) error {
+			for _, color := range value.([]string) {
+				if !hexColorPattern.MatchString(color) {
+					return errors.New("must contain only #RRGGBB colors")
+				}
+			}
+			return nil
+		})),
+	)
+}
+
+type SaveNamePrefixCommand struct {
+	ID      uuid.UUID
+	Name    string
+	Prefix  string
+	Image   string
+	NoSpace bool
+}
+
+func (c *SaveNamePrefixCommand) Validate() error {
+	return validation.ValidateStruct(c,
+		validation.Field(&c.Name, validation.Required, validation.Length(1, 255)),
+		validation.Field(&c.Prefix, validation.Required),
+		validation.Field(&c.Image, validation.Required, is.URL),
+	)
+}
+
+type SaveProductLocalization struct {
+	Locale      string
+	Name        string
+	Description string
+}
+
+type SaveProductCommand struct {
+	ID                  uuid.UUID
+	Category            domain.ProductCategory
+	CosmeticID          *uuid.UUID
+	PriceName           domain.ProductPriceName
+	IsActive            bool
+	EasyDonateProductID *int64
+	Localizations       []SaveProductLocalization
+}
+
+func (c *SaveProductCommand) Validate() error {
+	validCategory := c.Category == domain.ProductCategoryUpgrade || c.Category == domain.ProductCategoryNameColor || c.Category == domain.ProductCategoryNamePrefix
+	if !validCategory {
+		return errors.New("category must be upgrade, name-color or name-prefix")
+	}
+	expectedPrice := map[domain.ProductCategory]domain.ProductPriceName{
+		domain.ProductCategoryUpgrade:    domain.ProductPriceNameSeasonAccess,
+		domain.ProductCategoryNameColor:  domain.ProductPriceNameNameColor,
+		domain.ProductCategoryNamePrefix: domain.ProductPriceNameNamePrefix,
+	}[c.Category]
+	if c.PriceName != expectedPrice {
+		return errors.New("priceName does not match category")
+	}
+	if c.Category != domain.ProductCategoryUpgrade && (c.CosmeticID == nil || *c.CosmeticID == uuid.Nil) {
+		return errors.New("cosmeticId is required")
+	}
+	if c.IsActive && (c.EasyDonateProductID == nil || *c.EasyDonateProductID <= 0) {
+		return errors.New("easyDonateProductId is required for an active product")
+	}
+	seen := map[string]bool{}
+	for _, localization := range c.Localizations {
+		locale := strings.ToLower(localization.Locale)
+		if locale != "ru" && locale != "en" {
+			return errors.New("localization locale must be ru or en")
+		}
+		if seen[locale] {
+			return errors.New("localization locale must be unique")
+		}
+		seen[locale] = true
+		if strings.TrimSpace(localization.Name) == "" || strings.TrimSpace(localization.Description) == "" {
+			return errors.New("localization name and description are required")
+		}
+	}
+	if !seen["ru"] || !seen["en"] {
+		return errors.New("ru and en localizations are required")
+	}
+	return nil
 }
 
 func (c *GrantCosmeticCommand) Validate() error {

@@ -430,7 +430,9 @@
       "wiki": "Wiki",
       "products": "Shop",
       "community": "Community",
-      "seasons": "Seasons"
+      "seasons": "Seasons",
+      "cosmetics": "Cosmetics",
+      "products": "Products"
     },
     "notifications": {
       "title": "Notifications",
@@ -838,6 +840,65 @@
         "archive": "Archive"
       },
       "since": "since {date}"
+    },
+    "cosmetics": {
+      "loadFailed": "Failed to load cosmetics",
+      "search": "Search cosmetics",
+      "colors": "Name colors",
+      "prefixes": "Prefixes",
+      "color": "Name color",
+      "prefix": "Prefix",
+      "create": "Create",
+      "edit": "Edit",
+      "save": "Save changes",
+      "created": "Cosmetic created",
+      "updated": "Cosmetic updated",
+      "saveFailed": "Failed to save cosmetic",
+      "colorHint": "Set gradient stops from left to right.",
+      "prefixHint": "The game symbol and storefront image change together.",
+      "colorsHint": "Comma-separated HEX colors in gradient order.",
+      "noSpaceHint": "Do not add a space after the prefix in game chat.",
+      "preview": "Chat preview",
+      "fields": {
+        "name": "Name",
+        "colors": "Colors",
+        "prefix": "Game prefix",
+        "image": "Image URL",
+        "noSpace": "No space"
+      }
+    },
+    "products": {
+      "loadFailed": "Failed to load products",
+      "search": "Search products",
+      "create": "Create product",
+      "edit": "Edit product",
+      "description": "A product connects a cosmetic, shared tariff, and EasyDonate item.",
+      "save": "Save changes",
+      "created": "Product created",
+      "updated": "Product updated",
+      "saveFailed": "Failed to save product",
+      "active": "For sale",
+      "draft": "Draft",
+      "selectCosmetic": "Select cosmetic",
+      "tariffHint": "Price is shared by the whole category.",
+      "easyDonateHint": "Positive unique ID. Required for publication.",
+      "activeHint": "Published products appear in the storefront and new orders.",
+      "seasonAccess": "Season access",
+      "pricesAfterSave": "Tariff prices appear after saving",
+      "categories": {
+        "upgrade": "Access",
+        "name-color": "Name color",
+        "name-prefix": "Prefix"
+      },
+      "fields": {
+        "category": "Category",
+        "tariff": "Shared tariff",
+        "cosmetic": "Cosmetic",
+        "name": "Name",
+        "description": "Description",
+        "easyDonate": "EasyDonate ID",
+        "active": "Offer for sale"
+      }
     }
   }
 }

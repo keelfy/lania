@@ -25,7 +25,7 @@ SELECT
 FROM products
 LEFT JOIN product_localizations ON products.id = product_localizations.product_id  AND product_localizations.locale = ?
 LEFT JOIN product_prices prices ON products.price_name = prices.name AND prices.currency = ?
-WHERE category = ?
+WHERE category = ? AND products.is_active = true
 ORDER BY category DESC, created_at DESC
 `
 
@@ -91,6 +91,7 @@ LEFT JOIN product_localizations ON
 	products.id = product_localizations.product_id 
 	AND product_localizations.locale = ?
 LEFT JOIN product_prices prices ON products.price_name = prices.name AND prices.currency = ?
+WHERE products.is_active = true
 ORDER BY category DESC, created_at DESC
 `
 
@@ -156,16 +157,24 @@ LEFT JOIN product_localizations ON
 	products.id = product_localizations.product_id 
 	AND product_localizations.locale = ?
 LEFT JOIN product_prices prices ON products.price_name = prices.name AND prices.currency = ?
-WHERE id IN ('%s')
+WHERE (? = false OR products.is_active = true) AND id IN ('%s')
 `
 
 func (q *queries) FindProductByIDs(ctx context.Context, ids uuid.UUIDs, locale string, currency domain.Currency) ([]*domain.Product, error) {
+	return q.findProductByIDs(ctx, ids, locale, currency, true)
+}
+
+func (q *queries) FindProductByIDsIncludingInactive(ctx context.Context, ids uuid.UUIDs, locale string, currency domain.Currency) ([]*domain.Product, error) {
+	return q.findProductByIDs(ctx, ids, locale, currency, false)
+}
+
+func (q *queries) findProductByIDs(ctx context.Context, ids uuid.UUIDs, locale string, currency domain.Currency, activeOnly bool) ([]*domain.Product, error) {
 	idsStr := make([]string, len(ids))
 	for i, id := range ids {
 		idsStr[i] = id.String()
 	}
 	query := fmt.Sprintf(findProductByIDs, strings.Join(idsStr, "','"))
-	rows, err := q.x.QueryContext(ctx, query, locale, currency)
+	rows, err := q.x.QueryContext(ctx, query, locale, currency, activeOnly)
 	if err != nil {
 		return nil, err
 	}

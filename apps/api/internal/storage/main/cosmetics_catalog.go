@@ -9,6 +9,42 @@ import (
 	"github.com/lania-smp/backend/internal/domain"
 )
 
+func (q *queries) InsertNameColor(ctx context.Context, id uuid.UUID, name string, colors []string) error {
+	payload, err := json.Marshal(domain.NameColorMetadata{Colors: colors})
+	if err != nil {
+		return err
+	}
+	_, err = q.x.ExecContext(ctx, "INSERT INTO name_colors (id, name, colors) VALUES (?, ?, ?)", id, name, payload)
+	return err
+}
+
+func (q *queries) UpdateNameColor(ctx context.Context, id uuid.UUID, name string, colors []string) error {
+	payload, err := json.Marshal(domain.NameColorMetadata{Colors: colors})
+	if err != nil {
+		return err
+	}
+	_, err = q.x.ExecContext(ctx, "UPDATE name_colors SET name = ?, colors = ? WHERE id = ?", name, payload, id)
+	return err
+}
+
+func (q *queries) InsertNamePrefix(ctx context.Context, id uuid.UUID, name string, metadata domain.NamePrefixMetadata) error {
+	payload, err := json.Marshal(metadata)
+	if err != nil {
+		return err
+	}
+	_, err = q.x.ExecContext(ctx, "INSERT INTO name_prefixes (id, name, metadata) VALUES (?, ?, ?)", id, name, payload)
+	return err
+}
+
+func (q *queries) UpdateNamePrefix(ctx context.Context, id uuid.UUID, name string, metadata domain.NamePrefixMetadata) error {
+	payload, err := json.Marshal(metadata)
+	if err != nil {
+		return err
+	}
+	_, err = q.x.ExecContext(ctx, "UPDATE name_prefixes SET name = ?, metadata = ? WHERE id = ?", name, payload, id)
+	return err
+}
+
 const findNameColors = `
 SELECT id, name, colors
 FROM name_colors

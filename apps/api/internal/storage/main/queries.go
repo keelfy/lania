@@ -58,6 +58,10 @@ type Queries interface {
 	FindNamePrefixes(ctx context.Context) ([]*domain.NamePrefix, error)
 	FindNameColorByID(ctx context.Context, nameColorID uuid.UUID) (*domain.NameColor, error)
 	FindNamePrefixByID(ctx context.Context, namePrefixID uuid.UUID) (*domain.NamePrefix, error)
+	InsertNameColor(ctx context.Context, id uuid.UUID, name string, colors []string) error
+	UpdateNameColor(ctx context.Context, id uuid.UUID, name string, colors []string) error
+	InsertNamePrefix(ctx context.Context, id uuid.UUID, name string, metadata domain.NamePrefixMetadata) error
+	UpdateNamePrefix(ctx context.Context, id uuid.UUID, name string, metadata domain.NamePrefixMetadata) error
 	InsertProfileNameColorOption(ctx context.Context, arg InsertProfileNameColorOptionParams) error
 	InsertProfileNamePrefixOption(ctx context.Context, arg InsertProfileNamePrefixOptionParams) error
 	FindProfileNameColorOptionsByProfileID(ctx context.Context, profileID uuid.UUID, seasonID *uuid.UUID) ([]*domain.ProfileNameColorOption, error)
@@ -108,6 +112,13 @@ type Queries interface {
 	FindProductsByCategory(ctx context.Context, category domain.ProductCategory, currency domain.Currency, locale string) ([]*domain.Product, error)
 	FindProducts(ctx context.Context, locale string, currency domain.Currency) ([]*domain.Product, error)
 	FindProductByIDs(ctx context.Context, ids uuid.UUIDs, locale string, currency domain.Currency) ([]*domain.Product, error)
+	FindProductByIDsIncludingInactive(ctx context.Context, ids uuid.UUIDs, locale string, currency domain.Currency) ([]*domain.Product, error)
+	FindAdminProducts(ctx context.Context) ([]*domain.Product, error)
+	InsertProduct(ctx context.Context, arg SaveProductParams) error
+	UpdateProduct(ctx context.Context, arg SaveProductParams) error
+	UpsertProductLocalization(ctx context.Context, productID uuid.UUID, locale, name, description string) error
+	UpsertEDProduct(ctx context.Context, productID uuid.UUID, edProductID int64) error
+	DeleteEDProduct(ctx context.Context, productID uuid.UUID) error
 
 	// Prices
 	FindPricesByNames(ctx context.Context, names []domain.ProductPriceName) ([]*domain.ProductPrice, error)

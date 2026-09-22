@@ -149,7 +149,7 @@ func (s *orderService) handleOrderCompletion(ctx context.Context, order *domain.
 		productIDs[i] = item.ProductID
 	}
 
-	products, err := s.productService.GetProductsByIDs(ctx, productIDs)
+	products, err := s.productService.GetProductsByIDsIncludingInactive(ctx, productIDs)
 	if err != nil {
 		return err
 	}
@@ -162,6 +162,9 @@ func (s *orderService) handleOrderCompletion(ctx context.Context, order *domain.
 					product = p
 					break
 				}
+			}
+			if product == nil {
+				return utils.NewInternalServerError("order references missing product", nil)
 			}
 
 			err := s.handleOrderItemCompletion(ctx, queries, item, product)

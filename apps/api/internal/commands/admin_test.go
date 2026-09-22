@@ -56,3 +56,63 @@ func TestMergeProfilesCommand_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestSaveNameColorCommand_Validate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		command SaveNameColorCommand
+		wantErr bool
+	}{
+		{"valid gradient", SaveNameColorCommand{Name: "Forest", Colors: []string{"#16A34A", "#22C55E"}}, false},
+		{"plain color", SaveNameColorCommand{Name: "Default"}, false},
+		{"invalid color", SaveNameColorCommand{Name: "Forest", Colors: []string{"green"}}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if err := tt.command.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestSaveProductCommand_Validate(t *testing.T) {
+	t.Parallel()
+
+	cosmeticID := uuid.New()
+	easyDonateID := int64(123)
+	localizations := []SaveProductLocalization{
+		{Locale: "ru", Name: "Лес", Description: "Зелёный градиент"},
+		{Locale: "en", Name: "Forest", Description: "Green gradient"},
+	}
+	valid := SaveProductCommand{Category: domain.ProductCategoryNameColor, CosmeticID: &cosmeticID, PriceName: domain.ProductPriceNameNameColor, IsActive: true, EasyDonateProductID: &easyDonateID, Localizations: localizations}
+
+	tests := []struct {
+		name    string
+		mutate  func(*SaveProductCommand)
+		wantErr bool
+	}{
+		{"published product", func(*SaveProductCommand) {}, false},
+		{"draft without EasyDonate ID", func(command *SaveProductCommand) { command.IsActive = false; command.EasyDonateProductID = nil }, false},
+		{"published without EasyDonate ID", func(command *SaveProductCommand) { command.EasyDonateProductID = nil }, true},
+		{"wrong tariff", func(command *SaveProductCommand) { command.PriceName = domain.ProductPriceNameNamePrefix }, true},
+		{"missing cosmetic", func(command *SaveProductCommand) { command.CosmeticID = nil }, true},
+		{"missing English localization", func(command *SaveProductCommand) { command.Localizations = command.Localizations[:1] }, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			command := valid
+			command.Localizations = append([]SaveProductLocalization(nil), valid.Localizations...)
+			tt.mutate(&command)
+			if err := command.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

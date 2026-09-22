@@ -119,6 +119,8 @@ export type AdminNamePrefix = {
   id: string
   name: string
   image: string
+  prefix: string
+  noSpace: boolean
 }
 
 // Every name color and name prefix that can be granted, for sale or not.
@@ -134,4 +136,42 @@ export type GrantCosmeticReq = {
   prefixType?: 'glyth' | 'special'
   // Missing to grant the item for good.
   seasonId?: string
+}
+
+export type SaveNameColor = Pick<AdminNameColor, 'name' | 'colors'>
+export type SaveNamePrefix = Pick<
+  AdminNamePrefix,
+  'name' | 'prefix' | 'image' | 'noSpace'
+>
+
+export type AdminProductLocalization = {
+  locale: 'ru' | 'en'
+  name: string
+  description: string
+}
+
+export type AdminProductPrice = {
+  currency: string
+  amount: number
+}
+
+export type AdminProduct = {
+  id: string
+  category: 'upgrade' | 'name-color' | 'name-prefix'
+  priceName: 'season_access' | 'name_color' | 'name_prefix'
+  metadata: { action?: string; nameColorId?: string; namePrefixId?: string }
+  isActive: boolean
+  easyDonateProductId?: number
+  soldCount: number
+  localizations: AdminProductLocalization[]
+  prices: AdminProductPrice[]
+}
+
+export type SaveProduct = {
+  category: AdminProduct['category']
+  cosmeticId?: string
+  priceName: AdminProduct['priceName']
+  isActive: boolean
+  easyDonateProductId?: number
+  localizations: AdminProductLocalization[]
 }

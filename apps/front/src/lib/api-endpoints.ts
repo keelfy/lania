@@ -1,5 +1,6 @@
 import {
   AdminCosmeticsCatalog,
+  AdminProduct,
   AdminGrant,
   AdminProfile,
   AdminProfileDetails,
@@ -8,6 +9,9 @@ import {
   GrantCosmeticReq,
   GrantProductReq,
   GrantType,
+  SaveNameColor,
+  SaveNamePrefix,
+  SaveProduct,
   ProfileMerge,
   ProfileMergeSummary,
 } from '@/models/admin'
@@ -558,6 +562,73 @@ export function getAdminCosmetics(
   fetcher: ApiFetcher,
 ): Promise<AdminCosmeticsCatalog> {
   return fetcher<AdminCosmeticsCatalog>('/v1/admin/cosmetics')
+}
+
+export function createNameColor(
+  fetcher: ApiFetcher,
+  item: SaveNameColor,
+): Promise<AdminCosmeticsCatalog> {
+  return fetcher('/v1/admin/cosmetics/name-colors', undefined, {
+    method: 'POST',
+    body: JSON.stringify(item),
+  })
+}
+
+export function updateNameColor(
+  fetcher: ApiFetcher,
+  id: string,
+  item: SaveNameColor,
+): Promise<AdminCosmeticsCatalog> {
+  return fetcher(`/v1/admin/cosmetics/name-colors/${id}`, undefined, {
+    method: 'PUT',
+    body: JSON.stringify(item),
+  })
+}
+
+export function createNamePrefix(
+  fetcher: ApiFetcher,
+  item: SaveNamePrefix,
+): Promise<AdminCosmeticsCatalog> {
+  return fetcher('/v1/admin/cosmetics/name-prefixes', undefined, {
+    method: 'POST',
+    body: JSON.stringify(item),
+  })
+}
+
+export function updateNamePrefix(
+  fetcher: ApiFetcher,
+  id: string,
+  item: SaveNamePrefix,
+): Promise<AdminCosmeticsCatalog> {
+  return fetcher(`/v1/admin/cosmetics/name-prefixes/${id}`, undefined, {
+    method: 'PUT',
+    body: JSON.stringify(item),
+  })
+}
+
+export function getAdminProducts(fetcher: ApiFetcher): Promise<AdminProduct[]> {
+  return fetcher('/v1/admin/products')
+}
+
+export function createAdminProduct(
+  fetcher: ApiFetcher,
+  item: SaveProduct,
+): Promise<AdminProduct> {
+  return fetcher('/v1/admin/products', undefined, {
+    method: 'POST',
+    body: JSON.stringify(item),
+  })
+}
+
+export function updateAdminProduct(
+  fetcher: ApiFetcher,
+  id: string,
+  item: SaveProduct,
+): Promise<AdminProduct> {
+  return fetcher(`/v1/admin/products/${id}`, undefined, {
+    method: 'PUT',
+    body: JSON.stringify(item),
+  })
 }
 
 // Answers with the grants of the profile after the change.

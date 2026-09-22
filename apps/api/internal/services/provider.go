@@ -8,6 +8,7 @@ var ProviderSet = wire.NewSet(
 	NewAdminProfileService,
 	NewAdminProfileMergeService,
 	NewAdminGrantService,
+	NewAdminCatalogService,
 	NewKratosService,
 	NewMinecraftService,
 	NewAccessService,

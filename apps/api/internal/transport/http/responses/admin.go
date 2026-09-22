@@ -101,12 +101,37 @@ type AdminNameColor struct {
 }
 
 type AdminNamePrefix struct {
-	ID    uuid.UUID `json:"id"`
-	Name  string    `json:"name"`
-	Image string    `json:"image"`
+	ID      uuid.UUID `json:"id"`
+	Name    string    `json:"name"`
+	Image   string    `json:"image"`
+	Prefix  string    `json:"prefix"`
+	NoSpace bool      `json:"noSpace"`
 }
 
 type AdminCosmeticsCatalog struct {
 	NameColors   []*AdminNameColor  `json:"nameColors"`
 	NamePrefixes []*AdminNamePrefix `json:"namePrefixes"`
+}
+
+type AdminProductLocalization struct {
+	Locale      string `json:"locale"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type AdminProductPrice struct {
+	Currency string  `json:"currency"`
+	Amount   float64 `json:"amount"`
+}
+
+type AdminProduct struct {
+	ID                  uuid.UUID                   `json:"id"`
+	Category            string                      `json:"category"`
+	PriceName           string                      `json:"priceName"`
+	Metadata            any                         `json:"metadata"`
+	IsActive            bool                        `json:"isActive"`
+	EasyDonateProductID *int64                      `json:"easyDonateProductId,omitempty"`
+	SoldCount           int64                       `json:"soldCount"`
+	Localizations       []*AdminProductLocalization `json:"localizations"`
+	Prices              []*AdminProductPrice        `json:"prices"`
 }

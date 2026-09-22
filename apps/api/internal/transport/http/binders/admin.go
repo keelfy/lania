@@ -30,6 +30,9 @@ func BindEmailSearch(r *http.Request) string {
 
 var SeasonIDVariable = "seasonId"
 
+var CosmeticIDVariable = "cosmeticId"
+var ProductIDVariable = "productId"
+
 func optionalTrimmed(value *string) *string {
 	if value == nil {
 		return nil
@@ -86,6 +89,65 @@ func BindUpdateSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 		return nil, err
 	}
 	cmd.ID, err = BindPathVariableAsUUID(r, SeasonIDVariable)
+	return cmd, err
+}
+
+func BindSaveNameColor(r *http.Request) (*commands.SaveNameColorCommand, error) {
+	var req requests.SaveNameColor
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+	colors := make([]string, 0, len(req.Colors))
+	for _, color := range req.Colors {
+		colors = append(colors, strings.TrimSpace(color))
+	}
+	return &commands.SaveNameColorCommand{Name: strings.TrimSpace(req.Name), Colors: colors}, nil
+}
+
+func BindUpdateNameColor(r *http.Request) (*commands.SaveNameColorCommand, error) {
+	cmd, err := BindSaveNameColor(r)
+	if err != nil {
+		return nil, err
+	}
+	cmd.ID, err = BindPathVariableAsUUID(r, CosmeticIDVariable)
+	return cmd, err
+}
+
+func BindSaveNamePrefix(r *http.Request) (*commands.SaveNamePrefixCommand, error) {
+	var req requests.SaveNamePrefix
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+	return &commands.SaveNamePrefixCommand{Name: strings.TrimSpace(req.Name), Prefix: strings.TrimSpace(req.Prefix), Image: strings.TrimSpace(req.Image), NoSpace: req.NoSpace}, nil
+}
+
+func BindUpdateNamePrefix(r *http.Request) (*commands.SaveNamePrefixCommand, error) {
+	cmd, err := BindSaveNamePrefix(r)
+	if err != nil {
+		return nil, err
+	}
+	cmd.ID, err = BindPathVariableAsUUID(r, CosmeticIDVariable)
+	return cmd, err
+}
+
+func BindSaveProduct(r *http.Request) (*commands.SaveProductCommand, error) {
+	var req requests.SaveProduct
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+	localizations := make([]commands.SaveProductLocalization, len(req.Localizations))
+	for i, localization := range req.Localizations {
+		localizations[i] = commands.SaveProductLocalization{Locale: strings.ToLower(strings.TrimSpace(localization.Locale)), Name: strings.TrimSpace(localization.Name), Description: strings.TrimSpace(localization.Description)}
+	}
+	return &commands.SaveProductCommand{Category: domain.ProductCategory(strings.TrimSpace(req.Category)), CosmeticID: req.CosmeticID, PriceName: domain.ProductPriceName(strings.TrimSpace(req.PriceName)), IsActive: req.IsActive, EasyDonateProductID: req.EasyDonateProductID, Localizations: localizations}, nil
+}
+
+func BindUpdateProduct(r *http.Request) (*commands.SaveProductCommand, error) {
+	cmd, err := BindSaveProduct(r)
+	if err != nil {
+		return nil, err
+	}
+	cmd.ID, err = BindPathVariableAsUUID(r, ProductIDVariable)
 	return cmd, err
 }
 

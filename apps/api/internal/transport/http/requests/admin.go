@@ -43,3 +43,30 @@ type SaveSeason struct {
 	Preregistration  bool    `json:"preregistration"`
 	FreeRegistration bool    `json:"freeRegistration"`
 }
+
+type SaveNameColor struct {
+	Name   string   `json:"name"`
+	Colors []string `json:"colors"`
+}
+
+type SaveNamePrefix struct {
+	Name    string `json:"name"`
+	Prefix  string `json:"prefix"`
+	Image   string `json:"image"`
+	NoSpace bool   `json:"noSpace"`
+}
+
+type SaveProductLocalization struct {
+	Locale      string `json:"locale"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type SaveProduct struct {
+	Category            string                    `json:"category"`
+	CosmeticID          *uuid.UUID                `json:"cosmeticId"`
+	PriceName           string                    `json:"priceName"`
+	IsActive            bool                      `json:"isActive"`
+	EasyDonateProductID *int64                    `json:"easyDonateProductId"`
+	Localizations       []SaveProductLocalization `json:"localizations"`
+}

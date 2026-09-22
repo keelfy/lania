@@ -85,6 +85,13 @@ func (s *easyDonateService) ConstructPaymentURL(ctx context.Context, queries sql
 	if err != nil {
 		return "", utils.NewInternalServerError("failed to find ed products by product ids", err)
 	}
+	uniqueProducts := make(map[uuid.UUID]struct{}, len(params.ProductIDs))
+	for _, productID := range params.ProductIDs {
+		uniqueProducts[productID] = struct{}{}
+	}
+	if len(edProductIDs) != len(uniqueProducts) {
+		return "", utils.NewConflictError("some products have no EasyDonate ID", nil)
+	}
 
 	products := make([]edPaymentCreateProduct, 0, len(edProductIDs))
 	for _, edProductID := range edProductIDs {

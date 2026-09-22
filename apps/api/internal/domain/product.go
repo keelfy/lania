@@ -52,14 +52,16 @@ type ProductPrice struct {
 }
 
 type Product struct {
-	ID        uuid.UUID
-	PriceName ProductPriceName
-	Category  ProductCategory
-	Metadata  json.RawMessage
-	SoldCount int64
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	UpdatedBy *uuid.UUID
+	ID                  uuid.UUID
+	PriceName           ProductPriceName
+	Category            ProductCategory
+	Metadata            json.RawMessage
+	SoldCount           int64
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	UpdatedBy           *uuid.UUID
+	IsActive            bool
+	EasyDonateProductID *int64
 	// relations
 	Prices        []*ProductPrice
 	Localizations []*ProductLocalization

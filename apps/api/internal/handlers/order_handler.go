@@ -161,7 +161,7 @@ func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		product := &domain.Product{}
+		var product *domain.Product
 		for _, p := range products {
 			if p.ID == item.ProductID {
 				product = p
