@@ -1,0 +1,769 @@
+[
+  {
+    "uid": "4086268a-34fe-47ec-afab-a014a2f02688",
+    "name": "Проходка",
+    "description": "Доступ к серверу на текущий сезон (длительностью до 3 месяцев)",
+    "price": 49,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Проходка.png"
+  },
+  {
+    "uid": "bdd07172-ea5f-4a0a-b82a-16776a6b4b5c",
+    "name": "CocoaaIce",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/CocoaaIce.png"
+  },
+  {
+    "uid": "d9607e73-ad81-46e6-b0af-ee33b5987e16",
+    "name": "DeepSpace",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/DeepSpace.png"
+  },
+  {
+    "uid": "1cef33ed-08e5-49c5-9858-dac85872386e",
+    "name": "Dracula",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Dracula.png"
+  },
+  {
+    "uid": "9765c31a-c5d9-4d0a-9eb7-3c10aec6e66c",
+    "name": "Dusk",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Dusk.png"
+  },
+  {
+    "uid": "63406c8d-67c2-43c1-a8a7-e7e79b7ac2c3",
+    "name": "Frozen",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Frozen.png"
+  },
+  {
+    "uid": "68a560a1-878b-4cee-b79d-465aea06862b",
+    "name": "KyeMeh",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/KyeMeh.png"
+  },
+  {
+    "uid": "6a213c8c-4269-4329-9875-917cb3cfd033",
+    "name": "Kyoto",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Kyoto.png"
+  },
+  {
+    "uid": "56ef1088-6ce5-4cb6-9c3d-0c35070def83",
+    "name": "Lawrencium",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Lawrencium.png"
+  },
+  {
+    "uid": "8f461be1-9320-4d17-96e7-e5215fc52522",
+    "name": "Magic",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Magic.png"
+  },
+  {
+    "uid": "2a65d174-8896-411a-a6dd-8341b3620171",
+    "name": "Mango",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Mango.png"
+  },
+  {
+    "uid": "21852047-a4e9-4f7d-acfd-9fce898bc03d",
+    "name": "Memariani",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Memariani.png"
+  },
+  {
+    "uid": "72150255-2649-4339-895b-44142701117d",
+    "name": "MiceElf",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/MiceElf.png"
+  },
+  {
+    "uid": "de397bbd-782c-4eb2-a59c-f955cc06340e",
+    "name": "Moonrise",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Moonrise.png"
+  },
+  {
+    "uid": "6509dcd7-6177-4e39-8474-e0304870ff23",
+    "name": "PacificDream",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/PacificDream.png"
+  },
+  {
+    "uid": "383c4fc1-5f92-4bae-a4b4-b743922f1eba",
+    "name": "PinkFlavour",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/PinkFlavour.png"
+  },
+  {
+    "uid": "54075756-222b-4917-9924-696436654254",
+    "name": "RedMist",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/RedMist.png"
+  },
+  {
+    "uid": "8bbf4210-24fa-4382-af93-4da30dfeae1f",
+    "name": "RedSquare",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/RedSquare.png"
+  },
+  {
+    "uid": "3189113f-9253-4bef-9ce4-0374aff2df7c",
+    "name": "SiriusTamed",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/SiriusTamed.png"
+  },
+  {
+    "uid": "f1740c10-850a-41a6-bcd8-d3449846f284",
+    "name": "SteelGray",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/SteelGray.png"
+  },
+  {
+    "uid": "66678f14-e431-41d1-a172-d301564deba0",
+    "name": "Telegram",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Telegram.png"
+  },
+  {
+    "uid": "f555a7d6-c52f-4f22-8183-cdfee77eb59e",
+    "name": "Timber",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Timber.png"
+  },
+  {
+    "uid": "69c9ef9e-f66a-4df7-9b3b-bdb2dbf97834",
+    "name": "VelvetSun",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/VelvetSun.png"
+  },
+  {
+    "uid": "068e6c5a-94e1-4927-9eed-f9b02beb9f64",
+    "name": "WheatField",
+    "description": "Градиентный цвет для вашего ника",
+    "price": 199,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/WheatField.png"
+  },
+  {
+    "uid": "b928851e-4e85-44c6-bd81-68984ce85801",
+    "name": "AgaAdun",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/AgaAdun.png"
+  },
+  {
+    "uid": "880d1ea6-c17f-4eb1-bf95-bd49535c493b",
+    "name": "AskaCute",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/AskaCute.png"
+  },
+  {
+    "uid": "a64731fd-c078-4fe3-aacd-ae381657bb5a",
+    "name": "BlazePowder",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/BlazePowder.png"
+  },
+  {
+    "uid": "6acf3350-b279-461d-92d8-8e85b99e2d84",
+    "name": "BowPulling",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/BowPulling.png"
+  },
+  {
+    "uid": "a5034907-fcb5-4e60-95fe-1049f85d2a4f",
+    "name": "Boykisser",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Boykisser.png"
+  },
+  {
+    "uid": "5e0ca533-0f0d-4f7c-ae05-98a0ea415c1b",
+    "name": "BoykisserLove",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/BoykisserLove.png"
+  },
+  {
+    "uid": "3302c2be-10e5-4417-9c4d-09efcd833b23",
+    "name": "Bread",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Bread.png"
+  },
+  {
+    "uid": "96e119fd-e330-41a6-b822-76380d963f79",
+    "name": "Cake",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Cake.png"
+  },
+  {
+    "uid": "d775ec0a-0efe-4eb2-b5c2-55904b839d12",
+    "name": "Cat",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Cat.png"
+  },
+  {
+    "uid": "86bd3132-edc0-453b-8fb8-a7c66dc20cff",
+    "name": "CatSus",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/CatSus.png"
+  },
+  {
+    "uid": "a958d4e4-11ae-4d1e-9aa5-c2aea3a0e158",
+    "name": "Cod",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Cod.png"
+  },
+  {
+    "uid": "8bd9ee48-97fb-4ba7-9dd6-50fde2bab6b9",
+    "name": "Cookie",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Cookie.png"
+  },
+  {
+    "uid": "6609f7e4-26f3-4074-a6c3-ecce6cdae65a",
+    "name": "Cute",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Cute.png"
+  },
+  {
+    "uid": "ba13fe01-2e35-4e09-b5aa-a90446014724",
+    "name": "EnchantedBook",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/EnchantedBook.png"
+  },
+  {
+    "uid": "51061275-0f37-4d5f-bc11-c6753ea16810",
+    "name": "EndCrystal",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/EndCrystal.png"
+  },
+  {
+    "uid": "54c1a9b5-0716-4cb5-9ef2-18ebf404bfd2",
+    "name": "EnderEye",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/EnderEye.png"
+  },
+  {
+    "uid": "f6aceea9-fc49-419a-bb68-ca7493f5ccf0",
+    "name": "EnergyDrink",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/EnergyDrink.png"
+  },
+  {
+    "uid": "205aeebf-a959-428c-8152-a39dd83d29a0",
+    "name": "ExpBottle",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/ExpBottle.png"
+  },
+  {
+    "uid": "bc4d1cbe-10ad-4583-bfb6-352260c4dbc9",
+    "name": "FoxFace",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/FoxFace.png"
+  },
+  {
+    "uid": "91228584-fee2-4d90-9b41-8474b2f66918",
+    "name": "GhastTear",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/GhastTear.png"
+  },
+  {
+    "uid": "deb2f617-7258-4f3f-8111-76be6e2809e9",
+    "name": "HelloKittySkull",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/HelloKittySkull.png"
+  },
+  {
+    "uid": "643ec8eb-9b4c-48e9-b6cb-144063abb92c",
+    "name": "Hexbloom",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Hexbloom.png"
+  },
+  {
+    "uid": "5dadbcfe-74d2-467d-9283-faa33da3eaaf",
+    "name": "Jokerge",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Jokerge.png"
+  },
+  {
+    "uid": "d1dea961-a68e-4c8b-af35-f6306eead8d5",
+    "name": "Meowdy",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Meowdy.png"
+  },
+  {
+    "uid": "1284a5ca-7f23-496d-a3e4-2bc389faff99",
+    "name": "MusicDisk",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/MusicDisk.png"
+  },
+  {
+    "uid": "56e380bc-2b97-4118-a78f-c780431a4deb",
+    "name": "NameTag",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/NameTag.png"
+  },
+  {
+    "uid": "023e5ea7-e959-432c-9007-21f41274b717",
+    "name": "NautilusShell",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/NautilusShell.png"
+  },
+  {
+    "uid": "6ab8f42b-37d9-45d6-b6df-a8263fa9beec",
+    "name": "NetherStar",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/NetherStar.png"
+  },
+  {
+    "uid": "a4a4558f-d7b6-425b-893e-f6c23e46091e",
+    "name": "Netwatcher",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Netwatcher.png"
+  },
+  {
+    "uid": "cec7d0a3-403c-4072-8a62-e885da32324d",
+    "name": "Oh",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Oh.png"
+  },
+  {
+    "uid": "2fb9109c-5bbf-4ed2-81cd-b17767993fca",
+    "name": "Popcat",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Popcat.png"
+  },
+  {
+    "uid": "09b5d8e5-505c-46b9-a2dc-83d29021a07e",
+    "name": "Pufferfish",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Pufferfish.png"
+  },
+  {
+    "uid": "2ad71d17-8c66-438c-bd44-7e67ffe88639",
+    "name": "TotemOfUndying",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/TotemOfUndying.png"
+  },
+  {
+    "uid": "ad88413f-80f9-4bb2-9a76-9bed659e6a0a",
+    "name": "Trident",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/Trident.png"
+  },
+  {
+    "uid": "78b80d91-761d-498f-aa48-fe657c23c4ab",
+    "name": "ZipZap",
+    "description": "Иконка, которая будет отображаться перед вашим именем",
+    "price": 399,
+    "number": 1,
+    "type": "group",
+    "commands": [
+      "lpv user add",
+      ""
+    ],
+    "image_path": "images/ZipZap.png"
+  }
+]
