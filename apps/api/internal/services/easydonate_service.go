@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -42,18 +41,29 @@ func NewEasyDonateService(
 	}
 }
 
-type edResponse struct {
-	Success bool `json:"success"`
+type edPaymentCreateProduct struct {
+	ID       int64 `json:"id"`
+	Quantity int   `json:"quantity"`
 }
 
-type easyDonatePaymentCreateRes struct {
-	Success  bool `json:"success"`
-	Response struct {
-		URL     string `json:"url"`
-		Payment struct {
-			ID int64 `json:"id"`
-		}
-	}
+type edPaymentCreateRequest struct {
+	Username  string                   `json:"username"`
+	ServerID  int64                    `json:"server_id"`
+	Products  []edPaymentCreateProduct `json:"products"`
+	Email     string                   `json:"email"`
+	ReturnURL string                   `json:"return_url,omitempty"`
+}
+
+type edPaymentCreateResponse struct {
+	Success bool `json:"success"`
+	Data    struct {
+		PaymentID int64  `json:"payment_id"`
+		URL       string `json:"url"`
+	} `json:"data"`
+	Error *struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
 }
 
 type EDConstructPaymentURLParams struct {
@@ -76,77 +86,66 @@ func (s *easyDonateService) ConstructPaymentURL(ctx context.Context, queries sql
 		return "", utils.NewInternalServerError("failed to find ed products by product ids", err)
 	}
 
-	products := make(map[string]int)
+	products := make([]edPaymentCreateProduct, 0, len(edProductIDs))
 	for _, edProductID := range edProductIDs {
-		products[strconv.FormatInt(edProductID, 10)] = 1
-	}
-	productsStr, err := json.Marshal(products)
-	if err != nil {
-		return "", utils.NewInternalServerError("failed to marshal products", err)
+		products = append(products, edPaymentCreateProduct{ID: edProductID, Quantity: 1})
 	}
 
-	queryParams := url.Values{}
-	queryParams.Add("customer", profile.MinecraftUsername)
-	queryParams.Add("server_id", strconv.FormatInt(config.GetEasyDonateProxyServerID(), 10))
-	queryParams.Add("products", string(productsStr))
-	queryParams.Add("email", params.Email)
-	queryParams.Add("success_url", fmt.Sprintf(config.GetEasyDonateSuccessURL(), params.OrderID.String()))
-	shopKey := config.GetEasyDonateKey()
+	payload := edPaymentCreateRequest{
+		Username:  profile.MinecraftUsername,
+		ServerID:  config.GetEasyDonateProxyServerID(),
+		Products:  products,
+		Email:     params.Email,
+		ReturnURL: fmt.Sprintf(config.GetEasyDonateSuccessURL(), params.OrderID.String()),
+	}
+
+	requestBody, err := json.Marshal(payload)
+	if err != nil {
+		return "", utils.NewInternalServerError("failed to marshal Easy Donate payment create request", err)
+	}
 
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
-	req, err := http.NewRequest("GET", config.GetEasyDonateCreatePaymentEndpoint(), nil)
+	req, err := http.NewRequest(http.MethodPost, config.GetEasyDonateCreatePaymentEndpoint(), bytes.NewReader(requestBody))
 	if err != nil {
 		return "", utils.NewInternalServerError("failed to create request", err)
 	}
-	req.URL.RawQuery = queryParams.Encode()
-	logger.Debugf(ctx, "easy donate create payment url params: %s", req.URL.String())
-	req.Header.Set(config.GetEasyDonateShopKeyHeader(), shopKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Shop-Key", config.GetEasyDonateKey())
+	logger.Debugf(ctx, "easy donate create payment request body: %s", string(requestBody))
+
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", utils.NewInternalServerError("failed to do Easy Donate request", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		errBody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return "", utils.NewInternalServerError("failed to read Easy Donate response body", err)
-		}
-		return "", utils.NewInternalServerError("failed to do Easy Donate request", fmt.Errorf("status code: %d, body: %s", resp.StatusCode, string(errBody)))
-	}
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Errorf(ctx, "failed to read Easy Donate response body: %s", string(body))
-		return "", utils.NewInternalServerError("failed to read EasyDonate response body", err)
+		return "", utils.NewInternalServerError("failed to read Easy Donate response body", err)
 	}
 
-	var basicResponse edResponse
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&basicResponse)
-	if err != nil {
-		logger.Errorf(ctx, "failed to decode Easy Donate response: %s", string(body))
-		return "", utils.NewInternalServerError("failed to decode EasyDonate response", err)
-	}
-
-	if !basicResponse.Success {
-		return "", utils.NewInternalServerError("failed to do Easy Donate request", fmt.Errorf("status code: %d, body: %s", resp.StatusCode, string(body)))
-	}
-
-	var response easyDonatePaymentCreateRes
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&response)
-	if err != nil {
+	var response edPaymentCreateResponse
+	if err := json.Unmarshal(body, &response); err != nil {
 		logger.Errorf(ctx, "failed to decode Easy Donate response: %s", string(body))
 		return "", utils.NewInternalServerError("failed to decode Easy Donate response", err)
 	}
 
+	if !response.Success {
+		errMsg := string(body)
+		if response.Error != nil {
+			errMsg = fmt.Sprintf("%s: %s", response.Error.Code, response.Error.Message)
+		}
+		return "", utils.NewInternalServerError("failed to do Easy Donate request", fmt.Errorf("status code: %d, %s", resp.StatusCode, errMsg))
+	}
+
 	// save easy donate payment id to order
-	err = s.orderService.UpdateOrderExternalIDByID(ctx, queries, params.OrderID, strconv.FormatInt(response.Response.Payment.ID, 10))
+	err = s.orderService.UpdateOrderExternalIDByID(ctx, queries, params.OrderID, strconv.FormatInt(response.Data.PaymentID, 10))
 	if err != nil {
 		return "", err
 	}
 
-	return response.Response.URL, nil
+	return response.Data.URL, nil
 }

@@ -230,10 +230,6 @@ func GetEasyDonateCreatePaymentEndpoint() string {
 	return os.Getenv("ED_CREATE_PAYMENT_ENDPOINT")
 }
 
-func GetEasyDonateShopKeyHeader() string {
-	return os.Getenv("ED_SHOP_KEY_HEADER")
-}
-
 func GetEasyDonateProxyServerID() int64 {
 	value, err := strconv.ParseInt(os.Getenv("ED_PROXY_SERVER_ID"), 10, 64)
 	if err != nil {
