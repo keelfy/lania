@@ -540,6 +540,8 @@
       "length": "Active",
       "description": "The first full-fledged season with mods. The server was built around Create with the Aeronautics addon."
     },
+    "active": "Active",
+    "since": "since",
     "readMore": "Read more"
   },
   "footer": {

@@ -1,8 +1,8 @@
 import { AspectRatio } from '@/components/ui/aspect-ratio'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { getSeasons } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
-import { cn } from '@/lib/utils'
 import { Season } from '@/models/season'
 import { CalendarIcon, ClockIcon } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
@@ -60,36 +60,40 @@ export default async function SeasonsPage({ params }: Props) {
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover transition-transform duration-300 hover:scale-105"
                 />
+                {season.isActive && (
+                  <Badge
+                    variant="outline"
+                    className="absolute top-2 right-2 border-teal-500/30 bg-teal-500/10 text-teal-300 backdrop-blur-sm"
+                  >
+                    <span className="size-1.5 rounded-full bg-teal-400" />
+                    {t('active')}
+                  </Badge>
+                )}
               </AspectRatio>
               <h2
                 className={`text-xl font-bold uppercase ${notoSans.className} antialiased`}
               >
                 {season.name}
               </h2>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="bg-muted text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-md">
-                    <CalendarIcon className="size-3.5" />
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-md">
+                    <CalendarIcon className="size-3" />
                   </div>
-                  <span className="text-sm">
-                    {toLocalDate(season.startDate)}
-                    &nbsp;&mdash;&nbsp;
-                    {toLocalDate(season.endDate)}
+                  <span className="text-xs">
+                    {season.isActive
+                      ? `${t('since')} ${toLocalDate(season.startDate)}`
+                      : `${toLocalDate(season.startDate)} — ${toLocalDate(season.endDate)}`}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className={cn(
-                      'flex size-7 shrink-0 items-center justify-center rounded-md',
-                      season.isActive
-                        ? 'bg-teal-500/10 text-teal-400'
-                        : 'bg-muted text-muted-foreground',
-                    )}
-                  >
-                    <ClockIcon className="size-3.5" />
+                {!season.isActive && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-md">
+                      <ClockIcon className="size-3" />
+                    </div>
+                    <span className="text-xs">{t(`${season.id}.length`)}</span>
                   </div>
-                  <span className="text-sm">{t(`${season.id}.length`)}</span>
-                </div>
+                )}
               </div>
               <p className="text-muted-foreground text-sm">
                 {t(`${season.id}.description`)}
