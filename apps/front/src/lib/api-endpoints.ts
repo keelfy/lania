@@ -8,6 +8,8 @@ import {
   GrantCosmeticReq,
   GrantProductReq,
   GrantType,
+  ProfileMerge,
+  ProfileMergeSummary,
 } from '@/models/admin'
 import { BasketItem } from '@/models/basket'
 import { NotificationList, NotificationQuery } from '@/models/notification'
@@ -444,6 +446,41 @@ export function resyncProfileAsAdmin(
   return fetcher<ProfileResync>(`/v1/admin/profiles/${id}/resync`, undefined, {
     method: 'POST',
   })
+}
+
+// Shows what merging sourceId into targetId would do, blockers included. Changes nothing.
+export function previewMergeProfiles(
+  fetcher: ApiFetcher,
+  sourceId: string,
+  targetId: string,
+): Promise<ProfileMergeSummary> {
+  const params = new URLSearchParams()
+  params.set('targetProfileId', targetId)
+  return fetcher<ProfileMergeSummary>(
+    `/v1/admin/profiles/${sourceId}/merge`,
+    params,
+  )
+}
+
+// Moves every site record of sourceId into targetId, then deletes sourceId.
+export function mergeProfiles(
+  fetcher: ApiFetcher,
+  sourceId: string,
+  targetId: string,
+): Promise<ProfileMergeSummary> {
+  return fetcher<ProfileMergeSummary>(
+    `/v1/admin/profiles/${sourceId}/merge`,
+    undefined,
+    { method: 'POST', body: JSON.stringify({ targetProfileId: targetId }) },
+  )
+}
+
+// Every profile merged into id, newest first.
+export function getProfileMerges(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<ProfileMerge[]> {
+  return fetcher<ProfileMerge[]>(`/v1/admin/profiles/${id}/merges`)
 }
 
 // Deletes the account of the signed in user and releases the game profiles.

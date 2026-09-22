@@ -250,6 +250,9 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Put("/role", api.adminProfileHandler.SetProfileRole)
 			r.Delete("/owner", api.adminProfileHandler.ReleaseProfile)
 			r.Post("/resync", api.profileResyncHandler.AdminResyncProfile)
+			r.Get("/merge", api.adminProfileHandler.PreviewMergeProfiles)
+			r.Post("/merge", api.adminProfileHandler.MergeProfiles)
+			r.Get("/merges", api.adminProfileHandler.GetProfileMerges)
 
 			r.Get("/grants", api.adminGrantHandler.GetGrants)
 			r.Post("/grants", api.adminGrantHandler.GrantProduct)

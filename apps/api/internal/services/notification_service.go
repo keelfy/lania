@@ -30,6 +30,9 @@ type NotificationService interface {
 	NotifyCosmeticGranted(ctx context.Context, queries sql.Queries, profile *domain.Profile, grantType domain.GrantType, itemID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID)
 	// NotifyCosmeticRevoked tells the owner of the profile that a name color or a name prefix was taken back.
 	NotifyCosmeticRevoked(ctx context.Context, queries sql.Queries, profile *domain.Profile, grantType domain.GrantType, itemID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID)
+	// NotifyProfileMerged tells the owner of the target profile that an admin moved sourceUsername's data into it.
+	// A profile without an owner is skipped. A failure is logged, not returned, so a notification never undoes the merge.
+	NotifyProfileMerged(ctx context.Context, queries sql.Queries, profile *domain.Profile, sourceUsername string)
 }
 
 type notificationService struct {
@@ -134,6 +137,32 @@ func (s *notificationService) notifyCosmetic(
 	})
 	if err != nil {
 		logger.Errorf(ctx, "failed to store a %s notification for user %s: %v", notificationType, *profile.OwnerUserID, err)
+	}
+}
+
+func (s *notificationService) NotifyProfileMerged(ctx context.Context, queries sql.Queries, profile *domain.Profile, sourceUsername string) {
+	if profile == nil || profile.OwnerUserID == nil {
+		return
+	}
+
+	payload := domain.ProfileMergeNotificationPayload{
+		ProfileID:       profile.ID,
+		ProfileUsername: profile.MinecraftUsername,
+		SourceUsername:  sourceUsername,
+	}
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		logger.Errorf(ctx, "failed to build the payload of a profile merge notification: %v", err)
+		return
+	}
+
+	err = queries.InsertNotification(ctx, sql.InsertNotificationParams{
+		UserID:  *profile.OwnerUserID,
+		Type:    domain.NotificationTypeProfileMerged,
+		Payload: payloadJSON,
+	})
+	if err != nil {
+		logger.Errorf(ctx, "failed to store a profile merge notification for user %s: %v", *profile.OwnerUserID, err)
 	}
 }
 

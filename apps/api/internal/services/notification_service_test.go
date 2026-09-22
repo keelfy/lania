@@ -151,6 +151,46 @@ func TestNotifyCosmeticGranted(t *testing.T) {
 	})
 }
 
+func TestNotifyProfileMerged(t *testing.T) {
+	ctx := context.Background()
+	ownerID := uuid.New()
+	owned := &domain.Profile{ID: uuid.New(), MinecraftUsername: "player1", OwnerUserID: &ownerID}
+
+	t.Run("stores the merge for the owner of the target profile", func(t *testing.T) {
+		queries := &fakeNotificationQueries{}
+		svc := NewNotificationService(nil)
+
+		svc.NotifyProfileMerged(ctx, queries, owned, "player2")
+
+		if len(queries.inserted) != 1 {
+			t.Fatalf("got %d notifications", len(queries.inserted))
+		}
+		got := queries.inserted[0]
+		if got.UserID != ownerID || got.Type != domain.NotificationTypeProfileMerged {
+			t.Errorf("got %+v", got)
+		}
+
+		var payload domain.ProfileMergeNotificationPayload
+		if err := json.Unmarshal(got.Payload, &payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload.ProfileID != owned.ID || payload.ProfileUsername != "player1" || payload.SourceUsername != "player2" {
+			t.Errorf("payload: got %+v", payload)
+		}
+	})
+
+	t.Run("a profile without an owner stores nothing", func(t *testing.T) {
+		queries := &fakeNotificationQueries{}
+		svc := NewNotificationService(nil)
+
+		svc.NotifyProfileMerged(ctx, queries, &domain.Profile{ID: uuid.New()}, "player2")
+
+		if len(queries.inserted) != 0 {
+			t.Errorf("got %d notifications", len(queries.inserted))
+		}
+	})
+}
+
 func TestGetNotifications(t *testing.T) {
 	ctx := context.Background()
 	stored := make([]*domain.Notification, 5)

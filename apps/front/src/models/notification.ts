@@ -1,6 +1,9 @@
 import { GrantType } from './admin'
 
-export type NotificationType = 'cosmetic-granted' | 'cosmetic-revoked'
+export type NotificationType =
+  | 'cosmetic-granted'
+  | 'cosmetic-revoked'
+  | 'profile-merged'
 
 // The payload of a cosmetic-granted and a cosmetic-revoked notification.
 // The item name and the profile name are copied in by the backend, so an old
@@ -21,13 +24,32 @@ export type CosmeticNotificationPayload = {
   seasonName?: string
 }
 
-export type Notification = {
+// The payload of a profile-merged notification: an admin carried sourceUsername's data into this profile.
+// sourceUsername no longer exists as a profile once the merge ran.
+export type ProfileMergeNotificationPayload = {
+  profileId: string
+  profileUsername: string
+  sourceUsername: string
+}
+
+type NotificationBase = {
   id: string
-  type: NotificationType
-  payload: CosmeticNotificationPayload
   readAt?: string
   createdAt: string
 }
+
+export type CosmeticNotification = NotificationBase & {
+  type: 'cosmetic-granted' | 'cosmetic-revoked'
+  payload: CosmeticNotificationPayload
+}
+
+export type ProfileMergeNotification = NotificationBase & {
+  type: 'profile-merged'
+  payload: ProfileMergeNotificationPayload
+}
+
+// A discriminated union on type, so narrowing on notification.type also narrows notification.payload.
+export type Notification = CosmeticNotification | ProfileMergeNotification
 
 // unreadCount counts every unread notification, also the ones past the end of content.
 export type NotificationList = {

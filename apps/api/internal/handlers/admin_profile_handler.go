@@ -18,20 +18,26 @@ type AdminProfileHandler interface {
 	TransferProfile(w http.ResponseWriter, r *http.Request)
 	ReleaseProfile(w http.ResponseWriter, r *http.Request)
 	SetProfileRole(w http.ResponseWriter, r *http.Request)
+	PreviewMergeProfiles(w http.ResponseWriter, r *http.Request)
+	MergeProfiles(w http.ResponseWriter, r *http.Request)
+	GetProfileMerges(w http.ResponseWriter, r *http.Request)
 }
 
 type adminProfileHandler struct {
-	profileService      services.ProfileService
-	adminProfileService services.AdminProfileService
+	profileService           services.ProfileService
+	adminProfileService      services.AdminProfileService
+	adminProfileMergeService services.AdminProfileMergeService
 }
 
 func NewAdminProfileHandler(
 	profileService services.ProfileService,
 	adminProfileService services.AdminProfileService,
+	adminProfileMergeService services.AdminProfileMergeService,
 ) AdminProfileHandler {
 	return &adminProfileHandler{
-		profileService:      profileService,
-		adminProfileService: adminProfileService,
+		profileService:           profileService,
+		adminProfileService:      adminProfileService,
+		adminProfileMergeService: adminProfileMergeService,
 	}
 }
 
@@ -139,4 +145,70 @@ func (h *adminProfileHandler) SetProfileRole(w http.ResponseWriter, r *http.Requ
 	}
 
 	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentAdminProfileDetails(profile, owner))
+}
+
+// PreviewMergeProfiles shows what merging the profile in the path into the target would do, blockers included.
+// It never changes data.
+func (h *adminProfileHandler) PreviewMergeProfiles(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	cmd, err := binders.BindPreviewMergeProfiles(r)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	if err := cmd.Validate(); err != nil {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("", err))
+		return
+	}
+
+	summary, err := h.adminProfileMergeService.PreviewMergeProfiles(ctx, cmd.SourceProfileID, cmd.TargetProfileID)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileMergeSummary(summary, nil))
+}
+
+// MergeProfiles moves every site record of the profile in the path into the target profile, then deletes it.
+func (h *adminProfileHandler) MergeProfiles(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	cmd, err := binders.BindMergeProfiles(r)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	if err := cmd.Validate(); err != nil {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("", err))
+		return
+	}
+
+	summary, resync, err := h.adminProfileMergeService.MergeProfiles(ctx, cmd.SourceProfileID, cmd.TargetProfileID)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileMergeSummary(summary, resync))
+}
+
+// GetProfileMerges lists every profile merged into the profile in the path, newest first.
+func (h *adminProfileHandler) GetProfileMerges(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	profileID, err := binders.BindPathVariableAsUUID(r, binders.ProfileIDVariable)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	merges, err := h.adminProfileMergeService.ListMergesInto(ctx, profileID)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileMerges(merges))
 }

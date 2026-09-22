@@ -31,6 +31,55 @@ type AdminProfileDetails struct {
 	Owner *AdminUser `json:"owner,omitempty"`
 }
 
+type ProfileMergeBlocker struct {
+	Kind        string   `json:"kind"`
+	SeasonNames []string `json:"seasonNames,omitempty"`
+}
+
+type ProfileMergeCounts struct {
+	PlaytimeMoved            int64 `json:"playtimeMoved"`
+	PlaytimeSummed           int64 `json:"playtimeSummed"`
+	AccessesMoved            int64 `json:"accessesMoved"`
+	AccessesDropped          int64 `json:"accessesDropped"`
+	ViolationsMoved          int64 `json:"violationsMoved"`
+	NameColorOptionsMoved    int64 `json:"nameColorOptionsMoved"`
+	NameColorOptionsDropped  int64 `json:"nameColorOptionsDropped"`
+	NamePrefixOptionsMoved   int64 `json:"namePrefixOptionsMoved"`
+	NamePrefixOptionsDropped int64 `json:"namePrefixOptionsDropped"`
+	SeasonCosmeticsMoved     int64 `json:"seasonCosmeticsMoved"`
+	SeasonCosmeticsDropped   int64 `json:"seasonCosmeticsDropped"`
+	PrefixesMoved            int64 `json:"prefixesMoved"`
+	PrefixesDropped          int64 `json:"prefixesDropped"`
+	OrderItemsMoved          int64 `json:"orderItemsMoved"`
+	BasketItemsMoved         int64 `json:"basketItemsMoved"`
+	BasketItemsDropped       int64 `json:"basketItemsDropped"`
+	NotificationsRepointed   int64 `json:"notificationsRepointed"`
+}
+
+type ProfileMergeSummary struct {
+	SourceProfileID uuid.UUID              `json:"sourceProfileId"`
+	SourceUsername  string                 `json:"sourceUsername"`
+	TargetProfileID uuid.UUID              `json:"targetProfileId"`
+	TargetUsername  string                 `json:"targetUsername"`
+	RoleBefore      string                 `json:"roleBefore"`
+	RoleAfter       string                 `json:"roleAfter"`
+	OwnerUserID     *uuid.UUID             `json:"ownerUserId,omitempty"`
+	Counts          ProfileMergeCounts     `json:"counts"`
+	Blockers        []*ProfileMergeBlocker `json:"blockers,omitempty"`
+	CanMerge        bool                   `json:"canMerge"`
+	// Resync is the report of updating the season servers. Empty for a preview or when the merge failed before it.
+	Resync *ProfileResync `json:"resync,omitempty"`
+}
+
+type ProfileMerge struct {
+	ID                  uuid.UUID `json:"id"`
+	SourceProfileID     uuid.UUID `json:"sourceProfileId"`
+	SourceMinecraftUUID uuid.UUID `json:"sourceMcUuid"`
+	SourceUsername      string    `json:"sourceUsername"`
+	MergedBy            uuid.UUID `json:"mergedBy"`
+	CreatedAt           int64     `json:"createdAt"`
+}
+
 type AdminGrant struct {
 	ID          uuid.UUID  `json:"id"`
 	Type        string     `json:"type"`

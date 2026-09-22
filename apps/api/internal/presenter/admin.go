@@ -46,6 +46,70 @@ func PresentAdminProfileDetails(profile *domain.Profile, owner *domain.User) *re
 	return details
 }
 
+func presentProfileMergeBlockers(blockers []*domain.ProfileMergeBlocker) []*responses.ProfileMergeBlocker {
+	if len(blockers) == 0 {
+		return nil
+	}
+	res := make([]*responses.ProfileMergeBlocker, len(blockers))
+	for i, blocker := range blockers {
+		res[i] = &responses.ProfileMergeBlocker{Kind: string(blocker.Kind), SeasonNames: blocker.SeasonNames}
+	}
+	return res
+}
+
+// PresentProfileMergeSummary renders a preview or the outcome of a merge. resync is nil for a preview.
+func PresentProfileMergeSummary(summary *domain.ProfileMergeSummary, resync *domain.ProfileResync) *responses.ProfileMergeSummary {
+	res := &responses.ProfileMergeSummary{
+		SourceProfileID: summary.SourceProfileID,
+		SourceUsername:  summary.SourceUsername,
+		TargetProfileID: summary.TargetProfileID,
+		TargetUsername:  summary.TargetUsername,
+		RoleBefore:      string(summary.RoleBefore),
+		RoleAfter:       string(summary.RoleAfter),
+		OwnerUserID:     summary.OwnerUserID,
+		Counts: responses.ProfileMergeCounts{
+			PlaytimeMoved:            summary.Counts.PlaytimeMoved,
+			PlaytimeSummed:           summary.Counts.PlaytimeSummed,
+			AccessesMoved:            summary.Counts.AccessesMoved,
+			AccessesDropped:          summary.Counts.AccessesDropped,
+			ViolationsMoved:          summary.Counts.ViolationsMoved,
+			NameColorOptionsMoved:    summary.Counts.NameColorOptionsMoved,
+			NameColorOptionsDropped:  summary.Counts.NameColorOptionsDropped,
+			NamePrefixOptionsMoved:   summary.Counts.NamePrefixOptionsMoved,
+			NamePrefixOptionsDropped: summary.Counts.NamePrefixOptionsDropped,
+			SeasonCosmeticsMoved:     summary.Counts.SeasonCosmeticsMoved,
+			SeasonCosmeticsDropped:   summary.Counts.SeasonCosmeticsDropped,
+			PrefixesMoved:            summary.Counts.PrefixesMoved,
+			PrefixesDropped:          summary.Counts.PrefixesDropped,
+			OrderItemsMoved:          summary.Counts.OrderItemsMoved,
+			BasketItemsMoved:         summary.Counts.BasketItemsMoved,
+			BasketItemsDropped:       summary.Counts.BasketItemsDropped,
+			NotificationsRepointed:   summary.Counts.NotificationsRepointed,
+		},
+		Blockers: presentProfileMergeBlockers(summary.Blockers),
+		CanMerge: summary.CanMerge(),
+	}
+	if resync != nil {
+		res.Resync = PresentProfileResync(resync)
+	}
+	return res
+}
+
+func PresentProfileMerges(merges []*domain.ProfileMerge) []*responses.ProfileMerge {
+	res := make([]*responses.ProfileMerge, len(merges))
+	for i, merge := range merges {
+		res[i] = &responses.ProfileMerge{
+			ID:                  merge.ID,
+			SourceProfileID:     merge.SourceProfileID,
+			SourceMinecraftUUID: merge.SourceMinecraftUUID,
+			SourceUsername:      merge.SourceUsername,
+			MergedBy:            merge.MergedBy,
+			CreatedAt:           merge.CreatedAt.UnixMilli(),
+		}
+	}
+	return res
+}
+
 func PresentAdminGrants(grants []*domain.Grant) []*responses.AdminGrant {
 	res := make([]*responses.AdminGrant, len(grants))
 	for i, grant := range grants {

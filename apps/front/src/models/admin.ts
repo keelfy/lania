@@ -1,4 +1,4 @@
-import { ProfileRole } from './profile'
+import { ProfileResync, ProfileRole } from './profile'
 
 export type AdminUser = {
   id: string
@@ -25,6 +25,64 @@ export type AdminUserDetails = AdminUser & {
 export type AdminProfileDetails = AdminProfile & {
   // Missing while nobody owns the profile.
   owner?: AdminUser
+}
+
+export type ProfileMergeBlockerKind =
+  | 'same-profile'
+  | 'different-owners'
+  | 'live-season-playtime'
+
+export type ProfileMergeBlocker = {
+  kind: ProfileMergeBlockerKind
+  // Set for live-season-playtime only.
+  seasonNames?: string[]
+}
+
+export type ProfileMergeCounts = {
+  playtimeMoved: number
+  playtimeSummed: number
+  accessesMoved: number
+  accessesDropped: number
+  violationsMoved: number
+  nameColorOptionsMoved: number
+  nameColorOptionsDropped: number
+  namePrefixOptionsMoved: number
+  namePrefixOptionsDropped: number
+  seasonCosmeticsMoved: number
+  seasonCosmeticsDropped: number
+  prefixesMoved: number
+  prefixesDropped: number
+  orderItemsMoved: number
+  basketItemsMoved: number
+  basketItemsDropped: number
+  notificationsRepointed: number
+}
+
+// What merging the source profile into the target would do (a preview) or did (the real merge).
+export type ProfileMergeSummary = {
+  sourceProfileId: string
+  sourceUsername: string
+  targetProfileId: string
+  targetUsername: string
+  roleBefore: ProfileRole
+  roleAfter: ProfileRole
+  ownerUserId?: string
+  counts: ProfileMergeCounts
+  // Empty when nothing stops the merge.
+  blockers?: ProfileMergeBlocker[]
+  canMerge: boolean
+  // The report of updating the season servers. Missing for a preview.
+  resync?: ProfileResync
+}
+
+// One profile merged into another one and then deleted, kept for support history.
+export type ProfileMerge = {
+  id: string
+  sourceProfileId: string
+  sourceMcUuid: string
+  sourceUsername: string
+  mergedBy: string
+  createdAt: number
 }
 
 export type GrantType = 'access' | 'name-color' | 'name-prefix'

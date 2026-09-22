@@ -135,6 +135,22 @@ type Queries interface {
 	// Easy Donate
 	FindEDProductsByProductIDs(ctx context.Context, productIDs uuid.UUIDs) ([]int64, error)
 
+	// Profile Merge
+	// LockProfilesForMerge locks both profile rows for the duration of the transaction.
+	LockProfilesForMerge(ctx context.Context, firstProfileID, secondProfileID uuid.UUID) error
+	// FindLiveSyncedSeasonNamesWithPlaytime returns the seasons where the profile has playtime and a shell
+	// still syncs it every minute.
+	FindLiveSyncedSeasonNamesWithPlaytime(ctx context.Context, mcUUID uuid.UUID) ([]string, error)
+	// MergeProfileData moves every table that references the source profile into the target profile.
+	MergeProfileData(ctx context.Context, sourceProfileID, sourceMcUUID, targetProfileID, targetMcUUID uuid.UUID) (*domain.ProfileMergeCounts, error)
+	// UpdateProfileAfterMerge writes the merged owner and seen dates onto the target profile.
+	UpdateProfileAfterMerge(ctx context.Context, targetProfileID uuid.UUID, ownerUserID *uuid.UUID, firstSeenAt, lastSeenAt *time.Time, updatedBy uuid.UUID) error
+	// DeleteProfile removes the profile row. Every table that referenced it must be cleared first.
+	DeleteProfile(ctx context.Context, profileID uuid.UUID) error
+	InsertProfileMerge(ctx context.Context, arg InsertProfileMergeParams) error
+	// FindProfileMergesByTargetProfileID returns every profile merged into the profile, newest first.
+	FindProfileMergesByTargetProfileID(ctx context.Context, targetProfileID uuid.UUID) ([]*domain.ProfileMerge, error)
+
 	// Notification
 	InsertNotification(ctx context.Context, arg InsertNotificationParams) error
 	// FindNotificationsByUserID returns the notifications of the user that match the filter, newest first.

@@ -451,7 +451,8 @@
           "nameColor": "Name color “{item}” revoked",
           "glyth": "Glyth “{item}” revoked",
           "special": "Special prefix “{item}” revoked"
-        }
+        },
+        "merged": "{source}'s data was merged in"
       }
     },
     "signIn": "Sign in",
@@ -530,19 +531,19 @@
   },
   "seasons": {
     "title": "Seasons",
-    "123e4567-e89b-12d3-a456-426614174000": {
+    "123e4567-e89b-12d3-a456-426614174001": {
       "length": "3 months 2 days",
       "description": "The first season was launched for the audience of keelfy."
     },
-    "123e4567-e89b-12d3-a456-426614174001": {
+    "123e4567-e89b-12d3-a456-426614174002": {
       "length": "2 months 23 days",
       "description": "The server began to acquire a periodic character, plans for development appeared."
     },
-    "123e4567-e89b-12d3-a456-426614174002": {
+    "123e4567-e89b-12d3-a456-426614174003": {
       "length": "3 months 10 days",
       "description": "A strong jump in technical execution - the appearance of the lobby and the farm world."
     },
-    "123e4567-e89b-12d3-a456-426614174003": {
+    "864fc606-28aa-42a3-a845-02cb190b8ee9": {
       "length": "2 months 15 days",
       "description": "A relatively short but eventful season. During this time, the website appeared along with a variety of profile customization options."
     },
@@ -733,6 +734,51 @@
           "granted": "Item granted",
           "failed": "Failed to grant the item"
         }
+      },
+      "merge": {
+        "title": "Merge profiles",
+        "description": "Move another profile's data into this one, for a player who changed nickname. The other profile is deleted once the merge runs.",
+        "open": "Merge into another profile",
+        "dialogTitle": "Merge {username}",
+        "dialogDescription": "Pick the profile that should receive {username}'s data. {username} is deleted once the merge runs.",
+        "targetLabel": "Profile to merge into",
+        "searchPlaceholder": "Search by username",
+        "noResults": "Nothing found",
+        "targetSelected": "{source} will be merged into {target}",
+        "changeTarget": "Change",
+        "previewLoading": "Checking what would move…",
+        "previewFailed": "Failed to preview the merge",
+        "roleChange": "Role changes from {before} to {after}",
+        "confirmLabel": "Type {username} to confirm",
+        "submit": "Merge",
+        "merged": "Merged into {username}",
+        "mergeFailed": "Failed to merge the profiles",
+        "blockers": {
+          "same-profile": "A profile cannot be merged into itself",
+          "different-owners": "The profiles belong to different users",
+          "live-season-playtime": "The profile has playtime in a running season the game server still syncs: {seasons}. Merge after the season ends."
+        },
+        "counts": {
+          "playtimeMoved": "{count} season playtime carried over",
+          "playtimeSummed": "{count} season playtime summed with the target's own",
+          "accessesMoved": "{count} season access carried over",
+          "accessesDropped": "{count} duplicate season access dropped",
+          "violationsMoved": "{count} violation carried over",
+          "nameColorOptionsMoved": "{count} name color carried over",
+          "nameColorOptionsDropped": "{count} duplicate name color dropped",
+          "namePrefixOptionsMoved": "{count} name prefix carried over",
+          "namePrefixOptionsDropped": "{count} duplicate name prefix dropped",
+          "seasonCosmeticsMoved": "{count} season look carried over",
+          "seasonCosmeticsDropped": "{count} season look dropped, the target's own kept",
+          "prefixesMoved": "{count} legacy prefix carried over",
+          "prefixesDropped": "{count} legacy prefix dropped, the target's own kept",
+          "orderItemsMoved": "{count} order item carried over",
+          "basketItemsMoved": "{count} basket item carried over",
+          "basketItemsDropped": "{count} duplicate basket item dropped",
+          "notificationsRepointed": "{count} old notification now points to the target profile"
+        },
+        "mergedFromTitle": "Merged from",
+        "mergedFromDescription": "Profiles whose data was moved into this one. They no longer exist."
       }
     },
     "seasons": {

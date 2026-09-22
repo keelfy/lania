@@ -46,6 +46,23 @@ func (c *SetProfileRoleCommand) Validate() error {
 	)
 }
 
+type MergeProfilesCommand struct {
+	SourceProfileID uuid.UUID
+	TargetProfileID uuid.UUID
+}
+
+func (c *MergeProfilesCommand) Validate() error {
+	return validation.ValidateStruct(c,
+		validation.Field(&c.SourceProfileID, notNilUUID),
+		validation.Field(&c.TargetProfileID, notNilUUID, validation.By(func(value any) error {
+			if value.(uuid.UUID) == c.SourceProfileID {
+				return errors.New("cannot be the source profile")
+			}
+			return nil
+		})),
+	)
+}
+
 type GrantProductCommand struct {
 	ProfileID uuid.UUID
 	ProductID uuid.UUID

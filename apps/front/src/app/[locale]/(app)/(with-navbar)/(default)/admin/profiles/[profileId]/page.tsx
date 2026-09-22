@@ -5,6 +5,7 @@ import {
   getAdminCosmetics,
   getAdminGrants,
   getAdminProfile,
+  getProfileMerges,
   getSeasons,
   getProducts,
 } from '@/lib/api-endpoints'
@@ -14,6 +15,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import AdminShell from '../../admin-shell'
 import GrantsCard from './grants-card'
+import MergeCard from './merge-card'
+import MergedFromCard from './merged-from-card'
 import OwnerCard from './owner-card'
 import RoleCard from './role-card'
 
@@ -37,7 +40,7 @@ export default async function AdminProfilePage({ params }: Props) {
   )
   if (!profile) notFound()
 
-  const [grants, seasons, products, catalog] = await Promise.all([
+  const [grants, seasons, products, catalog, merges] = await Promise.all([
     getAdminGrants(serverApiFetcher, profileId).catch((error) => {
       console.error(error)
       return undefined
@@ -54,6 +57,10 @@ export default async function AdminProfilePage({ params }: Props) {
       console.error(error)
       return undefined
     }),
+    getProfileMerges(serverApiFetcher, profileId).catch((error) => {
+      console.error(error)
+      return []
+    }),
   ])
 
   return (
@@ -68,6 +75,12 @@ export default async function AdminProfilePage({ params }: Props) {
       <OwnerCard profileId={profile.id} owner={profile.owner} locale={locale} />
       <RoleCard profileId={profile.id} role={profile.role} />
       <ProfileResyncCard profileId={profile.id} asAdmin />
+      {merges.length > 0 && <MergedFromCard merges={merges} locale={locale} />}
+      <MergeCard
+        profileId={profile.id}
+        profileUsername={profile.username}
+        locale={locale}
+      />
       <GrantsCard
         profileId={profile.id}
         grants={grants}

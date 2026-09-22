@@ -4,7 +4,11 @@ import McUsername from '@/components/ui/mc-username'
 import { Link } from '@/i18n/navigation'
 import { formatTimeAgo } from '@/lib/time-ago'
 import { cn } from '@/lib/utils'
-import { Notification } from '@/models/notification'
+import {
+  CosmeticNotification,
+  Notification,
+  ProfileMergeNotification,
+} from '@/models/notification'
 import { useLocale, useTranslations } from 'next-intl'
 import Image from 'next/image'
 
@@ -18,12 +22,29 @@ type Props = {
 }
 
 // NotificationItem is one notification of the bell menu and of the notifications page.
-// A click opens the profile settings the notification is about and reads the notification.
-export default function NotificationItem({
+// A click opens what the notification is about and reads the notification.
+export default function NotificationItem(props: Props) {
+  if (props.notification.type === 'profile-merged') {
+    return (
+      <ProfileMergeItem
+        {...props}
+        notification={props.notification as ProfileMergeNotification}
+      />
+    )
+  }
+  return (
+    <CosmeticItem
+      {...props}
+      notification={props.notification as CosmeticNotification}
+    />
+  )
+}
+
+function CosmeticItem({
   notification,
   markUnread = false,
   onOpen,
-}: Props) {
+}: Props & { notification: CosmeticNotification }) {
   const t = useTranslations('navbar.notifications.items')
   const { payload } = notification
   const granted = notification.type === 'cosmetic-granted'
@@ -103,6 +124,49 @@ export default function NotificationItem({
             </span>
           )}
         </div>
+      </Link>
+    </li>
+  )
+}
+
+function ProfileMergeItem({
+  notification,
+  markUnread = false,
+  onOpen,
+}: Props & { notification: ProfileMergeNotification }) {
+  const t = useTranslations('navbar.notifications.items')
+  const { payload } = notification
+  const unread = markUnread && !notification.readAt
+
+  return (
+    <li>
+      <Link
+        href={{
+          pathname: '/profiles',
+          query: { id: payload.profileId },
+        }}
+        onClick={() => onOpen(notification)}
+        className={cn(
+          'group hover:bg-accent/60 focus-visible:ring-ring relative block px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset',
+          unread &&
+            'bg-accent/40 before:bg-primary before:absolute before:inset-y-0 before:left-0 before:w-0.5',
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <McUsername
+            username={payload.profileUsername}
+            className="truncate text-base"
+          />
+          <RelativeTime date={notification.createdAt} />
+        </div>
+        <p
+          className={cn(
+            'mt-1',
+            markUnread && !unread ? 'text-muted-foreground' : 'text-foreground',
+          )}
+        >
+          {t('merged', { source: payload.sourceUsername })}
+        </p>
       </Link>
     </li>
   )

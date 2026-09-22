@@ -14,11 +14,13 @@ const (
 	NotificationTypeCosmeticGranted NotificationType = "cosmetic-granted"
 	// NotificationTypeCosmeticRevoked tells the user that a name color or a name prefix was taken back.
 	NotificationTypeCosmeticRevoked NotificationType = "cosmetic-revoked"
+	// NotificationTypeProfileMerged tells the owner that an admin moved another profile's data into this one.
+	NotificationTypeProfileMerged NotificationType = "profile-merged"
 )
 
 func (t NotificationType) IsValid() bool {
 	switch t {
-	case NotificationTypeCosmeticGranted, NotificationTypeCosmeticRevoked:
+	case NotificationTypeCosmeticGranted, NotificationTypeCosmeticRevoked, NotificationTypeProfileMerged:
 		return true
 	}
 	return false
@@ -60,6 +62,16 @@ type CosmeticNotificationPayload struct {
 	SeasonID *uuid.UUID `json:"seasonId,omitempty"`
 	// SeasonName is copied in next to SeasonID, so the bell menu names the season without asking for it.
 	SeasonName string `json:"seasonName,omitempty"`
+}
+
+// ProfileMergeNotificationPayload is the payload of NotificationTypeProfileMerged.
+type ProfileMergeNotificationPayload struct {
+	// ProfileID is the target profile, the one that received the data.
+	ProfileID uuid.UUID `json:"profileId"`
+	// ProfileUsername is copied in so the notification keeps the name it was made with.
+	ProfileUsername string `json:"profileUsername"`
+	// SourceUsername is the nickname the data was carried over from. The source profile no longer exists.
+	SourceUsername string `json:"sourceUsername"`
 }
 
 // NotificationFilter narrows the notifications of a user.

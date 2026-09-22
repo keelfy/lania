@@ -2,10 +2,12 @@ package binders
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/commands"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/transport/http/requests"
@@ -126,6 +128,42 @@ func BindSetProfileRole(r *http.Request) (*commands.SetProfileRoleCommand, error
 		ProfileID: profileID,
 		Role:      domain.Role(strings.TrimSpace(req.Role)),
 	}, nil
+}
+
+var TargetProfileIDQueryParam = "targetProfileId"
+
+// BindPreviewMergeProfiles reads the source profile from the path and the target from the query,
+// for the preview GET that has no body.
+func BindPreviewMergeProfiles(r *http.Request) (*commands.MergeProfilesCommand, error) {
+	sourceProfileID, err := BindPathVariableAsUUID(r, ProfileIDVariable)
+	if err != nil {
+		return nil, err
+	}
+
+	targetProfileIDStr, err := BindMandatoryQueryParamAsString(r, TargetProfileIDQueryParam)
+	if err != nil {
+		return nil, err
+	}
+	targetProfileID, err := uuid.Parse(targetProfileIDStr)
+	if err != nil {
+		return nil, utils.NewBadRequestError(fmt.Sprintf("query parameter %v is not a valid UUID", TargetProfileIDQueryParam), err)
+	}
+
+	return &commands.MergeProfilesCommand{SourceProfileID: sourceProfileID, TargetProfileID: targetProfileID}, nil
+}
+
+func BindMergeProfiles(r *http.Request) (*commands.MergeProfilesCommand, error) {
+	sourceProfileID, err := BindPathVariableAsUUID(r, ProfileIDVariable)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &requests.MergeProfiles{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+
+	return &commands.MergeProfilesCommand{SourceProfileID: sourceProfileID, TargetProfileID: req.TargetProfileID}, nil
 }
 
 var (

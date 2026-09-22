@@ -11,6 +11,10 @@ type SetProfileRole struct {
 	Role string `json:"role"`
 }
 
+type MergeProfiles struct {
+	TargetProfileID uuid.UUID `json:"targetProfileId"`
+}
+
 type GrantProduct struct {
 	ProductID uuid.UUID `json:"productId"`
 	SeasonID  uuid.UUID `json:"seasonId"`

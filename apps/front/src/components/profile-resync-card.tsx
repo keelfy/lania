@@ -26,7 +26,7 @@ type Props = {
 const FAILED_TOAST_DURATION = 15_000
 
 // Tells for every season whether its server got everything, and what failed when it did not.
-function ResyncReport({ resync }: { resync: ProfileResync }) {
+export function ResyncReport({ resync }: { resync: ProfileResync }) {
   const t = useTranslations('profileResync')
 
   return (
@@ -56,7 +56,7 @@ function ResyncReport({ resync }: { resync: ProfileResync }) {
 }
 
 // Shows the report as a success, a warning when only some seasons failed, or an error when all of them did.
-function showResync(resync: ProfileResync, t: (key: string) => string) {
+export function showResync(resync: ProfileResync, t: (key: string) => string) {
   if (resync.seasons.length === 0) {
     toast.success(t('success'), { description: t('noServers') })
     return
