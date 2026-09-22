@@ -6,7 +6,7 @@ import { getTranslations } from 'next-intl/server'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { ServerMapInfo } from '@/models/server'
-import ServerStatusWithMaps from './server-status'
+import ServerCard from './server-card'
 import { getSeasons } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
 import { Season } from '@/models/season'
@@ -91,25 +91,25 @@ export default async function WorldPage({ params }: Props) {
   const rest = statuses.filter((entry) => entry !== primary)
 
   return (
-    <div className="flex flex-col gap-10">
-      <h1 className="text-2xl font-semibold">{t('title')}</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="text-4xl font-extrabold tracking-tight">{t('title')}</h1>
       {primary && (
-        <section className="border-border/60 flex flex-col gap-4 rounded-lg border p-4 sm:p-6">
-          <ServerStatusWithMaps
-            variant="primary"
-            locale={locale}
-            server={primary.server}
-            maps={mapsFor(primary.server)}
-            status={primary.status}
-          />
-        </section>
+        <ServerCard
+          variant="primary"
+          locale={locale}
+          server={primary.server}
+          maps={mapsFor(primary.server)}
+          status={primary.status}
+        />
       )}
       {rest.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">{t('otherServers')}</h2>
-          <div className="flex flex-col gap-5">
+        <section className="flex flex-col gap-4">
+          <h2 className="text-2xl font-bold tracking-tight">
+            {t('otherServers')}
+          </h2>
+          <div className="flex flex-col gap-4">
             {rest.map(({ server, status }) => (
-              <ServerStatusWithMaps
+              <ServerCard
                 key={server.id}
                 variant="secondary"
                 locale={locale}

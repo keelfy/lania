@@ -1,15 +1,23 @@
 import DeerIcon from '@/components/icons/DeerIcon'
+import { Badge } from '@/components/ui/badge'
+import {
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { Season } from '@/models/season'
 import { ServerMapInfo } from '@/models/server'
-import { HouseIcon, PickaxeIcon, UsersIcon } from 'lucide-react'
+import { HouseIcon, PickaxeIcon } from 'lucide-react'
 import pinger from 'minecraft-pinger'
 import { getTranslations } from 'next-intl/server'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 import type { RawMotdDescription } from '@/lib/motd'
-import CopyableServerCard from './components/copyable-server-card'
+import ClickToCopy from './components/click-to-copy'
 import CopyStateIcon from './components/copy-state-icon'
 import Motd from './components/motd'
 
@@ -26,21 +34,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   pickaxe: PickaxeIcon,
 }
 
-// A small dot standing in for online/offline, colored with the brand
-// accent instead of a generic traffic-light green.
-function StatusDot({ online }: { online: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'size-2 shrink-0 rounded-full',
-        online ? 'bg-teal-400' : 'bg-muted-foreground/40',
-      )}
-    />
-  )
-}
-
-export default async function ServerStatusWithMaps({
+export default async function ServerCard({
   locale,
   server,
   maps,
@@ -50,56 +44,24 @@ export default async function ServerStatusWithMaps({
   const t = await getTranslations({ locale, namespace: 'worlds' })
   const address = server.publicAddress ?? ''
   const online = !!status?.description
-
-  if (variant === 'secondary') {
-    return (
-      <div className="flex flex-col gap-2">
-        <CopyableServerCard
-          copyText={address}
-          copyLabel={t('copyAddress')}
-          className="px-4 py-2.5"
-        >
-          <div className="flex items-center gap-3">
-            <StatusDot online={online} />
-            <span className="font-minecraft tracking-mc translate-y-0.5 text-lg">
-              {server.name}
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-muted-foreground text-sm">
-              {status?.players.online ?? <>&mdash;</>}&nbsp;/&nbsp;
-              {status?.players.max ?? <>&mdash;</>}
-            </span>
-            <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
-              <CopyStateIcon />
-              {address}
-            </span>
-          </div>
-        </CopyableServerCard>
-        {maps.length > 0 && online && (
-          // Indented and rail-connected to the row above, so it reads as
-          // "these maps belong to this server" rather than a new one.
-          <div className="border-border/60 ml-2 border-l pl-4">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {maps.map((map) => (
-                <ServerMap key={map.id} locale={locale} map={map} compact />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
+  const isPrimary = variant === 'primary'
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="font-minecraft tracking-mc translate-y-0.5 text-3xl drop-shadow-[0_1.2px_1.2px_rgba(255,255,255,0.2)] sm:text-4xl">
-        {server.name}
-      </h2>
-      <CopyableServerCard copyText={address} copyLabel={t('copyAddress')}>
-        <div className="flex items-center gap-4">
-          <DeerIcon className="hidden size-14 rounded-sm bg-black/20 p-1 sm:inline-block" />
-          <span className="text-sm sm:text-base">
+    <ClickToCopy copyText={address} copyLabel={t('copyAddress')}>
+      <CardHeader className="flex flex-row items-start gap-4">
+        {isPrimary && (
+          <DeerIcon className="hidden size-10 shrink-0 rounded-sm bg-black/20 p-1 sm:inline-block" />
+        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <CardTitle
+            className={cn(
+              'font-minecraft tracking-mc translate-y-0.5',
+              isPrimary ? 'text-2xl' : 'text-lg',
+            )}
+          >
+            {server.name}
+          </CardTitle>
+          <CardDescription className="text-foreground/80 text-sm">
             {status?.description ? (
               <Motd
                 description={
@@ -109,34 +71,40 @@ export default async function ServerStatusWithMaps({
             ) : (
               <span className="text-destructive">{t('status.error')}</span>
             )}
-          </span>
+          </CardDescription>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex items-center gap-2">
-            <StatusDot online={online} />
-            <span className="text-md font-bold sm:text-lg">
-              {status?.players.online ?? <>&mdash;</>}&nbsp;/&nbsp;
-              {status?.players.max ?? <>&mdash;</>}
-            </span>
-            <UsersIcon className="text-muted-foreground size-5" />
-          </div>
-          <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-sm">
+        <CardAction className="flex flex-col items-end gap-1.5">
+          <Badge
+            variant="outline"
+            className={cn(
+              online && 'border-teal-500/30 bg-teal-500/10 text-teal-300',
+            )}
+          >
+            {status?.players.online ?? '—'}&nbsp;/&nbsp;
+            {status?.players.max ?? '—'}
+          </Badge>
+          <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
             <CopyStateIcon />
             {address}
           </span>
-        </div>
-      </CopyableServerCard>
+        </CardAction>
+      </CardHeader>
       {maps.length > 0 && online && (
-        <>
+        <CardContent className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">{t('mapsTitle')}</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {maps.map((map) => (
-              <ServerMap key={map.id} locale={locale} map={map} />
+              <ServerMap
+                key={map.id}
+                locale={locale}
+                map={map}
+                compact={!isPrimary}
+              />
             ))}
           </div>
-        </>
+        </CardContent>
       )}
-    </div>
+    </ClickToCopy>
   )
 }
 

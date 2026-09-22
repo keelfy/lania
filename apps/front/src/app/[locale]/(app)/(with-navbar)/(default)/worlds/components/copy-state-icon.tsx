@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils'
 import { CheckIcon, CopyIcon } from 'lucide-react'
 import React from 'react'
-import { CopiedAddressContext } from './copyable-server-card'
+import { CopiedAddressContext } from './click-to-copy'
 
 // The copy/check icon pair shared by the hero and compact server cards.
 // Reads `copied` from context so the surrounding tree can stay server
