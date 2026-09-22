@@ -8,11 +8,11 @@ import {
   PROFILE_ROLE_COLORS,
   PROFILE_STATUS_COLORS,
 } from '@/lib/profile-colors'
+import { formatTimeAgo } from '@/lib/time-ago'
 import { PublicProfile } from '@/models/profile'
 import { communityProfileHref } from './community-href'
 import { ClockIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useTimeAgo } from 'next-timeago'
 import Link from 'next/link'
 
 type Props = {
@@ -27,8 +27,11 @@ export default function CommunityPlayerItem({
   season,
 }: Props) {
   const t = useTranslations('playerCard')
-  const { TimeAgo } = useTimeAgo()
   const playtime = formatPlaytime(profile.playtime)
+  const lastSeen = profile.lastSeenAt
+    ? formatTimeAgo(profile.lastSeenAt)
+    : undefined
+  const hasBeenOnline = profile.isOnline || lastSeen !== undefined
   return (
     <Link
       href={communityProfileHref(locale, profile.username, season)}
@@ -57,22 +60,29 @@ export default function CommunityPlayerItem({
             <ClockIcon className="size-3.5" />
             {playtime.value} {t(`playtime.${playtime.unit}`)}
           </span>
-          <span aria-hidden className="shrink-0">
-            ·
-          </span>
-          {profile.isOnline ? (
-            <span
-              className="truncate"
-              style={{ color: PROFILE_STATUS_COLORS.online }}
-            >
-              {t('statuses.online')}
-            </span>
-          ) : (
-            profile.lastSeenAt && (
-              <span className="truncate" suppressHydrationWarning>
-                <TimeAgo date={profile.lastSeenAt} locale={locale} />
+          {hasBeenOnline && (
+            <>
+              <span aria-hidden className="shrink-0">
+                ·
               </span>
-            )
+              {profile.isOnline ? (
+                <span
+                  className="truncate"
+                  style={{ color: PROFILE_STATUS_COLORS.online }}
+                >
+                  {t('statuses.online')}
+                </span>
+              ) : (
+                <span className="truncate" suppressHydrationWarning>
+                  {lastSeen!.unit === 'now'
+                    ? t('timeAgo.now')
+                    : t('timeAgo.ago', {
+                        value: lastSeen!.value,
+                        unit: t(`timeAgo.${lastSeen!.unit}`),
+                      })}
+                </span>
+              )}
+            </>
           )}
           {profile.role !== 'player' && (
             <span

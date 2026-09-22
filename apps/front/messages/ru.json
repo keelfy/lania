@@ -348,6 +348,16 @@
       "minutes": "мин.",
       "seconds": "сек."
     },
+    "timeAgo": {
+      "now": "Только что",
+      "ago": "{value} {unit} назад",
+      "minutes": "мин.",
+      "hours": "ч.",
+      "days": "дн.",
+      "weeks": "нед.",
+      "months": "мес.",
+      "years": "г."
+    },
     "lastSeenAt": {
       "title": "Последний раз онлайн",
       "now": "Сейчас"

@@ -349,6 +349,16 @@
       "minutes": "min.",
       "seconds": "sec."
     },
+    "timeAgo": {
+      "now": "Just now",
+      "ago": "{value} {unit} ago",
+      "minutes": "min.",
+      "hours": "h.",
+      "days": "d.",
+      "weeks": "w.",
+      "months": "mo.",
+      "years": "y."
+    },
     "lastSeenAt": {
       "title": "Last seen",
       "now": "Now"
