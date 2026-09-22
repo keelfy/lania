@@ -65,6 +65,7 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
+import SeasonScreenshotsManager from './season-screenshots-manager'
 
 type Props = {
   seasons: AdminSeason[]
@@ -127,6 +128,8 @@ function SeasonDialog({
       isPrimary,
       preregistration,
       freeRegistration,
+      gameVersion: optionalString(form, 'gameVersion'),
+      worldUrl: optionalString(form, 'worldUrl'),
     }
 
     startTransition(async () => {
@@ -276,6 +279,36 @@ function SeasonDialog({
               />
               <FieldDescription>{t('planUrlHint')}</FieldDescription>
             </Field>
+            <FieldGroup className="grid gap-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel
+                  htmlFor={`season-game-version-${season?.id ?? 'new'}`}
+                >
+                  {t('fields.gameVersion')}
+                </FieldLabel>
+                <Input
+                  id={`season-game-version-${season?.id ?? 'new'}`}
+                  name="gameVersion"
+                  maxLength={64}
+                  defaultValue={season?.gameVersion}
+                  placeholder="1.21.1"
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor={`season-world-url-${season?.id ?? 'new'}`}>
+                  {t('fields.worldUrl')}
+                </FieldLabel>
+                <Input
+                  id={`season-world-url-${season?.id ?? 'new'}`}
+                  name="worldUrl"
+                  type="url"
+                  maxLength={2048}
+                  defaultValue={season?.worldUrl}
+                  placeholder="https://cdn.example.com/world.zip"
+                />
+                <FieldDescription>{t('worldUrlHint')}</FieldDescription>
+              </Field>
+            </FieldGroup>
             <Field orientation="horizontal">
               <Switch
                 id={`season-active-${season?.id ?? 'new'}`}
@@ -481,7 +514,8 @@ export default function SeasonManager({ seasons, locale }: Props) {
               <CardHeader>
                 <CardTitle className="text-lg">{season.name}</CardTitle>
                 <SeasonBadges season={season} />
-                <CardAction>
+                <CardAction className="flex gap-2">
+                  <SeasonScreenshotsManager season={season} />
                   <SeasonDialog season={season} />
                 </CardAction>
               </CardHeader>
@@ -577,6 +611,7 @@ export default function SeasonManager({ seasons, locale }: Props) {
                             <TooltipContent>{t('openPlan')}</TooltipContent>
                           </Tooltip>
                         )}
+                        <SeasonScreenshotsManager season={season} compact />
                         <SeasonDialog season={season} compact />
                         <DeleteSeasonDialog season={season} />
                       </div>

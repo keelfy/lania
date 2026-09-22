@@ -56,6 +56,8 @@ export type ProfileMergeCounts = {
   basketItemsMoved: number
   basketItemsDropped: number
   notificationsRepointed: number
+  screenshotAuthorsMoved: number
+  screenshotAuthorsDropped: number
 }
 
 // What merging the source profile into the target would do (a preview) or did (the real merge).

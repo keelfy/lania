@@ -24,6 +24,19 @@ type Queries interface {
 	SetSeasonPrimary(ctx context.Context, seasonID uuid.UUID) (bool, error)
 	SetSeasonShellAddress(ctx context.Context, seasonID uuid.UUID, address string) error
 
+	// Season Screenshot
+	// FindSeasonScreenshots returns every screenshot of the season, in feed order, each with its authors in credit order.
+	FindSeasonScreenshots(ctx context.Context, seasonID uuid.UUID) ([]*domain.SeasonScreenshot, error)
+	// FindSeasonScreenshotByID returns stdsql.ErrNoRows when the screenshot does not exist in the season.
+	FindSeasonScreenshotByID(ctx context.Context, screenshotID, seasonID uuid.UUID) (*domain.SeasonScreenshot, error)
+	CreateSeasonScreenshot(ctx context.Context, arg SaveSeasonScreenshotParams) error
+	// UpdateSeasonScreenshot reports whether a screenshot with the id existed in the season.
+	UpdateSeasonScreenshot(ctx context.Context, arg SaveSeasonScreenshotParams) (bool, error)
+	// DeleteSeasonScreenshot reports whether the screenshot existed in the season.
+	DeleteSeasonScreenshot(ctx context.Context, screenshotID, seasonID uuid.UUID) (bool, error)
+	// SetSeasonScreenshotAuthors replaces every credit of the screenshot with profileIDs, in the given order.
+	SetSeasonScreenshotAuthors(ctx context.Context, screenshotID uuid.UUID, profileIDs uuid.UUIDs) error
+
 	// Game Profile
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
 	// FindPublicProfiles sorts by last_seen_at in seasonID, or over every season when seasonID is uuid.Nil.
@@ -45,6 +58,8 @@ type Queries interface {
 	FindMinecraftUUIDsByRoles(ctx context.Context, roles []domain.Role) (uuid.UUIDs, error)
 	FindProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)
 	FindProfileByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID) (*domain.Profile, error)
+	// FindProfilesByIDs returns the profiles that exist among ids; a missing id is simply absent from the result.
+	FindProfilesByIDs(ctx context.Context, ids uuid.UUIDs) ([]*domain.Profile, error)
 
 	// Profile Mojang UUID
 	FindProfileMojangUUIDsByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]uuid.UUID, error)

@@ -7,15 +7,19 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
+import TopPlayers from '@/components/top-players'
 import { getProfiles, getSeasons } from '@/lib/api-endpoints'
 import { pickSeason } from '@/lib/seasons'
 import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
-import { communityHref, DEFAULT_COMMUNITY_SORT } from './community-href'
+import {
+  communityHref,
+  communityProfileHref,
+  DEFAULT_COMMUNITY_SORT,
+} from './community-href'
 import CommunityFilters from './community-filters'
 import CommunityOnlineNow from './community-online-now'
 import CommunityStats from './community-stats'
-import CommunityTopPlayers from './community-top-players'
 import CommunityPlayerList from './community-player-list'
 import CommunitySearch from './community-search'
 import SelectCommunitySeason from './select-community-season'
@@ -173,7 +177,16 @@ export default async function CommunityPage({ params, searchParams }: Props) {
       {showSummary && onlineAvailable && (
         <CommunityOnlineNow locale={locale} season={season} />
       )}
-      {showSummary && <CommunityTopPlayers locale={locale} season={season} />}
+      {showSummary && (
+        <TopPlayers
+          locale={locale}
+          title={t('top.title')}
+          season={season}
+          href={(profile) =>
+            communityProfileHref(locale, profile.username, season)
+          }
+        />
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           {seasons.length > 1 && (

@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { getSeasons } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
+import { formatSeasonDuration } from '@/lib/seasons'
 import { Season } from '@/models/season'
 import { CalendarIcon, ClockIcon } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
@@ -46,6 +47,20 @@ export default async function SeasonsPage({ params }: Props) {
         {t('title')}
       </h1>
       {seasons.map((season) => {
+        const duration = formatSeasonDuration(season.startDate, season.endDate)
+        const durationLabel = duration
+          ? [
+              duration.months > 0
+                ? t('duration.months', { count: duration.months })
+                : null,
+              duration.days > 0 || duration.months === 0
+                ? t('duration.days', { count: duration.days })
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' ')
+          : undefined
+
         return (
           <div
             key={season.id}
@@ -86,12 +101,12 @@ export default async function SeasonsPage({ params }: Props) {
                       : `${toLocalDate(season.startDate)} — ${toLocalDate(season.endDate)}`}
                   </span>
                 </div>
-                {!season.isActive && (
+                {!season.isActive && durationLabel && (
                   <div className="flex items-center gap-1.5">
                     <div className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-md">
                       <ClockIcon className="size-3" />
                     </div>
-                    <span className="text-xs">{t(`${season.id}.length`)}</span>
+                    <span className="text-xs">{durationLabel}</span>
                   </div>
                 )}
               </div>
@@ -99,7 +114,7 @@ export default async function SeasonsPage({ params }: Props) {
                 {t(`${season.id}.description`)}
               </p>
             </div>
-            <Button variant="link" className="hidden h-auto p-0" asChild>
+            <Button variant="link" className="h-auto p-0" asChild>
               <Link href={`/${locale}/seasons/${season.id}`}>
                 {t('readMore')}
               </Link>

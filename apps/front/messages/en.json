@@ -534,32 +534,37 @@
   "seasons": {
     "title": "Seasons",
     "123e4567-e89b-12d3-a456-426614174001": {
-      "length": "3 months 2 days",
       "description": "The first season was launched for the audience of keelfy."
     },
     "123e4567-e89b-12d3-a456-426614174002": {
-      "length": "2 months 23 days",
       "description": "The server began to acquire a periodic character, plans for development appeared."
     },
     "123e4567-e89b-12d3-a456-426614174003": {
-      "length": "3 months 10 days",
       "description": "A strong jump in technical execution - the appearance of the lobby and the farm world."
     },
     "864fc606-28aa-42a3-a845-02cb190b8ee9": {
-      "length": "2 months 15 days",
       "description": "A relatively short but eventful season. During this time, the website appeared along with a variety of profile customization options."
     },
     "123e4567-e89b-12d3-a456-426614174004": {
-      "length": "Active",
       "description": "The autumn season, which began with the release of the Wilderness Bound update. Yellow foliage, Halloween, and a group of friends - what could be better?"
     },
     "123e4567-e89b-12d3-a456-426614174010": {
-      "length": "Active",
       "description": "The first full-fledged season with mods. The server was built around Create with the Aeronautics addon."
     },
     "active": "Active",
     "since": "since",
-    "readMore": "Read more"
+    "readMore": "Read more",
+    "duration": {
+      "months": "{count, plural, one {# month} other {# months}}",
+      "days": "{count, plural, one {# day} other {# days}}"
+    },
+    "gameVersion": "Game version",
+    "worldDownload": "Download world",
+    "screenshots": {
+      "title": "Screenshots",
+      "empty": "No screenshots yet"
+    },
+    "topPlayers": "Top players of the season"
   },
   "footer": {
     "madeBy": {
@@ -779,7 +784,9 @@
           "orderItemsMoved": "{count} order item carried over",
           "basketItemsMoved": "{count} basket item carried over",
           "basketItemsDropped": "{count} duplicate basket item dropped",
-          "notificationsRepointed": "{count} old notification now points to the target profile"
+          "notificationsRepointed": "{count} old notification now points to the target profile",
+          "screenshotAuthorsMoved": "{count} season screenshot credit carried over",
+          "screenshotAuthorsDropped": "{count} season screenshot credit dropped, the target's own kept"
         },
         "mergedFromTitle": "Merged from",
         "mergedFromDescription": "Profiles whose data was moved into this one. They no longer exist."
@@ -815,6 +822,7 @@
       "freeRegistrationHint": "Players can register for this season without buying a season pass.",
       "shellAddressHint": "host:port of the shell service that serves this season. One shell serves one season, so the address cannot repeat. RCON access is configured in shell.",
       "planUrlHint": "Address of the Plan web interface of this season. Only admins see the link.",
+      "worldUrlHint": "Link to the world archive. Shown on the season page when set.",
       "openPlan": "Open Plan",
       "fields": {
         "name": "Name",
@@ -827,7 +835,9 @@
         "active": "Active",
         "primary": "Primary season",
         "preregistration": "Pre-registration",
-        "freeRegistration": "Free registration"
+        "freeRegistration": "Free registration",
+        "gameVersion": "Game version",
+        "worldUrl": "World link"
       },
       "columns": {
         "season": "Season",
@@ -841,7 +851,41 @@
         "active": "Active",
         "archive": "Archive"
       },
-      "since": "since {date}"
+      "since": "since {date}",
+      "screenshots": {
+        "manage": "Screenshots",
+        "dialogTitle": "Screenshots of “{name}”",
+        "dialogDescription": "Shown in the feed on the season page, in this order.",
+        "add": "Add screenshot",
+        "edit": "Edit screenshot",
+        "empty": "No screenshots yet",
+        "loadFailed": "Failed to load screenshots",
+        "saveFailed": "Failed to save screenshot",
+        "deleteFailed": "Failed to delete screenshot",
+        "created": "Screenshot added",
+        "updated": "Screenshot updated",
+        "deleted": "Screenshot deleted",
+        "deleteTitle": "Delete screenshot?",
+        "deleteDescription": "The screenshot will be removed from the season feed.",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "save": "Save",
+        "fields": {
+          "image": "Image",
+          "title": "Caption",
+          "position": "Position",
+          "authors": "Authors"
+        },
+        "authorsSearchPlaceholder": "Search a player by username",
+        "noAuthors": "No authors",
+        "noResults": "No matches",
+        "columns": {
+          "image": "Image",
+          "title": "Caption",
+          "authors": "Authors",
+          "actions": "Actions"
+        }
+      }
     },
     "cosmetics": {
       "loadFailed": "Failed to load cosmetics",

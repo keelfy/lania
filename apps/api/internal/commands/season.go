@@ -25,6 +25,8 @@ type SaveSeasonCommand struct {
 	IsPrimary        bool
 	Preregistration  bool
 	FreeRegistration bool
+	GameVersion      *string
+	WorldURL         *string
 }
 
 func (c *SaveSeasonCommand) Validate() error {
@@ -42,8 +44,23 @@ func (c *SaveSeasonCommand) Validate() error {
 			validation.By(validateAddress(c.PublicAddress)),
 		),
 		validation.Field(&c.ShellAddress, validation.By(validateShellAddress(c.ShellAddress))),
-		validation.Field(&c.PlanURL, validation.By(validatePlanURL(c.PlanURL))),
+		validation.Field(&c.PlanURL, validation.By(validateHTTPURL(c.PlanURL))),
+		validation.Field(&c.GameVersion, validation.By(validateRuneLength(c.GameVersion, 0, 64))),
+		validation.Field(&c.WorldURL, validation.By(validateHTTPURL(c.WorldURL))),
 	)
+}
+
+func validateRuneLength(value *string, min, max int) validation.RuleFunc {
+	return func(v any) error {
+		if value == nil {
+			return nil
+		}
+		length := len([]rune(*value))
+		if length < min || length > max {
+			return errors.New("invalid length")
+		}
+		return nil
+	}
 }
 
 func validateAddress(address *string) validation.RuleFunc {
@@ -76,16 +93,16 @@ func validateShellAddress(address *string) validation.RuleFunc {
 	}
 }
 
-// validatePlanURL requires an absolute http(s) URL, the form a browser link opens.
-func validatePlanURL(planURL *string) validation.RuleFunc {
+// validateHTTPURL requires an absolute http(s) URL, the form a browser link opens.
+func validateHTTPURL(httpURL *string) validation.RuleFunc {
 	return func(value any) error {
-		if planURL == nil {
+		if httpURL == nil {
 			return nil
 		}
-		if len(*planURL) > 2048 {
+		if len(*httpURL) > 2048 {
 			return errors.New("must be at most 2048 characters")
 		}
-		parsed, err := url.Parse(*planURL)
+		parsed, err := url.Parse(*httpURL)
 		if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Hostname() == "" {
 			return errors.New("must be an http or https URL")
 		}

@@ -201,6 +201,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 
 	r.Route("/seasons", func(r chi.Router) {
 		r.Get("/", api.seasonHandler.GetSeasons)
+		r.Get("/{seasonId}/screenshots", api.seasonHandler.GetSeasonScreenshots)
 	})
 
 	r.Route("/seasons/{seasonId}", func(r chi.Router) {
@@ -256,6 +257,12 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Post("/", api.seasonHandler.CreateSeason)
 			r.Put("/{seasonId}", api.seasonHandler.UpdateSeason)
 			r.Delete("/{seasonId}", api.seasonHandler.DeleteSeason)
+
+			r.Route("/{seasonId}/screenshots", func(r chi.Router) {
+				r.Post("/", api.seasonHandler.CreateSeasonScreenshot)
+				r.Put("/{screenshotId}", api.seasonHandler.UpdateSeasonScreenshot)
+				r.Delete("/{screenshotId}", api.seasonHandler.DeleteSeasonScreenshot)
+			})
 		})
 
 		r.Get("/profiles", api.adminProfileHandler.GetProfiles)

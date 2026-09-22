@@ -20,14 +20,10 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  getAdminProfiles,
-  mergeProfiles,
-  previewMergeProfiles,
-} from '@/lib/api-endpoints'
+import ProfilePicker from '@/components/profile-picker'
+import { mergeProfiles, previewMergeProfiles } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
-import { useDebouncedState } from '@/lib/use-debounced-state'
 import {
   AdminProfile,
   ProfileMergeCounts,
@@ -44,9 +40,6 @@ type Props = {
   profileUsername: string
   locale: string
 }
-
-// The longest Minecraft username.
-const MAX_SEARCH_LENGTH = 16
 
 // Only the fields with something to show, in reading order.
 const COUNT_KEYS = [
@@ -67,6 +60,8 @@ const COUNT_KEYS = [
   'basketItemsMoved',
   'basketItemsDropped',
   'notificationsRepointed',
+  'screenshotAuthorsMoved',
+  'screenshotAuthorsDropped',
 ] as const satisfies readonly (keyof ProfileMergeCounts)[]
 
 function MergeCounts({ counts }: { counts: ProfileMergeCounts }) {
@@ -114,10 +109,6 @@ export default function MergeCard({
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
 
-  const [query, setQuery] = React.useState('')
-  const debouncedQuery = useDebouncedState(query.trim(), 300)
-  const [results, setResults] = React.useState<AdminProfile[]>([])
-
   const [target, setTarget] = React.useState<AdminProfile | undefined>()
   const [summary, setSummary] = React.useState<
     ProfileMergeSummary | undefined
@@ -128,40 +119,14 @@ export default function MergeCard({
   const [isMergePending, startMergeTransition] = React.useTransition()
 
   const reset = () => {
-    setQuery('')
-    setResults([])
     setTarget(undefined)
     setSummary(undefined)
     setPreviewFailed(false)
     setConfirmText('')
   }
 
-  // Stale results are hidden through this, not cleared through setState in the effect below,
-  // so the effect never calls setState synchronously on its early-return path.
-  const visibleResults = !debouncedQuery || target ? [] : results
-
-  React.useEffect(() => {
-    if (!debouncedQuery || target) return
-
-    let cancelled = false
-    getAdminProfiles(clientApiFetcher, 0, debouncedQuery, 6)
-      .then((page) => {
-        if (!cancelled) {
-          setResults(page.content.filter((profile) => profile.id !== profileId))
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setResults([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [debouncedQuery, target, profileId])
-
   const selectTarget = (profile: AdminProfile) => {
     setTarget(profile)
-    setQuery('')
-    setResults([])
     setSummary(undefined)
     setPreviewFailed(false)
     setConfirmText('')
@@ -234,33 +199,12 @@ export default function MergeCard({
               {!target ? (
                 <div className="flex flex-col gap-2">
                   <Label>{t('targetLabel')}</Label>
-                  <Input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    maxLength={MAX_SEARCH_LENGTH}
+                  <ProfilePicker
+                    onSelect={selectTarget}
+                    excludeIds={[profileId]}
                     placeholder={t('searchPlaceholder')}
-                    aria-label={t('searchPlaceholder')}
+                    noResultsLabel={t('noResults')}
                   />
-                  {visibleResults.length > 0 && (
-                    <ul className="border-border divide-border divide-y rounded-md border">
-                      {visibleResults.map((profile) => (
-                        <li key={profile.id}>
-                          <button
-                            type="button"
-                            className="hover:bg-accent w-full px-3 py-2 text-left text-sm"
-                            onClick={() => selectTarget(profile)}
-                          >
-                            {profile.username}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {debouncedQuery && visibleResults.length === 0 && (
-                    <p className="text-muted-foreground text-sm">
-                      {t('noResults')}
-                    </p>
-                  )}
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">

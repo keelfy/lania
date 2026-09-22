@@ -44,6 +44,8 @@ type ProfileMergeCounts struct {
 	BasketItemsMoved         int64 `json:"basketItemsMoved"`
 	BasketItemsDropped       int64 `json:"basketItemsDropped"`
 	NotificationsRepointed   int64 `json:"notificationsRepointed"`
+	ScreenshotAuthorsMoved   int64 `json:"screenshotAuthorsMoved"`
+	ScreenshotAuthorsDropped int64 `json:"screenshotAuthorsDropped"`
 }
 
 // ProfileMergeSummary is what a merge did, or would do in a preview.

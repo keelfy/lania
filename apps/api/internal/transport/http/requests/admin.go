@@ -42,6 +42,15 @@ type SaveSeason struct {
 	IsPrimary        bool    `json:"isPrimary"`
 	Preregistration  bool    `json:"preregistration"`
 	FreeRegistration bool    `json:"freeRegistration"`
+	GameVersion      *string `json:"gameVersion"`
+	WorldURL         *string `json:"worldUrl"`
+}
+
+type SaveSeasonScreenshot struct {
+	Image            string      `json:"image"`
+	Title            *string     `json:"title"`
+	Position         int         `json:"position"`
+	AuthorProfileIDs []uuid.UUID `json:"authorProfileIds"`
 }
 
 type SaveNameColor struct {

@@ -196,6 +196,19 @@ const moveBasketItems = `
 UPDATE basket_items SET profile_id = ? WHERE profile_id = ?
 `
 
+// season_screenshot_authors is unique on (screenshot_id, profile_id): a screenshot already crediting the
+// target keeps that credit, the source's clashing credit is dropped, everything else moves.
+const dropDuplicateScreenshotAuthors = `
+DELETE FROM season_screenshot_authors
+WHERE profile_id = ? AND screenshot_id IN (
+	SELECT screenshot_id FROM (SELECT screenshot_id FROM season_screenshot_authors WHERE profile_id = ?) existing
+)
+`
+
+const moveScreenshotAuthors = `
+UPDATE season_screenshot_authors SET profile_id = ? WHERE profile_id = ?
+`
+
 // notifications keep the profile id inside their JSON payload, not as a column, so an old bell menu link
 // still resolves after the merge.
 const repointNotificationProfileID = `
@@ -283,6 +296,13 @@ func (q *queries) MergeProfileData(ctx context.Context, sourceProfileID, sourceM
 	}
 
 	if counts.NotificationsRepointed, err = execAffected(ctx, x, repointNotificationProfileID, targetProfileID.String(), sourceProfileID.String()); err != nil {
+		return nil, err
+	}
+
+	if counts.ScreenshotAuthorsDropped, err = execAffected(ctx, x, dropDuplicateScreenshotAuthors, sourceProfileID, targetProfileID); err != nil {
+		return nil, err
+	}
+	if counts.ScreenshotAuthorsMoved, err = execAffected(ctx, x, moveScreenshotAuthors, targetProfileID, sourceProfileID); err != nil {
 		return nil, err
 	}
 

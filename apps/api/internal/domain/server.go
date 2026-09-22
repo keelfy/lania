@@ -24,6 +24,10 @@ type Season struct {
 	IsPrimary        bool
 	Preregistration  bool
 	FreeRegistration bool
+	// GameVersion is the client version needed to join, e.g. "1.21.1".
+	GameVersion *string
+	// WorldURL is an absolute http(s) link to the world archive of a finished season.
+	WorldURL *string
 	// relations
 	Profiles          []*Profile
 	ProfileAccesses   []*ProfileAccess

@@ -14,9 +14,11 @@ type Season struct {
 	IsActive      bool    `json:"isActive"`
 	IsPrimary     bool    `json:"isPrimary"`
 	// OnlineAvailable tells whether the API knows who is online in the season: it is active and has a server.
-	OnlineAvailable  bool `json:"onlineAvailable"`
-	Preregistration  bool `json:"preregistration"`
-	FreeRegistration bool `json:"freeRegistration"`
+	OnlineAvailable  bool    `json:"onlineAvailable"`
+	Preregistration  bool    `json:"preregistration"`
+	FreeRegistration bool    `json:"freeRegistration"`
+	GameVersion      *string `json:"gameVersion,omitempty"`
+	WorldURL         *string `json:"worldUrl,omitempty"`
 }
 
 type AdminSeason struct {

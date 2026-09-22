@@ -29,6 +29,12 @@ type SeasonService interface {
 	UpdateSeason(ctx context.Context, cmd *commands.SaveSeasonCommand) (*domain.Season, error)
 	DeleteSeason(ctx context.Context, seasonID uuid.UUID) error
 	InitializePrimarySeason(ctx context.Context) error
+
+	// GetSeasonScreenshots returns the feed of the season, checking first that the season exists.
+	GetSeasonScreenshots(ctx context.Context, seasonID uuid.UUID) ([]*domain.SeasonScreenshot, error)
+	CreateSeasonScreenshot(ctx context.Context, cmd *commands.SaveSeasonScreenshotCommand) (*domain.SeasonScreenshot, error)
+	UpdateSeasonScreenshot(ctx context.Context, cmd *commands.SaveSeasonScreenshotCommand) (*domain.SeasonScreenshot, error)
+	DeleteSeasonScreenshot(ctx context.Context, seasonID, screenshotID uuid.UUID) error
 }
 
 // The cache is dropped whenever the primary season changes, the TTL only covers a missed drop.
@@ -108,6 +114,7 @@ func insertSeasonParams(id uuid.UUID, cmd *commands.SaveSeasonCommand) sql.Inser
 		PlanURL:       cmd.PlanURL,
 		IsActive:      cmd.IsActive, Preregistration: cmd.Preregistration,
 		FreeRegistration: cmd.FreeRegistration,
+		GameVersion:      cmd.GameVersion, WorldURL: cmd.WorldURL,
 	}
 }
 
@@ -120,6 +127,7 @@ func updateSeasonParams(cmd *commands.SaveSeasonCommand) sql.UpdateSeasonParams 
 		PlanURL:         cmd.PlanURL,
 		IsActive:        cmd.IsActive,
 		Preregistration: cmd.Preregistration, FreeRegistration: cmd.FreeRegistration,
+		GameVersion: cmd.GameVersion, WorldURL: cmd.WorldURL,
 	}
 }
 
@@ -288,6 +296,95 @@ func (s *seasonService) seedShellAddress(ctx context.Context, season *domain.Sea
 	}
 	if err := s.storage.Queries().SetSeasonShellAddress(ctx, season.ID, address); err != nil {
 		return utils.NewInternalServerError("failed to seed season shell address", err)
+	}
+	return nil
+}
+
+func (s *seasonService) GetSeasonScreenshots(ctx context.Context, seasonID uuid.UUID) ([]*domain.SeasonScreenshot, error) {
+	if _, err := s.GetSeasonByID(ctx, seasonID); err != nil {
+		return nil, err
+	}
+	screenshots, err := s.storage.Queries().FindSeasonScreenshots(ctx, seasonID)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get season screenshots", err)
+	}
+	return screenshots, nil
+}
+
+// checkAuthorProfilesExist fails with a 400 naming nothing further: an admin cannot credit a profile id that
+// does not exist, that is a mistake in the request, not a silently dropped credit.
+func (s *seasonService) checkAuthorProfilesExist(ctx context.Context, profileIDs uuid.UUIDs) error {
+	if len(profileIDs) == 0 {
+		return nil
+	}
+	found, err := s.storage.Queries().FindProfilesByIDs(ctx, profileIDs)
+	if err != nil {
+		return utils.NewInternalServerError("failed to verify screenshot authors", err)
+	}
+	if len(found) != len(profileIDs) {
+		return utils.NewBadRequestError("one or more author profiles do not exist", nil)
+	}
+	return nil
+}
+
+func (s *seasonService) CreateSeasonScreenshot(ctx context.Context, cmd *commands.SaveSeasonScreenshotCommand) (*domain.SeasonScreenshot, error) {
+	if _, err := s.GetSeasonByID(ctx, cmd.SeasonID); err != nil {
+		return nil, err
+	}
+	if err := s.checkAuthorProfilesExist(ctx, cmd.AuthorProfileIDs); err != nil {
+		return nil, err
+	}
+
+	id := uuid.New()
+	err := s.storage.BeginTx(ctx, func(queries sql.Queries) error {
+		if err := queries.CreateSeasonScreenshot(ctx, sql.SaveSeasonScreenshotParams{
+			ID: id, SeasonID: cmd.SeasonID, Image: cmd.Image, Title: cmd.Title, Position: cmd.Position,
+		}); err != nil {
+			return err
+		}
+		return queries.SetSeasonScreenshotAuthors(ctx, id, cmd.AuthorProfileIDs)
+	})
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to create season screenshot", err)
+	}
+	return s.storage.Queries().FindSeasonScreenshotByID(ctx, id, cmd.SeasonID)
+}
+
+func (s *seasonService) UpdateSeasonScreenshot(ctx context.Context, cmd *commands.SaveSeasonScreenshotCommand) (*domain.SeasonScreenshot, error) {
+	if _, err := s.GetSeasonByID(ctx, cmd.SeasonID); err != nil {
+		return nil, err
+	}
+	if err := s.checkAuthorProfilesExist(ctx, cmd.AuthorProfileIDs); err != nil {
+		return nil, err
+	}
+
+	var found bool
+	err := s.storage.BeginTx(ctx, func(queries sql.Queries) error {
+		var err error
+		found, err = queries.UpdateSeasonScreenshot(ctx, sql.SaveSeasonScreenshotParams{
+			ID: cmd.ID, SeasonID: cmd.SeasonID, Image: cmd.Image, Title: cmd.Title, Position: cmd.Position,
+		})
+		if err != nil || !found {
+			return err
+		}
+		return queries.SetSeasonScreenshotAuthors(ctx, cmd.ID, cmd.AuthorProfileIDs)
+	})
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to update season screenshot", err)
+	}
+	if !found {
+		return nil, utils.NewNotFoundError("screenshot not found", nil)
+	}
+	return s.storage.Queries().FindSeasonScreenshotByID(ctx, cmd.ID, cmd.SeasonID)
+}
+
+func (s *seasonService) DeleteSeasonScreenshot(ctx context.Context, seasonID, screenshotID uuid.UUID) error {
+	deleted, err := s.storage.Queries().DeleteSeasonScreenshot(ctx, screenshotID, seasonID)
+	if err != nil {
+		return utils.NewInternalServerError("failed to delete season screenshot", err)
+	}
+	if !deleted {
+		return utils.NewNotFoundError("screenshot not found", nil)
 	}
 	return nil
 }

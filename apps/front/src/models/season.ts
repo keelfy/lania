@@ -13,6 +13,10 @@ export type Season = {
   onlineAvailable: boolean
   preregistration: boolean
   freeRegistration: boolean
+  // The client version needed to join, e.g. "1.21.1".
+  gameVersion?: string
+  // An absolute link to the world archive of a finished season.
+  worldUrl?: string
 }
 
 export type AdminSeason = Season & {
@@ -34,4 +38,27 @@ export type SaveSeason = {
   isPrimary: boolean
   preregistration: boolean
   freeRegistration: boolean
+  gameVersion?: string
+  worldUrl?: string
+}
+
+export type ScreenshotAuthor = {
+  id: string
+  username: string
+}
+
+export type SeasonScreenshot = {
+  id: string
+  // s3://bucket/key, the same form as Season.previewImage.
+  image: string
+  title?: string
+  position: number
+  authors: ScreenshotAuthor[]
+}
+
+export type SaveSeasonScreenshot = {
+  image: string
+  title?: string
+  position: number
+  authorProfileIds: string[]
 }

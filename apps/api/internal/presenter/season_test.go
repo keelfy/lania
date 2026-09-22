@@ -52,3 +52,47 @@ func TestPresentAdminSeason_ShowsShellAddress(t *testing.T) {
 		t.Fatalf("PlanURL = %v, want %q", season.PlanURL, planURL)
 	}
 }
+
+func TestPresentSeasons_GameVersionAndWorldURL(t *testing.T) {
+	t.Parallel()
+
+	version := "1.21.1"
+	worldURL := "https://cdn.example.com/lania-v.zip"
+	res := PresentSeasons([]*domain.Season{
+		{ID: uuid.New(), Name: "Lania V", StartDate: time.Now(), GameVersion: &version, WorldURL: &worldURL},
+	})
+
+	if res[0].GameVersion == nil || *res[0].GameVersion != version {
+		t.Errorf("GameVersion = %v, want %q", res[0].GameVersion, version)
+	}
+	if res[0].WorldURL == nil || *res[0].WorldURL != worldURL {
+		t.Errorf("WorldURL = %v, want %q", res[0].WorldURL, worldURL)
+	}
+}
+
+func TestPresentSeasonScreenshots(t *testing.T) {
+	t.Parallel()
+
+	title := "Spawn build"
+	authorID := uuid.New()
+	res := PresentSeasonScreenshots([]*domain.SeasonScreenshot{
+		{
+			ID: uuid.New(), Image: "s3://bucket/screenshot.jpg", Title: &title,
+			Authors: []*domain.Profile{{ID: authorID, MinecraftUsername: "keelfy"}},
+		},
+		{ID: uuid.New(), Image: "s3://bucket/no-credit.jpg", Authors: nil},
+	})
+
+	if len(res) != 2 {
+		t.Fatalf("got %d screenshots, want 2", len(res))
+	}
+	if res[0].Title == nil || *res[0].Title != title {
+		t.Errorf("Title = %v, want %q", res[0].Title, title)
+	}
+	if len(res[0].Authors) != 1 || res[0].Authors[0].ID != authorID || res[0].Authors[0].Username != "keelfy" {
+		t.Errorf("Authors = %+v", res[0].Authors)
+	}
+	if len(res[1].Authors) != 0 {
+		t.Errorf("uncredited screenshot Authors = %+v, want empty", res[1].Authors)
+	}
+}

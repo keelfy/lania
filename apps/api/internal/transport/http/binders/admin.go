@@ -29,6 +29,7 @@ func BindEmailSearch(r *http.Request) string {
 }
 
 var SeasonIDVariable = "seasonId"
+var ScreenshotIDVariable = "screenshotId"
 
 var CosmeticIDVariable = "cosmeticId"
 var ProductIDVariable = "productId"
@@ -80,6 +81,8 @@ func BindSaveSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 		IsPrimary:        req.IsPrimary,
 		Preregistration:  req.Preregistration,
 		FreeRegistration: req.FreeRegistration,
+		GameVersion:      optionalTrimmed(req.GameVersion),
+		WorldURL:         optionalTrimmed(req.WorldURL),
 	}, nil
 }
 
@@ -90,6 +93,49 @@ func BindUpdateSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 	}
 	cmd.ID, err = BindPathVariableAsUUID(r, SeasonIDVariable)
 	return cmd, err
+}
+
+func BindSaveSeasonScreenshot(r *http.Request) (*commands.SaveSeasonScreenshotCommand, error) {
+	req := &requests.SaveSeasonScreenshot{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+
+	seasonID, err := BindPathVariableAsUUID(r, SeasonIDVariable)
+	if err != nil {
+		return nil, err
+	}
+
+	return &commands.SaveSeasonScreenshotCommand{
+		SeasonID:         seasonID,
+		Image:            strings.TrimSpace(req.Image),
+		Title:            optionalTrimmed(req.Title),
+		Position:         req.Position,
+		AuthorProfileIDs: dedupeUUIDs(req.AuthorProfileIDs),
+	}, nil
+}
+
+func BindUpdateSeasonScreenshot(r *http.Request) (*commands.SaveSeasonScreenshotCommand, error) {
+	cmd, err := BindSaveSeasonScreenshot(r)
+	if err != nil {
+		return nil, err
+	}
+	cmd.ID, err = BindPathVariableAsUUID(r, ScreenshotIDVariable)
+	return cmd, err
+}
+
+// dedupeUUIDs keeps the first occurrence of each id, in order.
+func dedupeUUIDs(ids []uuid.UUID) uuid.UUIDs {
+	seen := make(map[uuid.UUID]bool, len(ids))
+	result := make(uuid.UUIDs, 0, len(ids))
+	for _, id := range ids {
+		if seen[id] {
+			continue
+		}
+		seen[id] = true
+		result = append(result, id)
+	}
+	return result
 }
 
 func BindSaveNameColor(r *http.Request) (*commands.SaveNameColorCommand, error) {

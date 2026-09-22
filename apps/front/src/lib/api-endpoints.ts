@@ -24,7 +24,13 @@ import {
   PurchasedProduct,
 } from '@/models/order'
 import { Product, ProductMetadata } from '@/models/product'
-import { AdminSeason, SaveSeason, Season } from '@/models/season'
+import {
+  AdminSeason,
+  SaveSeason,
+  SaveSeasonScreenshot,
+  Season,
+  SeasonScreenshot,
+} from '@/models/season'
 import {
   Profile,
   PublicProfile,
@@ -533,6 +539,50 @@ export function deleteSeason(fetcher: ApiFetcher, id: string): Promise<void> {
   return fetcher<void>(`/v1/admin/seasons/${id}`, undefined, {
     method: 'DELETE',
   })
+}
+
+export function getSeasonScreenshots(
+  fetcher: ApiFetcher,
+  seasonId: string,
+): Promise<SeasonScreenshot[]> {
+  return fetcher<SeasonScreenshot[]>(`/v1/seasons/${seasonId}/screenshots`)
+}
+
+export function createSeasonScreenshot(
+  fetcher: ApiFetcher,
+  seasonId: string,
+  screenshot: SaveSeasonScreenshot,
+): Promise<SeasonScreenshot> {
+  return fetcher<SeasonScreenshot>(
+    `/v1/admin/seasons/${seasonId}/screenshots`,
+    undefined,
+    { method: 'POST', body: JSON.stringify(screenshot) },
+  )
+}
+
+export function updateSeasonScreenshot(
+  fetcher: ApiFetcher,
+  seasonId: string,
+  screenshotId: string,
+  screenshot: SaveSeasonScreenshot,
+): Promise<SeasonScreenshot> {
+  return fetcher<SeasonScreenshot>(
+    `/v1/admin/seasons/${seasonId}/screenshots/${screenshotId}`,
+    undefined,
+    { method: 'PUT', body: JSON.stringify(screenshot) },
+  )
+}
+
+export function deleteSeasonScreenshot(
+  fetcher: ApiFetcher,
+  seasonId: string,
+  screenshotId: string,
+): Promise<void> {
+  return fetcher<void>(
+    `/v1/admin/seasons/${seasonId}/screenshots/${screenshotId}`,
+    undefined,
+    { method: 'DELETE' },
+  )
 }
 
 export function getAdminGrants(
