@@ -83,6 +83,7 @@
   "worlds": {
     "title": "Worlds",
     "copyAddress": "Copy server address",
+    "otherServers": "Other servers",
     "metadata": {
       "title": "Worlds - Lania Network",
       "description": "Worlds for the Lania Network."

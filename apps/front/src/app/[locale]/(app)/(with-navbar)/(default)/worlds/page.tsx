@@ -82,24 +82,45 @@ export default async function WorldPage({ params }: Props) {
       })),
   )
 
+  const mapsFor = (server: Season) =>
+    (mapsPerServer[server.id] as ServerMapInfo[] | undefined) ?? []
+
+  // The flagship season gets the hero treatment; everything else is
+  // secondary and shown as compact status rows below it.
+  const primary = statuses.find(({ server }) => server.isPrimary) ?? statuses[0]
+  const rest = statuses.filter((entry) => entry !== primary)
+
   return (
     <div className="flex flex-col gap-10">
-      <h1 className="text-3xl font-extrabold antialiased">{t('title')}</h1>
-      {statuses.map(({ server, status }) => {
-        const seasonMaps =
-          (mapsPerServer[server.id] as ServerMapInfo[] | undefined) ?? []
-        return (
-          <div key={server.id} className="flex flex-col gap-4">
-            <h2 className="text-2xl font-bold tracking-tight">{server.name}</h2>
-            <ServerStatusWithMaps
-              locale={locale}
-              server={server}
-              maps={seasonMaps}
-              status={status}
-            />
+      <h1 className="text-2xl font-semibold">{t('title')}</h1>
+      {primary && (
+        <section className="border-border/60 flex flex-col gap-4 rounded-lg border p-4 sm:p-6">
+          <ServerStatusWithMaps
+            variant="primary"
+            locale={locale}
+            server={primary.server}
+            maps={mapsFor(primary.server)}
+            status={primary.status}
+          />
+        </section>
+      )}
+      {rest.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">{t('otherServers')}</h2>
+          <div className="flex flex-col gap-3">
+            {rest.map(({ server, status }) => (
+              <ServerStatusWithMaps
+                key={server.id}
+                variant="secondary"
+                locale={locale}
+                server={server}
+                maps={mapsFor(server)}
+                status={status}
+              />
+            ))}
           </div>
-        )
-      })}
+        </section>
+      )}
     </div>
   )
 }
