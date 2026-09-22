@@ -50,7 +50,7 @@ export default async function ServerCard({
     <ClickToCopy copyText={address} copyLabel={t('copyAddress')}>
       <CardHeader className="flex flex-row items-start gap-4">
         {isPrimary && (
-          <DeerIcon className="hidden size-10 shrink-0 rounded-sm bg-black/20 p-1 sm:inline-block" />
+          <DeerIcon className="hidden size-14 shrink-0 rounded-sm bg-black/20 p-1.5 sm:inline-block" />
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <CardTitle
@@ -77,6 +77,7 @@ export default async function ServerCard({
           <Badge
             variant="outline"
             className={cn(
+              'px-2.5 py-1 text-sm font-semibold',
               online && 'border-teal-500/30 bg-teal-500/10 text-teal-300',
             )}
           >
