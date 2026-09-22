@@ -61,11 +61,8 @@ export default async function SeasonsPage({ params }: Props) {
                   className="object-cover transition-transform duration-300 hover:scale-105"
                 />
                 {season.isActive && (
-                  <Badge
-                    variant="outline"
-                    className="absolute top-2 right-2 border-teal-500/30 bg-teal-500/10 text-teal-300 backdrop-blur-sm"
-                  >
-                    <span className="size-1.5 rounded-full bg-teal-400" />
+                  <Badge className="absolute top-2 right-2 border-transparent bg-teal-500 text-white">
+                    <span className="size-1.5 rounded-full bg-white" />
                     {t('active')}
                   </Badge>
                 )}
