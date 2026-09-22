@@ -61,7 +61,7 @@ const navItems: NavbarItem[] = [
     labelKey: 'products',
     href: '/products',
     icon: ShoppingBagIcon,
-    disabled: true,
+    disabled: false,
   },
   {
     labelKey: 'community',
