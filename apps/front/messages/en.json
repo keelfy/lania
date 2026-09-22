@@ -737,7 +737,7 @@
       },
       "merge": {
         "title": "Merge profiles",
-        "description": "Move another profile's data into this one, for a player who changed nickname. The other profile is deleted once the merge runs.",
+        "description": "Move this profile's data into another one, for a player who changed nickname. This profile is deleted once the merge runs.",
         "open": "Merge into another profile",
         "dialogTitle": "Merge {username}",
         "dialogDescription": "Pick the profile that should receive {username}'s data. {username} is deleted once the merge runs.",
