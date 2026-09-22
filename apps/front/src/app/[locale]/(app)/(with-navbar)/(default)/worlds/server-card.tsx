@@ -20,6 +20,7 @@ import type { RawMotdDescription } from '@/lib/motd'
 import ClickToCopy from './components/click-to-copy'
 import CopyStateIcon from './components/copy-state-icon'
 import Motd from './components/motd'
+import StopPropagation from './components/stop-propagation'
 
 type Props = {
   locale: string
@@ -93,16 +94,18 @@ export default async function ServerCard({
       {maps.length > 0 && online && (
         <CardContent className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">{t('mapsTitle')}</h3>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {maps.map((map) => (
-              <ServerMap
-                key={map.id}
-                locale={locale}
-                map={map}
-                compact={!isPrimary}
-              />
-            ))}
-          </div>
+          <StopPropagation>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {maps.map((map) => (
+                <ServerMap
+                  key={map.id}
+                  locale={locale}
+                  map={map}
+                  compact={!isPrimary}
+                />
+              ))}
+            </div>
+          </StopPropagation>
         </CardContent>
       )}
     </ClickToCopy>

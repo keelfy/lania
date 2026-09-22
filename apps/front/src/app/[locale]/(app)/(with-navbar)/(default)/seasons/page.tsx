@@ -2,8 +2,9 @@ import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Button } from '@/components/ui/button'
 import { getSeasons } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
+import { cn } from '@/lib/utils'
 import { Season } from '@/models/season'
-import { ClockIcon } from 'lucide-react'
+import { CalendarIcon, ClockIcon } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import Image from 'next/image'
 import { Noto_Sans } from 'next/font/google'
@@ -45,7 +46,7 @@ export default async function SeasonsPage({ params }: Props) {
         return (
           <div
             key={season.id}
-            className="bg-card flex w-full max-w-sm flex-col items-start justify-between gap-2 justify-self-center rounded-md p-6 shadow-md"
+            className="bg-card flex w-full max-w-sm flex-col items-start justify-between gap-4 justify-self-center rounded-md border p-6 shadow-sm"
           >
             <div className="flex w-full flex-col gap-4">
               <AspectRatio
@@ -65,15 +66,29 @@ export default async function SeasonsPage({ params }: Props) {
               >
                 {season.name}
               </h2>
-              <div>
-                <h3 className="text-sm">
-                  {toLocalDate(season.startDate)}
-                  &nbsp;&mdash;&nbsp;
-                  {toLocalDate(season.endDate)}
-                </h3>
-                <div className="flex items-center gap-2 text-sm">
-                  <ClockIcon className="text-muted-foreground size-3" />
-                  <p>{t(`${season.id}.length`)}</p>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="bg-muted text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-md">
+                    <CalendarIcon className="size-3.5" />
+                  </div>
+                  <span className="text-sm">
+                    {toLocalDate(season.startDate)}
+                    &nbsp;&mdash;&nbsp;
+                    {toLocalDate(season.endDate)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={cn(
+                      'flex size-7 shrink-0 items-center justify-center rounded-md',
+                      season.isActive
+                        ? 'bg-teal-500/10 text-teal-400'
+                        : 'bg-muted text-muted-foreground',
+                    )}
+                  >
+                    <ClockIcon className="size-3.5" />
+                  </div>
+                  <span className="text-sm">{t(`${season.id}.length`)}</span>
                 </div>
               </div>
               <p className="text-muted-foreground text-sm">
