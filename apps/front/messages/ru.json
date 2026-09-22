@@ -81,6 +81,8 @@
     }
   },
   "worlds": {
+    "title": "Миры",
+    "copyAddress": "Скопировать адрес сервера",
     "metadata": {
       "title": "Миры - Lania Network",
       "description": "Миры сервера Lania."

@@ -1,12 +1,12 @@
 import { getMetadataLocale } from '@/i18n/metadata-locale'
 import pinger from 'minecraft-pinger'
 import { Metadata } from 'next'
+import { unstable_cache } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { ServerInfo, ServerMapInfo } from '@/models/server'
+import { ServerMapInfo } from '@/models/server'
 import ServerStatusWithMaps from './server-status'
-import { Noto_Sans } from 'next/font/google'
 import { getSeasons } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
 import { Season } from '@/models/season'
@@ -16,10 +16,6 @@ type Props = {
     locale: string
   }>
 }
-
-const notoSans = Noto_Sans({
-  subsets: ['latin'],
-})
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = await getMetadataLocale(params)
@@ -37,6 +33,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
   }
 }
+
+const pingServer = unstable_cache(
+  async (publicAddress: string): Promise<pinger.Data | undefined> => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    try {
+      return await Promise.race([
+        pinger.pingPromise(publicAddress, 25565),
+        new Promise<undefined>((_, reject) => {
+          timeoutId = setTimeout(reject, 1000)
+        }),
+      ])
+    } catch (error) {
+      console.error(error)
+      return undefined
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  },
+  ['worlds-server-ping'],
+  { revalidate: 15 },
+)
 
 export default async function WorldPage({ params }: Props) {
   const { locale } = await params
@@ -56,39 +73,33 @@ export default async function WorldPage({ params }: Props) {
       return {}
     })
 
-  const statuses: { server: Season; status: pinger.Data | undefined }[] = []
-
-  for (const server of seasons) {
-    const { publicAddress } = server
-
-    if (publicAddress) {
-      let status: pinger.Data | undefined = undefined
-      try {
-        status = await Promise.race([
-          pinger.pingPromise(publicAddress, 25565),
-          new Promise<undefined>((_, reject) => setTimeout(reject, 1000)),
-        ])
-      } catch (error) {
-        console.error(error)
-      }
-      statuses.push({ server, status })
-    }
-  }
+  const statuses = await Promise.all(
+    seasons
+      .filter((server) => !!server.publicAddress)
+      .map(async (server) => ({
+        server,
+        status: await pingServer(server.publicAddress!),
+      })),
+  )
 
   return (
     <div className="flex flex-col gap-10">
+      <h1 className="text-3xl font-extrabold antialiased">{t('title')}</h1>
       {statuses.map(({ server, status }) => {
-        const seasonMaps = mapsPerServer[server.id] as ServerMapInfo[];
+        const seasonMaps =
+          (mapsPerServer[server.id] as ServerMapInfo[] | undefined) ?? []
         return (
-        <div key={server.id} className="flex flex-col gap-4">
-          <h1 className={`text-3xl font-extrabold ${notoSans.className} antialiased`}>
-            {server.name}
-          </h1>
-          <ServerStatusWithMaps
-            params={Promise.resolve({ locale, server, maps: seasonMaps, status })}
-          />
-        </div>
-      )})}
+          <div key={server.id} className="flex flex-col gap-4">
+            <h2 className="text-2xl font-bold tracking-tight">{server.name}</h2>
+            <ServerStatusWithMaps
+              locale={locale}
+              server={server}
+              maps={seasonMaps}
+              status={status}
+            />
+          </div>
+        )
+      })}
     </div>
   )
 }

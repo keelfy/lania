@@ -1,21 +1,28 @@
-import DeerIcon from '@/components/icons/DeerIcon';
-import { ServerInfo, ServerMapInfo } from '@/models/server';
-import { HouseIcon, PickaxeIcon, Server, UsersIcon } from 'lucide-react';
-import pinger from 'minecraft-pinger';
-import { getTranslations } from 'next-intl/server';
-import MapButton from './map-button';
-import React from 'react';
-import Image from 'next/image';
-import SmallCopyIpButton from './components/small-copy-ip-button';
-import { Season } from '@/models/season';
+import DeerIcon from '@/components/icons/DeerIcon'
+import { cn } from '@/lib/utils'
+import { Season } from '@/models/season'
+import { ServerMapInfo } from '@/models/server'
+import {
+  CheckIcon,
+  CopyIcon,
+  HouseIcon,
+  PickaxeIcon,
+  UsersIcon,
+} from 'lucide-react'
+import pinger from 'minecraft-pinger'
+import { getTranslations } from 'next-intl/server'
+import Image from 'next/image'
+import Link from 'next/link'
+import React from 'react'
+import type { RawMotdDescription } from '@/lib/motd'
+import CopyableServerCard from './components/copyable-server-card'
+import Motd from './components/motd'
 
 type Props = {
-  params: Promise<{
-    locale: string
-    server: Season
-    maps: ServerMapInfo[]
-    status: pinger.Data | undefined
-  }>
+  locale: string
+  server: Season
+  maps: ServerMapInfo[]
+  status: pinger.Data | undefined
 }
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -23,63 +30,75 @@ const ICON_MAP: Record<string, React.ElementType> = {
   pickaxe: PickaxeIcon,
 }
 
-export default async function ServerStatusWithMaps({ params, }: Props) {
-  const { locale, server, maps, status } = await params
+export default async function ServerStatusWithMaps({
+  locale,
+  server,
+  maps,
+  status,
+}: Props) {
   const t = await getTranslations({ locale, namespace: 'worlds' })
-  
+  const address = server.publicAddress ?? ''
+
   return (
-    <div className="flex flex-col gap-2 h-min">
-      <div className="bg-card flex flex-col items-center justify-between gap-2 rounded-md px-4 py-3 shadow-md sm:flex-row">
-        <div className="flex items-center gap-4">
-          <DeerIcon className="hidden size-14 rounded-sm bg-black/20 p-1 sm:inline-block" />
-          <label className="text-sm sm:text-base">
-            {status?.description ? (
-              <>
-                <span key={status.description.text}>
-                    {status.description.text.includes('\n') && <br />}
-                    <span style={{ color: status.description as unknown as { color: string } }.color }>
-                      {status.description.text}
-                    </span>
-                  </span>
-                {(
-                  status.description?.extra as unknown as {
-                    text: string
-                    color: string
-                  }[]
-                )?.map((extra) => (
-                  <span key={extra.text}>
-                    {extra.text.includes('\n') && <br />}
-                    <span style={{ color: extra.color }}>{extra.text}</span>
-                  </span>
-                ))}
-              </>
-            ) : (
-              <span className="text-destructive">{t('status.error')}</span>
-            )}
-          </label>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex items-center gap-2">
-            <label className="text-md font-bold sm:text-lg">
-              {status?.players.online ?? <>&mdash;</>}&nbsp;/&nbsp;
-              {status?.players.max ?? <>&mdash;</>}
-            </label>
-            <UsersIcon className="text-muted-foreground size-5" />
-          </div>
-          <SmallCopyIpButton copyText={server.publicAddress ?? "127.0.0.1"} />
-        </div>
-      </div>
+    <div className="flex h-min flex-col gap-2">
+      <CopyableServerCard copyText={address} copyLabel={t('copyAddress')}>
+        {(copied) => (
+          <>
+            <div className="flex items-center gap-4">
+              <DeerIcon className="hidden size-14 rounded-sm bg-black/20 p-1 sm:inline-block" />
+              <span className="text-sm sm:text-base">
+                {status?.description ? (
+                  <Motd
+                    description={
+                      status.description as unknown as RawMotdDescription
+                    }
+                  />
+                ) : (
+                  <span className="text-destructive">{t('status.error')}</span>
+                )}
+              </span>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-md font-bold sm:text-lg">
+                  {status?.players.online ?? <>&mdash;</>}&nbsp;/&nbsp;
+                  {status?.players.max ?? <>&mdash;</>}
+                </span>
+                <UsersIcon className="text-muted-foreground size-5" />
+              </div>
+              <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-sm">
+                <span className="relative inline-block size-4">
+                  <CheckIcon
+                    className={cn(
+                      'absolute inset-0 transition-all duration-200',
+                      copied
+                        ? 'scale-100 text-teal-500 opacity-100'
+                        : 'scale-75 opacity-0',
+                    )}
+                  />
+                  <CopyIcon
+                    className={cn(
+                      'absolute inset-0 size-3.5 transition-all duration-200',
+                      copied
+                        ? 'scale-75 opacity-0'
+                        : 'scale-100 opacity-70 group-hover:opacity-100',
+                    )}
+                  />
+                </span>
+                {address}
+              </span>
+            </div>
+          </>
+        )}
+      </CopyableServerCard>
       {maps.length > 0 && !!status?.description && (
         <>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight sm:mt-2">
+          <h3 className="mt-1 text-2xl font-bold tracking-tight sm:mt-2">
             {t('mapsTitle')}
-          </h2>
+          </h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {maps.map((map) => (
-              <ServerMap
-                key={map.id}
-                params={Promise.resolve({ locale, server, map, status })}
-              />
+              <ServerMap key={map.id} locale={locale} map={map} />
             ))}
           </div>
         </>
@@ -89,49 +108,40 @@ export default async function ServerStatusWithMaps({ params, }: Props) {
 }
 
 type ServerMapProps = {
-  params: Promise<{
-    locale: string
-    server: Season
-    map: ServerMapInfo
-    status: pinger.Data | undefined
-  }>
+  locale: string
+  map: ServerMapInfo
 }
 
-async function ServerMap({ params }: ServerMapProps) {
-  const { locale, server, map, status } = await params
+async function ServerMap({ locale, map }: ServerMapProps) {
   const t = await getTranslations({ locale, namespace: 'worlds' })
 
   return (
-    <MapButton 
-      mapId={map.id}
-      className="bg-card group relative flex w-full flex-col items-start justify-between gap-4 justify-self-center overflow-hidden rounded-md p-6 text-start shadow-md"
+    <Link
+      href={`/worlds/${map.id}`}
+      className="bg-card group relative flex aspect-video w-full flex-col items-start justify-between gap-4 justify-self-center overflow-hidden rounded-md p-6 text-start shadow-md"
     >
-      <h2 className="z-10 flex w-fit items-center gap-2 rounded-xs bg-black/20 px-2 text-2xl font-bold">
+      <Image
+        src={map.image}
+        alt={t('elements.' + map.id + '.title')}
+        fill
+        sizes="(min-width: 768px) 50vw, 100vw"
+        quality={75}
+        className="object-cover transition-transform duration-300 group-hover:scale-105"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+      <h3 className="z-10 flex items-center gap-2 text-2xl font-bold">
         {React.createElement(ICON_MAP[map.icon] || HouseIcon, {
           className: 'size-5',
         })}
         <span>{t('elements.' + map.id + '.title')}</span>
-      </h2>
-      <p className="z-10 w-fit rounded-xs bg-black/20 px-2 py-1 text-sm">
-        {t('elements.' + map.id + '.description')}
-      </p>
+      </h3>
+      <p className="z-10 text-sm">{t('elements.' + map.id + '.description')}</p>
       <div className="z-10 flex items-center gap-2">
-        <p className="text-primary z-10 w-fit rounded-xs bg-black/20 px-2">
-          {t('openMap')}
-        </p>
-        <p className="translate-0 font-bold transition-transform duration-300 group-hover:translate-x-1">
+        <p className="text-primary">{t('openMap')}</p>
+        <p className="font-bold transition-transform duration-300 group-hover:translate-x-1">
           →
         </p>
       </div>
-      <Image
-        src={map.image}
-        alt={t('elements.' + map.id + '.title')}
-        width={400}
-        height={400}
-        quality={75}
-        className="absolute w-full inset-0 rounded-md top-1/2 -translate-y-1/2 transform transition-transform duration-300 group-hover:scale-105"
-      />
-      <div className="pointer-events-none absolute inset-0 bg-black opacity-30 transition-opacity duration-300 group-hover:opacity-0"></div>
-    </MapButton>
+    </Link>
   )
 }
