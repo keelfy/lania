@@ -584,7 +584,9 @@
     "nav": {
       "users": "Пользователи",
       "profiles": "Профили",
-      "seasons": "Сезоны"
+      "seasons": "Сезоны",
+      "cosmetics": "Косметика",
+      "products": "Товары"
     },
     "users": {
       "title": "Пользователи",

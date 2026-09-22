@@ -585,7 +585,9 @@
     "nav": {
       "users": "Users",
       "profiles": "Profiles",
-      "seasons": "Seasons"
+      "seasons": "Seasons",
+      "cosmetics": "Cosmetics",
+      "products": "Products"
     },
     "users": {
       "title": "Users",

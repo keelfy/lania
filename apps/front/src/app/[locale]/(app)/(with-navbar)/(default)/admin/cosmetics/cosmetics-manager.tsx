@@ -48,9 +48,11 @@ export default function CosmeticsManager({
   const [search, setSearch] = React.useState('')
   const [isPending, startTransition] = React.useTransition()
   const [noSpace, setNoSpace] = React.useState(false)
+  const [colors, setColors] = React.useState<string[]>([])
+  const [image, setImage] = React.useState('')
 
   const query = search.trim().toLocaleLowerCase()
-  const colors = catalog.nameColors.filter((item) =>
+  const colorOptions = catalog.nameColors.filter((item) =>
     item.name.toLocaleLowerCase().includes(query),
   )
   const prefixes = catalog.namePrefixes.filter((item) =>
@@ -108,11 +110,14 @@ export default function CosmeticsManager({
           <CatalogGroup
             title={t('colors')}
             icon={<PaletteIcon />}
-            items={colors}
-            onSelect={(item) => setSelection({ type: 'color', item })}
+            items={colorOptions}
+            onSelect={(item) => {
+              setSelection({ type: 'color', item })
+              setColors(item.colors)
+            }}
             onCreate={() => {
               setSelection({ type: 'color' })
-              setNoSpace(false)
+              setColors([])
             }}
             selected={
               selection.type === 'color' ? selection.item?.id : undefined
@@ -125,10 +130,12 @@ export default function CosmeticsManager({
             onSelect={(item) => {
               setSelection({ type: 'prefix', item })
               setNoSpace(item.noSpace)
+              setImage(item.image)
             }}
             onCreate={() => {
               setSelection({ type: 'prefix' })
               setNoSpace(false)
+              setImage('')
             }}
             selected={
               selection.type === 'prefix' ? selection.item?.id : undefined
@@ -170,20 +177,30 @@ export default function CosmeticsManager({
               />
             </Field>
             {selection.type === 'color' ? (
-              <ColorFields item={selection.item} t={t} />
+              <ColorFields
+                item={selection.item}
+                t={t}
+                onColorsChange={setColors}
+              />
             ) : (
               <PrefixFields
                 item={selection.item}
                 t={t}
                 noSpace={noSpace}
                 setNoSpace={setNoSpace}
+                onImageChange={setImage}
               />
             )}
             <Button disabled={isPending} className="w-fit">
               {t('save')}
             </Button>
           </FieldGroup>
-          <CosmeticPreview selection={selection} t={t} />
+          <CosmeticPreview
+            type={selection.type}
+            colors={colors}
+            image={image}
+            t={t}
+          />
         </form>
       </section>
     </div>
@@ -240,9 +257,11 @@ function CatalogGroup<T extends { id: string; name: string }>({
 function ColorFields({
   item,
   t,
+  onColorsChange,
 }: {
   item?: AdminNameColor
   t: ReturnType<typeof useTranslations>
+  onColorsChange: (colors: string[]) => void
 }) {
   return (
     <Field>
@@ -251,6 +270,14 @@ function ColorFields({
         id="cosmetic-colors"
         name="colors"
         defaultValue={item?.colors.join(', ')}
+        onChange={(event) =>
+          onColorsChange(
+            event.target.value
+              .split(',')
+              .map((value) => value.trim())
+              .filter(Boolean),
+          )
+        }
         placeholder="#22c55e, #16a34a"
       />
       <FieldDescription>{t('colorsHint')}</FieldDescription>
@@ -263,11 +290,13 @@ function PrefixFields({
   t,
   noSpace,
   setNoSpace,
+  onImageChange,
 }: {
   item?: AdminNamePrefix
   t: ReturnType<typeof useTranslations>
   noSpace: boolean
   setNoSpace: (value: boolean) => void
+  onImageChange: (image: string) => void
 }) {
   return (
     <>
@@ -288,6 +317,7 @@ function PrefixFields({
           type="url"
           required
           defaultValue={item?.image}
+          onChange={(event) => onImageChange(event.target.value.trim())}
         />
       </Field>
       <Field orientation="horizontal">
@@ -308,31 +338,25 @@ function PrefixFields({
 }
 
 function CosmeticPreview({
-  selection,
+  type,
+  colors,
+  image,
   t,
 }: {
-  selection: Selection
+  type: Selection['type']
+  colors: string[]
+  image: string
   t: ReturnType<typeof useTranslations>
 }) {
   return (
     <aside className="bg-muted/40 flex min-h-40 flex-col items-center justify-center gap-3 rounded-lg border p-5">
       <span className="text-muted-foreground text-xs">{t('preview')}</span>
-      {selection.type === 'color' ? (
-        <McUsername
-          username="Keelfy"
-          colors={selection.item?.colors}
-          className="text-2xl"
-        />
+      {type === 'color' ? (
+        <McUsername username="Keelfy" colors={colors} className="text-2xl" />
       ) : (
         <div className="flex items-center gap-2">
-          {selection.item?.image && (
-            <Image
-              src={selection.item.image}
-              alt=""
-              width={32}
-              height={32}
-              unoptimized
-            />
+          {image && (
+            <Image src={image} alt="" width={32} height={32} unoptimized />
           )}
           <McUsername username="Keelfy" className="text-2xl" />
         </div>
