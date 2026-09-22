@@ -33,6 +33,7 @@ export function useAuthFlow(type: AuthFlowType) {
     if (flowId && flowId === loadedId.current) return
     let cancelled = false
     const returnTo = process.env.NEXT_PUBLIC_DOMAIN + goto
+    setFailed(false)
 
     const load = async (): Promise<AuthFlow | undefined> => {
       if (flowId) {
@@ -58,11 +59,11 @@ export function useAuthFlow(type: AuthFlowType) {
           ? await error.response.json().catch(() => ({}))
           : undefined
         if (res?.error?.id === 'session_already_available') {
-          window.location.href = returnTo
+          if (!cancelled) window.location.href = returnTo
           return undefined
         }
         console.error('Failed to create login flow', error)
-        setFailed(true)
+        if (!cancelled) setFailed(true)
         return undefined
       }
     }

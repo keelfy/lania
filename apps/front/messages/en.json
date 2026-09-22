@@ -261,6 +261,7 @@
   },
   "auth": {
     "loadFailed": "Could not load the sign-in form. Reload the page.",
+    "backHome": "Back to home",
     "continueWith": "Continue with {provider}",
     "continue": "Continue",
     "signIn": "Sign in",

@@ -69,9 +69,14 @@ export default function AuthForm({ type, className }: Props) {
       </CardHeader>
       <CardContent>
         {failed ? (
-          <p className="text-destructive text-sm">{t('loadFailed')}</p>
+          <div className="flex flex-col gap-3">
+            <p className="text-destructive text-sm">{t('loadFailed')}</p>
+            <Button variant="secondary" className="w-full" asChild>
+              <Link href="/">{t('backHome')}</Link>
+            </Button>
+          </div>
         ) : flow ? (
-          <FlowForm flow={flow} />
+          <FlowForm flow={flow} type={type} />
         ) : (
           <div className="flex min-h-24 items-center justify-center">
             <LoadingSpinner />
@@ -113,7 +118,20 @@ function FlowMessages({
   )
 }
 
-function FlowForm({ flow }: { flow: AuthFlow }) {
+// Sign-in is SSO only, so only these node groups are ever rendered.
+// Password, identifier_first, code and link nodes are dropped even if Kratos sends them.
+const ALLOWED_GROUPS: Record<AuthFlowType, UiNodeGroupEnum[]> = {
+  login: [UiNodeGroupEnum.Default, UiNodeGroupEnum.Oidc],
+  registration: [
+    UiNodeGroupEnum.Default,
+    UiNodeGroupEnum.Oidc,
+    UiNodeGroupEnum.Profile,
+  ],
+}
+
+function FlowForm({ flow, type }: { flow: AuthFlow; type: AuthFlowType }) {
+  const allowed = ALLOWED_GROUPS[type]
+  const nodes = flow.ui.nodes.filter((node) => allowed.includes(node.group))
   return (
     <form
       noValidate
@@ -121,7 +139,7 @@ function FlowForm({ flow }: { flow: AuthFlow }) {
       method={flow.ui.method}
       className="flex flex-col gap-4"
     >
-      {flow.ui.nodes.map((node, index) => (
+      {nodes.map((node, index) => (
         <FlowNode key={`${node.group}-${index}`} node={node} />
       ))}
       <FlowMessages messages={flow.ui.messages} />
