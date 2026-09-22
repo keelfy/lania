@@ -53,7 +53,7 @@ export default async function ServerStatusWithMaps({
 
   if (variant === 'secondary') {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         <CopyableServerCard
           copyText={address}
           copyLabel={t('copyAddress')}
@@ -61,7 +61,7 @@ export default async function ServerStatusWithMaps({
         >
           <div className="flex items-center gap-3">
             <StatusDot online={online} />
-            <span className="font-minecraft tracking-mc text-lg">
+            <span className="font-minecraft tracking-mc translate-y-0.5 text-lg">
               {server.name}
             </span>
           </div>
@@ -77,10 +77,14 @@ export default async function ServerStatusWithMaps({
           </div>
         </CopyableServerCard>
         {maps.length > 0 && online && (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {maps.map((map) => (
-              <ServerMap key={map.id} locale={locale} map={map} compact />
-            ))}
+          // Indented and rail-connected to the row above, so it reads as
+          // "these maps belong to this server" rather than a new one.
+          <div className="border-border/60 ml-2 border-l pl-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {maps.map((map) => (
+                <ServerMap key={map.id} locale={locale} map={map} compact />
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -89,7 +93,7 @@ export default async function ServerStatusWithMaps({
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="font-minecraft tracking-mc text-3xl drop-shadow-[0_1.2px_1.2px_rgba(255,255,255,0.2)] sm:text-4xl">
+      <h2 className="font-minecraft tracking-mc translate-y-0.5 text-3xl drop-shadow-[0_1.2px_1.2px_rgba(255,255,255,0.2)] sm:text-4xl">
         {server.name}
       </h2>
       <CopyableServerCard copyText={address} copyLabel={t('copyAddress')}>

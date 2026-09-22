@@ -81,12 +81,12 @@
     }
   },
   "worlds": {
-    "title": "Worlds",
+    "title": "Servers",
     "copyAddress": "Copy server address",
     "otherServers": "Other servers",
     "metadata": {
-      "title": "Worlds - Lania Network",
-      "description": "Worlds for the Lania Network."
+      "title": "Servers - Lania Network",
+      "description": "Servers of the Lania Network."
     },
     "status": {
       "title": "Server status",
@@ -415,7 +415,7 @@
   "navbar": {
     "title": "Menu",
     "items": {
-      "worlds": "Worlds",
+      "worlds": "Servers",
       "wiki": "Wiki",
       "products": "Shop",
       "community": "Community",

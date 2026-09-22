@@ -107,7 +107,7 @@ export default async function WorldPage({ params }: Props) {
       {rest.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold">{t('otherServers')}</h2>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-5">
             {rest.map(({ server, status }) => (
               <ServerStatusWithMaps
                 key={server.id}

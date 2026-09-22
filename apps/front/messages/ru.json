@@ -81,12 +81,12 @@
     }
   },
   "worlds": {
-    "title": "Миры",
+    "title": "Серверы",
     "copyAddress": "Скопировать адрес сервера",
     "otherServers": "Другие серверы",
     "metadata": {
-      "title": "Миры - Lania Network",
-      "description": "Миры сервера Lania."
+      "title": "Серверы - Lania Network",
+      "description": "Серверы сети Lania."
     },
     "status": {
       "title": "Статус серверов",
@@ -414,7 +414,7 @@
   "navbar": {
     "title": "Меню",
     "items": {
-      "worlds": "Миры",
+      "worlds": "Серверы",
       "wiki": "Вики",
       "products": "Магазин",
       "community": "Сообщество",
