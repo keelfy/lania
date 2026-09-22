@@ -2,13 +2,7 @@ import DeerIcon from '@/components/icons/DeerIcon'
 import { cn } from '@/lib/utils'
 import { Season } from '@/models/season'
 import { ServerMapInfo } from '@/models/server'
-import {
-  CheckIcon,
-  CopyIcon,
-  HouseIcon,
-  PickaxeIcon,
-  UsersIcon,
-} from 'lucide-react'
+import { HouseIcon, PickaxeIcon, UsersIcon } from 'lucide-react'
 import pinger from 'minecraft-pinger'
 import { getTranslations } from 'next-intl/server'
 import Image from 'next/image'
@@ -16,6 +10,7 @@ import Link from 'next/link'
 import React from 'react'
 import type { RawMotdDescription } from '@/lib/motd'
 import CopyableServerCard from './components/copyable-server-card'
+import CopyStateIcon from './components/copy-state-icon'
 import Motd from './components/motd'
 
 type Props = {
@@ -45,28 +40,6 @@ function StatusDot({ online }: { online: boolean }) {
   )
 }
 
-// The copy/check icon pair shared by both the hero and compact cards.
-function CopyStateIcon({ copied }: { copied: boolean }) {
-  return (
-    <span className="relative inline-block size-4">
-      <CheckIcon
-        className={cn(
-          'absolute inset-0 transition-all duration-200',
-          copied ? 'scale-100 text-teal-500 opacity-100' : 'scale-75 opacity-0',
-        )}
-      />
-      <CopyIcon
-        className={cn(
-          'absolute inset-0 size-3.5 transition-all duration-200',
-          copied
-            ? 'scale-75 opacity-0'
-            : 'scale-100 opacity-70 group-hover:opacity-100',
-        )}
-      />
-    </span>
-  )
-}
-
 export default async function ServerStatusWithMaps({
   locale,
   server,
@@ -86,26 +59,22 @@ export default async function ServerStatusWithMaps({
           copyLabel={t('copyAddress')}
           className="px-4 py-2.5"
         >
-          {(copied) => (
-            <>
-              <div className="flex items-center gap-3">
-                <StatusDot online={online} />
-                <span className="font-minecraft tracking-mc text-lg">
-                  {server.name}
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-muted-foreground text-sm">
-                  {status?.players.online ?? <>&mdash;</>}&nbsp;/&nbsp;
-                  {status?.players.max ?? <>&mdash;</>}
-                </span>
-                <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
-                  <CopyStateIcon copied={copied} />
-                  {address}
-                </span>
-              </div>
-            </>
-          )}
+          <div className="flex items-center gap-3">
+            <StatusDot online={online} />
+            <span className="font-minecraft tracking-mc text-lg">
+              {server.name}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-muted-foreground text-sm">
+              {status?.players.online ?? <>&mdash;</>}&nbsp;/&nbsp;
+              {status?.players.max ?? <>&mdash;</>}
+            </span>
+            <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
+              <CopyStateIcon />
+              {address}
+            </span>
+          </div>
         </CopyableServerCard>
         {maps.length > 0 && online && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -124,38 +93,34 @@ export default async function ServerStatusWithMaps({
         {server.name}
       </h2>
       <CopyableServerCard copyText={address} copyLabel={t('copyAddress')}>
-        {(copied) => (
-          <>
-            <div className="flex items-center gap-4">
-              <DeerIcon className="hidden size-14 rounded-sm bg-black/20 p-1 sm:inline-block" />
-              <span className="text-sm sm:text-base">
-                {status?.description ? (
-                  <Motd
-                    description={
-                      status.description as unknown as RawMotdDescription
-                    }
-                  />
-                ) : (
-                  <span className="text-destructive">{t('status.error')}</span>
-                )}
-              </span>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center gap-2">
-                <StatusDot online={online} />
-                <span className="text-md font-bold sm:text-lg">
-                  {status?.players.online ?? <>&mdash;</>}&nbsp;/&nbsp;
-                  {status?.players.max ?? <>&mdash;</>}
-                </span>
-                <UsersIcon className="text-muted-foreground size-5" />
-              </div>
-              <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-sm">
-                <CopyStateIcon copied={copied} />
-                {address}
-              </span>
-            </div>
-          </>
-        )}
+        <div className="flex items-center gap-4">
+          <DeerIcon className="hidden size-14 rounded-sm bg-black/20 p-1 sm:inline-block" />
+          <span className="text-sm sm:text-base">
+            {status?.description ? (
+              <Motd
+                description={
+                  status.description as unknown as RawMotdDescription
+                }
+              />
+            ) : (
+              <span className="text-destructive">{t('status.error')}</span>
+            )}
+          </span>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-2">
+            <StatusDot online={online} />
+            <span className="text-md font-bold sm:text-lg">
+              {status?.players.online ?? <>&mdash;</>}&nbsp;/&nbsp;
+              {status?.players.max ?? <>&mdash;</>}
+            </span>
+            <UsersIcon className="text-muted-foreground size-5" />
+          </div>
+          <span className="text-muted-foreground flex items-center gap-1.5 font-mono text-sm">
+            <CopyStateIcon />
+            {address}
+          </span>
+        </div>
       </CopyableServerCard>
       {maps.length > 0 && online && (
         <>

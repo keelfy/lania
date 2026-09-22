@@ -3,11 +3,16 @@
 import { cn } from '@/lib/utils'
 import React from 'react'
 
+// Whether the address was just copied. Exposed via context (not a
+// render-prop) because a Server Component can pass plain React nodes
+// across the client boundary, but never a function.
+export const CopiedAddressContext = React.createContext(false)
+
 type Props = {
   copyText: string
   copyLabel: string
   className?: string
-  children: (copied: boolean) => React.ReactNode
+  children: React.ReactNode
 }
 
 // Wraps the whole server card so clicking anywhere on it (MOTD included)
@@ -53,7 +58,9 @@ export default function CopyableServerCard({
         className,
       )}
     >
-      {children(copied)}
+      <CopiedAddressContext.Provider value={copied}>
+        {children}
+      </CopiedAddressContext.Provider>
     </button>
   )
 }
