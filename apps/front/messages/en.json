@@ -437,7 +437,7 @@
       "noNotifications": "No notifications",
       "loading": "Loading...",
       "items": {
-        "openProfiles": "My profiles",
+        "install": "Apply ->",
         "cosmeticGranted": {
           "title": "New cosmetic",
           "body": "{item} for the profile {profile}"
@@ -517,6 +517,7 @@
     }
   },
   "seasons": {
+    "title": "Seasons",
     "123e4567-e89b-12d3-a456-426614174000": {
       "length": "3 months 2 days",
       "description": "The first season was launched for the audience of keelfy."

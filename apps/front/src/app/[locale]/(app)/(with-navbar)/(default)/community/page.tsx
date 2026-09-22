@@ -148,8 +148,9 @@ export default async function CommunityPage({ params, searchParams }: Props) {
   const online = onlineParam === 'true' && onlineAvailable
   const page = Math.max(0, (parseInt(pageParam ?? '') || 1) - 1)
   const [col, dir] = sort.split('.')
-  // The online ribbon and the season top are only shown on the untouched list, so they do not get in the way of searching.
-  const isDefaultView = page === 0 && !search && !online && !staff
+  // The online and staff filters only affect the player list below. Searching and
+  // pagination still hide the summary blocks so they do not get in the way.
+  const showSummary = page === 0 && !search
 
   const paginatedProfiles = await getProfiles(
     serverApiFetcher,
@@ -169,10 +170,10 @@ export default async function CommunityPage({ params, searchParams }: Props) {
     <div className="flex flex-col gap-4">
       <h1 className="text-4xl font-extrabold tracking-tight">{t('title')}</h1>
       <CommunityStats locale={locale} season={season} />
-      {isDefaultView && onlineAvailable && (
+      {showSummary && onlineAvailable && (
         <CommunityOnlineNow locale={locale} season={season} />
       )}
-      {isDefaultView && <CommunityTopPlayers locale={locale} season={season} />}
+      {showSummary && <CommunityTopPlayers locale={locale} season={season} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           {seasons.length > 1 && (

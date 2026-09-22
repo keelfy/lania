@@ -436,7 +436,7 @@
       "noNotifications": "Уведомлений нет",
       "loading": "Загрузка...",
       "items": {
-        "openProfiles": "Мои профили",
+        "install": "Установить ->",
         "cosmeticGranted": {
           "title": "Новое украшение",
           "body": "{item} для профиля {profile}"
@@ -516,6 +516,7 @@
     }
   },
   "seasons": {
+    "title": "Сезоны",
     "123e4567-e89b-12d3-a456-426614174000": {
       "length": "3 месяца 2 дня",
       "description": "Первый сезон был запущен для игры со зрителями keelfy."

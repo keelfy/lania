@@ -1,4 +1,4 @@
-export const DEFAULT_COMMUNITY_SORT = 'created_at.asc'
+export const DEFAULT_COMMUNITY_SORT = 'created_at.desc'
 
 export type CommunityFilters = {
   online?: boolean

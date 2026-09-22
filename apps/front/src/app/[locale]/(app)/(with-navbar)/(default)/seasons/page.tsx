@@ -42,6 +42,9 @@ export default async function SeasonsPage({ params }: Props) {
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <h1 className="col-span-full text-4xl font-extrabold tracking-tight">
+        {t('title')}
+      </h1>
       {seasons.map((season) => {
         return (
           <div

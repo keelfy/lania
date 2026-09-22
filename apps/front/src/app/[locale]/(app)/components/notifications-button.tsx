@@ -163,7 +163,17 @@ function NotificationItem({ notification }: { notification: Notification }) {
           {formatDateTime(Date.parse(notification.createdAt), locale)}
         </time>
         <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild>
-          <Link href="/profiles">{t('openProfiles')}</Link>
+          <Link
+            href={{
+              pathname: '/profiles/settings',
+              query: {
+                id: payload.profileId,
+                ...(payload.seasonId ? { s: payload.seasonId } : {}),
+              },
+            }}
+          >
+            {t('install')}
+          </Link>
         </Button>
       </div>
     </li>
