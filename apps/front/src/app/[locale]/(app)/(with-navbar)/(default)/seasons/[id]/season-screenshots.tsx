@@ -42,7 +42,7 @@ export default function SeasonScreenshots({
               />
             </AspectRatio>
           </DialogTrigger>
-          <DialogContent className="w-[min(calc(100vw-2rem),160dvh)] max-w-4xl gap-0 overflow-hidden border-0 p-0">
+          <DialogContent className="w-[min(calc(100vw-2rem),160dvh)] gap-0 overflow-hidden border-0 p-0 sm:max-w-4xl">
             <DialogHeader className="sr-only">
               <DialogTitle>{screenshot.title ?? 'Screenshot'}</DialogTitle>
             </DialogHeader>
