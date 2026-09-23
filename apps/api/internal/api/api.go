@@ -204,15 +204,22 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 
 	r.Route("/seasons", func(r chi.Router) {
 		r.Get("/", api.seasonHandler.GetSeasons)
-		r.Get("/{seasonId}/screenshots", api.seasonHandler.GetSeasonScreenshots)
-	})
 
-	r.Route("/seasons/{seasonId}", func(r chi.Router) {
-		api.useProtectedRoutes(r)
+		r.Route("/{seasonId}", func(r chi.Router) {
+			r.Group(func(r chi.Router) {
+				api.useUnprotectedRoutes(r)
 
-		r.Post("/access/pre-register", api.accessHandler.ObtainFreeAccessForProfiles)
-		r.Post("/access/register", api.accessHandler.RegisterProfilesForSeason)
-		r.Post("/get-access", api.accessHandler.ObtainAccessForProfiles)
+				r.Get("/screenshots", api.seasonHandler.GetSeasonScreenshots)
+			})
+
+			r.Group(func(r chi.Router) {
+				api.useProtectedRoutes(r)
+
+				r.Post("/access/pre-register", api.accessHandler.ObtainFreeAccessForProfiles)
+				r.Post("/access/register", api.accessHandler.RegisterProfilesForSeason)
+				r.Post("/get-access", api.accessHandler.ObtainAccessForProfiles)
+			})
+		})
 	})
 
 	r.Route("/products", func(r chi.Router) {
