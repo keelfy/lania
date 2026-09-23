@@ -25,10 +25,18 @@ import {
   AdminCosmeticsCatalog,
   AdminNameColor,
   AdminNamePrefix,
+  AdminProduct,
 } from '@/models/admin'
-import { PaletteIcon, PlusIcon, ShapesIcon } from 'lucide-react'
+import { CURRENCY_SYMBOLS, Currency } from '@/lib/currency'
+import {
+  PaletteIcon,
+  PlusIcon,
+  ShapesIcon,
+  ShoppingBagIcon,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
@@ -37,10 +45,27 @@ type Selection =
   | { type: 'color'; item?: AdminNameColor }
   | { type: 'prefix'; item?: AdminNamePrefix }
 
+function linkedProducts(
+  products: AdminProduct[],
+  type: Selection['type'],
+  id?: string,
+): AdminProduct[] {
+  if (!id) return []
+  const category = type === 'color' ? 'name-color' : 'name-prefix'
+  return products.filter(
+    (product) =>
+      product.category === category &&
+      (product.metadata.nameColorId === id ||
+        product.metadata.namePrefixId === id),
+  )
+}
+
 export default function CosmeticsManager({
   catalog,
+  products,
 }: {
   catalog: AdminCosmeticsCatalog
+  products: AdminProduct[]
 }) {
   const t = useTranslations('admin.cosmetics')
   const router = useRouter()
@@ -119,6 +144,9 @@ export default function CosmeticsManager({
             title={t('colors')}
             icon={<PaletteIcon />}
             items={colorOptions}
+            hasProduct={(id) =>
+              linkedProducts(products, 'color', id).length > 0
+            }
             onSelect={(item) => {
               setSelection({ type: 'color', item })
               setName(item.name)
@@ -137,6 +165,9 @@ export default function CosmeticsManager({
             title={t('prefixes')}
             icon={<ShapesIcon />}
             items={prefixes}
+            hasProduct={(id) =>
+              linkedProducts(products, 'prefix', id).length > 0
+            }
             onSelect={(item) => {
               setSelection({ type: 'prefix', item })
               setName(item.name)
@@ -214,14 +245,79 @@ export default function CosmeticsManager({
               {t('save')}
             </Button>
           </FieldGroup>
-          <CosmeticPreview
-            type={selection.type}
-            colors={colors}
-            image={image}
-            t={t}
-          />
+          <div className="flex flex-col gap-4">
+            <CosmeticPreview
+              type={selection.type}
+              colors={colors}
+              image={image}
+              t={t}
+            />
+            {selection.item && (
+              <LinkedProducts
+                products={linkedProducts(
+                  products,
+                  selection.type,
+                  selection.item.id,
+                )}
+                t={t}
+              />
+            )}
+          </div>
         </form>
       </section>
+    </div>
+  )
+}
+
+function LinkedProducts({
+  products,
+  t,
+}: {
+  products: AdminProduct[]
+  t: ReturnType<typeof useTranslations>
+}) {
+  return (
+    <div className="border-border rounded-lg border p-4">
+      <h3 className="text-muted-foreground mb-3 flex items-center gap-2 text-sm font-semibold">
+        <ShoppingBagIcon className="size-4" />
+        {t('linkedProduct')}
+      </h3>
+      {products.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          {t('linkedProductNone')}
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {products.map((product) => {
+            const name =
+              product.localizations.find((item) => item.locale === 'ru')
+                ?.name ?? product.id
+            const price = product.prices.find(
+              (item) => item.currency === Currency.RUB,
+            )
+            return (
+              <li key={product.id}>
+                <Link
+                  href="/admin/products"
+                  className="hover:bg-muted flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
+                >
+                  <span className="flex flex-col">
+                    <span className="font-medium">{name}</span>
+                    {price && (
+                      <span className="text-muted-foreground text-xs">
+                        {price.amount} {CURRENCY_SYMBOLS[Currency.RUB]}
+                      </span>
+                    )}
+                  </span>
+                  <Badge variant={product.isActive ? 'default' : 'secondary'}>
+                    {t(product.isActive ? 'productActive' : 'productDraft')}
+                  </Badge>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
@@ -230,6 +326,7 @@ function CatalogGroup<T extends { id: string; name: string }>({
   title,
   icon,
   items,
+  hasProduct,
   onSelect,
   onCreate,
   selected,
@@ -237,6 +334,7 @@ function CatalogGroup<T extends { id: string; name: string }>({
   title: string
   icon: React.ReactNode
   items: T[]
+  hasProduct?: (id: string) => boolean
   onSelect: (item: T) => void
   onCreate: () => void
   selected?: string
@@ -263,9 +361,12 @@ function CatalogGroup<T extends { id: string; name: string }>({
           <button
             key={item.id}
             onClick={() => onSelect(item)}
-            className={`rounded-md px-3 py-2 text-left text-sm ${selected === item.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+            className={`flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm ${selected === item.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
           >
-            {item.name}
+            <span className="flex-1">{item.name}</span>
+            {hasProduct?.(item.id) && (
+              <ShoppingBagIcon className="size-3.5 shrink-0 opacity-70" />
+            )}
           </button>
         ))}
       </div>

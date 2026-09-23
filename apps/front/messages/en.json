@@ -918,7 +918,11 @@
         "prefix": "Game prefix",
         "image": "Image location",
         "noSpace": "No space"
-      }
+      },
+      "linkedProduct": "Linked product",
+      "linkedProductNone": "This cosmetic isn't linked to any product and can't be purchased.",
+      "productActive": "Active",
+      "productDraft": "Draft"
     },
     "uploads": {
       "choose": "Choose file",
