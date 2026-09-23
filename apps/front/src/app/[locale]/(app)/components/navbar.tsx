@@ -87,6 +87,7 @@ export default async function Navbar({
   const t = await getTranslations({ locale: currentLocale })
   const session = await getCurrentSession()
   const isSessionActive = session?.active === true
+  const isAdmin = isAdminSession(session)
   const currency =
     ((await cookies()).get(CURRENCY_COOKIE)?.value as Currency) ??
     DEFAULT_CURRENCY
@@ -153,13 +154,14 @@ export default async function Navbar({
           </SheetTrigger>
           <DynamicMenuSheetContent
             sessionActive={isSessionActive}
+            isAdmin={isAdmin}
             locale={currentLocale as Locale}
             currency={currency}
           />
         </Sheet>
         <div className="relative hidden items-center gap-6 lg:flex">
           {isSessionActive ? (
-            <UserDropdownMenu isAdmin={isAdminSession(session)} />
+            <UserDropdownMenu isAdmin={isAdmin} />
           ) : (
             <SignInButton />
           )}

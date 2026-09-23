@@ -19,6 +19,7 @@ import {
   MapIcon,
   MessageCircleIcon,
   SettingsIcon,
+  ShieldCheckIcon,
   ShoppingBagIcon,
   UsersIcon,
 } from 'lucide-react'
@@ -83,12 +84,14 @@ const menuItems = [
 
 type Props = {
   sessionActive: boolean
+  isAdmin: boolean
   locale: Locale
   currency: Currency
 }
 
 export default function MenuSheetContent({
   sessionActive,
+  isAdmin,
   locale,
   currency,
 }: Props) {
@@ -104,7 +107,7 @@ export default function MenuSheetContent({
           {menuItems.map((items, index) => (
             <div className="flex flex-col gap-4" key={index}>
               {items.map((item) => (
-                <SheetClose key={item.label}>
+                <SheetClose key={item.label} asChild>
                   <Link
                     href={item.href}
                     className={cn(
@@ -118,6 +121,17 @@ export default function MenuSheetContent({
                   </Link>
                 </SheetClose>
               ))}
+              {index === 1 && isAdmin && (
+                <SheetClose asChild>
+                  <Link
+                    href={`/${locale}/admin/users`}
+                    className="flex items-center gap-2 text-lg font-medium"
+                  >
+                    <ShieldCheckIcon className="size-5" />
+                    {t('userDropdown.admin')}
+                  </Link>
+                </SheetClose>
+              )}
               {index < menuItems.length - 1 && <Separator className="mt-4" />}
             </div>
           ))}
