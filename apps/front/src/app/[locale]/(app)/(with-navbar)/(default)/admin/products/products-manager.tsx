@@ -25,6 +25,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
+import EasyDonateCreateDialog from './easydonate-create-dialog'
 
 const priceByCategory = {
   upgrade: 'season_access',
@@ -47,7 +48,10 @@ export default function ProductsManager({
     React.useState<AdminProduct['category']>('name-color')
   const [cosmeticId, setCosmeticId] = React.useState('')
   const [active, setActive] = React.useState(false)
+  const [easyDonateProductId, setEasyDonateProductId] = React.useState('')
+  const [ruFilled, setRuFilled] = React.useState(false)
   const [isPending, startTransition] = React.useTransition()
+  const formRef = React.useRef<HTMLFormElement>(null)
 
   function chooseProduct(product?: AdminProduct) {
     setSelected(product)
@@ -56,6 +60,27 @@ export default function ProductsManager({
       product?.metadata.nameColorId ?? product?.metadata.namePrefixId ?? '',
     )
     setActive(product?.isActive ?? false)
+    setEasyDonateProductId(
+      product?.easyDonateProductId ? String(product.easyDonateProductId) : '',
+    )
+    const ru = product?.localizations.find((item) => item.locale === 'ru')
+    setRuFilled(Boolean(ru?.name.trim() && ru?.description.trim()))
+  }
+
+  function checkRuFilled(form: HTMLFormElement) {
+    const data = new FormData(form)
+    const name = String(data.get('name-ru') ?? '').trim()
+    const description = String(data.get('description-ru') ?? '').trim()
+    setRuFilled(Boolean(name && description))
+  }
+
+  function getProductInfo() {
+    const data = formRef.current ? new FormData(formRef.current) : undefined
+    return {
+      name: String(data?.get('name-ru') ?? '').trim(),
+      description: String(data?.get('description-ru') ?? '').trim(),
+      priceName: priceByCategory[category],
+    }
   }
 
   const filtered = products.filter((product) =>
@@ -76,7 +101,7 @@ export default function ProductsManager({
     event.preventDefault()
     if (isPending) return
     const form = new FormData(event.currentTarget)
-    const edValue = String(form.get('easyDonateProductId') ?? '').trim()
+    const edValue = easyDonateProductId.trim()
     const payload: SaveProduct = {
       category,
       cosmeticId: category === 'upgrade' ? undefined : cosmeticId,
@@ -161,7 +186,9 @@ export default function ProductsManager({
         </div>
         <form
           key={selected?.id ?? 'new'}
+          ref={formRef}
           onSubmit={submit}
+          onInput={(event) => checkRuFilled(event.currentTarget)}
           className="grid gap-6 xl:grid-cols-[1fr_16rem]"
         >
           <FieldGroup>
@@ -225,14 +252,24 @@ export default function ProductsManager({
               <FieldLabel htmlFor="product-ed">
                 {t('fields.easyDonate')}
               </FieldLabel>
-              <Input
-                id="product-ed"
-                name="easyDonateProductId"
-                type="number"
-                min={1}
-                defaultValue={selected?.easyDonateProductId}
-                required={active}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="product-ed"
+                  name="easyDonateProductId"
+                  type="number"
+                  min={1}
+                  value={easyDonateProductId}
+                  onChange={(event) =>
+                    setEasyDonateProductId(event.target.value)
+                  }
+                  required={active}
+                />
+                <EasyDonateCreateDialog
+                  disabled={!ruFilled}
+                  getProductInfo={getProductInfo}
+                  onCreated={(id) => setEasyDonateProductId(String(id))}
+                />
+              </div>
               <FieldDescription>{t('easyDonateHint')}</FieldDescription>
             </Field>
             <Field orientation="horizontal">

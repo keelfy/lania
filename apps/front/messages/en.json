@@ -944,7 +944,7 @@
       "draft": "Draft",
       "selectCosmetic": "Select cosmetic",
       "tariffHint": "Price is shared by the whole category.",
-      "easyDonateHint": "Positive unique ID. Required for publication.",
+      "easyDonateHint": "Positive unique ID. Required for publication. Creating the EasyDonate position does not save the product — remember to press \"Save changes\".",
       "activeHint": "Published products appear in the storefront and new orders.",
       "seasonAccess": "Season access",
       "pricesAfterSave": "Tariff prices appear after saving",
@@ -961,6 +961,23 @@
         "description": "Description",
         "easyDonate": "EasyDonate ID",
         "active": "Offer for sale"
+      },
+      "easydonate": {
+        "button": "Create in EasyDonate",
+        "title": "Create an EasyDonate position",
+        "description": "The position is created in the EasyDonate panel from the Russian name and description. The price comes from the shared tariff.",
+        "sessionKey": "Session key",
+        "sessionKeyHint": "The value of the easydonate_session cookie from the EasyDonate panel.",
+        "csrfToken": "CSRF token",
+        "csrfTokenHint": "The token from the EasyDonate panel page.",
+        "credentialsKept": "The key and token are kept until the page reloads.",
+        "changeCredentials": "Change",
+        "image": "Image (optional)",
+        "imageHint": "Uploaded straight to EasyDonate, never stored in lania.",
+        "summary": "Will be sent",
+        "submit": "Create",
+        "created": "Position created in EasyDonate",
+        "createFailed": "Failed to create the EasyDonate position"
       }
     }
   }

@@ -943,7 +943,7 @@
       "draft": "Черновик",
       "selectCosmetic": "Выберите косметику",
       "tariffHint": "Цена общая для всей категории.",
-      "easyDonateHint": "Положительный уникальный ID. Обязателен для публикации.",
+      "easyDonateHint": "Положительный уникальный ID. Обязателен для публикации. Создание позиции в EasyDonate не сохраняет товар — не забудьте нажать «Сохранить».",
       "activeHint": "Опубликованный товар виден на витрине и доступен для новых заказов.",
       "seasonAccess": "Доступ к сезону",
       "pricesAfterSave": "Цены тарифа появятся после сохранения",
@@ -960,6 +960,23 @@
         "description": "Описание",
         "easyDonate": "EasyDonate ID",
         "active": "Выставить на продажу"
+      },
+      "easydonate": {
+        "button": "Создать в EasyDonate",
+        "title": "Создать позицию в EasyDonate",
+        "description": "Позиция создаётся в панели EasyDonate по названию и описанию на русском. Цена берётся из общего тарифа.",
+        "sessionKey": "Session key",
+        "sessionKeyHint": "Значение куки easydonate_session из панели EasyDonate.",
+        "csrfToken": "CSRF токен",
+        "csrfTokenHint": "Токен со страницы панели EasyDonate.",
+        "credentialsKept": "Ключ и токен сохранены до перезагрузки страницы.",
+        "changeCredentials": "Изменить",
+        "image": "Изображение (необязательно)",
+        "imageHint": "Загружается напрямую в EasyDonate, не сохраняется в lania.",
+        "summary": "Будет отправлено",
+        "submit": "Создать",
+        "created": "Позиция создана в EasyDonate",
+        "createFailed": "Не удалось создать позицию в EasyDonate"
       }
     }
   }
