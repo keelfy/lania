@@ -102,7 +102,6 @@ export default function NameGlythOptionSelect({
                 alt={prefix.name}
                 width={20}
                 height={20}
-                unoptimized
               />
               <McUsername username={prefix.name} />
             </SelectItem>

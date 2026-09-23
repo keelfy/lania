@@ -317,8 +317,10 @@ function PrefixFields({
           type="url"
           required
           defaultValue={item?.image}
+          placeholder="s3://bucket/glyth_preview/name.png"
           onChange={(event) => onImageChange(event.target.value.trim())}
         />
+        <FieldDescription>{t('imageHint')}</FieldDescription>
       </Field>
       <Field orientation="horizontal">
         <Switch
@@ -355,9 +357,7 @@ function CosmeticPreview({
         <McUsername username="Keelfy" colors={colors} className="text-2xl" />
       ) : (
         <div className="flex items-center gap-2">
-          {image && (
-            <Image src={image} alt="" width={32} height={32} unoptimized />
-          )}
+          {image && <Image src={image} alt="" width={32} height={32} />}
           <McUsername username="Keelfy" className="text-2xl" />
         </div>
       )}

@@ -23,7 +23,6 @@ export default function NamePrefixes({ cosmetics, size = 20 }: Props) {
           title={prefix!.name}
           width={size}
           height={size}
-          unoptimized
         />
       ))}
     </>

@@ -152,7 +152,6 @@ export default function GrantCosmeticDialog({
                             alt=""
                             width={16}
                             height={16}
-                            unoptimized
                           />
                         )}
                         {namePrefix.name}

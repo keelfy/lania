@@ -428,11 +428,10 @@
     "items": {
       "worlds": "Servers",
       "wiki": "Wiki",
-      "products": "Shop",
+      "products": "Products",
       "community": "Community",
       "seasons": "Seasons",
-      "cosmetics": "Cosmetics",
-      "products": "Products"
+      "cosmetics": "Cosmetics"
     },
     "notifications": {
       "title": "Notifications",
@@ -904,12 +903,13 @@
       "prefixHint": "The game symbol and storefront image change together.",
       "colorsHint": "Comma-separated HEX colors in gradient order.",
       "noSpaceHint": "Do not add a space after the prefix in game chat.",
+      "imageHint": "S3 location: s3://bucket/glyth_preview/snake_case.png. Served through images.lania.network.",
       "preview": "Chat preview",
       "fields": {
         "name": "Name",
         "colors": "Colors",
         "prefix": "Game prefix",
-        "image": "Image URL",
+        "image": "Image location",
         "noSpace": "No space"
       }
     },

@@ -427,11 +427,10 @@
     "items": {
       "worlds": "Серверы",
       "wiki": "Вики",
-      "products": "Магазин",
+      "products": "Товары",
       "community": "Сообщество",
       "seasons": "Сезоны",
-      "cosmetics": "Косметика",
-      "products": "Товары"
+      "cosmetics": "Косметика"
     },
     "notifications": {
       "title": "Уведомления",
@@ -903,12 +902,13 @@
       "prefixHint": "Игровой символ и изображение витрины меняются вместе.",
       "colorsHint": "HEX-цвета через запятую, в порядке градиента.",
       "noSpaceHint": "Не добавлять пробел после префикса в игровом чате.",
+      "imageHint": "Путь в S3: s3://бакет/glyth_preview/snake_case.png. Раздаётся через images.lania.network.",
       "preview": "Предпросмотр в чате",
       "fields": {
         "name": "Название",
         "colors": "Цвета",
         "prefix": "Игровой префикс",
-        "image": "URL изображения",
+        "image": "Путь к изображению",
         "noSpace": "Без пробела"
       }
     },

@@ -16,7 +16,7 @@ export default function NamePrefixProductCard({ item, ...props }: Props) {
   return (
     <ProductCard item={item} {...props}>
       <div className="flex items-center gap-2 py-3">
-        <Image src={prefix} alt={prefix} width={32} height={32} unoptimized />
+        <Image src={prefix} alt={prefix} width={32} height={32} />
         <McUsername
           username={item.name}
           className="text-center text-xl font-bold"

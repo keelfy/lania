@@ -87,7 +87,6 @@ function CosmeticItem({
                 alt=""
                 width={18}
                 height={18}
-                unoptimized
                 className="shrink-0"
               />
             )}

@@ -20,7 +20,6 @@ export default function NamePrefixProductDetails({
           alt={item.metadata.prefix}
           width={40}
           height={40}
-          unoptimized
           className="-translate-y-1"
         />
         <McUsername

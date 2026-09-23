@@ -13,6 +13,10 @@ import (
 
 var hexColorPattern = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 
+// imageLocationPattern accepts an s3://bucket/key location, the form seasons use and the one
+// glyth previews moved to, as well as a plain http(s) URL for icons still hosted elsewhere.
+var imageLocationPattern = regexp.MustCompile(`^(s3|https?)://\S+$`)
+
 // notNilUUID rejects the zero UUID. validation.Required does not, because it reads a UUID as a non-empty string.
 var notNilUUID = validation.By(func(value any) error {
 	if id, ok := value.(uuid.UUID); ok && id == uuid.Nil {
@@ -140,7 +144,7 @@ func (c *SaveNamePrefixCommand) Validate() error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.Name, validation.Required, validation.Length(1, 255)),
 		validation.Field(&c.Prefix, validation.Required),
-		validation.Field(&c.Image, validation.Required, is.URL),
+		validation.Field(&c.Image, validation.Required, validation.RuneLength(1, 512), validation.Match(imageLocationPattern)),
 	)
 }
 

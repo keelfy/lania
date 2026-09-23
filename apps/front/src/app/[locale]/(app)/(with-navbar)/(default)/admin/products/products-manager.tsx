@@ -334,13 +334,7 @@ function ProductPreview({
       {category === 'name-prefix' && (
         <div className="flex items-center gap-2">
           {prefix?.image && (
-            <Image
-              src={prefix.image}
-              alt=""
-              width={32}
-              height={32}
-              unoptimized
-            />
+            <Image src={prefix.image} alt="" width={32} height={32} />
           )}
           <McUsername username="Keelfy" className="text-2xl" />
         </div>

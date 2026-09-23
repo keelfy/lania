@@ -16,7 +16,6 @@ export default function NamePrefixBasketItem({ product }: Props) {
         alt={product.metadata.prefix}
         width={32}
         height={32}
-        unoptimized
       />
       <McUsername
         username={product.name}

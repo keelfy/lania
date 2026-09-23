@@ -80,6 +80,32 @@ func TestSaveNameColorCommand_Validate(t *testing.T) {
 	}
 }
 
+func TestSaveNamePrefixCommand_Validate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		command SaveNamePrefixCommand
+		wantErr bool
+	}{
+		{"s3 preview", SaveNamePrefixCommand{Name: "Popcat", Prefix: ":glyth_popcat:", Image: "s3://bucket/glyth_preview/popcat.png"}, false},
+		{"https preview", SaveNamePrefixCommand{Name: "Popcat", Prefix: ":glyth_popcat:", Image: "https://cdn.example.com/popcat.png"}, false},
+		{"no scheme", SaveNamePrefixCommand{Name: "Popcat", Prefix: ":glyth_popcat:", Image: "glyth_preview/popcat.png"}, true},
+		{"unsupported scheme", SaveNamePrefixCommand{Name: "Popcat", Prefix: ":glyth_popcat:", Image: "ftp://bucket/popcat.png"}, true},
+		{"blank image", SaveNamePrefixCommand{Name: "Popcat", Prefix: ":glyth_popcat:"}, true},
+		{"blank prefix", SaveNamePrefixCommand{Name: "Popcat", Image: "s3://bucket/glyth_preview/popcat.png"}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if err := tt.command.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestSaveProductCommand_Validate(t *testing.T) {
 	t.Parallel()
 
