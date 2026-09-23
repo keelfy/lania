@@ -142,3 +142,41 @@ func TestSaveProductCommand_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateEDProductCommand_Validate(t *testing.T) {
+	t.Parallel()
+
+	valid := CreateEDProductCommand{
+		SessionKey:  "session-key",
+		CSRFToken:   "csrf-token",
+		Name:        "Лес",
+		Description: "Зелёный градиент",
+		PriceName:   domain.ProductPriceNameNameColor,
+	}
+
+	tests := []struct {
+		name    string
+		mutate  func(*CreateEDProductCommand)
+		wantErr bool
+	}{
+		{"valid without image", func(*CreateEDProductCommand) {}, false},
+		{"valid with image", func(command *CreateEDProductCommand) { command.Image = []byte{1, 2, 3} }, false},
+		{"missing session key", func(command *CreateEDProductCommand) { command.SessionKey = "" }, true},
+		{"missing csrf token", func(command *CreateEDProductCommand) { command.CSRFToken = "" }, true},
+		{"missing name", func(command *CreateEDProductCommand) { command.Name = "" }, true},
+		{"missing description", func(command *CreateEDProductCommand) { command.Description = "" }, true},
+		{"invalid price name", func(command *CreateEDProductCommand) { command.PriceName = "invalid" }, true},
+		{"image too large", func(command *CreateEDProductCommand) { command.Image = make([]byte, MaxEDProductImageBytes+1) }, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			command := valid
+			tt.mutate(&command)
+			if err := command.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

@@ -77,7 +77,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	adminGrantService := services.NewAdminGrantService(mainStorage, profileService, productService, seasonService, fulfillmentService, accessService, profileCosmeticsService, minecraftService, notificationService)
 	adminGrantHandler := handlers.NewAdminGrantHandler(adminGrantService)
 	adminCatalogService := services.NewAdminCatalogService(mainStorage)
-	adminCatalogHandler := handlers.NewAdminCatalogHandler(adminCatalogService)
+	adminCatalogHandler := handlers.NewAdminCatalogHandler(adminCatalogService, easyDonateService)
 	seasonHandler := handlers.NewSeasonHandler(seasonService)
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 	accountService := services.NewAccountService(mainStorage, oryAPI, profileService, profileCosmeticsService, profileResyncService)

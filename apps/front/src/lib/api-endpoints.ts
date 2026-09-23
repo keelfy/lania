@@ -6,6 +6,8 @@ import {
   AdminProfileDetails,
   AdminUser,
   AdminUserDetails,
+  CreateEasyDonateProduct,
+  EasyDonateProduct,
   GrantCosmeticReq,
   GrantProductReq,
   GrantType,
@@ -722,6 +724,25 @@ export function updateAdminProduct(
   return fetcher(`/v1/admin/products/${id}`, undefined, {
     method: 'PUT',
     body: JSON.stringify(item),
+  })
+}
+
+export function createEasyDonateProduct(
+  fetcher: ApiFetcher,
+  req: CreateEasyDonateProduct,
+): Promise<EasyDonateProduct> {
+  const form = new FormData()
+  form.set('sessionKey', req.sessionKey)
+  form.set('csrfToken', req.csrfToken)
+  form.set('name', req.name)
+  form.set('description', req.description)
+  form.set('priceName', req.priceName)
+  if (req.image) {
+    form.set('image', req.image)
+  }
+  return fetcher('/v1/admin/products/easydonate', undefined, {
+    method: 'POST',
+    body: form,
   })
 }
 

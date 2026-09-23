@@ -271,3 +271,16 @@ func GetEasyDonateSuccessURL() string {
 func IsEasyDonateSignatureVerificationSkipped() bool {
 	return os.Getenv("ED_SKIP_SIGNATURE_VERIFICATION") == "true"
 }
+
+// GetEasyDonateControlPanelURL returns the origin of the EasyDonate control panel, the HTML admin
+// site. It has no public API, so product creation drives the same endpoints a browser does.
+func GetEasyDonateControlPanelURL() string {
+	if value := os.Getenv("ED_CP_URL"); value != "" {
+		return value
+	}
+	return "https://cp.easydonate.ru"
+}
+
+func GetEasyDonateShopID() string {
+	return os.Getenv("ED_SHOP_ID")
+}

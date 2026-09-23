@@ -12,8 +12,7 @@ import (
 
 const seasonScreenshotJoinColumns = `
 	ss.id, ss.season_id, ss.image, ss.title, ss.position, ss.created_at,
-	p.id, p.mc_uuid, p.mc_username, p.owner_user_id, p.first_seen_at, p.last_seen_at,
-	p.role, p.is_slim, p.created_at, p.updated_at, p.updated_by
+	p.id, p.mc_username
 FROM season_screenshots ss
 LEFT JOIN season_screenshot_authors ssa ON ssa.screenshot_id = ss.id
 LEFT JOIN profiles p ON p.id = ssa.profile_id
@@ -36,14 +35,12 @@ func scanSeasonScreenshotRows(rows *stdsql.Rows) ([]*domain.SeasonScreenshot, er
 	byID := make(map[uuid.UUID]*domain.SeasonScreenshot)
 	for rows.Next() {
 		var screenshot domain.SeasonScreenshot
-		var author domain.Profile
 		var authorID *uuid.UUID
+		var authorUsername *string
 		err := rows.Scan(
 			&screenshot.ID, &screenshot.SeasonID, &screenshot.Image, &screenshot.Title,
 			&screenshot.Position, &screenshot.CreatedAt,
-			&authorID, &author.MinecraftUUID, &author.MinecraftUsername, &author.OwnerUserID,
-			&author.FirstSeenAt, &author.LastSeenAt, &author.Role, &author.IsSlimModel,
-			&author.CreatedAt, &author.UpdatedAt, &author.UpdatedBy,
+			&authorID, &authorUsername,
 		)
 		if err != nil {
 			return nil, err
@@ -57,8 +54,9 @@ func scanSeasonScreenshotRows(rows *stdsql.Rows) ([]*domain.SeasonScreenshot, er
 			screenshots = append(screenshots, existing)
 		}
 		if authorID != nil {
-			author.ID = *authorID
-			existing.Authors = append(existing.Authors, &author)
+			existing.Authors = append(existing.Authors, &domain.Profile{
+				ID: *authorID, MinecraftUsername: *authorUsername,
+			})
 		}
 	}
 	return screenshots, rows.Err()

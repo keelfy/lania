@@ -231,3 +231,45 @@ func (c *GrantCosmeticCommand) Validate() error {
 		})),
 	)
 }
+
+// MaxEDProductImageBytes bounds the image forwarded to EasyDonate. Same order of magnitude as a
+// glyth preview: the control panel renders it as a small shop thumbnail.
+const MaxEDProductImageBytes int64 = 1024 * 1024
+
+type CreateEDProductCommand struct {
+	// SessionKey is the value of the admin's easydonate_session cookie. Never log it.
+	SessionKey string
+	// CSRFToken is the token of the control panel page the session belongs to. Never log it.
+	CSRFToken   string
+	Name        string
+	Description string
+	// PriceName selects the tariff whose RUB amount becomes the EasyDonate price, so the shop
+	// cannot drift away from lania's own prices.
+	PriceName domain.ProductPriceName
+	// Image is optional. Empty means the position is created without a picture.
+	Image            []byte
+	ImageFilename    string
+	ImageContentType string
+}
+
+func (c *CreateEDProductCommand) Validate() error {
+	return validation.ValidateStruct(c,
+		validation.Field(&c.SessionKey, validation.Required),
+		validation.Field(&c.CSRFToken, validation.Required),
+		validation.Field(&c.Name, validation.Required),
+		validation.Field(&c.Description, validation.Required),
+		validation.Field(&c.PriceName, validation.Required, validation.By(func(value any) error {
+			priceName := value.(domain.ProductPriceName)
+			if priceName != domain.ProductPriceNameSeasonAccess && priceName != domain.ProductPriceNameNameColor && priceName != domain.ProductPriceNameNamePrefix {
+				return errors.New("must be season_access, name_color or name_prefix")
+			}
+			return nil
+		})),
+		validation.Field(&c.Image, validation.By(func(value any) error {
+			if image, ok := value.([]byte); ok && int64(len(image)) > MaxEDProductImageBytes {
+				return errors.New("must not exceed MaxEDProductImageBytes")
+			}
+			return nil
+		})),
+	)
+}

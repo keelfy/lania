@@ -142,3 +142,8 @@ type UploadedImage struct {
 	Width    int    `json:"width"`
 	Height   int    `json:"height"`
 }
+
+// EasyDonateProduct is the id of the position lania just created in the EasyDonate control panel.
+type EasyDonateProduct struct {
+	EasyDonateProductID int64 `json:"easyDonateProductId"`
+}

@@ -184,3 +184,16 @@ export type SaveProduct = {
   easyDonateProductId?: number
   localizations: AdminProductLocalization[]
 }
+
+export type EasyDonateProduct = {
+  easyDonateProductId: number
+}
+
+export type CreateEasyDonateProduct = {
+  sessionKey: string
+  csrfToken: string
+  name: string
+  description: string
+  priceName: AdminProduct['priceName']
+  image?: File
+}

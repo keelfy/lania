@@ -20,12 +20,16 @@ type AdminCatalogHandler interface {
 	GetProducts(http.ResponseWriter, *http.Request)
 	CreateProduct(http.ResponseWriter, *http.Request)
 	UpdateProduct(http.ResponseWriter, *http.Request)
+	CreateEasyDonateProduct(http.ResponseWriter, *http.Request)
 }
 
-type adminCatalogHandler struct{ service services.AdminCatalogService }
+type adminCatalogHandler struct {
+	service           services.AdminCatalogService
+	easyDonateService services.EasyDonateService
+}
 
-func NewAdminCatalogHandler(service services.AdminCatalogService) AdminCatalogHandler {
-	return &adminCatalogHandler{service: service}
+func NewAdminCatalogHandler(service services.AdminCatalogService, easyDonateService services.EasyDonateService) AdminCatalogHandler {
+	return &adminCatalogHandler{service: service, easyDonateService: easyDonateService}
 }
 
 func (h *adminCatalogHandler) GetCosmetics(w http.ResponseWriter, r *http.Request) {
@@ -152,4 +156,25 @@ func (h *adminCatalogHandler) CreateProduct(w http.ResponseWriter, r *http.Reque
 }
 func (h *adminCatalogHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	h.saveProduct(w, r, true)
+}
+
+func (h *adminCatalogHandler) CreateEasyDonateProduct(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	r.Body = http.MaxBytesReader(w, r.Body, commands.MaxEDProductImageBytes)
+
+	cmd, err := binders.BindCreateEDProduct(r)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	if err := cmd.Validate(); err != nil {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("", err))
+		return
+	}
+	easyDonateProductID, err := h.easyDonateService.CreateShopProduct(ctx, cmd)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentEasyDonateProduct(easyDonateProductID))
 }

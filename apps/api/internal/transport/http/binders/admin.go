@@ -3,6 +3,7 @@ package binders
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -195,6 +196,38 @@ func BindUpdateProduct(r *http.Request) (*commands.SaveProductCommand, error) {
 	}
 	cmd.ID, err = BindPathVariableAsUUID(r, ProductIDVariable)
 	return cmd, err
+}
+
+// BindCreateEDProduct reads the multipart request behind the "create in EasyDonate" button. The
+// caller must wrap r.Body in http.MaxBytesReader first, like the image uploads do. The image is
+// optional: a request without one creates the position without a picture.
+func BindCreateEDProduct(r *http.Request) (*commands.CreateEDProductCommand, error) {
+	if err := r.ParseMultipartForm(commands.MaxEDProductImageBytes); err != nil {
+		return nil, utils.NewBadRequestError("request is invalid or too large", err)
+	}
+	defer r.MultipartForm.RemoveAll()
+
+	cmd := &commands.CreateEDProductCommand{
+		SessionKey:  strings.TrimSpace(r.FormValue("sessionKey")),
+		CSRFToken:   strings.TrimSpace(r.FormValue("csrfToken")),
+		Name:        strings.TrimSpace(r.FormValue("name")),
+		Description: strings.TrimSpace(r.FormValue("description")),
+		PriceName:   domain.ProductPriceName(strings.TrimSpace(r.FormValue("priceName"))),
+	}
+
+	file, header, err := r.FormFile("image")
+	if err == nil {
+		defer file.Close()
+		content, err := io.ReadAll(file)
+		if err != nil {
+			return nil, utils.NewBadRequestError("failed to read image", err)
+		}
+		cmd.Image = content
+		cmd.ImageFilename = header.Filename
+		cmd.ImageContentType = header.Header.Get("Content-Type")
+	}
+
+	return cmd, nil
 }
 
 // BindPageToken returns the opaque token of the requested page, empty for the first page.
