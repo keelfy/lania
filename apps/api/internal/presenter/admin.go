@@ -163,3 +163,7 @@ func PresentAdminProducts(products []*domain.Product) []*responses.AdminProduct 
 	}
 	return res
 }
+
+func PresentUploadedImage(image *domain.UploadedImage) *responses.UploadedImage {
+	return &responses.UploadedImage{Location: image.Location, Width: image.Width, Height: image.Height}
+}

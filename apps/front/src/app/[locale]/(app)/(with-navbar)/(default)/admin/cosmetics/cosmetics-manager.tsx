@@ -1,5 +1,6 @@
 'use client'
 
+import ImageUploadField from '@/components/admin/image-upload-field'
 import McUsername from '@/components/ui/mc-username'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ import {
   createNamePrefix,
   updateNameColor,
   updateNamePrefix,
+  uploadGlythPreview,
 } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
@@ -47,9 +49,11 @@ export default function CosmeticsManager({
   })
   const [search, setSearch] = React.useState('')
   const [isPending, startTransition] = React.useTransition()
+  const [name, setName] = React.useState('')
   const [noSpace, setNoSpace] = React.useState(false)
   const [colors, setColors] = React.useState<string[]>([])
   const [image, setImage] = React.useState('')
+  const [prefixToken, setPrefixToken] = React.useState('')
 
   const query = search.trim().toLocaleLowerCase()
   const colorOptions = catalog.nameColors.filter((item) =>
@@ -78,10 +82,14 @@ export default function CosmeticsManager({
             await updateNameColor(clientApiFetcher, selection.item.id, payload)
           else await createNameColor(clientApiFetcher, payload)
         } else {
+          if (!image) {
+            errorToast(t('saveFailed'), new Error(t('imageRequired')))
+            return
+          }
           const payload = {
             name: String(form.get('name') ?? '').trim(),
             prefix: String(form.get('prefix') ?? '').trim(),
-            image: String(form.get('image') ?? '').trim(),
+            image,
             noSpace,
           }
           if (selection.item)
@@ -113,10 +121,12 @@ export default function CosmeticsManager({
             items={colorOptions}
             onSelect={(item) => {
               setSelection({ type: 'color', item })
+              setName(item.name)
               setColors(item.colors)
             }}
             onCreate={() => {
               setSelection({ type: 'color' })
+              setName('')
               setColors([])
             }}
             selected={
@@ -129,13 +139,17 @@ export default function CosmeticsManager({
             items={prefixes}
             onSelect={(item) => {
               setSelection({ type: 'prefix', item })
+              setName(item.name)
               setNoSpace(item.noSpace)
               setImage(item.image)
+              setPrefixToken(item.prefix)
             }}
             onCreate={() => {
               setSelection({ type: 'prefix' })
+              setName('')
               setNoSpace(false)
               setImage('')
+              setPrefixToken('')
             }}
             selected={
               selection.type === 'prefix' ? selection.item?.id : undefined
@@ -174,6 +188,7 @@ export default function CosmeticsManager({
                 required
                 maxLength={255}
                 defaultValue={selection.item?.name}
+                onChange={(event) => setName(event.target.value)}
               />
             </Field>
             {selection.type === 'color' ? (
@@ -186,9 +201,13 @@ export default function CosmeticsManager({
               <PrefixFields
                 item={selection.item}
                 t={t}
+                name={name}
+                prefixToken={prefixToken}
                 noSpace={noSpace}
                 setNoSpace={setNoSpace}
+                image={image}
                 onImageChange={setImage}
+                onPrefixChange={setPrefixToken}
               />
             )}
             <Button disabled={isPending} className="w-fit">
@@ -288,15 +307,23 @@ function ColorFields({
 function PrefixFields({
   item,
   t,
+  name,
+  prefixToken,
   noSpace,
   setNoSpace,
+  image,
   onImageChange,
+  onPrefixChange,
 }: {
   item?: AdminNamePrefix
   t: ReturnType<typeof useTranslations>
+  name: string
+  prefixToken: string
   noSpace: boolean
   setNoSpace: (value: boolean) => void
+  image: string
   onImageChange: (image: string) => void
+  onPrefixChange: (prefix: string) => void
 }) {
   return (
     <>
@@ -307,18 +334,20 @@ function PrefixFields({
           name="prefix"
           required
           defaultValue={item?.prefix}
+          placeholder=":glyth_popcat:"
+          onChange={(event) => onPrefixChange(event.target.value.trim())}
         />
+        <FieldDescription>{t('prefixTokenHint')}</FieldDescription>
       </Field>
       <Field>
         <FieldLabel htmlFor="cosmetic-image">{t('fields.image')}</FieldLabel>
-        <Input
+        <ImageUploadField
           id="cosmetic-image"
-          name="image"
-          type="url"
-          required
-          defaultValue={item?.image}
-          placeholder="s3://bucket/glyth_preview/name.png"
-          onChange={(event) => onImageChange(event.target.value.trim())}
+          value={image}
+          onChange={onImageChange}
+          upload={(file) =>
+            uploadGlythPreview(clientApiFetcher, file, prefixToken, name)
+          }
         />
         <FieldDescription>{t('imageHint')}</FieldDescription>
       </Field>

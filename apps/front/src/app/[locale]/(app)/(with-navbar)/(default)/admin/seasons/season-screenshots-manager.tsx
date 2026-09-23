@@ -1,5 +1,6 @@
 'use client'
 
+import ImageUploadField from '@/components/admin/image-upload-field'
 import ProfilePicker from '@/components/profile-picker'
 import {
   AlertDialog,
@@ -39,6 +40,7 @@ import {
   deleteSeasonScreenshot,
   getSeasonScreenshots,
   updateSeasonScreenshot,
+  uploadSeasonScreenshotImage,
 } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
@@ -110,20 +112,28 @@ function ScreenshotFormDialog({
   const [authors, setAuthors] = React.useState<ScreenshotAuthorPick[]>(
     screenshot?.authors ?? [],
   )
+  const [image, setImage] = React.useState(screenshot?.image ?? '')
   const [isPending, startTransition] = React.useTransition()
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next)
-    if (next) setAuthors(screenshot?.authors ?? [])
+    if (next) {
+      setAuthors(screenshot?.authors ?? [])
+      setImage(screenshot?.image ?? '')
+    }
   }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (isPending) return
+    if (!image) {
+      errorToast(t('saveFailed'), new Error(t('imageRequired')))
+      return
+    }
 
     const form = new FormData(event.currentTarget)
     const payload: SaveSeasonScreenshot = {
-      image: String(form.get('image') ?? '').trim(),
+      image,
       title: optionalString(form, 'title'),
       position: Number(form.get('position') ?? 0),
       authorProfileIds: authors.map((author) => author.id),
@@ -167,13 +177,14 @@ function ScreenshotFormDialog({
               <FieldLabel htmlFor={`${idPrefix}-image`}>
                 {t('fields.image')}
               </FieldLabel>
-              <Input
+              <ImageUploadField
                 id={`${idPrefix}-image`}
-                name="image"
-                required
-                maxLength={512}
-                defaultValue={screenshot?.image}
-                placeholder="s3://bucket/image.jpg"
+                value={image}
+                onChange={setImage}
+                upload={(file) =>
+                  uploadSeasonScreenshotImage(clientApiFetcher, seasonId, file)
+                }
+                previewSize={80}
               />
             </Field>
             <Field>
@@ -298,6 +309,77 @@ function DeleteScreenshotDialog({
   )
 }
 
+function BulkUploadButton({
+  seasonId,
+  nextPosition,
+  onUploaded,
+}: {
+  seasonId: string
+  nextPosition: number
+  onUploaded: () => void
+}) {
+  const t = useTranslations('admin.seasons.screenshots')
+  const [isPending, startTransition] = React.useTransition()
+  const inputRef = React.useRef<HTMLInputElement>(null)
+
+  const handleFiles = (files: File[]) => {
+    if (files.length === 0) return
+    startTransition(async () => {
+      const results = await Promise.allSettled(
+        files.map(async (file, index) => {
+          const uploaded = await uploadSeasonScreenshotImage(
+            clientApiFetcher,
+            seasonId,
+            file,
+          )
+          await createSeasonScreenshot(clientApiFetcher, seasonId, {
+            image: uploaded.location,
+            position: nextPosition + index,
+            authorProfileIds: [],
+          })
+        }),
+      )
+      const failed = results.filter((result) => result.status === 'rejected')
+      if (failed.length > 0) {
+        errorToast(
+          t('bulkUploadFailed', { count: failed.length }),
+          (failed[0] as PromiseRejectedResult).reason,
+        )
+      } else {
+        toast.success(t('bulkUploaded', { count: files.length }))
+      }
+      onUploaded()
+    })
+  }
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={isPending}
+        onClick={() => inputRef.current?.click()}
+      >
+        <ImagesIcon data-icon="inline-start" />
+        {isPending ? t('bulkUploading') : t('bulkUpload')}
+      </Button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          const files = Array.from(event.target.files ?? [])
+          event.target.value = ''
+          handleFiles(files)
+        }}
+      />
+    </>
+  )
+}
+
 export default function SeasonScreenshotsManager({
   season,
   compact = false,
@@ -345,7 +427,16 @@ export default function SeasonScreenshotsManager({
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <BulkUploadButton
+              seasonId={season.id}
+              nextPosition={
+                screenshots.length === 0
+                  ? 0
+                  : Math.max(...screenshots.map((s) => s.position)) + 1
+              }
+              onUploaded={load}
+            />
             <ScreenshotFormDialog
               seasonId={season.id}
               onSaved={load}

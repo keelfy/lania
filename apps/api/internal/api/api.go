@@ -40,6 +40,7 @@ type laniaAPI struct {
 	seasonHandler           handlers.SeasonHandler
 	notificationHandler     handlers.NotificationHandler
 	accountHandler          handlers.AccountHandler
+	uploadHandler           handlers.UploadHandler
 	integrationService      services.IntegrationService
 	mojangService           services.MojangService
 	playerSyncService       services.PlayerSyncService
@@ -66,6 +67,7 @@ func NewLaniaAPI(
 	seasonHandler handlers.SeasonHandler,
 	notificationHandler handlers.NotificationHandler,
 	accountHandler handlers.AccountHandler,
+	uploadHandler handlers.UploadHandler,
 	integrationService services.IntegrationService,
 	mojangService services.MojangService,
 	playerSyncService services.PlayerSyncService,
@@ -90,6 +92,7 @@ func NewLaniaAPI(
 		seasonHandler:           seasonHandler,
 		notificationHandler:     notificationHandler,
 		accountHandler:          accountHandler,
+		uploadHandler:           uploadHandler,
 		integrationService:      integrationService,
 		mojangService:           mojangService,
 		playerSyncService:       playerSyncService,
@@ -246,6 +249,11 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Put("/name-prefixes/{cosmeticId}", api.adminCatalogHandler.UpdateNamePrefix)
 		})
 
+		r.Route("/uploads", func(r chi.Router) {
+			r.Post("/glyth-preview", api.uploadHandler.UploadGlythPreview)
+			r.Post("/season-preview", api.uploadHandler.UploadSeasonPreview)
+		})
+
 		r.Route("/products", func(r chi.Router) {
 			r.Get("/", api.adminCatalogHandler.GetProducts)
 			r.Post("/", api.adminCatalogHandler.CreateProduct)
@@ -259,6 +267,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Delete("/{seasonId}", api.seasonHandler.DeleteSeason)
 
 			r.Route("/{seasonId}/screenshots", func(r chi.Router) {
+				r.Post("/upload", api.uploadHandler.UploadSeasonScreenshot)
 				r.Post("/", api.seasonHandler.CreateSeasonScreenshot)
 				r.Put("/{screenshotId}", api.seasonHandler.UpdateSeasonScreenshot)
 				r.Delete("/{screenshotId}", api.seasonHandler.DeleteSeasonScreenshot)

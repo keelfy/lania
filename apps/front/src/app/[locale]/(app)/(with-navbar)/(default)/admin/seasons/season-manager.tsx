@@ -1,5 +1,6 @@
 'use client'
 
+import ImageUploadField from '@/components/admin/image-upload-field'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,7 +52,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { createSeason, deleteSeason, updateSeason } from '@/lib/api-endpoints'
+import {
+  createSeason,
+  deleteSeason,
+  updateSeason,
+  uploadSeasonPreview,
+} from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
 import { AdminSeason, SaveSeason } from '@/models/season'
@@ -99,6 +105,9 @@ function SeasonDialog({
   const [freeRegistration, setFreeRegistration] = React.useState(
     season?.freeRegistration ?? false,
   )
+  const [previewImage, setPreviewImage] = React.useState(
+    season?.previewImage ?? '',
+  )
   const [isPending, startTransition] = React.useTransition()
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -108,6 +117,7 @@ function SeasonDialog({
       setIsPrimary(season?.isPrimary ?? false)
       setPreregistration(season?.preregistration ?? false)
       setFreeRegistration(season?.freeRegistration ?? false)
+      setPreviewImage(season?.previewImage ?? '')
     }
   }
 
@@ -118,7 +128,7 @@ function SeasonDialog({
     const form = new FormData(event.currentTarget)
     const payload: SaveSeason = {
       name: String(form.get('name') ?? '').trim(),
-      previewImage: optionalString(form, 'previewImage'),
+      previewImage: previewImage || undefined,
       startDate: String(form.get('startDate') ?? ''),
       endDate: optionalString(form, 'endDate'),
       publicAddress: optionalString(form, 'publicAddress'),
@@ -229,11 +239,11 @@ function SeasonDialog({
               <FieldLabel htmlFor={`season-preview-${season?.id ?? 'new'}`}>
                 {t('fields.previewImage')}
               </FieldLabel>
-              <Input
+              <ImageUploadField
                 id={`season-preview-${season?.id ?? 'new'}`}
-                name="previewImage"
-                defaultValue={season?.previewImage}
-                placeholder="s3://bucket/image.jpg"
+                value={previewImage}
+                onChange={setPreviewImage}
+                upload={(file) => uploadSeasonPreview(clientApiFetcher, file)}
               />
             </Field>
             <FieldGroup className="grid gap-4 sm:grid-cols-2">

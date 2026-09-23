@@ -297,3 +297,39 @@ variable "oidc_twitch_client_secret" {
   default   = ""
   sensitive = true
 }
+
+# --- S3 (admin image uploads: glyth previews, season screenshots and previews) ---
+
+variable "s3_bucket" {
+  description = "Bucket the API uploads admin images into. imgproxy reads from it with its own credentials"
+  type        = string
+  default     = "lania-web-134312503254-eu-central-1-an"
+}
+
+variable "s3_region" {
+  type    = string
+  default = "eu-central-1"
+}
+
+variable "s3_endpoint" {
+  description = "Object storage endpoint. Empty uses the AWS default endpoint for s3_region"
+  type        = string
+  default     = ""
+}
+
+variable "s3_force_path_style" {
+  description = "Most S3-compatible providers other than AWS need bucket-in-path addressing"
+  type        = bool
+  default     = false
+}
+
+variable "aws_access_key_id" {
+  description = "Credentials for the API's own s3:PutObject-only IAM user, distinct from imgproxy's read credentials"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_access_key" {
+  type      = string
+  sensitive = true
+}

@@ -14,6 +14,7 @@ import {
   SaveProduct,
   ProfileMerge,
   ProfileMergeSummary,
+  UploadedImage,
 } from '@/models/admin'
 import { BasketItem } from '@/models/basket'
 import { NotificationList, NotificationQuery } from '@/models/notification'
@@ -541,6 +542,18 @@ export function deleteSeason(fetcher: ApiFetcher, id: string): Promise<void> {
   })
 }
 
+export function uploadSeasonPreview(
+  fetcher: ApiFetcher,
+  file: File,
+): Promise<UploadedImage> {
+  const form = new FormData()
+  form.set('file', file)
+  return fetcher<UploadedImage>('/v1/admin/uploads/season-preview', undefined, {
+    method: 'POST',
+    body: form,
+  })
+}
+
 export function getSeasonScreenshots(
   fetcher: ApiFetcher,
   seasonId: string,
@@ -582,6 +595,20 @@ export function deleteSeasonScreenshot(
     `/v1/admin/seasons/${seasonId}/screenshots/${screenshotId}`,
     undefined,
     { method: 'DELETE' },
+  )
+}
+
+export function uploadSeasonScreenshotImage(
+  fetcher: ApiFetcher,
+  seasonId: string,
+  file: File,
+): Promise<UploadedImage> {
+  const form = new FormData()
+  form.set('file', file)
+  return fetcher<UploadedImage>(
+    `/v1/admin/seasons/${seasonId}/screenshots/upload`,
+    undefined,
+    { method: 'POST', body: form },
   )
 }
 
@@ -653,6 +680,23 @@ export function updateNamePrefix(
   return fetcher(`/v1/admin/cosmetics/name-prefixes/${id}`, undefined, {
     method: 'PUT',
     body: JSON.stringify(item),
+  })
+}
+
+// token is the in-game glyth token (":glyth_popcat:"), used to name the object key.
+export function uploadGlythPreview(
+  fetcher: ApiFetcher,
+  file: File,
+  token: string,
+  name: string,
+): Promise<UploadedImage> {
+  const form = new FormData()
+  form.set('file', file)
+  form.set('token', token)
+  form.set('name', name)
+  return fetcher<UploadedImage>('/v1/admin/uploads/glyth-preview', undefined, {
+    method: 'POST',
+    body: form,
   })
 }
 

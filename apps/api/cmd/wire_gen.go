@@ -82,10 +82,18 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 	accountService := services.NewAccountService(mainStorage, oryAPI, profileService, profileCosmeticsService, profileResyncService)
 	accountHandler := handlers.NewAccountHandler(accountService)
+	objectStorage, err := clients.NewObjectStorage(ctx)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	uploadService := services.NewUploadService(objectStorage)
+	uploadHandler := handlers.NewUploadHandler(uploadService)
 	integrationService := services.NewIntegrationService(mainStorage, orderService)
 	playerSyncService := services.NewPlayerSyncService(mainStorage, seasonService, minecraftService)
 	roleSyncService := services.NewRoleSyncService(mainStorage, minecraftService)
-	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminCatalogHandler, seasonHandler, notificationHandler, accountHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
+	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminCatalogHandler, seasonHandler, notificationHandler, accountHandler, uploadHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
 	return laniaAPI, func() {
 		cleanup2()
 		cleanup()

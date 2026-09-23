@@ -65,6 +65,13 @@ resource "local_sensitive_file" "env" {
     oidc_yandex_client_secret  = var.oidc_yandex_client_secret
     oidc_twitch_client_id      = var.oidc_twitch_client_id
     oidc_twitch_client_secret  = var.oidc_twitch_client_secret
+
+    s3_bucket             = var.s3_bucket
+    s3_region             = var.s3_region
+    s3_endpoint           = var.s3_endpoint
+    s3_force_path_style   = var.s3_force_path_style
+    aws_access_key_id     = var.aws_access_key_id
+    aws_secret_access_key = var.aws_secret_access_key
   })
 }
 

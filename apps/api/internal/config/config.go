@@ -139,6 +139,27 @@ func GetImgProxySalt() string {
 	return os.Getenv("IMGPROXY_SALT")
 }
 
+/** S3 */
+
+func GetS3Bucket() string {
+	return os.Getenv("S3_BUCKET")
+}
+
+func GetS3Region() string {
+	return os.Getenv("S3_REGION")
+}
+
+// GetS3Endpoint returns the object storage endpoint. Empty means the AWS default endpoint.
+func GetS3Endpoint() string {
+	return os.Getenv("S3_ENDPOINT")
+}
+
+// IsS3PathStyleForced reports whether the client must address the bucket as part of the URL path.
+// Most non-AWS S3-compatible providers need this.
+func IsS3PathStyleForced() bool {
+	return os.Getenv("S3_FORCE_PATH_STYLE") == "true"
+}
+
 /** CORS */
 
 func GetCorsAllowedOrigins() []string {

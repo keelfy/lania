@@ -169,6 +169,13 @@ export type AdminProduct = {
   prices: AdminProductPrice[]
 }
 
+// The result of an admin uploading an image, ready to store as an image field.
+export type UploadedImage = {
+  location: string
+  width: number
+  height: number
+}
+
 export type SaveProduct = {
   category: AdminProduct['category']
   cosmeticId?: string

@@ -135,3 +135,10 @@ type AdminProduct struct {
 	Localizations       []*AdminProductLocalization `json:"localizations"`
 	Prices              []*AdminProductPrice        `json:"prices"`
 }
+
+// UploadedImage is the location of an image an admin just uploaded to the project's S3 bucket.
+type UploadedImage struct {
+	Location string `json:"location"`
+	Width    int    `json:"width"`
+	Height   int    `json:"height"`
+}
