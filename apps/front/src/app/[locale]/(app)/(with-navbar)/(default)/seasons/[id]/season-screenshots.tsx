@@ -42,8 +42,8 @@ export default function SeasonScreenshots({
               />
             </AspectRatio>
           </DialogTrigger>
-          <DialogContent className="border-0 p-0 md:max-w-4xl">
-            <DialogHeader className="hidden">
+          <DialogContent className="w-[min(calc(100vw-2rem),160dvh)] max-w-4xl gap-0 overflow-hidden border-0 p-0">
+            <DialogHeader className="sr-only">
               <DialogTitle>{screenshot.title ?? 'Screenshot'}</DialogTitle>
             </DialogHeader>
             <AspectRatio ratio={16 / 9} className="relative">
@@ -51,35 +51,36 @@ export default function SeasonScreenshots({
                 src={screenshot.image}
                 alt={screenshot.title ?? ''}
                 fill
-                className="rounded-2xl object-cover"
+                sizes="(max-width: 896px) 100vw, 896px"
+                className="object-cover"
               />
+              {(screenshot.title || screenshot.authors.length > 0) && (
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/65 to-transparent px-4 pt-10 pb-4 text-white sm:px-5 sm:pt-14 sm:pb-5">
+                  {screenshot.title && (
+                    <p className="font-medium">{screenshot.title}</p>
+                  )}
+                  {screenshot.authors.length > 0 && (
+                    <p className="mt-1 text-sm text-white/80">
+                      {screenshot.authors.map((author, index) => (
+                        <span key={author.id}>
+                          {index > 0 && ', '}
+                          <Link
+                            href={communityProfileHref(
+                              locale,
+                              author.username,
+                              seasonId,
+                            )}
+                            className="rounded-sm hover:text-white hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                          >
+                            {author.username}
+                          </Link>
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                </div>
+              )}
             </AspectRatio>
-            {(screenshot.title || screenshot.authors.length > 0) && (
-              <div className="flex flex-col gap-1 px-4 pb-4">
-                {screenshot.title && (
-                  <p className="font-medium">{screenshot.title}</p>
-                )}
-                {screenshot.authors.length > 0 && (
-                  <p className="text-muted-foreground text-sm">
-                    {screenshot.authors.map((author, index) => (
-                      <span key={author.id}>
-                        {index > 0 && ', '}
-                        <Link
-                          href={communityProfileHref(
-                            locale,
-                            author.username,
-                            seasonId,
-                          )}
-                          className="hover:underline"
-                        >
-                          {author.username}
-                        </Link>
-                      </span>
-                    ))}
-                  </p>
-                )}
-              </div>
-            )}
           </DialogContent>
         </Dialog>
       ))}
