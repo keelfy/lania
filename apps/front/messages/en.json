@@ -597,6 +597,8 @@
       "profiles": "Profiles",
       "seasons": "Seasons",
       "cosmetics": "Cosmetics",
+      "nameColors": "Name colors",
+      "namePrefixes": "Prefixes",
       "products": "Products"
     },
     "users": {
@@ -798,7 +800,6 @@
       }
     },
     "seasons": {
-      "title": "Seasons",
       "description": "Season metadata and the shell service of its game server.",
       "loadFailed": "Failed to load seasons",
       "empty": "No seasons yet",
@@ -900,10 +901,6 @@
     "cosmetics": {
       "loadFailed": "Failed to load cosmetics",
       "search": "Search cosmetics",
-      "colors": "Name colors",
-      "prefixes": "Prefixes",
-      "color": "Name color",
-      "prefix": "Prefix",
       "create": "Create",
       "createColor": "New color",
       "createPrefix": "New prefix",

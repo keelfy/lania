@@ -18,16 +18,14 @@ export default async function AdminSeasonsPage({ params }: Props) {
     return undefined
   })
 
-  return (
+  return seasons ? (
+    <SeasonManager seasons={seasons} locale={locale} title={t('nav.seasons')} />
+  ) : (
     <div className="flex flex-col gap-6">
       <AdminPageHeader title={t('nav.seasons')} />
-      {!seasons ? (
-        <p className="text-destructive py-10 text-center">
-          {t('seasons.loadFailed')}
-        </p>
-      ) : (
-        <SeasonManager seasons={seasons} locale={locale} />
-      )}
+      <p className="text-destructive py-10 text-center">
+        {t('seasons.loadFailed')}
+      </p>
     </div>
   )
 }

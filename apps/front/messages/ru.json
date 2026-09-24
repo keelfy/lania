@@ -596,6 +596,8 @@
       "profiles": "Профили",
       "seasons": "Сезоны",
       "cosmetics": "Косметика",
+      "nameColors": "Цвета ника",
+      "namePrefixes": "Префиксы",
       "products": "Товары"
     },
     "users": {
@@ -797,7 +799,6 @@
       }
     },
     "seasons": {
-      "title": "Сезоны",
       "description": "Метаданные сезона и shell-сервис его игрового сервера.",
       "loadFailed": "Не удалось загрузить сезоны",
       "empty": "Сезонов пока нет",
@@ -899,10 +900,6 @@
     "cosmetics": {
       "loadFailed": "Не удалось загрузить косметику",
       "search": "Поиск косметики",
-      "colors": "Цвета ника",
-      "prefixes": "Префиксы",
-      "color": "Цвет ника",
-      "prefix": "Префикс",
       "create": "Создать",
       "createColor": "Новый цвет",
       "createPrefix": "Новый префикс",

@@ -71,11 +71,13 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
+import AdminPageHeader from '../admin-page-header'
 import SeasonScreenshotsManager from './season-screenshots-manager'
 
 type Props = {
   seasons: AdminSeason[]
   locale: string
+  title: string
 }
 
 function dateInputValue(value?: number) {
@@ -491,7 +493,7 @@ function SeasonInfo({
   )
 }
 
-export default function SeasonManager({ seasons, locale }: Props) {
+export default function SeasonManager({ seasons, locale, title }: Props) {
   const t = useTranslations('admin.seasons')
   const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' })
   const dates = (season: AdminSeason) =>
@@ -504,13 +506,11 @@ export default function SeasonManager({ seasons, locale }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-xl font-bold">{t('title')}</h2>
-          <p className="text-muted-foreground text-sm">{t('description')}</p>
-        </div>
-        <SeasonDialog />
-      </div>
+      <AdminPageHeader
+        title={title}
+        description={t('description')}
+        actions={<SeasonDialog />}
+      />
       {seasons.length === 0 && (
         <p className="text-muted-foreground py-10 text-center">{t('empty')}</p>
       )}

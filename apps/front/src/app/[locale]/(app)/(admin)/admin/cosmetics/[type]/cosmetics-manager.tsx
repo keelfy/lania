@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   createNameColor,
   createNamePrefix,
@@ -29,18 +28,14 @@ import {
   AdminProduct,
 } from '@/models/admin'
 import { CURRENCY_SYMBOLS, Currency } from '@/lib/currency'
-import {
-  PaletteIcon,
-  PlusIcon,
-  ShapesIcon,
-  ShoppingBagIcon,
-} from 'lucide-react'
+import { PlusIcon, ShoppingBagIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
+import AdminPageHeader from '../../admin-page-header'
 
 type Selection =
   | { type: 'color'; item?: AdminNameColor }
@@ -62,17 +57,19 @@ function linkedProducts(
 }
 
 export default function CosmeticsManager({
+  type,
+  title,
   catalog,
   products,
 }: {
+  type: Selection['type']
+  title: string
   catalog: AdminCosmeticsCatalog
   products: AdminProduct[]
 }) {
   const t = useTranslations('admin.cosmetics')
   const router = useRouter()
-  const [selection, setSelection] = React.useState<Selection>({
-    type: 'color',
-  })
+  const [selection, setSelection] = React.useState<Selection>({ type })
   const [search, setSearch] = React.useState('')
   const [isPending, startTransition] = React.useTransition()
   const [name, setName] = React.useState('')
@@ -150,33 +147,19 @@ export default function CosmeticsManager({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Tabs
-          value={selection.type}
-          onValueChange={(value) => startCreate(value as Selection['type'])}
-        >
-          <TabsList>
-            <TabsTrigger value="color" className="px-3">
-              <PaletteIcon />
-              {t('colors')}
-              <Badge variant="secondary">{catalog.nameColors.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="prefix" className="px-3">
-              <ShapesIcon />
-              {t('prefixes')}
-              <Badge variant="secondary">{catalog.namePrefixes.length}</Badge>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <Button onClick={() => startCreate(selection.type)}>
-          <PlusIcon />
-          {t(selection.type === 'color' ? 'createColor' : 'createPrefix')}
-        </Button>
-      </div>
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        title={title}
+        actions={
+          <Button onClick={() => startCreate(type)}>
+            <PlusIcon />
+            {t(type === 'color' ? 'createColor' : 'createPrefix')}
+          </Button>
+        }
+      />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
-        <section className="border-border overflow-hidden rounded-lg border">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
+        <section className="border-border overflow-hidden rounded-lg border lg:sticky lg:top-6">
           <div className="bg-muted/40 border-b p-3">
             <Input
               value={search}
@@ -184,7 +167,7 @@ export default function CosmeticsManager({
               placeholder={t('search')}
             />
           </div>
-          <div className="max-h-[calc(100svh-16rem)] overflow-y-auto p-2">
+          <div className="max-h-[calc(100svh-14rem)] overflow-y-auto p-2">
             {selection.type === 'color' ? (
               <CatalogList
                 items={colorOptions}
@@ -244,18 +227,13 @@ export default function CosmeticsManager({
         </section>
 
         <section className="border-border rounded-lg border p-5">
-          <div className="mb-6 flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-bold">
-                {selection.item ? t('edit') : t('create')}
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                {t(selection.type === 'color' ? 'colorHint' : 'prefixHint')}
-              </p>
-            </div>
-            <Badge variant="outline">
-              {t(selection.type === 'color' ? 'color' : 'prefix')}
-            </Badge>
+          <div className="mb-6">
+            <h2 className="text-xl font-bold">
+              {selection.item ? t('edit') : t('create')}
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              {t(selection.type === 'color' ? 'colorHint' : 'prefixHint')}
+            </p>
           </div>
           <form
             key={key}

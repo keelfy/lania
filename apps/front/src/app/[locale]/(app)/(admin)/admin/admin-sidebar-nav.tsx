@@ -26,20 +26,42 @@ export default function AdminSidebarNav({
       {ADMIN_NAV_ITEMS.map((item) => {
         const isActive = pathnameStartsWith(pathname, item.href)
         return (
-          <Link
-            key={item.href}
-            href={`/${locale}${item.href}`}
-            onClick={onNavigate}
-            className={cn(
-              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-              isActive
-                ? 'bg-accent text-accent-foreground'
-                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+          <div key={item.href} className="flex flex-col gap-1">
+            <Link
+              href={`/${locale}${item.children?.[0].href ?? item.href}`}
+              onClick={onNavigate}
+              className={cn(
+                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                isActive && !item.children
+                  ? 'bg-accent text-accent-foreground'
+                  : isActive
+                    ? 'text-foreground'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+              )}
+            >
+              <item.icon className="size-4" />
+              {t(item.labelKey)}
+            </Link>
+            {item.children && (
+              <div className="ml-5 flex flex-col gap-1 border-l pl-2">
+                {item.children.map((child) => (
+                  <Link
+                    key={child.href}
+                    href={`/${locale}${child.href}`}
+                    onClick={onNavigate}
+                    className={cn(
+                      'rounded-md px-3 py-1.5 text-sm transition-colors',
+                      pathnameStartsWith(pathname, child.href)
+                        ? 'bg-accent text-accent-foreground font-medium'
+                        : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+                    )}
+                  >
+                    {t(child.labelKey)}
+                  </Link>
+                ))}
+              </div>
             )}
-          >
-            <item.icon className="size-4" />
-            {t(item.labelKey)}
-          </Link>
+          </div>
         )
       })}
     </nav>

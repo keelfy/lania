@@ -35,6 +35,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
+import AdminPageHeader from '../admin-page-header'
 import EasyDonateCreateDialog from './easydonate-create-dialog'
 
 const priceByCategory = {
@@ -44,9 +45,11 @@ const priceByCategory = {
 } as const
 
 export default function ProductsManager({
+  title,
   products,
   catalog,
 }: {
+  title: string
   products: AdminProduct[]
   catalog: AdminCosmeticsCatalog
 }) {
@@ -169,13 +172,16 @@ export default function ProductsManager({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
-        <Button onClick={() => chooseProduct()}>
-          <PlusIcon />
-          {t('create')}
-        </Button>
-      </div>
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        title={title}
+        actions={
+          <Button onClick={() => chooseProduct()}>
+            <PlusIcon />
+            {t('create')}
+          </Button>
+        }
+      />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
         <section className="border-border overflow-hidden rounded-lg border lg:sticky lg:top-6">

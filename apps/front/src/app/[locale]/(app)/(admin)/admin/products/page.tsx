@@ -16,18 +16,20 @@ export default async function AdminProductsPage({ params }: Props) {
     getAdminProducts(serverApiFetcher),
     getAdminCosmetics(serverApiFetcher),
   ]).catch(() => [undefined, undefined] as const)
-  return (
+  return products && catalog ? (
+    <EdCredentialsProvider>
+      <ProductsManager
+        title={t('nav.products')}
+        products={products}
+        catalog={catalog}
+      />
+    </EdCredentialsProvider>
+  ) : (
     <div className="flex flex-col gap-6">
       <AdminPageHeader title={t('nav.products')} />
-      {products && catalog ? (
-        <EdCredentialsProvider>
-          <ProductsManager products={products} catalog={catalog} />
-        </EdCredentialsProvider>
-      ) : (
-        <p className="text-destructive py-10 text-center">
-          {t('products.loadFailed')}
-        </p>
-      )}
+      <p className="text-destructive py-10 text-center">
+        {t('products.loadFailed')}
+      </p>
     </div>
   )
 }
