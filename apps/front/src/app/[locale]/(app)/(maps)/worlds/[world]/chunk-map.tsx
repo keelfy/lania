@@ -38,7 +38,7 @@ type Props = {
   markers: MapMarker[]
   players: MapPlayer[]
   // A left click gives the same chunk twice; a left drag gives the corners of the dragged area.
-  onChunkArea: (from: ChunkPos, to: ChunkPos) => void
+  onChunkArea: (from: ChunkPos, to: ChunkPos, removing: boolean) => void
   onChunkHover: (hover: ChunkHover | undefined) => void
 }
 
@@ -102,6 +102,8 @@ export default function ChunkMap({
       toLatLng((Math.max(ax, bx) + 1) * CHUNK, (Math.max(az, bz) + 1) * CHUNK),
     ]
 
+    // The right button deselects, so the browser menu must not open over the map.
+    const onContextMenu = (e: MouseEvent) => e.preventDefault()
     const onMouseDown = (e: MouseEvent) => {
       const layers = layersRef.current
       if (!layers) return
@@ -110,9 +112,13 @@ export default function ChunkMap({
         e.preventDefault()
         return
       }
-      if (e.button !== 0 || (e.target as Element).closest('.leaflet-control'))
+      if (
+        (e.button !== 0 && e.button !== 2) ||
+        (e.target as Element).closest('.leaflet-control')
+      )
         return
-      // Runs in the capture phase, so Leaflet never sees the left button and does not pan.
+      const button = e.button
+      // Runs in the capture phase, so Leaflet never sees the left or right button and does not pan.
       e.stopPropagation()
       e.preventDefault()
 
@@ -126,7 +132,7 @@ export default function ChunkMap({
       const from = chunkOf(e)
       let to = from
       const area = layers.L.rectangle(chunkBounds(from, to), {
-        color: '#ffffff',
+        color: button === 2 ? '#f87171' : '#ffffff',
         weight: 1,
         dashArray: '4 4',
         fillOpacity: 0.1,
@@ -139,9 +145,9 @@ export default function ChunkMap({
         if (to[0] !== from[0] || to[1] !== from[1]) area.addTo(layers.map)
       }
       const onUp = (event: MouseEvent) => {
-        if (event.button !== 0) return
+        if (event.button !== button) return
         stopSelecting?.()
-        areaRef.current(from, to)
+        areaRef.current(from, to, button === 2)
       }
       stopSelecting = () => {
         window.removeEventListener('mousemove', onMove)
@@ -271,6 +277,7 @@ export default function ChunkMap({
       map.on('mouseout', () => hoverRef.current(undefined))
       // A tap on a touch screen arrives as a left click too.
       container.addEventListener('mousedown', onMouseDown, true)
+      container.addEventListener('contextmenu', onContextMenu)
 
       layersRef.current = {
         L,
@@ -288,6 +295,7 @@ export default function ChunkMap({
       cancelled = true
       stopSelecting?.()
       container?.removeEventListener('mousedown', onMouseDown, true)
+      container?.removeEventListener('contextmenu', onContextMenu)
       layersRef.current = undefined
       playerMarkers.clear()
       setReady(false)

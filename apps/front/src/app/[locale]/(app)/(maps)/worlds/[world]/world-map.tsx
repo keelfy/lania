@@ -161,14 +161,12 @@ export default function WorldMap({
   // The chunk last clicked, whose owner and claim date the card over the map shows.
   const [focused, setFocused] = React.useState<ChunkPos>()
 
-  // A click focuses the chunk and toggles it. A drag adds every chunk it covers,
-  // or removes them when it started on a chunk that was already selected.
+  // The left button selects every chunk it covers and focuses a clicked chunk; the right button deselects.
   const onChunkArea = React.useCallback(
-    ([ax, az]: ChunkPos, [bx, bz]: ChunkPos) => {
-      if (ax === bx && az === bz) setFocused([ax, az])
+    ([ax, az]: ChunkPos, [bx, bz]: ChunkPos, removing: boolean) => {
+      if (!removing && ax === bx && az === bz) setFocused([ax, az])
       setSelection((current) => {
         const next = new Map(current)
-        const removing = next.has(chunkKey(ax, az))
         for (let x = Math.min(ax, bx); x <= Math.max(ax, bx); x++) {
           for (let z = Math.min(az, bz); z <= Math.max(az, bz); z++) {
             const key = chunkKey(x, z)
@@ -280,7 +278,8 @@ export default function WorldMap({
         )}
       </div>
 
-      <div className="relative min-h-0 flex-1">
+      {/* Leaflet panes and the overlays use z-index up to 1000; isolating them keeps menus above the map. */}
+      <div className="relative isolate min-h-0 flex-1">
         <ChunkMap
           mapUrl={mapUrl}
           dimension={dimension}

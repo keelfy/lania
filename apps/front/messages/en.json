@@ -1039,7 +1039,7 @@
       "nether": "Nether",
       "the_end": "The End"
     },
-    "hint": "Left click selects a chunk, drag to select an area. Hold the mouse wheel to move the map, scroll to zoom.",
+    "hint": "Left click selects a chunk or a dragged area, right click deselects. Hold the mouse wheel to move the map, scroll to zoom.",
     "hover": {
       "chunk": "chunk {x}, {z}",
       "block": "block {x}, {z}",
