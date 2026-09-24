@@ -952,7 +952,7 @@
       "active": "For sale",
       "draft": "Draft",
       "selectCosmetic": "Select cosmetic",
-      "tariffHint": "Price is shared by the whole category.",
+      "tariffHint": "Tariff <code>{tariff}</code> — price is shared by the whole category.",
       "easyDonateHint": "Positive unique ID. Required for publication. Creating the EasyDonate position does not save the product — remember to press \"Save changes\".",
       "activeHint": "Published products appear in the storefront and new orders.",
       "seasonAccess": "Season access",
@@ -964,7 +964,6 @@
       },
       "fields": {
         "category": "Category",
-        "tariff": "Shared tariff",
         "cosmetic": "Cosmetic",
         "name": "Name",
         "description": "Description",
@@ -987,6 +986,12 @@
         "submit": "Create",
         "created": "Position created in EasyDonate",
         "createFailed": "Failed to create the EasyDonate position"
+      },
+      "empty": "Nothing found",
+      "sections": {
+        "main": "General",
+        "texts": "Storefront texts",
+        "sale": "Sale"
       }
     }
   }

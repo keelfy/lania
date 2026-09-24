@@ -3,12 +3,7 @@
 import McUsername from '@/components/ui/mc-username'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from '@/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { createAdminProduct, updateAdminProduct } from '@/lib/api-endpoints'
@@ -19,7 +14,7 @@ import {
   AdminProduct,
   SaveProduct,
 } from '@/models/admin'
-import { PlusIcon, ShoppingBagIcon } from 'lucide-react'
+import { PlusIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -135,169 +130,211 @@ export default function ProductsManager({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(20rem,0.9fr)_minmax(28rem,1.5fr)]">
-      <section className="border-border overflow-hidden rounded-lg border">
-        <div className="bg-muted/40 flex gap-2 border-b p-3">
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={t('search')}
-          />
-          <Button
-            size="icon"
-            onClick={() => chooseProduct()}
-            aria-label={t('create')}
-          >
-            <PlusIcon />
-          </Button>
-        </div>
-        <div className="max-h-[calc(100svh-14rem)] overflow-y-auto p-2">
-          {filtered.map((product) => {
-            const name =
-              product.localizations.find((item) => item.locale === 'ru')
-                ?.name ?? product.id
-            return (
-              <button
-                key={product.id}
-                onClick={() => chooseProduct(product)}
-                className={`mb-1 flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left ${selected?.id === product.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
-              >
-                <span>
-                  <span className="block text-sm font-medium">{name}</span>
-                  <span className="text-xs opacity-70">
-                    {t(`categories.${product.category}`)}
-                  </span>
-                </span>
-                <Badge variant={product.isActive ? 'default' : 'secondary'}>
-                  {t(product.isActive ? 'active' : 'draft')}
-                </Badge>
-              </button>
-            )
-          })}
-        </div>
-      </section>
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <Button onClick={() => chooseProduct()}>
+          <PlusIcon />
+          {t('create')}
+        </Button>
+      </div>
 
-      <section className="border-border rounded-lg border p-5">
-        <div className="mb-6">
-          <h2 className="text-xl font-bold">
-            {selected ? t('edit') : t('create')}
-          </h2>
-          <p className="text-muted-foreground text-sm">{t('description')}</p>
-        </div>
-        <form
-          key={selected?.id ?? 'new'}
-          ref={formRef}
-          onSubmit={submit}
-          onInput={(event) => checkRuFilled(event.currentTarget)}
-          className="grid gap-6 xl:grid-cols-[1fr_16rem]"
-        >
-          <FieldGroup>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor="product-category">
-                  {t('fields.category')}
-                </FieldLabel>
-                <select
-                  id="product-category"
-                  value={category}
-                  disabled={Boolean(selected)}
-                  onChange={(event) => {
-                    setCategory(event.target.value as AdminProduct['category'])
-                    setCosmeticId('')
-                  }}
-                  className="border-input bg-background h-9 rounded-md border px-3 text-sm"
-                >
-                  <option value="upgrade">{t('categories.upgrade')}</option>
-                  <option value="name-color">
-                    {t('categories.name-color')}
-                  </option>
-                  <option value="name-prefix">
-                    {t('categories.name-prefix')}
-                  </option>
-                </select>
-              </Field>
-              <Field>
-                <FieldLabel>{t('fields.tariff')}</FieldLabel>
-                <Input readOnly value={priceByCategory[category]} />
-                <FieldDescription>{t('tariffHint')}</FieldDescription>
-              </Field>
-            </div>
-            {category !== 'upgrade' && (
-              <Field>
-                <FieldLabel htmlFor="product-cosmetic">
-                  {t('fields.cosmetic')}
-                </FieldLabel>
-                <select
-                  id="product-cosmetic"
-                  value={cosmeticId}
-                  disabled={Boolean(selected)}
-                  required
-                  onChange={(event) => setCosmeticId(event.target.value)}
-                  className="border-input bg-background h-9 rounded-md border px-3 text-sm"
-                >
-                  <option value="">{t('selectCosmetic')}</option>
-                  {cosmetics.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
+        <section className="border-border overflow-hidden rounded-lg border lg:sticky lg:top-6">
+          <div className="bg-muted/40 border-b p-3">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t('search')}
+            />
+          </div>
+          <div className="max-h-[calc(100svh-14rem)] overflow-y-auto p-2">
+            {filtered.length === 0 && (
+              <p className="text-muted-foreground py-8 text-center text-sm">
+                {t('empty')}
+              </p>
             )}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <LocalizationFields locale="ru" values={ru} t={t} />
-              <LocalizationFields locale="en" values={en} t={t} />
+            {filtered.map((product) => {
+              const name =
+                product.localizations.find((item) => item.locale === 'ru')
+                  ?.name ?? product.id
+              return (
+                <button
+                  key={product.id}
+                  type="button"
+                  onClick={() => chooseProduct(product)}
+                  className={`mb-1 flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors ${selected?.id === product.id ? 'border-primary bg-accent' : 'hover:bg-muted border-transparent'}`}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium">
+                      {name}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {t(`categories.${product.category}`)}
+                    </span>
+                  </span>
+                  <Badge variant={product.isActive ? 'default' : 'secondary'}>
+                    {t(product.isActive ? 'active' : 'draft')}
+                  </Badge>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="border-border rounded-lg border">
+          <div className="flex flex-col gap-4 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold">
+                {selected ? t('edit') : t('create')}
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                {t('description')}
+              </p>
             </div>
-            <Field>
-              <FieldLabel htmlFor="product-ed">
-                {t('fields.easyDonate')}
-              </FieldLabel>
-              <div className="flex gap-2">
-                <Input
-                  id="product-ed"
-                  name="easyDonateProductId"
-                  type="number"
-                  min={1}
-                  value={easyDonateProductId}
-                  onChange={(event) =>
-                    setEasyDonateProductId(event.target.value)
-                  }
-                  required={active}
-                />
-                <EasyDonateCreateDialog
-                  disabled={!ruFilled}
-                  getProductInfo={getProductInfo}
-                  onCreated={(id) => setEasyDonateProductId(String(id))}
-                />
+            <ProductPreview
+              category={category}
+              cosmeticId={cosmeticId}
+              catalog={catalog}
+              prices={selected?.prices ?? []}
+              t={t}
+            />
+          </div>
+          <form
+            key={selected?.id ?? 'new'}
+            ref={formRef}
+            onSubmit={submit}
+            onInput={(event) => checkRuFilled(event.currentTarget)}
+          >
+            <FormSection title={t('sections.main')}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="product-category">
+                    {t('fields.category')}
+                  </FieldLabel>
+                  <select
+                    id="product-category"
+                    value={category}
+                    disabled={Boolean(selected)}
+                    onChange={(event) => {
+                      setCategory(
+                        event.target.value as AdminProduct['category'],
+                      )
+                      setCosmeticId('')
+                    }}
+                    className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+                  >
+                    <option value="upgrade">{t('categories.upgrade')}</option>
+                    <option value="name-color">
+                      {t('categories.name-color')}
+                    </option>
+                    <option value="name-prefix">
+                      {t('categories.name-prefix')}
+                    </option>
+                  </select>
+                  <FieldDescription>
+                    {t.rich('tariffHint', {
+                      tariff: priceByCategory[category],
+                      code: (chunks) => (
+                        <code className="font-mono">{chunks}</code>
+                      ),
+                    })}
+                  </FieldDescription>
+                </Field>
+                {category !== 'upgrade' && (
+                  <Field>
+                    <FieldLabel htmlFor="product-cosmetic">
+                      {t('fields.cosmetic')}
+                    </FieldLabel>
+                    <select
+                      id="product-cosmetic"
+                      value={cosmeticId}
+                      disabled={Boolean(selected)}
+                      required
+                      onChange={(event) => setCosmeticId(event.target.value)}
+                      className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+                    >
+                      <option value="">{t('selectCosmetic')}</option>
+                      {cosmetics.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
               </div>
-              <FieldDescription>{t('easyDonateHint')}</FieldDescription>
-            </Field>
-            <Field orientation="horizontal">
-              <Switch
-                id="product-active"
-                checked={active}
-                onCheckedChange={setActive}
-              />
-              <div>
-                <FieldLabel htmlFor="product-active">
-                  {t('fields.active')}
+            </FormSection>
+
+            <FormSection title={t('sections.texts')}>
+              <div className="grid gap-6 md:grid-cols-2">
+                <LocalizationFields locale="ru" values={ru} t={t} />
+                <LocalizationFields locale="en" values={en} t={t} />
+              </div>
+            </FormSection>
+
+            <FormSection title={t('sections.sale')}>
+              <Field>
+                <FieldLabel htmlFor="product-ed">
+                  {t('fields.easyDonate')}
                 </FieldLabel>
-                <FieldDescription>{t('activeHint')}</FieldDescription>
-              </div>
-            </Field>
-            <Button disabled={isPending} className="w-fit">
-              {t('save')}
-            </Button>
-          </FieldGroup>
-          <ProductPreview
-            category={category}
-            cosmeticId={cosmeticId}
-            catalog={catalog}
-            prices={selected?.prices ?? []}
-            t={t}
-          />
-        </form>
-      </section>
+                <div className="flex max-w-md gap-2">
+                  <Input
+                    id="product-ed"
+                    name="easyDonateProductId"
+                    type="number"
+                    min={1}
+                    value={easyDonateProductId}
+                    onChange={(event) =>
+                      setEasyDonateProductId(event.target.value)
+                    }
+                    required={active}
+                  />
+                  <EasyDonateCreateDialog
+                    disabled={!ruFilled}
+                    getProductInfo={getProductInfo}
+                    onCreated={(id) => setEasyDonateProductId(String(id))}
+                  />
+                </div>
+                <FieldDescription>{t('easyDonateHint')}</FieldDescription>
+              </Field>
+              <Field orientation="horizontal">
+                <Switch
+                  id="product-active"
+                  checked={active}
+                  onCheckedChange={setActive}
+                />
+                <div>
+                  <FieldLabel htmlFor="product-active">
+                    {t('fields.active')}
+                  </FieldLabel>
+                  <FieldDescription>{t('activeHint')}</FieldDescription>
+                </div>
+              </Field>
+            </FormSection>
+
+            <div className="bg-muted/40 flex justify-end rounded-b-lg px-5 py-3">
+              <Button disabled={isPending}>{t('save')}</Button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function FormSection({
+  title,
+  children,
+}: {
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="grid gap-4 border-b p-5">
+      <h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+        {title}
+      </h3>
+      {children}
     </div>
   )
 }
@@ -312,10 +349,10 @@ function LocalizationFields({
   t: ReturnType<typeof useTranslations>
 }) {
   return (
-    <fieldset className="grid gap-3 rounded-md border p-3">
-      <legend className="px-1 text-sm font-semibold">
+    <div className="grid content-start gap-3">
+      <Badge variant="outline" className="w-fit">
         {locale.toUpperCase()}
-      </legend>
+      </Badge>
       <Field>
         <FieldLabel htmlFor={`product-name-${locale}`}>
           {t('fields.name')}
@@ -336,10 +373,10 @@ function LocalizationFields({
           name={`description-${locale}`}
           required
           defaultValue={values?.description}
-          className="border-input bg-background min-h-24 rounded-md border px-3 py-2 text-sm"
+          className="border-input bg-background min-h-24 resize-y rounded-md border px-3 py-2 text-sm"
         />
       </Field>
-    </fieldset>
+    </div>
   )
 }
 
@@ -359,21 +396,20 @@ function ProductPreview({
   const color = catalog.nameColors.find((item) => item.id === cosmeticId)
   const prefix = catalog.namePrefixes.find((item) => item.id === cosmeticId)
   return (
-    <aside className="bg-muted/40 flex min-h-56 flex-col items-center justify-center gap-4 rounded-lg border p-5">
-      <ShoppingBagIcon className="text-muted-foreground size-6" />
+    <aside className="bg-muted/40 flex min-w-56 shrink-0 flex-col items-center gap-1 rounded-lg border px-4 py-3">
       {category === 'name-color' && (
         <McUsername
           username="Keelfy"
           colors={color?.colors}
-          className="text-2xl"
+          className="text-xl"
         />
       )}
       {category === 'name-prefix' && (
         <div className="flex items-center gap-2">
           {prefix?.image && (
-            <Image src={prefix.image} alt="" width={32} height={32} />
+            <Image src={prefix.image} alt="" width={24} height={24} />
           )}
-          <McUsername username="Keelfy" className="text-2xl" />
+          <McUsername username="Keelfy" className="text-xl" />
         </div>
       )}
       {category === 'upgrade' && <strong>{t('seasonAccess')}</strong>}
