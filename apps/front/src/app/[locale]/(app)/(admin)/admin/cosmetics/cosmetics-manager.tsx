@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   createNameColor,
   createNamePrefix,
@@ -89,6 +90,25 @@ export default function CosmeticsManager({
   )
   const key = `${selection.type}-${selection.item?.id ?? 'new'}`
 
+  function selectColor(item?: AdminNameColor) {
+    setSelection({ type: 'color', item })
+    setName(item?.name ?? '')
+    setColors(item?.colors ?? [])
+  }
+
+  function selectPrefix(item?: AdminNamePrefix) {
+    setSelection({ type: 'prefix', item })
+    setName(item?.name ?? '')
+    setNoSpace(item?.noSpace ?? false)
+    setImage(item?.image ?? '')
+    setPrefixToken(item?.prefix ?? '')
+  }
+
+  function startCreate(type: Selection['type']) {
+    if (type === 'color') selectColor()
+    else selectPrefix()
+  }
+
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (isPending) return
@@ -130,141 +150,176 @@ export default function CosmeticsManager({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(18rem,0.85fr)_minmax(26rem,1.4fr)]">
-      <section className="border-border overflow-hidden rounded-lg border">
-        <div className="bg-muted/40 border-b p-3">
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={t('search')}
-          />
-        </div>
-        <div className="max-h-[calc(100svh-14rem)] overflow-y-auto p-2">
-          <CatalogGroup
-            title={t('colors')}
-            icon={<PaletteIcon />}
-            items={colorOptions}
-            hasProduct={(id) =>
-              linkedProducts(products, 'color', id).length > 0
-            }
-            onSelect={(item) => {
-              setSelection({ type: 'color', item })
-              setName(item.name)
-              setColors(item.colors)
-            }}
-            onCreate={() => {
-              setSelection({ type: 'color' })
-              setName('')
-              setColors([])
-            }}
-            selected={
-              selection.type === 'color' ? selection.item?.id : undefined
-            }
-          />
-          <CatalogGroup
-            title={t('prefixes')}
-            icon={<ShapesIcon />}
-            items={prefixes}
-            hasProduct={(id) =>
-              linkedProducts(products, 'prefix', id).length > 0
-            }
-            onSelect={(item) => {
-              setSelection({ type: 'prefix', item })
-              setName(item.name)
-              setNoSpace(item.noSpace)
-              setImage(item.image)
-              setPrefixToken(item.prefix)
-            }}
-            onCreate={() => {
-              setSelection({ type: 'prefix' })
-              setName('')
-              setNoSpace(false)
-              setImage('')
-              setPrefixToken('')
-            }}
-            selected={
-              selection.type === 'prefix' ? selection.item?.id : undefined
-            }
-          />
-        </div>
-      </section>
-
-      <section className="border-border rounded-lg border p-5">
-        <div className="mb-6 flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-bold">
-              {selection.item ? t('edit') : t('create')}
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              {t(selection.type === 'color' ? 'colorHint' : 'prefixHint')}
-            </p>
-          </div>
-          <Badge variant="outline">
-            {t(selection.type === 'color' ? 'color' : 'prefix')}
-          </Badge>
-        </div>
-        <form
-          key={key}
-          onSubmit={submit}
-          className="grid gap-6 xl:grid-cols-[1fr_15rem]"
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Tabs
+          value={selection.type}
+          onValueChange={(value) => startCreate(value as Selection['type'])}
         >
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor={`${key}-name`}>
-                {t('fields.name')}
-              </FieldLabel>
-              <Input
-                id={`${key}-name`}
-                name="name"
-                required
-                maxLength={255}
-                defaultValue={selection.item?.name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </Field>
+          <TabsList>
+            <TabsTrigger value="color" className="px-3">
+              <PaletteIcon />
+              {t('colors')}
+              <Badge variant="secondary">{catalog.nameColors.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="prefix" className="px-3">
+              <ShapesIcon />
+              {t('prefixes')}
+              <Badge variant="secondary">{catalog.namePrefixes.length}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <Button onClick={() => startCreate(selection.type)}>
+          <PlusIcon />
+          {t(selection.type === 'color' ? 'createColor' : 'createPrefix')}
+        </Button>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
+        <section className="border-border overflow-hidden rounded-lg border">
+          <div className="bg-muted/40 border-b p-3">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t('search')}
+            />
+          </div>
+          <div className="max-h-[calc(100svh-16rem)] overflow-y-auto p-2">
             {selection.type === 'color' ? (
-              <ColorFields
-                item={selection.item}
-                t={t}
-                onColorsChange={setColors}
+              <CatalogList
+                items={colorOptions}
+                selected={selection.item?.id}
+                onSelect={selectColor}
+                hasProduct={(id) =>
+                  linkedProducts(products, 'color', id).length > 0
+                }
+                empty={t('empty')}
+                renderPreview={(item) => (
+                  <>
+                    <span
+                      className="size-5 shrink-0 rounded-sm border"
+                      style={{ background: swatchBackground(item.colors) }}
+                    />
+                    <McUsername
+                      username={item.name}
+                      colors={item.colors}
+                      className="truncate text-base"
+                    />
+                  </>
+                )}
               />
             ) : (
-              <PrefixFields
-                item={selection.item}
-                t={t}
-                name={name}
-                prefixToken={prefixToken}
-                noSpace={noSpace}
-                setNoSpace={setNoSpace}
-                image={image}
-                onImageChange={setImage}
-                onPrefixChange={setPrefixToken}
-              />
-            )}
-            <Button disabled={isPending} className="w-fit">
-              {t('save')}
-            </Button>
-          </FieldGroup>
-          <div className="flex flex-col gap-4">
-            <CosmeticPreview
-              type={selection.type}
-              colors={colors}
-              image={image}
-              t={t}
-            />
-            {selection.item && (
-              <LinkedProducts
-                products={linkedProducts(
-                  products,
-                  selection.type,
-                  selection.item.id,
+              <CatalogList
+                items={prefixes}
+                selected={selection.item?.id}
+                onSelect={selectPrefix}
+                hasProduct={(id) =>
+                  linkedProducts(products, 'prefix', id).length > 0
+                }
+                empty={t('empty')}
+                renderPreview={(item) => (
+                  <>
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt=""
+                        width={24}
+                        height={24}
+                        className="size-6 shrink-0 object-contain"
+                      />
+                    ) : (
+                      <span className="bg-muted size-6 shrink-0 rounded-sm" />
+                    )}
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate font-medium">{item.name}</span>
+                      <span className="text-muted-foreground truncate font-mono text-xs">
+                        {item.prefix}
+                      </span>
+                    </span>
+                  </>
                 )}
-                t={t}
               />
             )}
           </div>
-        </form>
-      </section>
+        </section>
+
+        <section className="border-border rounded-lg border p-5">
+          <div className="mb-6 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold">
+                {selection.item ? t('edit') : t('create')}
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                {t(selection.type === 'color' ? 'colorHint' : 'prefixHint')}
+              </p>
+            </div>
+            <Badge variant="outline">
+              {t(selection.type === 'color' ? 'color' : 'prefix')}
+            </Badge>
+          </div>
+          <form
+            key={key}
+            onSubmit={submit}
+            className="grid gap-6 xl:grid-cols-[1fr_15rem]"
+          >
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor={`${key}-name`}>
+                  {t('fields.name')}
+                </FieldLabel>
+                <Input
+                  id={`${key}-name`}
+                  name="name"
+                  required
+                  maxLength={255}
+                  defaultValue={selection.item?.name}
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </Field>
+              {selection.type === 'color' ? (
+                <ColorFields
+                  item={selection.item}
+                  t={t}
+                  onColorsChange={setColors}
+                />
+              ) : (
+                <PrefixFields
+                  item={selection.item}
+                  t={t}
+                  name={name}
+                  prefixToken={prefixToken}
+                  noSpace={noSpace}
+                  setNoSpace={setNoSpace}
+                  image={image}
+                  onImageChange={setImage}
+                  onPrefixChange={setPrefixToken}
+                />
+              )}
+              <Button disabled={isPending} className="w-fit">
+                {t('save')}
+              </Button>
+            </FieldGroup>
+            <div className="flex flex-col gap-4">
+              <CosmeticPreview
+                type={selection.type}
+                colors={colors}
+                image={image}
+                t={t}
+              />
+              {selection.item && (
+                <LinkedProducts
+                  products={linkedProducts(
+                    products,
+                    selection.type,
+                    selection.item.id,
+                  )}
+                  t={t}
+                />
+              )}
+            </div>
+          </form>
+        </section>
+      </div>
     </div>
   )
 }
@@ -322,54 +377,49 @@ function LinkedProducts({
   )
 }
 
-function CatalogGroup<T extends { id: string; name: string }>({
-  title,
-  icon,
+// Solid for a single stop, gradient for several — mirrors McUsername.
+function swatchBackground(colors: string[]) {
+  if (colors.length === 0) return undefined
+  if (colors.length === 1) return colors[0]
+  return `linear-gradient(to right, ${colors.join(', ')})`
+}
+
+function CatalogList<T extends { id: string }>({
   items,
-  hasProduct,
-  onSelect,
-  onCreate,
   selected,
+  onSelect,
+  hasProduct,
+  empty,
+  renderPreview,
 }: {
-  title: string
-  icon: React.ReactNode
   items: T[]
-  hasProduct?: (id: string) => boolean
-  onSelect: (item: T) => void
-  onCreate: () => void
   selected?: string
+  onSelect: (item: T) => void
+  hasProduct: (id: string) => boolean
+  empty: string
+  renderPreview: (item: T) => React.ReactNode
 }) {
+  if (items.length === 0)
+    return (
+      <p className="text-muted-foreground py-8 text-center text-sm">{empty}</p>
+    )
   return (
-    <div className="mb-4">
-      <h3 className="text-muted-foreground flex items-center gap-2 px-2 py-2 text-sm font-semibold">
-        {icon}
-        <span className="flex-1">{title}</span>
-        <Badge variant="secondary">{items.length}</Badge>
-        <Button
+    <div className="grid gap-1">
+      {items.map((item) => (
+        <button
+          key={item.id}
           type="button"
-          size="icon"
-          variant="ghost"
-          className="size-7"
-          onClick={onCreate}
-          aria-label={title}
+          onClick={() => onSelect(item)}
+          className={`flex min-w-0 items-center gap-3 rounded-md border px-3 py-2 text-left text-sm transition-colors ${selected === item.id ? 'border-primary bg-accent' : 'hover:bg-muted border-transparent'}`}
         >
-          <PlusIcon />
-        </Button>
-      </h3>
-      <div className="grid gap-1">
-        {items.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onSelect(item)}
-            className={`flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm ${selected === item.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
-          >
-            <span className="flex-1">{item.name}</span>
-            {hasProduct?.(item.id) && (
-              <ShoppingBagIcon className="size-3.5 shrink-0 opacity-70" />
-            )}
-          </button>
-        ))}
-      </div>
+          <span className="flex min-w-0 flex-1 items-center gap-3">
+            {renderPreview(item)}
+          </span>
+          {hasProduct(item.id) && (
+            <ShoppingBagIcon className="text-muted-foreground size-3.5 shrink-0" />
+          )}
+        </button>
+      ))}
     </div>
   )
 }
