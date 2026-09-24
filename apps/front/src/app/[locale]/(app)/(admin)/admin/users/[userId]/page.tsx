@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -20,7 +19,7 @@ import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import AdminShell from '../../admin-shell'
+import AdminPageHeader from '../../admin-page-header'
 import { formatDate } from '../../format'
 import RoleBadge from '../../role-badge'
 
@@ -43,10 +42,11 @@ export default async function AdminUserPage({ params }: Props) {
   if (!user) notFound()
 
   return (
-    <AdminShell locale={locale} active="users">
-      <Button asChild variant="link" className="w-fit p-0">
-        <Link href={`/${locale}/admin/users`}>{t('back')}</Link>
-      </Button>
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        backHref={`/${locale}/admin/users`}
+        backLabel={t('back')}
+      />
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">{user.email || user.id}</CardTitle>
@@ -105,6 +105,6 @@ export default async function AdminUserPage({ params }: Props) {
           </Table>
         )}
       </div>
-    </AdminShell>
+    </div>
   )
 }

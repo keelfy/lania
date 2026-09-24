@@ -584,7 +584,13 @@
     }
   },
   "admin": {
-    "title": "Админ-панель",
+    "metadata": {
+      "title": "Админка — Lania"
+    },
+    "sidebar": {
+      "badge": "Админ",
+      "backToSite": "На сайт"
+    },
     "nav": {
       "users": "Пользователи",
       "profiles": "Профили",

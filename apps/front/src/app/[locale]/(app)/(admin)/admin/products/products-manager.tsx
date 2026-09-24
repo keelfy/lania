@@ -151,7 +151,7 @@ export default function ProductsManager({
             <PlusIcon />
           </Button>
         </div>
-        <div className="max-h-[68vh] overflow-y-auto p-2">
+        <div className="max-h-[calc(100svh-14rem)] overflow-y-auto p-2">
           {filtered.map((product) => {
             const name =
               product.localizations.find((item) => item.locale === 'ru')

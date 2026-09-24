@@ -1,5 +1,4 @@
 import ProfileResyncCard from '@/components/profile-resync-card'
-import { Button } from '@/components/ui/button'
 import { requireAdmin } from '@/lib/admin'
 import {
   getAdminCosmetics,
@@ -11,9 +10,8 @@ import {
 } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import AdminShell from '../../admin-shell'
+import AdminPageHeader from '../../admin-page-header'
 import GrantsCard from './grants-card'
 import MergeCard from './merge-card'
 import MergedFromCard from './merged-from-card'
@@ -64,14 +62,13 @@ export default async function AdminProfilePage({ params }: Props) {
   ])
 
   return (
-    <AdminShell locale={locale} active="profiles">
-      <Button asChild variant="link" className="w-fit p-0">
-        <Link href={`/${locale}/admin/profiles`}>{t('back')}</Link>
-      </Button>
-      <div>
-        <h2 className="text-2xl font-bold">{profile.username}</h2>
-        <p className="text-muted-foreground font-mono text-xs">{profile.id}</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        backHref={`/${locale}/admin/profiles`}
+        backLabel={t('back')}
+        title={profile.username}
+        description={<span className="font-mono text-xs">{profile.id}</span>}
+      />
       <OwnerCard profileId={profile.id} owner={profile.owner} locale={locale} />
       <RoleCard profileId={profile.id} role={profile.role} />
       <ProfileResyncCard profileId={profile.id} asAdmin />
@@ -88,6 +85,6 @@ export default async function AdminProfilePage({ params }: Props) {
         products={products}
         catalog={catalog}
       />
-    </AdminShell>
+    </div>
   )
 }

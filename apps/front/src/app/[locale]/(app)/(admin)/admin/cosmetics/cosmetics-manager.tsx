@@ -139,7 +139,7 @@ export default function CosmeticsManager({
             placeholder={t('search')}
           />
         </div>
-        <div className="max-h-[65vh] overflow-y-auto p-2">
+        <div className="max-h-[calc(100svh-14rem)] overflow-y-auto p-2">
           <CatalogGroup
             title={t('colors')}
             icon={<PaletteIcon />}

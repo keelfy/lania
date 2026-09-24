@@ -12,8 +12,8 @@ import { getAdminProfiles } from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
+import AdminPageHeader from '../admin-page-header'
 import AdminSearch from '../admin-search'
-import AdminShell from '../admin-shell'
 import { formatDate } from '../format'
 import RoleBadge from '../role-badge'
 
@@ -58,16 +58,18 @@ export default async function AdminProfilesPage({
   }
 
   return (
-    <AdminShell locale={locale} active="profiles">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-bold">{t('title')}</h2>
-        <AdminSearch
-          path={path}
-          defaultValue={search}
-          placeholder={t('searchPlaceholder')}
-          maxLength={MAX_SEARCH_LENGTH}
-        />
-      </div>
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        title={t('title')}
+        actions={
+          <AdminSearch
+            path={path}
+            defaultValue={search}
+            placeholder={t('searchPlaceholder')}
+            maxLength={MAX_SEARCH_LENGTH}
+          />
+        }
+      />
       {!profiles ? (
         <p className="text-destructive py-10 text-center">{t('loadFailed')}</p>
       ) : profiles.content.length === 0 ? (
@@ -135,6 +137,6 @@ export default async function AdminProfilesPage({
           )}
         </div>
       )}
-    </AdminShell>
+    </div>
   )
 }
