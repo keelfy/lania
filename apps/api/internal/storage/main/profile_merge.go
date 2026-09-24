@@ -209,6 +209,11 @@ const moveScreenshotAuthors = `
 UPDATE season_screenshot_authors SET profile_id = ? WHERE profile_id = ?
 `
 
+// chunk_claims has no uniqueness per profile: every claim, active or released, moves to the target.
+const moveChunkClaims = `
+UPDATE chunk_claims SET profile_id = ? WHERE profile_id = ?
+`
+
 // notifications keep the profile id inside their JSON payload, not as a column, so an old bell menu link
 // still resolves after the merge.
 const repointNotificationProfileID = `
@@ -303,6 +308,10 @@ func (q *queries) MergeProfileData(ctx context.Context, sourceProfileID, sourceM
 		return nil, err
 	}
 	if counts.ScreenshotAuthorsMoved, err = execAffected(ctx, x, moveScreenshotAuthors, targetProfileID, sourceProfileID); err != nil {
+		return nil, err
+	}
+
+	if counts.ChunkClaimsMoved, err = execAffected(ctx, x, moveChunkClaims, targetProfileID, sourceProfileID); err != nil {
 		return nil, err
 	}
 

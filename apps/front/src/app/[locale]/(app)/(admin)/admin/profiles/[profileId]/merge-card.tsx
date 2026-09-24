@@ -62,6 +62,7 @@ const COUNT_KEYS = [
   'notificationsRepointed',
   'screenshotAuthorsMoved',
   'screenshotAuthorsDropped',
+  'chunkClaimsMoved',
 ] as const satisfies readonly (keyof ProfileMergeCounts)[]
 
 function MergeCounts({ counts }: { counts: ProfileMergeCounts }) {

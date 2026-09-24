@@ -38,6 +38,7 @@ type laniaAPI struct {
 	adminGrantHandler       handlers.AdminGrantHandler
 	adminCatalogHandler     handlers.AdminCatalogHandler
 	seasonHandler           handlers.SeasonHandler
+	chunkClaimHandler       handlers.ChunkClaimHandler
 	notificationHandler     handlers.NotificationHandler
 	accountHandler          handlers.AccountHandler
 	uploadHandler           handlers.UploadHandler
@@ -65,6 +66,7 @@ func NewLaniaAPI(
 	adminGrantHandler handlers.AdminGrantHandler,
 	adminCatalogHandler handlers.AdminCatalogHandler,
 	seasonHandler handlers.SeasonHandler,
+	chunkClaimHandler handlers.ChunkClaimHandler,
 	notificationHandler handlers.NotificationHandler,
 	accountHandler handlers.AccountHandler,
 	uploadHandler handlers.UploadHandler,
@@ -90,6 +92,7 @@ func NewLaniaAPI(
 		adminGrantHandler:       adminGrantHandler,
 		adminCatalogHandler:     adminCatalogHandler,
 		seasonHandler:           seasonHandler,
+		chunkClaimHandler:       chunkClaimHandler,
 		notificationHandler:     notificationHandler,
 		accountHandler:          accountHandler,
 		uploadHandler:           uploadHandler,
@@ -210,6 +213,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				api.useUnprotectedRoutes(r)
 
 				r.Get("/screenshots", api.seasonHandler.GetSeasonScreenshots)
+				r.Get("/claims", api.chunkClaimHandler.GetChunkClaims)
 			})
 
 			r.Group(func(r chi.Router) {
@@ -218,6 +222,8 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				r.Post("/access/pre-register", api.accessHandler.ObtainFreeAccessForProfiles)
 				r.Post("/access/register", api.accessHandler.RegisterProfilesForSeason)
 				r.Post("/get-access", api.accessHandler.ObtainAccessForProfiles)
+				r.Post("/claims", api.chunkClaimHandler.ClaimChunks)
+				r.Delete("/claims", api.chunkClaimHandler.ReleaseChunks)
 			})
 		})
 	})
@@ -274,6 +280,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Post("/", api.seasonHandler.CreateSeason)
 			r.Put("/{seasonId}", api.seasonHandler.UpdateSeason)
 			r.Delete("/{seasonId}", api.seasonHandler.DeleteSeason)
+			r.Delete("/{seasonId}/claims", api.chunkClaimHandler.AdminReleaseChunks)
 
 			r.Route("/{seasonId}/screenshots", func(r chi.Router) {
 				r.Post("/upload", api.uploadHandler.UploadSeasonScreenshot)

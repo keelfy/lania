@@ -1,0 +1,165 @@
+package services
+
+import (
+	"context"
+	stdsql "database/sql"
+	"errors"
+	"fmt"
+
+	mysql "github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
+	"github.com/lania-smp/backend/internal/commands"
+	"github.com/lania-smp/backend/internal/domain"
+	"github.com/lania-smp/backend/internal/storage"
+	sql "github.com/lania-smp/backend/internal/storage/main"
+	"github.com/lania-smp/backend/internal/utils"
+)
+
+type ChunkClaimService interface {
+	// GetActiveClaims returns every claim that holds in the world of the season.
+	GetActiveClaims(ctx context.Context, seasonID uuid.UUID, world string) ([]*domain.ChunkClaim, error)
+	// ClaimChunks claims every chunk for the profile of the user, or none of them.
+	ClaimChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error
+	// ReleaseChunks ends the claims of the profile of the user on every chunk, or on none of them.
+	ReleaseChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error
+	// AdminReleaseChunks ends whatever claims hold on the chunks, in any season.
+	AdminReleaseChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error
+}
+
+type chunkClaimService struct {
+	storage       storage.MainStorage
+	seasonService SeasonService
+}
+
+func NewChunkClaimService(storage storage.MainStorage, seasonService SeasonService) ChunkClaimService {
+	return &chunkClaimService{storage: storage, seasonService: seasonService}
+}
+
+func (s *chunkClaimService) GetActiveClaims(ctx context.Context, seasonID uuid.UUID, world string) ([]*domain.ChunkClaim, error) {
+	if _, err := s.seasonService.GetSeasonByID(ctx, seasonID); err != nil {
+		return nil, err
+	}
+	claims, err := s.storage.Queries().FindActiveChunkClaims(ctx, seasonID, world)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get chunk claims", err)
+	}
+	return claims, nil
+}
+
+// claimableSeason returns the season when players can claim and release chunks in it: it runs and has a map.
+func (s *chunkClaimService) claimableSeason(ctx context.Context, seasonID uuid.UUID) (*domain.Season, error) {
+	season, err := s.seasonService.GetSeasonByID(ctx, seasonID)
+	if err != nil {
+		return nil, err
+	}
+	if !season.IsActive {
+		return nil, utils.NewBadRequestError("chunks can be claimed in an active season only", nil)
+	}
+	if season.MapURL == nil {
+		return nil, utils.NewBadRequestError("chunk claims are off in this season", nil)
+	}
+	return season, nil
+}
+
+// ownedProfile returns the profile when the user owns it.
+func (s *chunkClaimService) ownedProfile(ctx context.Context, profileID, userID uuid.UUID) (*domain.Profile, error) {
+	profile, err := s.storage.Queries().FindProfileByID(ctx, profileID)
+	if errors.Is(err, stdsql.ErrNoRows) {
+		return nil, utils.NewNotFoundError("profile not found", err)
+	} else if err != nil {
+		return nil, utils.NewInternalServerError("failed to find profile", err)
+	}
+	if profile.OwnerUserID == nil || *profile.OwnerUserID != userID {
+		return nil, utils.NewForbiddenError("only the owner can manage the claims of a profile", nil)
+	}
+	return profile, nil
+}
+
+func (s *chunkClaimService) ClaimChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error {
+	season, err := s.claimableSeason(ctx, cmd.SeasonID)
+	if err != nil {
+		return err
+	}
+	profile, err := s.ownedProfile(ctx, cmd.ProfileID, cmd.UserID)
+	if err != nil {
+		return err
+	}
+	hasAccess, err := s.storage.Queries().CheckIfProfileHasAccessBySeasonIDAndMinecraftUUID(ctx, profile.MinecraftUUID, season.ID)
+	if err != nil {
+		return utils.NewInternalServerError("failed to check season access", err)
+	}
+	if !hasAccess {
+		return utils.NewForbiddenError("the profile has no access to the season", nil)
+	}
+
+	err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
+		if err := queries.LockProfile(ctx, profile.ID); err != nil {
+			return err
+		}
+		held, err := queries.CountActiveChunkClaimsByProfile(ctx, profile.ID, season.ID)
+		if err != nil {
+			return err
+		}
+		if held+len(cmd.Chunks) > season.ClaimLimit {
+			return utils.NewConflictError(fmt.Sprintf("claim limit is %d chunks, the profile holds %d", season.ClaimLimit, held), nil)
+		}
+		taken, err := queries.CountActiveChunkClaimsAt(ctx, season.ID, cmd.World, cmd.Chunks)
+		if err != nil {
+			return err
+		}
+		if taken > 0 {
+			return utils.NewConflictError("some of the chunks are already claimed", nil)
+		}
+		return queries.InsertChunkClaims(ctx, season.ID, cmd.World, profile.ID, cmd.Chunks)
+	})
+	return claimWriteError("failed to claim chunks", err)
+}
+
+func (s *chunkClaimService) ReleaseChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error {
+	if _, err := s.claimableSeason(ctx, cmd.SeasonID); err != nil {
+		return err
+	}
+	if _, err := s.ownedProfile(ctx, cmd.ProfileID, cmd.UserID); err != nil {
+		return err
+	}
+	return s.release(ctx, cmd, &cmd.ProfileID, "some of the chunks are not claimed by the profile")
+}
+
+func (s *chunkClaimService) AdminReleaseChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error {
+	if _, err := s.seasonService.GetSeasonByID(ctx, cmd.SeasonID); err != nil {
+		return err
+	}
+	return s.release(ctx, cmd, nil, "some of the chunks are not claimed")
+}
+
+// release ends the claims on every chunk or on none: a request naming a chunk it cannot release changes nothing.
+func (s *chunkClaimService) release(ctx context.Context, cmd *commands.ClaimChunksCommand, profileID *uuid.UUID, missing string) error {
+	err := s.storage.BeginTx(ctx, func(queries sql.Queries) error {
+		released, err := queries.ReleaseChunkClaims(ctx, cmd.SeasonID, cmd.World, profileID, cmd.Chunks, cmd.UserID)
+		if err != nil {
+			return err
+		}
+		if released != int64(len(cmd.Chunks)) {
+			return utils.NewConflictError(missing, nil)
+		}
+		return nil
+	})
+	return claimWriteError("failed to release chunks", err)
+}
+
+// claimWriteError keeps the errors the transaction raised on purpose and maps a claim that lost the race for
+// a chunk to idx_chunk_claims_active to a conflict.
+func claimWriteError(msg string, err error) error {
+	if err == nil {
+		return nil
+	}
+	var customErr *utils.CustomError
+	if errors.As(err, &customErr) {
+		return err
+	}
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+		return utils.NewConflictError("some of the chunks are already claimed", err)
+	}
+	return utils.NewInternalServerError(msg, err)
+}

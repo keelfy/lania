@@ -70,6 +70,11 @@ func BindSaveSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 		endDate = &parsed
 	}
 
+	claimLimit := domain.DefaultClaimLimit
+	if req.ClaimLimit != nil {
+		claimLimit = *req.ClaimLimit
+	}
+
 	return &commands.SaveSeasonCommand{
 		Name:             strings.TrimSpace(req.Name),
 		PreviewImage:     optionalTrimmed(req.PreviewImage),
@@ -84,6 +89,8 @@ func BindSaveSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 		FreeRegistration: req.FreeRegistration,
 		GameVersion:      optionalTrimmed(req.GameVersion),
 		WorldURL:         optionalTrimmed(req.WorldURL),
+		MapURL:           optionalTrimmed(req.MapURL),
+		ClaimLimit:       claimLimit,
 	}, nil
 }
 

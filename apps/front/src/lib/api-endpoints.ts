@@ -34,6 +34,7 @@ import {
   Season,
   SeasonScreenshot,
 } from '@/models/season'
+import { ChunkClaims, ChunkPos } from '@/models/claim'
 import {
   Profile,
   PublicProfile,
@@ -820,4 +821,56 @@ export function markNotificationsRead(
       body: JSON.stringify({ ids }),
     },
   )
+}
+
+export function getChunkClaims(
+  fetcher: ApiFetcher,
+  seasonId: string,
+  world: string,
+): Promise<ChunkClaims> {
+  return fetcher<ChunkClaims>(
+    `/v1/seasons/${seasonId}/claims`,
+    new URLSearchParams({ world }),
+  )
+}
+
+// All or nothing: one taken chunk, or going over the limit, claims none of them.
+export function claimChunks(
+  fetcher: ApiFetcher,
+  seasonId: string,
+  profileId: string,
+  world: string,
+  chunks: ChunkPos[],
+): Promise<void> {
+  return fetcher<void>(`/v1/seasons/${seasonId}/claims`, undefined, {
+    method: 'POST',
+    body: JSON.stringify({ profileId, world, chunks }),
+  })
+}
+
+// Releases only the profile's own claims; one chunk it does not hold releases none of them.
+export function releaseChunks(
+  fetcher: ApiFetcher,
+  seasonId: string,
+  profileId: string,
+  world: string,
+  chunks: ChunkPos[],
+): Promise<void> {
+  return fetcher<void>(`/v1/seasons/${seasonId}/claims`, undefined, {
+    method: 'DELETE',
+    body: JSON.stringify({ profileId, world, chunks }),
+  })
+}
+
+// Releases whoever holds the chunks.
+export function adminReleaseChunks(
+  fetcher: ApiFetcher,
+  seasonId: string,
+  world: string,
+  chunks: ChunkPos[],
+): Promise<void> {
+  return fetcher<void>(`/v1/admin/seasons/${seasonId}/claims`, undefined, {
+    method: 'DELETE',
+    body: JSON.stringify({ world, chunks }),
+  })
 }

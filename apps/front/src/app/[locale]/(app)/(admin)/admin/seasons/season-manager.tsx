@@ -142,6 +142,8 @@ function SeasonDialog({
       freeRegistration,
       gameVersion: optionalString(form, 'gameVersion'),
       worldUrl: optionalString(form, 'worldUrl'),
+      mapUrl: optionalString(form, 'mapUrl'),
+      claimLimit: Number(form.get('claimLimit') ?? 0),
     }
 
     startTransition(async () => {
@@ -319,6 +321,39 @@ function SeasonDialog({
                   placeholder="https://cdn.example.com/world.zip"
                 />
                 <FieldDescription>{t('worldUrlHint')}</FieldDescription>
+              </Field>
+            </FieldGroup>
+            <FieldGroup className="grid gap-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor={`season-map-url-${season?.id ?? 'new'}`}>
+                  {t('fields.mapUrl')}
+                </FieldLabel>
+                <Input
+                  id={`season-map-url-${season?.id ?? 'new'}`}
+                  name="mapUrl"
+                  type="url"
+                  maxLength={512}
+                  defaultValue={season?.mapUrl}
+                  placeholder="https://survival-map.lania.network"
+                />
+                <FieldDescription>{t('mapUrlHint')}</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel
+                  htmlFor={`season-claim-limit-${season?.id ?? 'new'}`}
+                >
+                  {t('fields.claimLimit')}
+                </FieldLabel>
+                <Input
+                  id={`season-claim-limit-${season?.id ?? 'new'}`}
+                  name="claimLimit"
+                  type="number"
+                  min={0}
+                  max={100000}
+                  required
+                  defaultValue={season?.claimLimit ?? 100}
+                />
+                <FieldDescription>{t('claimLimitHint')}</FieldDescription>
               </Field>
             </FieldGroup>
             <Field orientation="horizontal">

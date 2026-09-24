@@ -17,6 +17,10 @@ export type Season = {
   gameVersion?: string
   // An absolute link to the world archive of a finished season.
   worldUrl?: string
+  // The squaremap of the season server. Chunk claims are off without it.
+  mapUrl?: string
+  // Chunks one profile may claim in the season, over every world together.
+  claimLimit: number
 }
 
 export type AdminSeason = Season & {
@@ -40,6 +44,8 @@ export type SaveSeason = {
   freeRegistration: boolean
   gameVersion?: string
   worldUrl?: string
+  mapUrl?: string
+  claimLimit: number
 }
 
 export type ScreenshotAuthor = {

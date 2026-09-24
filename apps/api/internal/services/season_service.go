@@ -115,6 +115,7 @@ func insertSeasonParams(id uuid.UUID, cmd *commands.SaveSeasonCommand) sql.Inser
 		IsActive:      cmd.IsActive, Preregistration: cmd.Preregistration,
 		FreeRegistration: cmd.FreeRegistration,
 		GameVersion:      cmd.GameVersion, WorldURL: cmd.WorldURL,
+		MapURL: cmd.MapURL, ClaimLimit: cmd.ClaimLimit,
 	}
 }
 
@@ -128,6 +129,7 @@ func updateSeasonParams(cmd *commands.SaveSeasonCommand) sql.UpdateSeasonParams 
 		IsActive:        cmd.IsActive,
 		Preregistration: cmd.Preregistration, FreeRegistration: cmd.FreeRegistration,
 		GameVersion: cmd.GameVersion, WorldURL: cmd.WorldURL,
+		MapURL: cmd.MapURL, ClaimLimit: cmd.ClaimLimit,
 	}
 }
 

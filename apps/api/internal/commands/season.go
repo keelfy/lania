@@ -27,6 +27,8 @@ type SaveSeasonCommand struct {
 	FreeRegistration bool
 	GameVersion      *string
 	WorldURL         *string
+	MapURL           *string
+	ClaimLimit       int
 }
 
 func (c *SaveSeasonCommand) Validate() error {
@@ -47,6 +49,8 @@ func (c *SaveSeasonCommand) Validate() error {
 		validation.Field(&c.PlanURL, validation.By(validateHTTPURL(c.PlanURL))),
 		validation.Field(&c.GameVersion, validation.By(validateRuneLength(c.GameVersion, 0, 64))),
 		validation.Field(&c.WorldURL, validation.By(validateHTTPURL(c.WorldURL))),
+		validation.Field(&c.MapURL, validation.By(validateHTTPURL(c.MapURL))),
+		validation.Field(&c.ClaimLimit, validation.Min(0), validation.Max(100000)),
 	)
 }
 

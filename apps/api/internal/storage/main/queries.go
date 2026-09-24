@@ -37,6 +37,18 @@ type Queries interface {
 	// SetSeasonScreenshotAuthors replaces every credit of the screenshot with profileIDs, in the given order.
 	SetSeasonScreenshotAuthors(ctx context.Context, screenshotID uuid.UUID, profileIDs uuid.UUIDs) error
 
+	// Chunk Claim
+	// FindActiveChunkClaims returns every claim that holds in the world of the season, each with its profile.
+	FindActiveChunkClaims(ctx context.Context, seasonID uuid.UUID, world string) ([]*domain.ChunkClaim, error)
+	CountActiveChunkClaimsByProfile(ctx context.Context, profileID, seasonID uuid.UUID) (int, error)
+	// CountActiveChunkClaimsAt returns how many of the chunks are already claimed by anyone.
+	CountActiveChunkClaimsAt(ctx context.Context, seasonID uuid.UUID, world string, chunks []domain.ChunkPos) (int, error)
+	InsertChunkClaims(ctx context.Context, seasonID uuid.UUID, world string, profileID uuid.UUID, chunks []domain.ChunkPos) error
+	// ReleaseChunkClaims returns how many claims it ended; a non-nil profileID limits it to that profile's claims.
+	ReleaseChunkClaims(ctx context.Context, seasonID uuid.UUID, world string, profileID *uuid.UUID, chunks []domain.ChunkPos, releasedBy uuid.UUID) (int64, error)
+	// LockProfile holds the profile row until the transaction ends.
+	LockProfile(ctx context.Context, profileID uuid.UUID) error
+
 	// Game Profile
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
 	// FindPublicProfiles sorts by last_seen_at in seasonID, or over every season when seasonID is uuid.Nil.

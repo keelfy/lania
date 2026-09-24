@@ -79,6 +79,8 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	adminCatalogService := services.NewAdminCatalogService(mainStorage)
 	adminCatalogHandler := handlers.NewAdminCatalogHandler(adminCatalogService, easyDonateService)
 	seasonHandler := handlers.NewSeasonHandler(seasonService)
+	chunkClaimService := services.NewChunkClaimService(mainStorage, seasonService)
+	chunkClaimHandler := handlers.NewChunkClaimHandler(chunkClaimService)
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 	accountService := services.NewAccountService(mainStorage, oryAPI, profileService, profileCosmeticsService, profileResyncService)
 	accountHandler := handlers.NewAccountHandler(accountService)
@@ -93,7 +95,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	integrationService := services.NewIntegrationService(mainStorage, orderService)
 	playerSyncService := services.NewPlayerSyncService(mainStorage, seasonService, minecraftService)
 	roleSyncService := services.NewRoleSyncService(mainStorage, minecraftService)
-	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminCatalogHandler, seasonHandler, notificationHandler, accountHandler, uploadHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
+	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminCatalogHandler, seasonHandler, chunkClaimHandler, notificationHandler, accountHandler, uploadHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
 	return laniaAPI, func() {
 		cleanup2()
 		cleanup()

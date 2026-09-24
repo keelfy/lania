@@ -28,6 +28,10 @@ type Season struct {
 	GameVersion *string
 	// WorldURL is an absolute http(s) link to the world archive of a finished season.
 	WorldURL *string
+	// MapURL is the squaremap of the season server. Chunk claims are off while it is empty.
+	MapURL *string
+	// ClaimLimit is how many chunks one profile may claim in the season, over every world together.
+	ClaimLimit int
 	// relations
 	Profiles          []*Profile
 	ProfileAccesses   []*ProfileAccess

@@ -431,7 +431,8 @@
       "products": "Products",
       "community": "Community",
       "seasons": "Seasons",
-      "cosmetics": "Cosmetics"
+      "cosmetics": "Cosmetics",
+      "claims": "Claims"
     },
     "notifications": {
       "title": "Notifications",
@@ -793,7 +794,8 @@
           "basketItemsDropped": "{count} duplicate basket item dropped",
           "notificationsRepointed": "{count} old notification now points to the target profile",
           "screenshotAuthorsMoved": "{count} season screenshot credit carried over",
-          "screenshotAuthorsDropped": "{count} season screenshot credit dropped, the target's own kept"
+          "screenshotAuthorsDropped": "{count} season screenshot credit dropped, the target's own kept",
+          "chunkClaimsMoved": "{count} chunk claim carried over"
         },
         "mergedFromTitle": "Merged from",
         "mergedFromDescription": "Profiles whose data was moved into this one. They no longer exist."
@@ -829,6 +831,8 @@
       "shellAddressHint": "host:port of the shell service that serves this season. One shell serves one season, so the address cannot repeat. RCON access is configured in shell.",
       "planUrlHint": "Address of the Plan web interface of this season. Only admins see the link.",
       "worldUrlHint": "Link to the world archive. Shown on the season page when set.",
+      "mapUrlHint": "Address of the server's squaremap. Chunk claims are off while it is empty.",
+      "claimLimitHint": "How many chunks one game profile may claim in the season, over every world.",
       "openPlan": "Open Plan",
       "fields": {
         "name": "Name",
@@ -843,7 +847,9 @@
         "preregistration": "Pre-registration",
         "freeRegistration": "Free registration",
         "gameVersion": "Game version",
-        "worldUrl": "World link"
+        "worldUrl": "World link",
+        "mapUrl": "Map (squaremap)",
+        "claimLimit": "Claim limit"
       },
       "columns": {
         "season": "Season",
@@ -995,5 +1001,36 @@
         "sale": "Sale"
       }
     }
+  },
+  "claims": {
+    "title": "Chunk claims",
+    "description": "Mark the chunks you build in on the map. Nothing is protected in game, but if someone griefs or settles next to you, it is clear who was there first.",
+    "noSeason": "No season has a map for claims right now.",
+    "mapUnavailable": "The server map is unavailable right now, try again later.",
+    "loadFailed": "Failed to load claims",
+    "worlds": {
+      "normal": "Overworld",
+      "nether": "Nether",
+      "the_end": "The End"
+    },
+    "hint": "Click selects a chunk, Shift+click selects a rectangle from the previous click.",
+    "hover": {
+      "chunk": "chunk {x}, {z}",
+      "block": "block {x}, {z}",
+      "claimed": "claimed by {username} since {date}",
+      "free": "free"
+    },
+    "signIn": "Sign in to claim chunks.",
+    "noAccess": "Players with access to the season can claim. <link>Get access</link>",
+    "held": "In this world: {count} · season limit: {limit}",
+    "clear": "Clear",
+    "claim": "Claim {count}",
+    "release": "Release {count}",
+    "adminRelease": "Remove others' claims: {count}",
+    "claimed": "{count, plural, one {# chunk} other {# chunks}} claimed",
+    "released": "{count, plural, one {# chunk} other {# chunks}} released",
+    "claimFailed": "Failed to claim",
+    "releaseFailed": "Failed to release",
+    "rules": "A claim protects nothing in game. It records who took a chunk and when: in a dispute, whoever claimed first is right."
   }
 }

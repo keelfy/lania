@@ -19,6 +19,9 @@ type Season struct {
 	FreeRegistration bool    `json:"freeRegistration"`
 	GameVersion      *string `json:"gameVersion,omitempty"`
 	WorldURL         *string `json:"worldUrl,omitempty"`
+	// MapURL is the squaremap of the season server, missing when chunk claims are off.
+	MapURL     *string `json:"mapUrl,omitempty"`
+	ClaimLimit int     `json:"claimLimit"`
 }
 
 type AdminSeason struct {
