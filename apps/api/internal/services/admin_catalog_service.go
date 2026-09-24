@@ -25,6 +25,7 @@ type AdminCatalogService interface {
 	GetProducts(ctx context.Context) ([]*domain.Product, error)
 	CreateProduct(ctx context.Context, cmd *commands.SaveProductCommand) (*domain.Product, error)
 	UpdateProduct(ctx context.Context, cmd *commands.SaveProductCommand) (*domain.Product, error)
+	DeleteProduct(ctx context.Context, id uuid.UUID) error
 }
 
 type adminCatalogService struct{ storage storage.MainStorage }
@@ -228,6 +229,17 @@ func (s *adminCatalogService) productByID(ctx context.Context, id uuid.UUID) (*d
 }
 
 func (s *adminCatalogService) CreateProduct(ctx context.Context, cmd *commands.SaveProductCommand) (*domain.Product, error) {
+	if cmd.CosmeticID != nil {
+		products, err := s.GetProducts(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, product := range products {
+			if product.Category == cmd.Category && sameUUID(linkedCosmeticID(product), cmd.CosmeticID) {
+				return nil, utils.NewConflictError("product for this cosmetic already exists", nil)
+			}
+		}
+	}
 	cmd.ID = uuid.New()
 	if err := s.saveProduct(ctx, cmd, true); err != nil {
 		return nil, err
@@ -247,4 +259,26 @@ func (s *adminCatalogService) UpdateProduct(ctx context.Context, cmd *commands.S
 		return nil, err
 	}
 	return s.productByID(ctx, cmd.ID)
+}
+
+// DeleteProduct removes a draft. Published products and products that were ever ordered stay.
+func (s *adminCatalogService) DeleteProduct(ctx context.Context, id uuid.UUID) error {
+	product, err := s.productByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if product.IsActive {
+		return utils.NewConflictError("only draft products can be deleted", nil)
+	}
+	err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
+		return queries.DeleteProduct(ctx, id)
+	})
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1451 {
+		return utils.NewConflictError("product has orders and cannot be deleted", err)
+	}
+	if err != nil {
+		return utils.NewInternalServerError("failed to delete product", err)
+	}
+	return nil
 }

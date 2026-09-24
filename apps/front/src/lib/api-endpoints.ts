@@ -727,6 +727,16 @@ export function updateAdminProduct(
   })
 }
 
+// Only drafts can be deleted: the API refuses published and ever ordered products.
+export function deleteAdminProduct(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<void> {
+  return fetcher<void>(`/v1/admin/products/${id}`, undefined, {
+    method: 'DELETE',
+  })
+}
+
 export function createEasyDonateProduct(
   fetcher: ApiFetcher,
   req: CreateEasyDonateProduct,

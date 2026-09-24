@@ -96,3 +96,19 @@ func (q *queries) DeleteEDProduct(ctx context.Context, productID uuid.UUID) erro
 	_, err := q.x.ExecContext(ctx, "DELETE FROM ed_products WHERE product_id = ?", productID)
 	return err
 }
+
+// DeleteProduct removes the product with its localizations, EasyDonate link and basket items.
+// Order items keep their foreign key, so a product that was ever ordered fails with 1451.
+func (q *queries) DeleteProduct(ctx context.Context, productID uuid.UUID) error {
+	for _, query := range []string{
+		"DELETE FROM basket_items WHERE product_id = ?",
+		"DELETE FROM ed_products WHERE product_id = ?",
+		"DELETE FROM product_localizations WHERE product_id = ?",
+		"DELETE FROM products WHERE id = ?",
+	} {
+		if _, err := q.x.ExecContext(ctx, query, productID); err != nil {
+			return err
+		}
+	}
+	return nil
+}

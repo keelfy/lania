@@ -20,6 +20,7 @@ type AdminCatalogHandler interface {
 	GetProducts(http.ResponseWriter, *http.Request)
 	CreateProduct(http.ResponseWriter, *http.Request)
 	UpdateProduct(http.ResponseWriter, *http.Request)
+	DeleteProduct(http.ResponseWriter, *http.Request)
 	CreateEasyDonateProduct(http.ResponseWriter, *http.Request)
 }
 
@@ -156,6 +157,20 @@ func (h *adminCatalogHandler) CreateProduct(w http.ResponseWriter, r *http.Reque
 }
 func (h *adminCatalogHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	h.saveProduct(w, r, true)
+}
+
+func (h *adminCatalogHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	productID, err := binders.BindPathVariableAsUUID(r, binders.ProductIDVariable)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	if err := h.service.DeleteProduct(ctx, productID); err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *adminCatalogHandler) CreateEasyDonateProduct(w http.ResponseWriter, r *http.Request) {

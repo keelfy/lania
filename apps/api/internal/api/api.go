@@ -265,6 +265,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Get("/", api.adminCatalogHandler.GetProducts)
 			r.Post("/", api.adminCatalogHandler.CreateProduct)
 			r.Put("/{productId}", api.adminCatalogHandler.UpdateProduct)
+			r.Delete("/{productId}", api.adminCatalogHandler.DeleteProduct)
 			r.Post("/easydonate", api.adminCatalogHandler.CreateEasyDonateProduct)
 		})
 

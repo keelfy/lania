@@ -134,6 +134,7 @@ type Queries interface {
 	UpsertProductLocalization(ctx context.Context, productID uuid.UUID, locale, name, description string) error
 	UpsertEDProduct(ctx context.Context, productID uuid.UUID, edProductID int64) error
 	DeleteEDProduct(ctx context.Context, productID uuid.UUID) error
+	DeleteProduct(ctx context.Context, productID uuid.UUID) error
 
 	// Prices
 	FindPricesByNames(ctx context.Context, names []domain.ProductPriceName) ([]*domain.ProductPrice, error)

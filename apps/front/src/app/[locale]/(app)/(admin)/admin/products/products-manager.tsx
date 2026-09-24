@@ -1,12 +1,27 @@
 'use client'
 
 import McUsername from '@/components/ui/mc-username'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { createAdminProduct, updateAdminProduct } from '@/lib/api-endpoints'
+import {
+  createAdminProduct,
+  deleteAdminProduct,
+  updateAdminProduct,
+} from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
 import {
@@ -85,12 +100,22 @@ export default function ProductsManager({
   )
   const ru = selected?.localizations.find((item) => item.locale === 'ru')
   const en = selected?.localizations.find((item) => item.locale === 'en')
-  const cosmetics =
+  // A cosmetic has at most one product, so a new product only offers the free ones.
+  const takenCosmetics = new Set(
+    products
+      .filter((product) => product.category === category)
+      .map(
+        (product) =>
+          product.metadata.nameColorId ?? product.metadata.namePrefixId,
+      ),
+  )
+  const cosmetics = (
     category === 'name-color'
       ? catalog.nameColors
       : category === 'name-prefix'
         ? catalog.namePrefixes
         : []
+  ).filter((item) => selected || !takenCosmetics.has(item.id))
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -125,6 +150,20 @@ export default function ProductsManager({
         router.refresh()
       } catch (error) {
         errorToast(t('saveFailed'), error)
+      }
+    })
+  }
+
+  function remove() {
+    if (!selected || isPending) return
+    startTransition(async () => {
+      try {
+        await deleteAdminProduct(clientApiFetcher, selected.id)
+        toast.success(t('deleted'))
+        chooseProduct()
+        router.refresh()
+      } catch (error) {
+        errorToast(t('deleteFailed'), error)
       }
     })
   }
@@ -312,7 +351,36 @@ export default function ProductsManager({
               </Field>
             </FormSection>
 
-            <div className="bg-muted/40 flex justify-end rounded-b-lg px-5 py-3">
+            <div className="bg-muted/40 flex justify-end gap-2 rounded-b-lg px-5 py-3">
+              {selected && !selected.isActive && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      disabled={isPending}
+                    >
+                      {t('delete')}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {t('deleteConfirmTitle')}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t('deleteConfirmDescription')}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                      <AlertDialogAction onClick={remove}>
+                        {t('delete')}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
               <Button disabled={isPending}>{t('save')}</Button>
             </div>
           </form>
