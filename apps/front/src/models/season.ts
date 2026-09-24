@@ -17,10 +17,6 @@ export type Season = {
   gameVersion?: string
   // An absolute link to the world archive of a finished season.
   worldUrl?: string
-  // The squaremap of the season server. Chunk claims are off without it.
-  mapUrl?: string
-  // Chunks one profile may claim in the season, over every world together.
-  claimLimit: number
 }
 
 export type AdminSeason = Season & {
@@ -44,8 +40,35 @@ export type SaveSeason = {
   freeRegistration: boolean
   gameVersion?: string
   worldUrl?: string
+}
+
+// One server of the season network: survival, farms, creative. Each has its own map and chunk claims.
+export type SeasonWorld = {
+  id: string
+  seasonId: string
+  // The key of the world page, /worlds/<slug>; unique within the season.
+  slug: string
+  // The same in every language.
+  name: string
+  // s3://bucket/key, the same form as Season.previewImage.
+  previewImage?: string
+  // The squaremap of the world server. The world has no map page without it.
+  mapUrl?: string
+  // Chunks one profile may claim in the world, over its claim dimensions together.
+  claimLimit: number
+  // squaremap world names where chunks can be claimed; empty for a view-only map.
+  claimDimensions: string[]
+  position: number
+}
+
+export type SaveSeasonWorld = {
+  slug: string
+  name: string
+  previewImage?: string
   mapUrl?: string
   claimLimit: number
+  claimDimensions: string[]
+  position: number
 }
 
 export type ScreenshotAuthor = {

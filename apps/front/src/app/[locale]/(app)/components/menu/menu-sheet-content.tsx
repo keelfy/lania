@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils'
 import {
   Book,
   CalendarIcon,
-  FlagIcon,
   GamepadIcon,
   HandCoinsIcon,
   MapIcon,
@@ -36,11 +35,6 @@ const menuItems = [
       label: 'items.worlds',
       href: '/worlds',
       icon: MapIcon,
-    },
-    {
-      label: 'items.claims',
-      href: '/claims',
-      icon: FlagIcon,
     },
     {
       label: 'items.wiki',

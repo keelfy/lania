@@ -37,15 +37,29 @@ type Queries interface {
 	// SetSeasonScreenshotAuthors replaces every credit of the screenshot with profileIDs, in the given order.
 	SetSeasonScreenshotAuthors(ctx context.Context, screenshotID uuid.UUID, profileIDs uuid.UUIDs) error
 
+	// Season World
+	// FindSeasonWorlds returns the worlds of the season in display order.
+	FindSeasonWorlds(ctx context.Context, seasonID uuid.UUID) ([]*domain.SeasonWorld, error)
+	// FindSeasonWorldByID returns stdsql.ErrNoRows when the world does not exist.
+	FindSeasonWorldByID(ctx context.Context, worldID uuid.UUID) (*domain.SeasonWorld, error)
+	CreateSeasonWorld(ctx context.Context, arg SaveSeasonWorldParams) error
+	// UpdateSeasonWorld reports whether a world with the id existed.
+	UpdateSeasonWorld(ctx context.Context, arg SaveSeasonWorldParams) (bool, error)
+	// DeleteSeasonWorld reports whether the world existed.
+	DeleteSeasonWorld(ctx context.Context, worldID uuid.UUID) (bool, error)
+
 	// Chunk Claim
-	// FindActiveChunkClaims returns every claim that holds in the world of the season, each with its profile.
-	FindActiveChunkClaims(ctx context.Context, seasonID uuid.UUID, world string) ([]*domain.ChunkClaim, error)
-	CountActiveChunkClaimsByProfile(ctx context.Context, profileID, seasonID uuid.UUID) (int, error)
+	// FindActiveChunkClaims returns every claim that holds in the dimension of the world, each with its profile.
+	FindActiveChunkClaims(ctx context.Context, worldID uuid.UUID, dimension string) ([]*domain.ChunkClaim, error)
+	// CountActiveChunkClaimsByProfile counts the claims the profile holds in the world, over every dimension.
+	CountActiveChunkClaimsByProfile(ctx context.Context, profileID, worldID uuid.UUID) (int, error)
 	// CountActiveChunkClaimsAt returns how many of the chunks are already claimed by anyone.
-	CountActiveChunkClaimsAt(ctx context.Context, seasonID uuid.UUID, world string, chunks []domain.ChunkPos) (int, error)
-	InsertChunkClaims(ctx context.Context, seasonID uuid.UUID, world string, profileID uuid.UUID, chunks []domain.ChunkPos) error
+	CountActiveChunkClaimsAt(ctx context.Context, worldID uuid.UUID, dimension string, chunks []domain.ChunkPos) (int, error)
+	InsertChunkClaims(ctx context.Context, worldID uuid.UUID, dimension string, profileID uuid.UUID, chunks []domain.ChunkPos) error
 	// ReleaseChunkClaims returns how many claims it ended; a non-nil profileID limits it to that profile's claims.
-	ReleaseChunkClaims(ctx context.Context, seasonID uuid.UUID, world string, profileID *uuid.UUID, chunks []domain.ChunkPos, releasedBy uuid.UUID) (int64, error)
+	ReleaseChunkClaims(ctx context.Context, worldID uuid.UUID, dimension string, profileID *uuid.UUID, chunks []domain.ChunkPos, releasedBy uuid.UUID) (int64, error)
+	// CountChunkClaimsInWorld counts every claim the world ever had, released ones too.
+	CountChunkClaimsInWorld(ctx context.Context, worldID uuid.UUID) (int, error)
 	// LockProfile holds the profile row until the transaction ends.
 	LockProfile(ctx context.Context, profileID uuid.UUID) error
 

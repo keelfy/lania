@@ -73,6 +73,7 @@ import React from 'react'
 import { toast } from 'sonner'
 import AdminPageHeader from '../admin-page-header'
 import SeasonScreenshotsManager from './season-screenshots-manager'
+import SeasonWorldsManager from './season-worlds-manager'
 
 type Props = {
   seasons: AdminSeason[]
@@ -142,8 +143,6 @@ function SeasonDialog({
       freeRegistration,
       gameVersion: optionalString(form, 'gameVersion'),
       worldUrl: optionalString(form, 'worldUrl'),
-      mapUrl: optionalString(form, 'mapUrl'),
-      claimLimit: Number(form.get('claimLimit') ?? 0),
     }
 
     startTransition(async () => {
@@ -321,39 +320,6 @@ function SeasonDialog({
                   placeholder="https://cdn.example.com/world.zip"
                 />
                 <FieldDescription>{t('worldUrlHint')}</FieldDescription>
-              </Field>
-            </FieldGroup>
-            <FieldGroup className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor={`season-map-url-${season?.id ?? 'new'}`}>
-                  {t('fields.mapUrl')}
-                </FieldLabel>
-                <Input
-                  id={`season-map-url-${season?.id ?? 'new'}`}
-                  name="mapUrl"
-                  type="url"
-                  maxLength={512}
-                  defaultValue={season?.mapUrl}
-                  placeholder="https://survival-map.lania.network"
-                />
-                <FieldDescription>{t('mapUrlHint')}</FieldDescription>
-              </Field>
-              <Field>
-                <FieldLabel
-                  htmlFor={`season-claim-limit-${season?.id ?? 'new'}`}
-                >
-                  {t('fields.claimLimit')}
-                </FieldLabel>
-                <Input
-                  id={`season-claim-limit-${season?.id ?? 'new'}`}
-                  name="claimLimit"
-                  type="number"
-                  min={0}
-                  max={100000}
-                  required
-                  defaultValue={season?.claimLimit ?? 100}
-                />
-                <FieldDescription>{t('claimLimitHint')}</FieldDescription>
               </Field>
             </FieldGroup>
             <Field orientation="horizontal">
@@ -560,6 +526,7 @@ export default function SeasonManager({ seasons, locale, title }: Props) {
                 <CardTitle className="text-lg">{season.name}</CardTitle>
                 <SeasonBadges season={season} />
                 <CardAction className="flex gap-2">
+                  <SeasonWorldsManager season={season} />
                   <SeasonScreenshotsManager season={season} />
                   <SeasonDialog season={season} />
                 </CardAction>
@@ -656,6 +623,7 @@ export default function SeasonManager({ seasons, locale, title }: Props) {
                             <TooltipContent>{t('openPlan')}</TooltipContent>
                           </Tooltip>
                         )}
+                        <SeasonWorldsManager season={season} compact />
                         <SeasonScreenshotsManager season={season} compact />
                         <SeasonDialog season={season} compact />
                         <DeleteSeasonDialog season={season} />

@@ -31,8 +31,10 @@ import {
   AdminSeason,
   SaveSeason,
   SaveSeasonScreenshot,
+  SaveSeasonWorld,
   Season,
   SeasonScreenshot,
+  SeasonWorld,
 } from '@/models/season'
 import { ChunkClaims, ChunkPos } from '@/models/claim'
 import {
@@ -823,54 +825,104 @@ export function markNotificationsRead(
   )
 }
 
-export function getChunkClaims(
+export function getSeasonWorlds(
   fetcher: ApiFetcher,
   seasonId: string,
-  world: string,
+): Promise<SeasonWorld[]> {
+  return fetcher<SeasonWorld[]>(`/v1/seasons/${seasonId}/worlds`)
+}
+
+export function getSeasonWorld(
+  fetcher: ApiFetcher,
+  worldId: string,
+): Promise<SeasonWorld> {
+  return fetcher<SeasonWorld>(`/v1/worlds/${worldId}`)
+}
+
+export function createSeasonWorld(
+  fetcher: ApiFetcher,
+  seasonId: string,
+  world: SaveSeasonWorld,
+): Promise<SeasonWorld> {
+  return fetcher<SeasonWorld>(
+    `/v1/admin/seasons/${seasonId}/worlds`,
+    undefined,
+    {
+      method: 'POST',
+      body: JSON.stringify(world),
+    },
+  )
+}
+
+export function updateSeasonWorld(
+  fetcher: ApiFetcher,
+  worldId: string,
+  world: SaveSeasonWorld,
+): Promise<SeasonWorld> {
+  return fetcher<SeasonWorld>(`/v1/admin/worlds/${worldId}`, undefined, {
+    method: 'PUT',
+    body: JSON.stringify(world),
+  })
+}
+
+// Refused for a world that ever had claims; remove its map instead.
+export function deleteSeasonWorld(
+  fetcher: ApiFetcher,
+  worldId: string,
+): Promise<void> {
+  return fetcher<void>(`/v1/admin/worlds/${worldId}`, undefined, {
+    method: 'DELETE',
+  })
+}
+
+export function getChunkClaims(
+  fetcher: ApiFetcher,
+  worldId: string,
+  dimension: string,
 ): Promise<ChunkClaims> {
   return fetcher<ChunkClaims>(
-    `/v1/seasons/${seasonId}/claims`,
-    new URLSearchParams({ world }),
+    `/v1/worlds/${worldId}/claims`,
+    new URLSearchParams({ dimension }),
   )
 }
 
 // All or nothing: one taken chunk, or going over the limit, claims none of them.
 export function claimChunks(
   fetcher: ApiFetcher,
-  seasonId: string,
+  worldId: string,
   profileId: string,
-  world: string,
+  dimension: string,
   chunks: ChunkPos[],
 ): Promise<void> {
-  return fetcher<void>(`/v1/seasons/${seasonId}/claims`, undefined, {
+  return fetcher<void>(`/v1/worlds/${worldId}/claims`, undefined, {
     method: 'POST',
-    body: JSON.stringify({ profileId, world, chunks }),
+    body: JSON.stringify({ profileId, dimension, chunks }),
   })
 }
 
 // Releases only the profile's own claims; one chunk it does not hold releases none of them.
 export function releaseChunks(
   fetcher: ApiFetcher,
-  seasonId: string,
+  worldId: string,
   profileId: string,
-  world: string,
+  dimension: string,
   chunks: ChunkPos[],
 ): Promise<void> {
-  return fetcher<void>(`/v1/seasons/${seasonId}/claims`, undefined, {
+  return fetcher<void>(`/v1/worlds/${worldId}/claims`, undefined, {
     method: 'DELETE',
-    body: JSON.stringify({ profileId, world, chunks }),
+    body: JSON.stringify({ profileId, dimension, chunks }),
   })
 }
 
 // Releases whoever holds the chunks.
 export function adminReleaseChunks(
   fetcher: ApiFetcher,
-  seasonId: string,
-  world: string,
+  worldId: string,
+  dimension: string,
   chunks: ChunkPos[],
 ): Promise<void> {
-  return fetcher<void>(`/v1/admin/seasons/${seasonId}/claims`, undefined, {
+  return fetcher<void>(`/v1/admin/worlds/${worldId}/claims`, undefined, {
     method: 'DELETE',
-    body: JSON.stringify({ world, chunks }),
+    body: JSON.stringify({ dimension, chunks }),
   })
 }

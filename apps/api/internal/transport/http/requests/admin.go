@@ -44,9 +44,17 @@ type SaveSeason struct {
 	FreeRegistration bool    `json:"freeRegistration"`
 	GameVersion      *string `json:"gameVersion"`
 	WorldURL         *string `json:"worldUrl"`
-	MapURL           *string `json:"mapUrl"`
+}
+
+type SaveSeasonWorld struct {
+	Slug         string  `json:"slug"`
+	Name         string  `json:"name"`
+	PreviewImage *string `json:"previewImage"`
+	MapURL       *string `json:"mapUrl"`
 	// ClaimLimit falls back to domain.DefaultClaimLimit when the request leaves it out.
-	ClaimLimit *int `json:"claimLimit"`
+	ClaimLimit      *int     `json:"claimLimit"`
+	ClaimDimensions []string `json:"claimDimensions"`
+	Position        int      `json:"position"`
 }
 
 type SaveSeasonScreenshot struct {

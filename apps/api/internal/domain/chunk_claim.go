@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// DefaultClaimLimit is how many chunks one profile may claim in a season that sets no limit of its own.
+// DefaultClaimLimit is how many chunks one profile may claim in a world that sets no limit of its own.
 const DefaultClaimLimit = 100
 
 // MaxClaimBatch is the most chunks one request may claim or release.
@@ -24,9 +24,10 @@ type ChunkPos struct {
 // ChunkClaim is a chunk a player reserved on the site map. Nothing is protected in game, the claim only
 // records who reserved the chunk and since when.
 type ChunkClaim struct {
-	ID        uuid.UUID
-	SeasonID  uuid.UUID
-	World     string
+	ID      uuid.UUID
+	WorldID uuid.UUID
+	// Dimension is the squaremap world name of the world server, e.g. minecraft_overworld.
+	Dimension string
 	Chunk     ChunkPos
 	ProfileID uuid.UUID
 	ClaimedAt time.Time

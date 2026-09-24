@@ -38,6 +38,7 @@ type laniaAPI struct {
 	adminGrantHandler       handlers.AdminGrantHandler
 	adminCatalogHandler     handlers.AdminCatalogHandler
 	seasonHandler           handlers.SeasonHandler
+	seasonWorldHandler      handlers.SeasonWorldHandler
 	chunkClaimHandler       handlers.ChunkClaimHandler
 	notificationHandler     handlers.NotificationHandler
 	accountHandler          handlers.AccountHandler
@@ -66,6 +67,7 @@ func NewLaniaAPI(
 	adminGrantHandler handlers.AdminGrantHandler,
 	adminCatalogHandler handlers.AdminCatalogHandler,
 	seasonHandler handlers.SeasonHandler,
+	seasonWorldHandler handlers.SeasonWorldHandler,
 	chunkClaimHandler handlers.ChunkClaimHandler,
 	notificationHandler handlers.NotificationHandler,
 	accountHandler handlers.AccountHandler,
@@ -92,6 +94,7 @@ func NewLaniaAPI(
 		adminGrantHandler:       adminGrantHandler,
 		adminCatalogHandler:     adminCatalogHandler,
 		seasonHandler:           seasonHandler,
+		seasonWorldHandler:      seasonWorldHandler,
 		chunkClaimHandler:       chunkClaimHandler,
 		notificationHandler:     notificationHandler,
 		accountHandler:          accountHandler,
@@ -213,7 +216,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				api.useUnprotectedRoutes(r)
 
 				r.Get("/screenshots", api.seasonHandler.GetSeasonScreenshots)
-				r.Get("/claims", api.chunkClaimHandler.GetChunkClaims)
+				r.Get("/worlds", api.seasonWorldHandler.GetSeasonWorlds)
 			})
 
 			r.Group(func(r chi.Router) {
@@ -222,9 +225,23 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				r.Post("/access/pre-register", api.accessHandler.ObtainFreeAccessForProfiles)
 				r.Post("/access/register", api.accessHandler.RegisterProfilesForSeason)
 				r.Post("/get-access", api.accessHandler.ObtainAccessForProfiles)
-				r.Post("/claims", api.chunkClaimHandler.ClaimChunks)
-				r.Delete("/claims", api.chunkClaimHandler.ReleaseChunks)
 			})
+		})
+	})
+
+	r.Route("/worlds/{worldId}", func(r chi.Router) {
+		r.Group(func(r chi.Router) {
+			api.useUnprotectedRoutes(r)
+
+			r.Get("/", api.seasonWorldHandler.GetSeasonWorld)
+			r.Get("/claims", api.chunkClaimHandler.GetChunkClaims)
+		})
+
+		r.Group(func(r chi.Router) {
+			api.useProtectedRoutes(r)
+
+			r.Post("/claims", api.chunkClaimHandler.ClaimChunks)
+			r.Delete("/claims", api.chunkClaimHandler.ReleaseChunks)
 		})
 	})
 
@@ -262,6 +279,12 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Put("/name-prefixes/{cosmeticId}", api.adminCatalogHandler.UpdateNamePrefix)
 		})
 
+		r.Route("/worlds/{worldId}", func(r chi.Router) {
+			r.Put("/", api.seasonWorldHandler.UpdateSeasonWorld)
+			r.Delete("/", api.seasonWorldHandler.DeleteSeasonWorld)
+			r.Delete("/claims", api.chunkClaimHandler.AdminReleaseChunks)
+		})
+
 		r.Route("/uploads", func(r chi.Router) {
 			r.Post("/glyth-preview", api.uploadHandler.UploadGlythPreview)
 			r.Post("/season-preview", api.uploadHandler.UploadSeasonPreview)
@@ -280,7 +303,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Post("/", api.seasonHandler.CreateSeason)
 			r.Put("/{seasonId}", api.seasonHandler.UpdateSeason)
 			r.Delete("/{seasonId}", api.seasonHandler.DeleteSeason)
-			r.Delete("/{seasonId}/claims", api.chunkClaimHandler.AdminReleaseChunks)
+			r.Post("/{seasonId}/worlds", api.seasonWorldHandler.CreateSeasonWorld)
 
 			r.Route("/{seasonId}/screenshots", func(r chi.Router) {
 				r.Post("/upload", api.uploadHandler.UploadSeasonScreenshot)

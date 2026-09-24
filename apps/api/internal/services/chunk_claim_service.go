@@ -16,49 +16,56 @@ import (
 )
 
 type ChunkClaimService interface {
-	// GetActiveClaims returns every claim that holds in the world of the season.
-	GetActiveClaims(ctx context.Context, seasonID uuid.UUID, world string) ([]*domain.ChunkClaim, error)
+	// GetActiveClaims returns every claim that holds in the dimension of the world, and the world.
+	GetActiveClaims(ctx context.Context, worldID uuid.UUID, dimension string) (*domain.SeasonWorld, []*domain.ChunkClaim, error)
 	// ClaimChunks claims every chunk for the profile of the user, or none of them.
 	ClaimChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error
 	// ReleaseChunks ends the claims of the profile of the user on every chunk, or on none of them.
 	ReleaseChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error
-	// AdminReleaseChunks ends whatever claims hold on the chunks, in any season.
+	// AdminReleaseChunks ends whatever claims hold on the chunks, in any season and dimension.
 	AdminReleaseChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error
 }
 
 type chunkClaimService struct {
 	storage       storage.MainStorage
 	seasonService SeasonService
+	worldService  SeasonWorldService
 }
 
-func NewChunkClaimService(storage storage.MainStorage, seasonService SeasonService) ChunkClaimService {
-	return &chunkClaimService{storage: storage, seasonService: seasonService}
+func NewChunkClaimService(storage storage.MainStorage, seasonService SeasonService, worldService SeasonWorldService) ChunkClaimService {
+	return &chunkClaimService{storage: storage, seasonService: seasonService, worldService: worldService}
 }
 
-func (s *chunkClaimService) GetActiveClaims(ctx context.Context, seasonID uuid.UUID, world string) ([]*domain.ChunkClaim, error) {
-	if _, err := s.seasonService.GetSeasonByID(ctx, seasonID); err != nil {
-		return nil, err
-	}
-	claims, err := s.storage.Queries().FindActiveChunkClaims(ctx, seasonID, world)
+func (s *chunkClaimService) GetActiveClaims(ctx context.Context, worldID uuid.UUID, dimension string) (*domain.SeasonWorld, []*domain.ChunkClaim, error) {
+	world, err := s.worldService.GetSeasonWorld(ctx, worldID)
 	if err != nil {
-		return nil, utils.NewInternalServerError("failed to get chunk claims", err)
+		return nil, nil, err
 	}
-	return claims, nil
+	claims, err := s.storage.Queries().FindActiveChunkClaims(ctx, worldID, dimension)
+	if err != nil {
+		return nil, nil, utils.NewInternalServerError("failed to get chunk claims", err)
+	}
+	return world, claims, nil
 }
 
-// claimableSeason returns the season when players can claim and release chunks in it: it runs and has a map.
-func (s *chunkClaimService) claimableSeason(ctx context.Context, seasonID uuid.UUID) (*domain.Season, error) {
-	season, err := s.seasonService.GetSeasonByID(ctx, seasonID)
+// claimableWorld returns the world and its season when players can claim and release chunks of the dimension:
+// the season runs, the world has a map and claims are on in the dimension.
+func (s *chunkClaimService) claimableWorld(ctx context.Context, worldID uuid.UUID, dimension string) (*domain.SeasonWorld, *domain.Season, error) {
+	world, err := s.worldService.GetSeasonWorld(ctx, worldID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	season, err := s.seasonService.GetSeasonByID(ctx, world.SeasonID)
+	if err != nil {
+		return nil, nil, err
 	}
 	if !season.IsActive {
-		return nil, utils.NewBadRequestError("chunks can be claimed in an active season only", nil)
+		return nil, nil, utils.NewBadRequestError("chunks can be claimed in an active season only", nil)
 	}
-	if season.MapURL == nil {
-		return nil, utils.NewBadRequestError("chunk claims are off in this season", nil)
+	if !world.ClaimsIn(dimension) {
+		return nil, nil, utils.NewBadRequestError("chunk claims are off in this dimension", nil)
 	}
-	return season, nil
+	return world, season, nil
 }
 
 // ownedProfile returns the profile when the user owns it.
@@ -76,7 +83,7 @@ func (s *chunkClaimService) ownedProfile(ctx context.Context, profileID, userID 
 }
 
 func (s *chunkClaimService) ClaimChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error {
-	season, err := s.claimableSeason(ctx, cmd.SeasonID)
+	world, season, err := s.claimableWorld(ctx, cmd.WorldID, cmd.Dimension)
 	if err != nil {
 		return err
 	}
@@ -96,27 +103,27 @@ func (s *chunkClaimService) ClaimChunks(ctx context.Context, cmd *commands.Claim
 		if err := queries.LockProfile(ctx, profile.ID); err != nil {
 			return err
 		}
-		held, err := queries.CountActiveChunkClaimsByProfile(ctx, profile.ID, season.ID)
+		held, err := queries.CountActiveChunkClaimsByProfile(ctx, profile.ID, world.ID)
 		if err != nil {
 			return err
 		}
-		if held+len(cmd.Chunks) > season.ClaimLimit {
-			return utils.NewConflictError(fmt.Sprintf("claim limit is %d chunks, the profile holds %d", season.ClaimLimit, held), nil)
+		if held+len(cmd.Chunks) > world.ClaimLimit {
+			return utils.NewConflictError(fmt.Sprintf("claim limit is %d chunks, the profile holds %d", world.ClaimLimit, held), nil)
 		}
-		taken, err := queries.CountActiveChunkClaimsAt(ctx, season.ID, cmd.World, cmd.Chunks)
+		taken, err := queries.CountActiveChunkClaimsAt(ctx, world.ID, cmd.Dimension, cmd.Chunks)
 		if err != nil {
 			return err
 		}
 		if taken > 0 {
 			return utils.NewConflictError("some of the chunks are already claimed", nil)
 		}
-		return queries.InsertChunkClaims(ctx, season.ID, cmd.World, profile.ID, cmd.Chunks)
+		return queries.InsertChunkClaims(ctx, world.ID, cmd.Dimension, profile.ID, cmd.Chunks)
 	})
 	return claimWriteError("failed to claim chunks", err)
 }
 
 func (s *chunkClaimService) ReleaseChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error {
-	if _, err := s.claimableSeason(ctx, cmd.SeasonID); err != nil {
+	if _, _, err := s.claimableWorld(ctx, cmd.WorldID, cmd.Dimension); err != nil {
 		return err
 	}
 	if _, err := s.ownedProfile(ctx, cmd.ProfileID, cmd.UserID); err != nil {
@@ -126,7 +133,7 @@ func (s *chunkClaimService) ReleaseChunks(ctx context.Context, cmd *commands.Cla
 }
 
 func (s *chunkClaimService) AdminReleaseChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error {
-	if _, err := s.seasonService.GetSeasonByID(ctx, cmd.SeasonID); err != nil {
+	if _, err := s.worldService.GetSeasonWorld(ctx, cmd.WorldID); err != nil {
 		return err
 	}
 	return s.release(ctx, cmd, nil, "some of the chunks are not claimed")
@@ -135,7 +142,7 @@ func (s *chunkClaimService) AdminReleaseChunks(ctx context.Context, cmd *command
 // release ends the claims on every chunk or on none: a request naming a chunk it cannot release changes nothing.
 func (s *chunkClaimService) release(ctx context.Context, cmd *commands.ClaimChunksCommand, profileID *uuid.UUID, missing string) error {
 	err := s.storage.BeginTx(ctx, func(queries sql.Queries) error {
-		released, err := queries.ReleaseChunkClaims(ctx, cmd.SeasonID, cmd.World, profileID, cmd.Chunks, cmd.UserID)
+		released, err := queries.ReleaseChunkClaims(ctx, cmd.WorldID, cmd.Dimension, profileID, cmd.Chunks, cmd.UserID)
 		if err != nil {
 			return err
 		}

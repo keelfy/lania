@@ -94,30 +94,18 @@
     },
     "mapsTitle": "World maps",
     "openMap": "Open map",
-    "elements": {
-      "survival": {
-        "title": "Survival",
-        "description": "World with all the possible conveniences for construction and self-expression. Here the most beautiful buildings are created by players of the entire network of servers."
-      },
-      "farms": {
-        "title": "Farms",
-        "description": "Farms world is intended for the construction of personal and common farms, but living here is not prohibited."
-      }
-    },
     "maps": {
       "metadata": {
-        "title": "Map of <world/> - Lania Network",
-        "description": "Map for the <world/> server of Lania Network."
-      },
-      "title": "Map of <world/>",
-      "mapNames": {
-        "survival": "Survival",
-        "farms": "Farms"
+        "title": "{world} - Lania Network maps",
+        "description": "Map of the {world} world and its chunk claims - Lania Network."
       },
       "breadcrumbs": {
         "title": "World maps"
-      }
-    }
+      },
+      "unavailable": "The map of this world is unavailable right now, try again later."
+    },
+    "claimsBadge": "Claims",
+    "noMap": "No map"
   },
   "wiki": {
     "metadata": {
@@ -431,8 +419,7 @@
       "products": "Products",
       "community": "Community",
       "seasons": "Seasons",
-      "cosmetics": "Cosmetics",
-      "claims": "Claims"
+      "cosmetics": "Cosmetics"
     },
     "notifications": {
       "title": "Notifications",
@@ -831,8 +818,6 @@
       "shellAddressHint": "host:port of the shell service that serves this season. One shell serves one season, so the address cannot repeat. RCON access is configured in shell.",
       "planUrlHint": "Address of the Plan web interface of this season. Only admins see the link.",
       "worldUrlHint": "Link to the world archive. Shown on the season page when set.",
-      "mapUrlHint": "Address of the server's squaremap. Chunk claims are off while it is empty.",
-      "claimLimitHint": "How many chunks one game profile may claim in the season, over every world.",
       "openPlan": "Open Plan",
       "fields": {
         "name": "Name",
@@ -847,9 +832,7 @@
         "preregistration": "Pre-registration",
         "freeRegistration": "Free registration",
         "gameVersion": "Game version",
-        "worldUrl": "World link",
-        "mapUrl": "Map (squaremap)",
-        "claimLimit": "Claim limit"
+        "worldUrl": "World link"
       },
       "columns": {
         "season": "Season",
@@ -900,6 +883,53 @@
           "image": "Image",
           "title": "Caption",
           "authors": "Authors",
+          "actions": "Actions"
+        }
+      },
+      "worlds": {
+        "manage": "Worlds",
+        "dialogTitle": "Worlds of {name}",
+        "dialogDescription": "Servers of the season network. Each has its own map, chunk claims and limit.",
+        "formDescription": "A world with a map shows on the servers page and opens at /worlds/<slug>.",
+        "add": "Add world",
+        "edit": "Edit world",
+        "empty": "No worlds yet",
+        "loadFailed": "Failed to load worlds",
+        "saveFailed": "Failed to save the world",
+        "created": "World added",
+        "updated": "World updated",
+        "deleted": "World deleted",
+        "deleteFailed": "Failed to delete the world",
+        "deleteTitle": "Delete the world?",
+        "deleteDescription": "{name} will be deleted. A world that ever had chunk claims cannot be deleted: remove its map instead.",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "save": "Save",
+        "noMap": "No map",
+        "claimsOff": "Off",
+        "claimsSummary": "Limit {limit} · {dimensions, plural, one {# dimension} other {# dimensions}}",
+        "slugHint": "Latin letters, digits and dashes. Unique within the season.",
+        "mapUrlHint": "The squaremap of this server. While empty, the world has no map and no claims.",
+        "claimDimensionsHint": "Where claims work. Other dimensions are view-only on the map.",
+        "otherDimensionsPlaceholder": "Other squaremap dimensions, comma-separated",
+        "claimLimitHint": "How many chunks one game profile may claim in this world.",
+        "dimensions": {
+          "minecraft_overworld": "Overworld",
+          "minecraft_the_nether": "Nether",
+          "minecraft_the_end": "The End"
+        },
+        "fields": {
+          "name": "Name",
+          "slug": "Slug",
+          "previewImage": "Image",
+          "mapUrl": "Map (squaremap)",
+          "claimDimensions": "Claim dimensions",
+          "claimLimit": "Claim limit",
+          "position": "Position"
+        },
+        "columns": {
+          "world": "World",
+          "claims": "Claims",
           "actions": "Actions"
         }
       }
@@ -1003,12 +1033,8 @@
     }
   },
   "claims": {
-    "title": "Chunk claims",
-    "description": "Mark the chunks you build in on the map. Nothing is protected in game, but if someone griefs or settles next to you, it is clear who was there first.",
-    "noSeason": "No season has a map for claims right now.",
-    "mapUnavailable": "The server map is unavailable right now, try again later.",
     "loadFailed": "Failed to load claims",
-    "worlds": {
+    "dimensions": {
       "normal": "Overworld",
       "nether": "Nether",
       "the_end": "The End"
@@ -1028,7 +1054,7 @@
     },
     "signIn": "Sign in to claim chunks.",
     "noAccess": "Players with access to the season can claim. <link>Get access</link>",
-    "held": "In this world: {count} · season limit: {limit}",
+    "held": "Here: {count} · world limit: {limit}",
     "clear": "Clear",
     "claim": "Claim {count}",
     "release": "Release {count}",
@@ -1037,6 +1063,9 @@
     "released": "{count, plural, one {# chunk} other {# chunks}} released",
     "claimFailed": "Failed to claim",
     "releaseFailed": "Failed to release",
-    "rules": "A claim protects nothing in game. It records who took a chunk and when: in a dispute, whoever claimed first is right."
+    "rules": "A claim protects nothing in game. It records who took a chunk and when: in a dispute, whoever claimed first is right.",
+    "claimsOff": "Claims are off in this dimension.",
+    "viewOnly": "Claims are off in this world.",
+    "viewHint": "Click a chunk to see whose it is. Hold the wheel to move the map, scroll to zoom."
   }
 }

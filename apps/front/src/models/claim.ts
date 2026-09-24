@@ -17,14 +17,14 @@ export type ChunkClaimProfile = {
   cosmetics: ProfileCosmetics
 }
 
-// Every claim that holds in one world; each claiming profile is listed once.
+// Every claim that holds in one dimension of a world; each claiming profile is listed once.
 export type ChunkClaims = {
   claims: ChunkClaim[]
   profiles: ChunkClaimProfile[]
 }
 
-// A squaremap world as the claims map draws it, read from the map's settings.json.
-export type MapWorld = {
+// A dimension of a world server as the map draws it: one squaremap world, read from the map's settings.json.
+export type MapDimension = {
   name: string
   type: 'normal' | 'nether' | 'the_end'
   // The zoom where one tile pixel is one block.
@@ -56,7 +56,7 @@ export type MapPlayer = {
   cosmetics?: NameCosmetics
 }
 
-// What changes on the map while it is open: markers and the players online in the world.
+// What changes on the map while it is open: markers and the players online in the dimension.
 export type MapLive = {
   markers: MapMarker[]
   players: MapPlayer[]

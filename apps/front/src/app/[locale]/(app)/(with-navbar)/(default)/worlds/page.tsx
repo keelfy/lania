@@ -3,13 +3,8 @@ import pinger from 'minecraft-pinger'
 import { Metadata } from 'next'
 import { unstable_cache } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
-import { readFile } from 'node:fs/promises'
-import path from 'node:path'
-import { ServerMapInfo } from '@/models/server'
 import ServerCard from './server-card'
-import { getSeasons } from '@/lib/api-endpoints'
-import { serverApiFetcher } from '@/lib/server'
-import { Season } from '@/models/season'
+import { ActiveSeasonWorlds, getActiveSeasonWorlds } from '@/lib/worlds'
 
 type Props = {
   params: Promise<{
@@ -59,31 +54,19 @@ export default async function WorldPage({ params }: Props) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'worlds' })
 
-  const seasons = (
-    await getSeasons(serverApiFetcher).catch(() => [] as Season[])
-  ).filter((season): season is Season => season.isActive)
-
-  const mapsPerServer = await readFile(
-    path.join(process.cwd(), 'public/data/server-maps.json'),
-    'utf-8',
+  const seasons = await getActiveSeasonWorlds().catch(
+    () => [] as ActiveSeasonWorlds[],
   )
-    .then((raw) => JSON.parse(raw))
-    .catch((error) => {
-      console.error('Failed to read server-maps.json', error)
-      return {}
-    })
 
   const statuses = await Promise.all(
     seasons
-      .filter((server) => !!server.publicAddress)
-      .map(async (server) => ({
-        server,
-        status: await pingServer(server.publicAddress!),
+      .filter(({ season }) => !!season.publicAddress)
+      .map(async ({ season, worlds }) => ({
+        server: season,
+        worlds,
+        status: await pingServer(season.publicAddress!),
       })),
   )
-
-  const mapsFor = (server: Season) =>
-    (mapsPerServer[server.id] as ServerMapInfo[] | undefined) ?? []
 
   // The flagship season gets the hero treatment; everything else is
   // secondary and shown as compact status rows below it.
@@ -98,7 +81,7 @@ export default async function WorldPage({ params }: Props) {
           variant="primary"
           locale={locale}
           server={primary.server}
-          maps={mapsFor(primary.server)}
+          worlds={primary.worlds}
           status={primary.status}
         />
       )}
@@ -108,13 +91,13 @@ export default async function WorldPage({ params }: Props) {
             {t('otherServers')}
           </h2>
           <div className="flex flex-col gap-4">
-            {rest.map(({ server, status }) => (
+            {rest.map(({ server, worlds, status }) => (
               <ServerCard
                 key={server.id}
                 variant="secondary"
                 locale={locale}
                 server={server}
-                maps={mapsFor(server)}
+                worlds={worlds}
                 status={status}
               />
             ))}

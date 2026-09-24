@@ -18,7 +18,6 @@ import {
   BellIcon,
   BookIcon,
   CalendarIcon,
-  FlagIcon,
   MapIcon,
   MenuIcon,
   ShoppingBagIcon,
@@ -53,11 +52,6 @@ const navItems: NavbarItem[] = [
     href: '/worlds',
     icon: MapIcon,
   },
-  // {
-  //   labelKey: 'claims',
-  //   href: '/claims',
-  //   icon: FlagIcon,
-  // },
   {
     labelKey: 'wiki',
     href: '/wiki',

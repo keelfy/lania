@@ -8,14 +8,12 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { Season } from '@/models/season'
-import { ServerMapInfo } from '@/models/server'
-import { HouseIcon, PickaxeIcon } from 'lucide-react'
+import { Season, SeasonWorld } from '@/models/season'
+import { FlagIcon, MapIcon } from 'lucide-react'
 import pinger from 'minecraft-pinger'
 import { getTranslations } from 'next-intl/server'
 import Image from 'next/image'
 import Link from 'next/link'
-import React from 'react'
 import type { RawMotdDescription } from '@/lib/motd'
 import ClickToCopy from './components/click-to-copy'
 import CopyStateIcon from './components/copy-state-icon'
@@ -25,20 +23,15 @@ import StopPropagation from './components/stop-propagation'
 type Props = {
   locale: string
   server: Season
-  maps: ServerMapInfo[]
+  worlds: SeasonWorld[]
   status: pinger.Data | undefined
   variant?: 'primary' | 'secondary'
-}
-
-const ICON_MAP: Record<string, React.ElementType> = {
-  house: HouseIcon,
-  pickaxe: PickaxeIcon,
 }
 
 export default async function ServerCard({
   locale,
   server,
-  maps,
+  worlds,
   status,
   variant = 'primary',
 }: Props) {
@@ -91,16 +84,16 @@ export default async function ServerCard({
           </span>
         </CardAction>
       </CardHeader>
-      {maps.length > 0 && online && (
+      {worlds.length > 0 && (
         <CardContent className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">{t('mapsTitle')}</h3>
           <StopPropagation>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {maps.map((map) => (
-                <ServerMap
-                  key={map.id}
+              {worlds.map((world) => (
+                <WorldCard
+                  key={world.id}
                   locale={locale}
-                  map={map}
+                  world={world}
                   compact={!isPrimary}
                 />
               ))}
@@ -112,54 +105,70 @@ export default async function ServerCard({
   )
 }
 
-type ServerMapProps = {
+type WorldCardProps = {
   locale: string
-  map: ServerMapInfo
+  world: SeasonWorld
   compact?: boolean
 }
 
-async function ServerMap({ locale, map, compact = false }: ServerMapProps) {
+async function WorldCard({ locale, world, compact = false }: WorldCardProps) {
   const t = await getTranslations({ locale, namespace: 'worlds' })
+  const claims = !!world.mapUrl && world.claimDimensions.length > 0
 
-  return (
-    <Link
-      href={`/worlds/${map.id}`}
-      className={cn(
-        'bg-card group relative flex aspect-video w-full flex-col items-start justify-between gap-3 justify-self-center overflow-hidden rounded-md text-start shadow-md',
-        compact ? 'p-4' : 'p-6',
+  const content = (
+    <>
+      {world.previewImage && (
+        <Image
+          src={world.previewImage}
+          alt={world.name}
+          fill
+          sizes="(min-width: 768px) 50vw, 100vw"
+          quality={75}
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+        />
       )}
-    >
-      <Image
-        src={map.image}
-        alt={t('elements.' + map.id + '.title')}
-        fill
-        sizes="(min-width: 768px) 50vw, 100vw"
-        quality={75}
-        className="object-cover transition-transform duration-300 group-hover:scale-105"
-      />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-      <h3
-        className={cn(
-          'z-10 flex items-center gap-2 font-bold',
-          compact ? 'text-lg' : 'text-2xl',
+      <div className="z-10 flex w-full items-start justify-between gap-2">
+        <h3
+          className={cn(
+            'flex items-center gap-2 font-bold',
+            compact ? 'text-lg' : 'text-2xl',
+          )}
+        >
+          <MapIcon className="size-5" />
+          <span>{world.name}</span>
+        </h3>
+        {claims && (
+          <Badge variant="secondary" className="gap-1">
+            <FlagIcon className="size-3" />
+            {t('claimsBadge')}
+          </Badge>
         )}
-      >
-        {React.createElement(ICON_MAP[map.icon] || HouseIcon, {
-          className: 'size-5',
-        })}
-        <span>{t('elements.' + map.id + '.title')}</span>
-      </h3>
-      {!compact && (
-        <p className="z-10 text-sm">
-          {t('elements.' + map.id + '.description')}
-        </p>
-      )}
-      <div className="z-10 flex items-center gap-2">
-        <p className="text-primary">{t('openMap')}</p>
-        <p className="font-bold transition-transform duration-300 group-hover:translate-x-1">
-          →
-        </p>
       </div>
+      <div className="z-10 flex items-center gap-2">
+        {world.mapUrl ? (
+          <>
+            <p className="text-primary">{t('openMap')}</p>
+            <p className="font-bold transition-transform duration-300 group-hover:translate-x-1">
+              →
+            </p>
+          </>
+        ) : (
+          <p className="text-muted-foreground">{t('noMap')}</p>
+        )}
+      </div>
+    </>
+  )
+  const className = cn(
+    'bg-card group relative flex aspect-video w-full flex-col items-start justify-between gap-3 justify-self-center overflow-hidden rounded-md text-start shadow-md',
+    compact ? 'p-4' : 'p-6',
+  )
+
+  return world.mapUrl ? (
+    <Link href={`/worlds/${world.slug}`} className={className}>
+      {content}
     </Link>
+  ) : (
+    <div className={className}>{content}</div>
   )
 }

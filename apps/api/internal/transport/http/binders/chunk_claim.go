@@ -11,8 +11,10 @@ import (
 	"github.com/lania-smp/backend/internal/utils"
 )
 
-// WorldQueryParam names the squaremap world, e.g. minecraft_overworld.
-var WorldQueryParam = "world"
+// DimensionQueryParam names the squaremap world of the world server, e.g. minecraft_overworld.
+var DimensionQueryParam = "dimension"
+
+var WorldIDVariable = "worldId"
 
 // BindClaimChunks reads the chunks of a claim or release request made by the signed-in user.
 func BindClaimChunks(r *http.Request) (*commands.ClaimChunksCommand, error) {
@@ -20,7 +22,7 @@ func BindClaimChunks(r *http.Request) (*commands.ClaimChunksCommand, error) {
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		return nil, utils.NewBadRequestError("request body is invalid", err)
 	}
-	seasonID, err := BindPathVariableAsUUID(r, SeasonIDVariable)
+	worldID, err := BindPathVariableAsUUID(r, WorldIDVariable)
 	if err != nil {
 		return nil, err
 	}
@@ -34,10 +36,10 @@ func BindClaimChunks(r *http.Request) (*commands.ClaimChunksCommand, error) {
 		chunks[i] = domain.ChunkPos{X: chunk[0], Z: chunk[1]}
 	}
 	return &commands.ClaimChunksCommand{
-		SeasonID:  seasonID,
+		WorldID:   worldID,
 		UserID:    userID,
 		ProfileID: req.ProfileID,
-		World:     strings.TrimSpace(req.World),
+		Dimension: strings.TrimSpace(req.Dimension),
 		Chunks:    chunks,
 	}, nil
 }

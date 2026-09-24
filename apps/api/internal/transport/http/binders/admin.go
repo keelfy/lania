@@ -70,11 +70,6 @@ func BindSaveSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 		endDate = &parsed
 	}
 
-	claimLimit := domain.DefaultClaimLimit
-	if req.ClaimLimit != nil {
-		claimLimit = *req.ClaimLimit
-	}
-
 	return &commands.SaveSeasonCommand{
 		Name:             strings.TrimSpace(req.Name),
 		PreviewImage:     optionalTrimmed(req.PreviewImage),
@@ -89,8 +84,6 @@ func BindSaveSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 		FreeRegistration: req.FreeRegistration,
 		GameVersion:      optionalTrimmed(req.GameVersion),
 		WorldURL:         optionalTrimmed(req.WorldURL),
-		MapURL:           optionalTrimmed(req.MapURL),
-		ClaimLimit:       claimLimit,
 	}, nil
 }
 
@@ -100,6 +93,50 @@ func BindUpdateSeason(r *http.Request) (*commands.SaveSeasonCommand, error) {
 		return nil, err
 	}
 	cmd.ID, err = BindPathVariableAsUUID(r, SeasonIDVariable)
+	return cmd, err
+}
+
+func BindSaveSeasonWorld(r *http.Request) (*commands.SaveSeasonWorldCommand, error) {
+	req := &requests.SaveSeasonWorld{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+	claimLimit := domain.DefaultClaimLimit
+	if req.ClaimLimit != nil {
+		claimLimit = *req.ClaimLimit
+	}
+	dimensions := make([]string, len(req.ClaimDimensions))
+	for i, dimension := range req.ClaimDimensions {
+		dimensions[i] = strings.TrimSpace(dimension)
+	}
+	return &commands.SaveSeasonWorldCommand{
+		Slug:            strings.TrimSpace(req.Slug),
+		Name:            strings.TrimSpace(req.Name),
+		PreviewImage:    optionalTrimmed(req.PreviewImage),
+		MapURL:          optionalTrimmed(req.MapURL),
+		ClaimLimit:      claimLimit,
+		ClaimDimensions: dimensions,
+		Position:        req.Position,
+	}, nil
+}
+
+// BindCreateSeasonWorld reads a new world of the season in the path.
+func BindCreateSeasonWorld(r *http.Request) (*commands.SaveSeasonWorldCommand, error) {
+	cmd, err := BindSaveSeasonWorld(r)
+	if err != nil {
+		return nil, err
+	}
+	cmd.SeasonID, err = BindPathVariableAsUUID(r, SeasonIDVariable)
+	return cmd, err
+}
+
+// BindUpdateSeasonWorld reads the world in the path; its season never changes.
+func BindUpdateSeasonWorld(r *http.Request) (*commands.SaveSeasonWorldCommand, error) {
+	cmd, err := BindSaveSeasonWorld(r)
+	if err != nil {
+		return nil, err
+	}
+	cmd.ID, err = BindPathVariableAsUUID(r, WorldIDVariable)
 	return cmd, err
 }
 

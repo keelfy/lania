@@ -20,15 +20,15 @@ func chunkPositionsFilter(chunks []domain.ChunkPos) (string, []any) {
 }
 
 const findActiveChunkClaims = `
-SELECT c.id, c.season_id, c.world, c.chunk_x, c.chunk_z, c.profile_id, c.claimed_at, p.mc_username
+SELECT c.id, c.world_id, c.dimension, c.chunk_x, c.chunk_z, c.profile_id, c.claimed_at, p.mc_username
 FROM chunk_claims c
 JOIN profiles p ON p.id = c.profile_id
-WHERE c.season_id = ? AND c.world = ? AND c.active = 1
+WHERE c.world_id = ? AND c.dimension = ? AND c.active = 1
 `
 
-// FindActiveChunkClaims returns every claim that holds in the world of the season, each with its profile.
-func (q *queries) FindActiveChunkClaims(ctx context.Context, seasonID uuid.UUID, world string) ([]*domain.ChunkClaim, error) {
-	rows, err := q.x.QueryContext(ctx, findActiveChunkClaims, seasonID, world)
+// FindActiveChunkClaims returns every claim that holds in the dimension of the world, each with its profile.
+func (q *queries) FindActiveChunkClaims(ctx context.Context, worldID uuid.UUID, dimension string) ([]*domain.ChunkClaim, error) {
+	rows, err := q.x.QueryContext(ctx, findActiveChunkClaims, worldID, dimension)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (q *queries) FindActiveChunkClaims(ctx context.Context, seasonID uuid.UUID,
 	for rows.Next() {
 		claim := &domain.ChunkClaim{Profile: &domain.Profile{}}
 		err := rows.Scan(
-			&claim.ID, &claim.SeasonID, &claim.World, &claim.Chunk.X, &claim.Chunk.Z,
+			&claim.ID, &claim.WorldID, &claim.Dimension, &claim.Chunk.X, &claim.Chunk.Z,
 			&claim.ProfileID, &claim.ClaimedAt, &claim.Profile.MinecraftUsername,
 		)
 		if err != nil {
@@ -51,22 +51,23 @@ func (q *queries) FindActiveChunkClaims(ctx context.Context, seasonID uuid.UUID,
 }
 
 const countActiveChunkClaimsByProfile = `
-SELECT COUNT(*) FROM chunk_claims WHERE profile_id = ? AND season_id = ? AND active = 1
+SELECT COUNT(*) FROM chunk_claims WHERE profile_id = ? AND world_id = ? AND active = 1
 `
 
-func (q *queries) CountActiveChunkClaimsByProfile(ctx context.Context, profileID, seasonID uuid.UUID) (int, error) {
+// CountActiveChunkClaimsByProfile counts the claims the profile holds in the world, over every dimension.
+func (q *queries) CountActiveChunkClaimsByProfile(ctx context.Context, profileID, worldID uuid.UUID) (int, error) {
 	var count int
-	err := q.x.QueryRowContext(ctx, countActiveChunkClaimsByProfile, profileID, seasonID).Scan(&count)
+	err := q.x.QueryRowContext(ctx, countActiveChunkClaimsByProfile, profileID, worldID).Scan(&count)
 	return count, err
 }
 
 const countActiveChunkClaimsAt = `
-SELECT COUNT(*) FROM chunk_claims WHERE season_id = ? AND world = ? AND active = 1 AND `
+SELECT COUNT(*) FROM chunk_claims WHERE world_id = ? AND dimension = ? AND active = 1 AND `
 
 // CountActiveChunkClaimsAt returns how many of the chunks are already claimed by anyone.
-func (q *queries) CountActiveChunkClaimsAt(ctx context.Context, seasonID uuid.UUID, world string, chunks []domain.ChunkPos) (int, error) {
+func (q *queries) CountActiveChunkClaimsAt(ctx context.Context, worldID uuid.UUID, dimension string, chunks []domain.ChunkPos) (int, error) {
 	filter, filterArgs := chunkPositionsFilter(chunks)
-	args := append([]any{seasonID, world}, filterArgs...)
+	args := append([]any{worldID, dimension}, filterArgs...)
 	var count int
 	err := q.x.QueryRowContext(ctx, countActiveChunkClaimsAt+filter, args...).Scan(&count)
 	return count, err
@@ -74,28 +75,28 @@ func (q *queries) CountActiveChunkClaimsAt(ctx context.Context, seasonID uuid.UU
 
 // InsertChunkClaims claims every chunk for the profile in one statement. A chunk already claimed fails the
 // whole statement on idx_chunk_claims_active.
-func (q *queries) InsertChunkClaims(ctx context.Context, seasonID uuid.UUID, world string, profileID uuid.UUID, chunks []domain.ChunkPos) error {
+func (q *queries) InsertChunkClaims(ctx context.Context, worldID uuid.UUID, dimension string, profileID uuid.UUID, chunks []domain.ChunkPos) error {
 	placeholders := make([]string, len(chunks))
 	args := make([]any, 0, len(chunks)*5)
 	for i, chunk := range chunks {
 		placeholders[i] = "(?, ?, ?, ?, ?)"
-		args = append(args, seasonID, world, chunk.X, chunk.Z, profileID)
+		args = append(args, worldID, dimension, chunk.X, chunk.Z, profileID)
 	}
-	query := "INSERT INTO chunk_claims (season_id, world, chunk_x, chunk_z, profile_id) VALUES " + strings.Join(placeholders, ", ")
+	query := "INSERT INTO chunk_claims (world_id, dimension, chunk_x, chunk_z, profile_id) VALUES " + strings.Join(placeholders, ", ")
 	_, err := q.x.ExecContext(ctx, query, args...)
 	return err
 }
 
 const releaseChunkClaims = `
 UPDATE chunk_claims SET released_at = now(), released_by = ?
-WHERE season_id = ? AND world = ? AND active = 1 AND `
+WHERE world_id = ? AND dimension = ? AND active = 1 AND `
 
 // ReleaseChunkClaims ends the active claims on the chunks and returns how many it ended. A non-nil profileID
 // limits it to the claims of that profile.
-func (q *queries) ReleaseChunkClaims(ctx context.Context, seasonID uuid.UUID, world string, profileID *uuid.UUID, chunks []domain.ChunkPos, releasedBy uuid.UUID) (int64, error) {
+func (q *queries) ReleaseChunkClaims(ctx context.Context, worldID uuid.UUID, dimension string, profileID *uuid.UUID, chunks []domain.ChunkPos, releasedBy uuid.UUID) (int64, error) {
 	filter, filterArgs := chunkPositionsFilter(chunks)
 	query := releaseChunkClaims + filter
-	args := append([]any{releasedBy, seasonID, world}, filterArgs...)
+	args := append([]any{releasedBy, worldID, dimension}, filterArgs...)
 	if profileID != nil {
 		query += " AND profile_id = ?"
 		args = append(args, *profileID)

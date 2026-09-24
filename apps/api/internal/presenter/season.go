@@ -16,7 +16,6 @@ func PresentSeasons(seasons []*domain.Season) []*responses.Season {
 			OnlineAvailable: season.IsActive && season.HasServer,
 			Preregistration: season.Preregistration, FreeRegistration: season.FreeRegistration,
 			GameVersion: season.GameVersion, WorldURL: season.WorldURL,
-			MapURL: season.MapURL, ClaimLimit: season.ClaimLimit,
 		}
 	}
 	return res
@@ -32,7 +31,6 @@ func PresentAdminSeason(season *domain.Season) *responses.AdminSeason {
 			OnlineAvailable: season.IsActive && season.HasServer,
 			Preregistration: season.Preregistration, FreeRegistration: season.FreeRegistration,
 			GameVersion: season.GameVersion, WorldURL: season.WorldURL,
-			MapURL: season.MapURL, ClaimLimit: season.ClaimLimit,
 		},
 		ShellAddress: season.ShellAddress,
 		PlanURL:      season.PlanURL,

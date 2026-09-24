@@ -22,9 +22,7 @@ const seasonColumns = `
 	preregistration,
 	free_registration,
 	game_version,
-	world_url,
-	map_url,
-	claim_limit`
+	world_url`
 
 func scanSeason(row interface{ Scan(...any) error }) (*domain.Season, error) {
 	var season domain.Season
@@ -43,8 +41,6 @@ func scanSeason(row interface{ Scan(...any) error }) (*domain.Season, error) {
 		&season.FreeRegistration,
 		&season.GameVersion,
 		&season.WorldURL,
-		&season.MapURL,
-		&season.ClaimLimit,
 	)
 	season.HasServer = season.ShellAddress != nil
 	return &season, err
@@ -64,7 +60,7 @@ func (q *queries) FindPublicSeasons(ctx context.Context) ([]*domain.Season, erro
 	rows, err := q.x.QueryContext(ctx, `
 SELECT id, name, preview_image, start_date, end_date,
        public_address, shell_address IS NOT NULL, is_active, is_primary, preregistration, free_registration,
-       game_version, world_url, map_url, claim_limit
+       game_version, world_url
 FROM seasons
 ORDER BY start_date DESC, name ASC`)
 	if err != nil {
@@ -83,7 +79,6 @@ ORDER BY start_date DESC, name ASC`)
 			&season.IsActive, &season.IsPrimary,
 			&season.Preregistration, &season.FreeRegistration,
 			&season.GameVersion, &season.WorldURL,
-			&season.MapURL, &season.ClaimLimit,
 		); err != nil {
 			return nil, err
 		}
@@ -125,8 +120,6 @@ type InsertSeasonParams struct {
 	FreeRegistration bool
 	GameVersion      *string
 	WorldURL         *string
-	MapURL           *string
-	ClaimLimit       int
 }
 
 func (q *queries) InsertSeason(ctx context.Context, arg InsertSeasonParams) error {
@@ -134,8 +127,8 @@ func (q *queries) InsertSeason(ctx context.Context, arg InsertSeasonParams) erro
 INSERT INTO seasons (
 	id, name, preview_image, start_date, end_date,
 	public_address, shell_address, plan_url, is_active, preregistration, free_registration,
-	game_version, world_url, map_url, claim_limit
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	game_version, world_url
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		arg.ID, arg.Name, arg.PreviewImage, arg.StartDate, arg.EndDate,
 		arg.PublicAddress,
 		arg.ShellAddress,
@@ -145,8 +138,6 @@ INSERT INTO seasons (
 		arg.FreeRegistration,
 		arg.GameVersion,
 		arg.WorldURL,
-		arg.MapURL,
-		arg.ClaimLimit,
 	)
 	return err
 }
@@ -165,8 +156,6 @@ type UpdateSeasonParams struct {
 	FreeRegistration bool
 	GameVersion      *string
 	WorldURL         *string
-	MapURL           *string
-	ClaimLimit       int
 }
 
 func (q *queries) UpdateSeason(ctx context.Context, arg UpdateSeasonParams) error {
@@ -174,8 +163,7 @@ func (q *queries) UpdateSeason(ctx context.Context, arg UpdateSeasonParams) erro
 UPDATE seasons SET
 	name = ?, preview_image = ?, start_date = ?, end_date = ?,
 	public_address = ?, shell_address = ?, plan_url = ?, is_active = ?,
-	preregistration = ?, free_registration = ?, game_version = ?, world_url = ?,
-	map_url = ?, claim_limit = ?
+	preregistration = ?, free_registration = ?, game_version = ?, world_url = ?
 WHERE id = ?`,
 		arg.Name, arg.PreviewImage, arg.StartDate, arg.EndDate,
 		arg.PublicAddress,
@@ -186,8 +174,6 @@ WHERE id = ?`,
 		arg.FreeRegistration,
 		arg.GameVersion,
 		arg.WorldURL,
-		arg.MapURL,
-		arg.ClaimLimit,
 		arg.ID,
 	)
 	return err

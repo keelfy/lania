@@ -1,5 +1,6 @@
 'use client'
 
+import SignInButton from '@/app/[locale]/(app)/(with-navbar)/components/sign-in-button'
 import { Button } from '@/components/ui/button'
 import LoadingSpinner from '@/components/ui/loading-spinner'
 import McUsername from '@/components/ui/mc-username'
@@ -20,27 +21,28 @@ import {
   ChunkClaims,
   ChunkPos,
   MAX_CLAIM_BATCH,
+  MapDimension,
   MapLive,
   MapMarker,
   MapPlayer,
-  MapWorld,
 } from '@/models/claim'
 import { Profile } from '@/models/profile'
+import { SeasonWorld } from '@/models/season'
 import { useAuthStore } from '@/providers/auth-store'
 import { FlagIcon, FlagOffIcon, XIcon } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 import React from 'react'
 import { toast } from 'sonner'
-import SignInButton from '../../components/sign-in-button'
 import ChunkMap, { ChunkHover, SelectionKind, chunkKey } from './chunk-map'
 
 type Props = {
-  seasonId: string
+  world: SeasonWorld
   mapUrl: string
-  claimLimit: number
-  worlds: MapWorld[]
+  dimensions: MapDimension[]
   isAdmin: boolean
+  // Shown at the start of the bar over the map, the breadcrumb of the page.
+  header: React.ReactNode
 }
 
 type Selected = { x: number; z: number; kind: SelectionKind }
@@ -57,28 +59,40 @@ function profileColor(profileId: string) {
   return `hsl(${Math.abs(hash) % 360} 80% 55%)`
 }
 
-export default function ClaimsMap({
-  seasonId,
+export default function WorldMap({
+  world,
   mapUrl,
-  claimLimit,
-  worlds,
+  dimensions,
   isAdmin,
+  header,
 }: Props) {
   const t = useTranslations('claims')
   const locale = useLocale()
   const session = useAuthStore((state) => state.session)
   const signedIn = session?.active === true
+  const seasonId = world.seasonId
 
-  const [worldName, setWorldName] = React.useState(worlds[0].name)
-  const world = worlds.find((world) => world.name === worldName) ?? worlds[0]
+  // The map opens on the first dimension with claims, usually the overworld.
+  const [dimensionName, setDimensionName] = React.useState(
+    () =>
+      (
+        dimensions.find((dimension) =>
+          world.claimDimensions.includes(dimension.name),
+        ) ?? dimensions[0]
+      ).name,
+  )
+  const dimension =
+    dimensions.find((dimension) => dimension.name === dimensionName) ??
+    dimensions[0]
+  const claimsOn = world.claimDimensions.includes(dimension.name)
 
   const [data, setData] = React.useState<ChunkClaims>()
   const loadClaims = React.useCallback(
     () =>
-      getChunkClaims(clientApiFetcher, seasonId, world.name)
+      getChunkClaims(clientApiFetcher, world.id, dimension.name)
         .then(setData)
         .catch((error) => errorToast(t('loadFailed'), error)),
-    [seasonId, world.name, t],
+    [world.id, dimension.name, t],
   )
   React.useEffect(() => {
     void loadClaims()
@@ -88,7 +102,7 @@ export default function ClaimsMap({
   const [profiles, setProfiles] = React.useState<Profile[]>([])
   const [profileId, setProfileId] = React.useState<string>()
   React.useEffect(() => {
-    if (!signedIn) return
+    if (!signedIn || world.claimDimensions.length === 0) return
     let cancelled = false
     getUserProfiles(clientApiFetcher, undefined, seasonId)
       .then((profiles) => {
@@ -106,7 +120,7 @@ export default function ClaimsMap({
     return () => {
       cancelled = true
     }
-  }, [signedIn, seasonId])
+  }, [signedIn, seasonId, world.claimDimensions.length])
 
   const claimsByKey = React.useMemo(() => {
     const byKey = new Map<string, ChunkClaim>()
@@ -128,14 +142,15 @@ export default function ClaimsMap({
   }, [claimsByKey])
 
   // What clicking the chunk would do, or undefined when the user cannot touch it.
+  // Where claims are off, claims left from before stay and only an admin can release them.
   const selectionKind = React.useCallback(
     (cx: number, cz: number): SelectionKind | undefined => {
       const claim = claimsByKey.get(chunkKey(cx, cz))
-      if (!claim) return profileId ? 'claim' : undefined
-      if (claim.profileId === profileId) return 'release'
+      if (!claim) return claimsOn && profileId ? 'claim' : undefined
+      if (claimsOn && claim.profileId === profileId) return 'release'
       return isAdmin ? 'adminRelease' : undefined
     },
-    [claimsByKey, profileId, isAdmin],
+    [claimsByKey, claimsOn, profileId, isAdmin],
   )
 
   const [selection, setSelection] = React.useState<Map<string, Selected>>(
@@ -173,15 +188,19 @@ export default function ClaimsMap({
   )
 
   // Markers and online players, polled through the site: squaremap cannot be read across origins.
-  const [live, setLive] = React.useState<{ world: string } & MapLive>()
+  const [live, setLive] = React.useState<{ dimension: string } & MapLive>()
   React.useEffect(() => {
     let cancelled = false
     const load = () => {
       if (document.hidden) return
-      fetch(`/api/claims/live?world=${encodeURIComponent(world.name)}`)
+      fetch(
+        `/api/worlds/${world.id}/live?dimension=${encodeURIComponent(dimension.name)}`,
+      )
         .then((response) => (response.ok ? response.json() : undefined))
         .then((data?: MapLive) => {
-          if (!cancelled && data) setLive({ world: world.name, ...data })
+          if (!cancelled && data) {
+            setLive({ dimension: dimension.name, ...data })
+          }
         })
         .catch(console.error)
     }
@@ -191,8 +210,8 @@ export default function ClaimsMap({
       cancelled = true
       clearInterval(timer)
     }
-  }, [world.name])
-  const liveHere = live?.world === world.name ? live : undefined
+  }, [world.id, dimension.name])
+  const liveHere = live?.dimension === dimension.name ? live : undefined
 
   const [hover, setHover] = React.useState<ChunkHover>()
   const hoverClaim = hover
@@ -235,30 +254,36 @@ export default function ClaimsMap({
     })
 
   return (
-    <div className="flex flex-col gap-3">
-      {worlds.length > 1 && (
-        <Tabs
-          value={world.name}
-          onValueChange={(name) => {
-            clearSelection()
-            setFocused(undefined)
-            setWorldName(name)
-          }}
-        >
-          <TabsList>
-            {worlds.map((world) => (
-              <TabsTrigger key={world.name} value={world.name}>
-                {t(`worlds.${world.type}`)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      )}
+    <div className="flex h-full flex-col">
+      <div className="flex min-h-11 flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-1.5">
+        {header}
+        {dimensions.length > 1 && (
+          <Tabs
+            value={dimension.name}
+            onValueChange={(name) => {
+              clearSelection()
+              setFocused(undefined)
+              setDimensionName(name)
+            }}
+          >
+            <TabsList>
+              {dimensions.map((dimension) => (
+                <TabsTrigger key={dimension.name} value={dimension.name}>
+                  {world.claimDimensions.includes(dimension.name) && (
+                    <FlagIcon className="size-3.5" />
+                  )}
+                  {t(`dimensions.${dimension.type}`)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        )}
+      </div>
 
-      <div className="relative">
+      <div className="relative min-h-0 flex-1">
         <ChunkMap
           mapUrl={mapUrl}
-          world={world}
+          dimension={dimension}
           claimColors={claimColors}
           selection={selection}
           focused={focused}
@@ -322,31 +347,38 @@ export default function ClaimsMap({
             )}
           </div>
         )}
-      </div>
-
-      <div className="text-muted-foreground flex min-h-5 flex-wrap gap-x-4 font-mono text-sm">
-        {hover ? (
-          <>
-            <span>{t('hover.chunk', { x: hover.cx, z: hover.cz })}</span>
-            <span>{t('hover.block', { x: hover.x, z: hover.z })}</span>
-            {hoverClaim ? (
-              <span className="text-foreground">
-                {t('hover.claimed', {
-                  username: owners.get(hoverClaim.profileId)?.username ?? '?',
-                  date: formatDate(hoverClaim.claimedAt),
-                })}
+        <div className="bg-background/80 pointer-events-none absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-wrap gap-x-4 rounded-md px-2 py-1 font-mono text-xs backdrop-blur">
+          {hover ? (
+            <>
+              <span>{t('hover.chunk', { x: hover.cx, z: hover.cz })}</span>
+              <span className="text-muted-foreground">
+                {t('hover.block', { x: hover.x, z: hover.z })}
               </span>
-            ) : (
-              <span>{t('hover.free')}</span>
-            )}
-          </>
-        ) : (
-          <span>{t('hint')}</span>
-        )}
+              {hoverClaim ? (
+                <span>
+                  {t('hover.claimed', {
+                    username: owners.get(hoverClaim.profileId)?.username ?? '?',
+                    date: formatDate(hoverClaim.claimedAt),
+                  })}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">{t('hover.free')}</span>
+              )}
+            </>
+          ) : (
+            <span className="text-muted-foreground">
+              {claimsOn || isAdmin ? t('hint') : t('viewHint')}
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border p-3">
-        {!signedIn ? (
+      <div className="flex min-h-14 flex-wrap items-center gap-3 border-t px-4 py-2">
+        {!claimsOn ? (
+          <span className="text-muted-foreground text-sm">
+            {world.claimDimensions.length > 0 ? t('claimsOff') : t('viewOnly')}
+          </span>
+        ) : !signedIn ? (
           <>
             <span className="text-muted-foreground text-sm">{t('signIn')}</span>
             <SignInButton />
@@ -380,96 +412,100 @@ export default function ClaimsMap({
             )}
             {profileId && (
               <span className="text-muted-foreground text-sm">
-                {t('held', { count: held, limit: claimLimit })}
+                {t('held', { count: held, limit: world.claimLimit })}
               </span>
             )}
-            <div className="ms-auto flex flex-wrap gap-2">
-              {selection.size > 0 && (
-                <Button
-                  variant="ghost"
-                  onClick={clearSelection}
-                  disabled={isPending}
-                >
-                  <XIcon className="size-4" />
-                  {t('clear')}
-                </Button>
-              )}
-              {toRelease.length > 0 && profileId && (
-                <Button
-                  variant="outline"
-                  disabled={isPending}
-                  onClick={() =>
-                    run(
-                      () =>
-                        releaseChunks(
-                          clientApiFetcher,
-                          seasonId,
-                          profileId,
-                          world.name,
-                          toRelease,
-                        ),
-                      t('released', { count: toRelease.length }),
-                      t('releaseFailed'),
-                    )
-                  }
-                >
-                  <FlagOffIcon className="size-4" />
-                  {t('release', { count: toRelease.length })}
-                </Button>
-              )}
-              {toAdminRelease.length > 0 && (
-                <Button
-                  variant="destructive"
-                  disabled={isPending}
-                  onClick={() =>
-                    run(
-                      () =>
-                        adminReleaseChunks(
-                          clientApiFetcher,
-                          seasonId,
-                          world.name,
-                          toAdminRelease,
-                        ),
-                      t('released', { count: toAdminRelease.length }),
-                      t('releaseFailed'),
-                    )
-                  }
-                >
-                  <FlagOffIcon className="size-4" />
-                  {t('adminRelease', { count: toAdminRelease.length })}
-                </Button>
-              )}
-              {profileId && (
-                <Button
-                  disabled={isPending || toClaim.length === 0}
-                  onClick={() =>
-                    run(
-                      () =>
-                        claimChunks(
-                          clientApiFetcher,
-                          seasonId,
-                          profileId,
-                          world.name,
-                          toClaim,
-                        ),
-                      t('claimed', { count: toClaim.length }),
-                      t('claimFailed'),
-                    )
-                  }
-                >
-                  {isPending ? (
-                    <LoadingSpinner className="size-4" />
-                  ) : (
-                    <FlagIcon className="size-4" />
-                  )}
-                  {t('claim', { count: toClaim.length })}
-                </Button>
-              )}
-            </div>
           </>
         )}
+        <div className="ms-auto flex flex-wrap gap-2">
+          {selection.size > 0 && (
+            <Button
+              variant="ghost"
+              onClick={clearSelection}
+              disabled={isPending}
+            >
+              <XIcon className="size-4" />
+              {t('clear')}
+            </Button>
+          )}
+          {toRelease.length > 0 && profileId && (
+            <Button
+              variant="outline"
+              disabled={isPending}
+              onClick={() =>
+                run(
+                  () =>
+                    releaseChunks(
+                      clientApiFetcher,
+                      world.id,
+                      profileId,
+                      dimension.name,
+                      toRelease,
+                    ),
+                  t('released', { count: toRelease.length }),
+                  t('releaseFailed'),
+                )
+              }
+            >
+              <FlagOffIcon className="size-4" />
+              {t('release', { count: toRelease.length })}
+            </Button>
+          )}
+          {toAdminRelease.length > 0 && (
+            <Button
+              variant="destructive"
+              disabled={isPending}
+              onClick={() =>
+                run(
+                  () =>
+                    adminReleaseChunks(
+                      clientApiFetcher,
+                      world.id,
+                      dimension.name,
+                      toAdminRelease,
+                    ),
+                  t('released', { count: toAdminRelease.length }),
+                  t('releaseFailed'),
+                )
+              }
+            >
+              <FlagOffIcon className="size-4" />
+              {t('adminRelease', { count: toAdminRelease.length })}
+            </Button>
+          )}
+          {claimsOn && signedIn && profileId && (
+            <Button
+              disabled={isPending || toClaim.length === 0}
+              onClick={() =>
+                run(
+                  () =>
+                    claimChunks(
+                      clientApiFetcher,
+                      world.id,
+                      profileId,
+                      dimension.name,
+                      toClaim,
+                    ),
+                  t('claimed', { count: toClaim.length }),
+                  t('claimFailed'),
+                )
+              }
+            >
+              {isPending ? (
+                <LoadingSpinner className="size-4" />
+              ) : (
+                <FlagIcon className="size-4" />
+              )}
+              {t('claim', { count: toClaim.length })}
+            </Button>
+          )}
+        </div>
+        {claimsOn && (
+          <p className="text-muted-foreground basis-full text-xs">
+            {t('rules')}
+          </p>
+        )}
       </div>
-      <p className="text-muted-foreground text-xs">{t('rules')}</p>
     </div>
   )
 }

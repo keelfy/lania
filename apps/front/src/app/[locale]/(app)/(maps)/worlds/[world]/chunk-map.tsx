@@ -11,7 +11,7 @@ import type {
 import { useEffect, useRef, useState } from 'react'
 import { usernameColorStyle } from '@/components/ui/mc-username'
 import imgproxyImageLoader from '@/lib/imgproxyImageLoader'
-import { ChunkPos, MapMarker, MapPlayer, MapWorld } from '@/models/claim'
+import { ChunkPos, MapMarker, MapPlayer, MapDimension } from '@/models/claim'
 
 const CHUNK = 16
 
@@ -29,7 +29,7 @@ const selectionColors: Record<SelectionKind, string> = {
 
 type Props = {
   mapUrl: string
-  world: MapWorld
+  dimension: MapDimension
   // Fill colour of every claimed chunk, by chunkKey.
   claimColors: Map<string, string>
   selection: Map<string, { x: number; z: number; kind: SelectionKind }>
@@ -47,7 +47,7 @@ type Props = {
 // The left button selects chunks; the map pans with the middle button (Leaflet's own drag) or a finger.
 export default function ChunkMap({
   mapUrl,
-  world,
+  dimension,
   claimColors,
   selection,
   focused,
@@ -89,7 +89,7 @@ export default function ChunkMap({
     let map: LeafletMap | undefined
     let stopSelecting: (() => void) | undefined
     const container = containerRef.current
-    const scale = 1 / 2 ** world.maxZoom
+    const scale = 1 / 2 ** dimension.maxZoom
     const toLatLng = (x: number, z: number): [number, number] => [
       -z * scale,
       x * scale,
@@ -163,13 +163,16 @@ export default function ChunkMap({
         boxZoom: false,
         doubleClickZoom: false,
         minZoom: 0,
-        maxZoom: world.maxZoom + world.extraZoom,
-      }).setView(toLatLng(world.spawn.x, world.spawn.z), world.maxZoom)
+        maxZoom: dimension.maxZoom + dimension.extraZoom,
+      }).setView(
+        toLatLng(dimension.spawn.x, dimension.spawn.z),
+        dimension.maxZoom,
+      )
 
-      L.tileLayer(`${mapUrl}/tiles/${world.name}/{z}/{x}_{y}.png`, {
+      L.tileLayer(`${mapUrl}/tiles/${dimension.name}/{z}/{x}_{y}.png`, {
         tileSize: 512,
         minNativeZoom: 0,
-        maxNativeZoom: world.maxZoom,
+        maxNativeZoom: dimension.maxZoom,
         noWrap: true,
       }).addTo(map)
 
@@ -183,7 +186,7 @@ export default function ChunkMap({
           const ctx = tile.getContext('2d')!
 
           // At zoom z one block is 2^(z - maxZoom) screen pixels.
-          const pxPerChunk = CHUNK * 2 ** (coords.z - world.maxZoom)
+          const pxPerChunk = CHUNK * 2 ** (coords.z - dimension.maxZoom)
           const originX = coords.x * size.x
           const originY = coords.y * size.y
           const firstX = Math.floor(originX / pxPerChunk)
@@ -290,12 +293,12 @@ export default function ChunkMap({
       setReady(false)
       map?.remove()
     }
-  }, [mapUrl, world])
+  }, [mapUrl, dimension])
 
   useEffect(() => {
     const layers = layersRef.current
     if (!ready || !layers) return
-    const scale = 1 / 2 ** world.maxZoom
+    const scale = 1 / 2 ** dimension.maxZoom
     const chunkRect = (x: number, z: number): LatLngBoundsExpression => [
       [-z * CHUNK * scale, x * CHUNK * scale],
       [-(z + 1) * CHUNK * scale, (x + 1) * CHUNK * scale],
@@ -317,12 +320,12 @@ export default function ChunkMap({
         interactive: false,
       }).addTo(layers.selection)
     }
-  }, [ready, selection, focused, world.maxZoom])
+  }, [ready, selection, focused, dimension.maxZoom])
 
   useEffect(() => {
     const layers = layersRef.current
     if (!ready || !layers) return
-    const scale = 1 / 2 ** world.maxZoom
+    const scale = 1 / 2 ** dimension.maxZoom
     layers.markers.clearLayers()
     for (const marker of markers) {
       const icon = layers.L.marker([-marker.z * scale, marker.x * scale], {
@@ -342,13 +345,13 @@ export default function ChunkMap({
       }
       icon.addTo(layers.markers)
     }
-  }, [ready, markers, world.maxZoom])
+  }, [ready, markers, dimension.maxZoom])
 
   // Players are moved in place, so their nameplates do not blink on every poll.
   useEffect(() => {
     const layers = layersRef.current
     if (!ready || !layers) return
-    const scale = 1 / 2 ** world.maxZoom
+    const scale = 1 / 2 ** dimension.maxZoom
     const current = playerMarkersRef.current
     const online = new Set(players.map((player) => player.uuid))
     for (const [uuid, { marker }] of current) {
@@ -392,12 +395,12 @@ export default function ChunkMap({
         .addTo(layers.players)
       current.set(player.uuid, { marker, look })
     }
-  }, [ready, players, world.maxZoom])
+  }, [ready, players, dimension.maxZoom])
 
   return (
     <div
       ref={containerRef}
-      className="h-[70vh] w-full cursor-crosshair rounded-lg bg-[#1a1a1a]!"
+      className="h-full w-full cursor-crosshair bg-[#1a1a1a]!"
     />
   )
 }

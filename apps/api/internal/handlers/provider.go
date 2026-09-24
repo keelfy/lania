@@ -20,6 +20,7 @@ var ProviderSet = wire.NewSet(
 	NewAdminGrantHandler,
 	NewAdminCatalogHandler,
 	NewSeasonHandler,
+	NewSeasonWorldHandler,
 	NewChunkClaimHandler,
 	NewNotificationHandler,
 	NewAccountHandler,

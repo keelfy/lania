@@ -32,17 +32,17 @@ func NewChunkClaimHandler(chunkClaimService services.ChunkClaimService, cosmetic
 
 func (h *chunkClaimHandler) GetChunkClaims(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	seasonID, err := binders.BindPathVariableAsUUID(r, binders.SeasonIDVariable)
+	worldID, err := binders.BindPathVariableAsUUID(r, binders.WorldIDVariable)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
 	}
-	world := r.URL.Query().Get(binders.WorldQueryParam)
-	if world == "" {
-		utils.HttpError(ctx, w, utils.NewBadRequestError("world is required", nil))
+	dimension := r.URL.Query().Get(binders.DimensionQueryParam)
+	if dimension == "" {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("dimension is required", nil))
 		return
 	}
-	claims, err := h.chunkClaimService.GetActiveClaims(ctx, seasonID, world)
+	world, claims, err := h.chunkClaimService.GetActiveClaims(ctx, worldID, dimension)
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
@@ -52,7 +52,7 @@ func (h *chunkClaimHandler) GetChunkClaims(w http.ResponseWriter, r *http.Reques
 	for _, claim := range claims {
 		profileIDs = append(profileIDs, claim.ProfileID)
 	}
-	cosmetics, err := h.cosmeticsService.GetProfilesCosmetics(ctx, profileIDs, seasonID)
+	cosmetics, err := h.cosmeticsService.GetProfilesCosmetics(ctx, profileIDs, world.SeasonID)
 	if err != nil {
 		logger.Errorf(ctx, "[PROFILE COSMETICS] Failed to get chunk claim owners cosmetics: %v", err)
 		cosmetics = make(map[uuid.UUID]*domain.ProfileCosmetics)
