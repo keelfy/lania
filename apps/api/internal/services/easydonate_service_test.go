@@ -254,20 +254,28 @@ func TestEasyDonateService_CreateShopProduct(t *testing.T) {
 		}
 	})
 
-	t.Run("page without any CSRF token fails before the POST", func(t *testing.T) {
+	t.Run("page without any CSRF token still posts", func(t *testing.T) {
+		var fields map[string]string
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodGet {
 				fmt.Fprint(w, `<div data-product-id="1"></div>`)
 				return
 			}
-			t.Error("POST should not be reached")
+			fields = parseMultipartFields(t, r)
+			fmt.Fprint(w, `{"products_row": "<div data-product-id=\"2\"></div>"}`)
 		}))
 		defer server.Close()
 
 		service := newEDService(t, server.URL, rubPrices())
-		_, err := service.CreateShopProduct(context.Background(), validEDCommand())
-		if httpStatus(err) != http.StatusInternalServerError {
-			t.Fatalf("err = %v, want internal error", err)
+		id, err := service.CreateShopProduct(context.Background(), validEDCommand())
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if id != 2 {
+			t.Errorf("id = %d, want 2", id)
+		}
+		if _, ok := fields["_token"]; ok {
+			t.Errorf("_token sent without a token on the page")
 		}
 	})
 
@@ -278,6 +286,27 @@ func TestEasyDonateService_CreateShopProduct(t *testing.T) {
 			t.Fatalf("err = %v, want bad request", err)
 		}
 	})
+}
+
+func TestFindEDCSRFToken(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want string
+	}{
+		{"meta", `<meta name="csrf-token" content="a1">`, "a1"},
+		{"meta reversed with single quotes", `<meta content='a2' name='csrf-token' />`, "a2"},
+		{"hidden input", `<form><input type="hidden" name="_token" value="a3"></form>`, "a3"},
+		{"html entity", `<meta name="csrf-token" content="a&amp;4">`, "a&4"},
+		{"none", `<meta name="viewport" content="width=device-width">`, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := findEDCSRFToken([]byte(tt.body)); got != tt.want {
+				t.Errorf("findEDCSRFToken() = %q, want %q", got, tt.want)
+			}
+		})
+	}
 }
 
 func parseMultipartFields(t *testing.T, r *http.Request) map[string]string {

@@ -172,8 +172,22 @@ func (s *easyDonateService) ConstructPaymentURL(ctx context.Context, queries sql
 // shop's product table, in both the products page and the products_row AJAX partial.
 var edProductIDPattern = regexp.MustCompile(`data-product-id="(\d+)"`)
 
-// edCSRFMetaPattern matches the CSRF token October renders into every page for its AJAX framework.
-var edCSRFMetaPattern = regexp.MustCompile(`<meta\s+name="csrf-token"\s+content="([^"]+)"`)
+// edCSRFTagPatterns find the tags a page can carry its CSRF token in: the meta tag October's AJAX
+// framework reads, and the hidden _token input of its forms. Attribute order and quotes vary, so
+// the tag is matched first and its value attribute second.
+var edCSRFTagPatterns = []struct {
+	tag   *regexp.Regexp
+	value *regexp.Regexp
+}{
+	{
+		tag:   regexp.MustCompile(`(?i)<meta\b[^>]*\bname\s*=\s*["']csrf-token["'][^>]*>`),
+		value: regexp.MustCompile(`(?i)\bcontent\s*=\s*["']([^"']+)["']`),
+	},
+	{
+		tag:   regexp.MustCompile(`(?i)<input\b[^>]*\bname\s*=\s*["']_token["'][^>]*>`),
+		value: regexp.MustCompile(`(?i)\bvalue\s*=\s*["']([^"']+)["']`),
+	},
+}
 
 var edTitlePattern = regexp.MustCompile(`(?i)<title>([^<]*)`)
 
@@ -277,9 +291,7 @@ func (s *easyDonateService) fetchEDProductsPage(ctx context.Context, httpClient 
 	}
 
 	page := &edProductsPage{existingIDs: existingIDs}
-	if match := edCSRFMetaPattern.FindSubmatch(body); match != nil {
-		page.csrfToken = html.UnescapeString(string(match[1]))
-	}
+	page.csrfToken = findEDCSRFToken(body)
 	return page, nil
 }
 
@@ -334,7 +346,8 @@ func (s *easyDonateService) postEDProductCreate(ctx context.Context, httpClient 
 		}
 		req.Header.Set("X-XSRF-TOKEN", decoded)
 	} else {
-		return 0, utils.NewInternalServerError("EasyDonate products page has no CSRF token", nil)
+		// October may run with CSRF protection off. If it doesn't, the POST comes back 419 below.
+		logger.Warnf(ctx, "easydonate products page has no CSRF token, posting without one")
 	}
 
 	resp, err := httpClient.Do(req)
@@ -352,7 +365,7 @@ func (s *easyDonateService) postEDProductCreate(ctx context.Context, httpClient 
 	// net/http constant for it because it isn't in the standard registry.
 	const statusPageExpired = 419
 	if resp.StatusCode == statusPageExpired {
-		return 0, utils.NewUnauthorizedError("EasyDonate rejected the CSRF token", nil)
+		return 0, utils.NewUnauthorizedError("EasyDonate rejected the CSRF token", fmt.Errorf("sent token: %t", page.csrfToken != "" || req.Header.Get("X-XSRF-TOKEN") != ""))
 	}
 	if resp.StatusCode != http.StatusOK {
 		return 0, edStatusError(resp.StatusCode, respBody)
@@ -397,6 +410,17 @@ func setEDCommonHeaders(req *http.Request) {
 	req.Header.Set("X-Requested-With", "XMLHttpRequest")
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("User-Agent", "Mozilla/5.0")
+}
+
+func findEDCSRFToken(body []byte) string {
+	for _, pattern := range edCSRFTagPatterns {
+		for _, tag := range pattern.tag.FindAll(body, -1) {
+			if match := pattern.value.FindSubmatch(tag); match != nil {
+				return html.UnescapeString(string(match[1]))
+			}
+		}
+	}
+	return ""
 }
 
 func edJarCookie(jar http.CookieJar, u *url.URL, name string) string {
