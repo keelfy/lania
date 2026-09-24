@@ -1,4 +1,9 @@
-import { WORLD_NAME, getClaimsMapUrl, getMapLive } from '@/lib/squaremap'
+import {
+  WORLD_NAME,
+  getClaimsSeason,
+  getMapLive,
+  mapBaseUrl,
+} from '@/lib/squaremap'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Relays squaremap's markers and players to the claims map, which cannot read them across origins.
@@ -9,9 +14,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'bad world' }, { status: 400 })
   }
   try {
-    const mapUrl = await getClaimsMapUrl()
-    if (!mapUrl) return NextResponse.json({ error: 'no map' }, { status: 404 })
-    return NextResponse.json(await getMapLive(mapUrl, world), {
+    const season = await getClaimsSeason()
+    const mapUrl = mapBaseUrl(season)
+    if (!season || !mapUrl) {
+      return NextResponse.json({ error: 'no map' }, { status: 404 })
+    }
+    return NextResponse.json(await getMapLive(mapUrl, season.id, world), {
       headers: { 'Cache-Control': 'no-store' },
     })
   } catch (error) {

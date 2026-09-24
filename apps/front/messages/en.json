@@ -1023,7 +1023,7 @@
     "focus": {
       "close": "Close",
       "blocks": "blocks x {x1}…{x2}, z {z1}…{z2}",
-      "owner": "Owner: <link>{username}</link>",
+      "owner": "Owner:",
       "since": "Claimed {date}"
     },
     "signIn": "Sign in to claim chunks.",

@@ -9,6 +9,8 @@ import type {
   Marker,
 } from 'leaflet'
 import { useEffect, useRef, useState } from 'react'
+import { usernameColorStyle } from '@/components/ui/mc-username'
+import imgproxyImageLoader from '@/lib/imgproxyImageLoader'
 import { ChunkPos, MapMarker, MapPlayer, MapWorld } from '@/models/claim'
 
 const CHUNK = 16
@@ -63,7 +65,10 @@ export default function ChunkMap({
     markers: LayerGroup
     players: LayerGroup
   }>(undefined)
-  const playerMarkersRef = useRef(new Map<string, Marker>())
+  // Each player's marker with the look it was drawn with, so a changed look redraws it.
+  const playerMarkersRef = useRef(
+    new Map<string, { marker: Marker; look: string }>(),
+  )
   const [ready, setReady] = useState(false)
 
   // Leaflet handlers live as long as the map, so they read the latest props through refs.
@@ -346,20 +351,23 @@ export default function ChunkMap({
     const scale = 1 / 2 ** world.maxZoom
     const current = playerMarkersRef.current
     const online = new Set(players.map((player) => player.uuid))
-    for (const [uuid, marker] of current) {
+    for (const [uuid, { marker }] of current) {
       if (online.has(uuid)) continue
       marker.remove()
       current.delete(uuid)
     }
     for (const player of players) {
       const latlng: [number, number] = [-player.z * scale, player.x * scale]
+      const look = JSON.stringify([player.mojangUuid, player.cosmetics])
       const existing = current.get(player.uuid)
-      if (existing) {
-        existing.setLatLng(latlng)
+      if (existing?.look === look) {
+        existing.marker.setLatLng(latlng)
         continue
       }
+      existing?.marker.remove()
       const face = document.createElement('img')
-      face.src = `https://crafatar-pub.neodium.fr/avatars/${player.uuid}?size=16&overlay`
+      // Skins are looked up by the Mojang UUID; the in-game one only matches it on an online-mode server.
+      face.src = `https://crafatar-pub.neodium.fr/avatars/${player.mojangUuid ?? player.uuid}?size=16&overlay`
       face.alt = player.name
       face.className = 'size-4 rounded-sm shadow ring-1 ring-black/60'
       const marker = layers.L.marker(latlng, {
@@ -373,13 +381,16 @@ export default function ChunkMap({
         keyboard: false,
         zIndexOffset: 1000,
       })
-        .bindTooltip(textElement(player.name), {
+        .bindTooltip(nameplate(player), {
           permanent: true,
           direction: 'right',
           offset: [8, 0],
+          // A dark plate like the in-game nameplate, so every name colour reads on it.
+          className:
+            'rounded-sm! border-none! bg-black/65! px-1.5! py-0.5! text-white! shadow-none! before:hidden',
         })
         .addTo(layers.players)
-      current.set(player.uuid, marker)
+      current.set(player.uuid, { marker, look })
     }
   }, [ready, players, world.maxZoom])
 
@@ -396,4 +407,30 @@ function textElement(text: string) {
   const span = document.createElement('span')
   span.textContent = text
   return span
+}
+
+// The player's name as the game chat shows it: glyth and special prefixes, then the name in its colours.
+// Built as DOM because Leaflet owns the tooltip; it mirrors NamePrefixes and McUsername.
+function nameplate(player: MapPlayer) {
+  const plate = document.createElement('span')
+  plate.className = 'flex items-center gap-1'
+  const cosmetics = player.cosmetics
+  for (const prefix of [cosmetics?.glythPrefix, cosmetics?.specialPrefix]) {
+    if (!prefix?.image) continue
+    const image = document.createElement('img')
+    // Prefix images are s3:// keys that only resolve through imgproxy, as next/image does elsewhere.
+    image.src = imgproxyImageLoader({ src: prefix.image, width: 32 })
+    image.alt = prefix.name
+    image.className = 'size-4 [image-rendering:pixelated]'
+    plate.append(image)
+  }
+  const name = textElement(player.name)
+  const { isGradient, style } = usernameColorStyle(cosmetics?.colors?.colors)
+  name.className = isGradient
+    ? 'font-minecraft tracking-mc bg-clip-text text-transparent'
+    : 'font-minecraft tracking-mc'
+  if (style.backgroundImage) name.style.backgroundImage = style.backgroundImage
+  if (style.color) name.style.color = style.color
+  plate.append(name)
+  return plate
 }

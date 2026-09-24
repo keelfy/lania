@@ -2,6 +2,8 @@
 
 import { Button } from '@/components/ui/button'
 import LoadingSpinner from '@/components/ui/loading-spinner'
+import McUsername from '@/components/ui/mc-username'
+import NamePrefixes from '@/components/ui/name-prefixes'
 import ProfileSelect from '@/components/ui/profile-select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -113,9 +115,8 @@ export default function ClaimsMap({
     }
     return byKey
   }, [data])
-  const usernames = React.useMemo(
-    () =>
-      new Map(data?.profiles.map((profile) => [profile.id, profile.username])),
+  const owners = React.useMemo(
+    () => new Map(data?.profiles.map((profile) => [profile.id, profile])),
     [data],
   )
   const claimColors = React.useMemo(() => {
@@ -200,6 +201,7 @@ export default function ClaimsMap({
   const focusedClaim = focused
     ? claimsByKey.get(chunkKey(...focused))
     : undefined
+  const focusedOwner = focusedClaim && owners.get(focusedClaim.profileId)
   const formatDate = (millis: number) =>
     new Date(millis).toLocaleString(locale, {
       dateStyle: 'medium',
@@ -291,20 +293,24 @@ export default function ClaimsMap({
             </span>
             {focusedClaim ? (
               <>
-                <span>
-                  {t.rich('focus.owner', {
-                    username: usernames.get(focusedClaim.profileId) ?? '?',
-                    link: (chunks) => (
-                      <Link
-                        href={`/${locale}/community/${usernames.get(focusedClaim.profileId)}`}
-                        className="font-semibold underline"
-                        style={{ color: profileColor(focusedClaim.profileId) }}
-                      >
-                        {chunks}
-                      </Link>
-                    ),
-                  })}
-                </span>
+                {focusedOwner && (
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    {t('focus.owner')}
+                    <Link
+                      href={`/${locale}/community/${focusedOwner.username}`}
+                      className="hover:bg-accent flex items-center gap-1 rounded-xs px-1"
+                    >
+                      <NamePrefixes
+                        cosmetics={focusedOwner.cosmetics.name}
+                        size={16}
+                      />
+                      <McUsername
+                        username={focusedOwner.username}
+                        colors={focusedOwner.cosmetics.name.colors?.colors}
+                      />
+                    </Link>
+                  </span>
+                )}
                 <span className="text-muted-foreground">
                   {t('focus.since', {
                     date: formatDate(focusedClaim.claimedAt),
@@ -326,7 +332,7 @@ export default function ClaimsMap({
             {hoverClaim ? (
               <span className="text-foreground">
                 {t('hover.claimed', {
-                  username: usernames.get(hoverClaim.profileId) ?? '?',
+                  username: owners.get(hoverClaim.profileId)?.username ?? '?',
                   date: formatDate(hoverClaim.claimedAt),
                 })}
               </span>

@@ -1,3 +1,5 @@
+import { NameCosmetics, ProfileCosmetics } from '@/models/profile'
+
 // A chunk index, the block coordinate divided by 16 and rounded down, as F3 shows it.
 export type ChunkPos = [x: number, z: number]
 
@@ -11,6 +13,8 @@ export type ChunkClaim = {
 export type ChunkClaimProfile = {
   id: string
   username: string
+  // What the owner wears in the season of the claims.
+  cosmetics: ProfileCosmetics
 }
 
 // Every claim that holds in one world; each claiming profile is listed once.
@@ -43,9 +47,13 @@ export type MapMarker = {
 
 export type MapPlayer = {
   name: string
+  // The in-game UUID.
   uuid: string
   x: number
   z: number
+  // Missing when the player's profile is not known to the site.
+  mojangUuid?: string
+  cosmetics?: NameCosmetics
 }
 
 // What changes on the map while it is open: markers and the players online in the world.

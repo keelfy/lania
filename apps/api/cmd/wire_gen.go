@@ -80,7 +80,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	adminCatalogHandler := handlers.NewAdminCatalogHandler(adminCatalogService, easyDonateService)
 	seasonHandler := handlers.NewSeasonHandler(seasonService)
 	chunkClaimService := services.NewChunkClaimService(mainStorage, seasonService)
-	chunkClaimHandler := handlers.NewChunkClaimHandler(chunkClaimService)
+	chunkClaimHandler := handlers.NewChunkClaimHandler(chunkClaimService, profileCosmeticsService)
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 	accountService := services.NewAccountService(mainStorage, oryAPI, profileService, profileCosmeticsService, profileResyncService)
 	accountHandler := handlers.NewAccountHandler(accountService)

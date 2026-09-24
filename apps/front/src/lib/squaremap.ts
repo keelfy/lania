@@ -1,5 +1,7 @@
 import { apiFetcher } from '@/lib/fetcher'
 import { MapLive, MapWorld } from '@/models/claim'
+import { Paginated } from '@/models/types'
+import { PublicProfile } from '@/models/profile'
 import { Season } from '@/models/season'
 
 // squaremap sends no CORS headers, so everything it serves as JSON is read on the Next server.
@@ -47,14 +49,30 @@ export function mapBaseUrl(season: Season | undefined) {
   return season?.mapUrl?.replace(/\/+$/, '')
 }
 
-// The map of the claims season, read without the visitor's cookies so it can be cached between requests.
-export async function getClaimsMapUrl() {
+// The claims season, read without the visitor's cookies so it can be cached between requests.
+export async function getClaimsSeason() {
   const seasons = await apiFetcher<Season[]>(
     '/v1/seasons',
     new URLSearchParams(),
     { next: { revalidate: 60 } },
   )
-  return mapBaseUrl(pickClaimsSeason(seasons))
+  return pickClaimsSeason(seasons)
+}
+
+// Who is online in the season with what they wear, by the in-game UUID squaremap reports.
+// Shared by every open map for a while; a player who just joined shows plain until the next refresh.
+async function getOnlineProfiles(seasonId: string) {
+  const params = new URLSearchParams({
+    online: 'true',
+    seasonId,
+    size: '100',
+  })
+  const page = await apiFetcher<Paginated<PublicProfile>>(
+    '/v1/profiles',
+    params,
+    { next: { revalidate: 15 } },
+  )
+  return new Map(page.content.map((profile) => [profile.uuid, profile]))
 }
 
 export async function getMapWorlds(mapUrl: string): Promise<MapWorld[]> {
@@ -87,15 +105,18 @@ export async function getMapWorlds(mapUrl: string): Promise<MapWorld[]> {
 // Shapes such as the world border are left out: at claim scale they are noise.
 export async function getMapLive(
   mapUrl: string,
+  seasonId: string,
   world: string,
 ): Promise<MapLive> {
-  const [layers, players] = await Promise.all([
+  const [layers, players, profiles] = await Promise.all([
     fetchJson<SquaremapMarkerLayer[]>(`${mapUrl}/tiles/${world}/markers.json`, {
       next: { revalidate: 30 },
     }),
     fetchJson<SquaremapPlayers>(`${mapUrl}/tiles/players.json`, {
       cache: 'no-store',
     }),
+    // Players still show, plain, when the API cannot tell who is online.
+    getOnlineProfiles(seasonId).catch(() => new Map<string, PublicProfile>()),
   ])
   return {
     markers: layers
@@ -116,6 +137,16 @@ export async function getMapLive(
       ),
     players: players.players
       .filter((player) => player.world === world)
-      .map(({ name, uuid, x, z }) => ({ name, uuid, x, z })),
+      .map(({ name, uuid, x, z }) => {
+        const profile = profiles.get(uuid)
+        return {
+          name,
+          uuid,
+          x,
+          z,
+          mojangUuid: profile?.mojangUuid,
+          cosmetics: profile?.cosmetics.name,
+        }
+      }),
   }
 }

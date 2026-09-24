@@ -4,7 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/commands"
+	"github.com/lania-smp/backend/internal/domain"
+	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/presenter"
 	"github.com/lania-smp/backend/internal/services"
 	"github.com/lania-smp/backend/internal/transport/http/binders"
@@ -20,10 +23,11 @@ type ChunkClaimHandler interface {
 
 type chunkClaimHandler struct {
 	chunkClaimService services.ChunkClaimService
+	cosmeticsService  services.ProfileCosmeticsService
 }
 
-func NewChunkClaimHandler(chunkClaimService services.ChunkClaimService) ChunkClaimHandler {
-	return &chunkClaimHandler{chunkClaimService: chunkClaimService}
+func NewChunkClaimHandler(chunkClaimService services.ChunkClaimService, cosmeticsService services.ProfileCosmeticsService) ChunkClaimHandler {
+	return &chunkClaimHandler{chunkClaimService: chunkClaimService, cosmeticsService: cosmeticsService}
 }
 
 func (h *chunkClaimHandler) GetChunkClaims(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +47,17 @@ func (h *chunkClaimHandler) GetChunkClaims(w http.ResponseWriter, r *http.Reques
 		utils.HttpError(ctx, w, err)
 		return
 	}
-	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentChunkClaims(claims))
+	// Owners are shown the way they look in the season; claims still show when cosmetics cannot be read.
+	profileIDs := make(uuid.UUIDs, 0, len(claims))
+	for _, claim := range claims {
+		profileIDs = append(profileIDs, claim.ProfileID)
+	}
+	cosmetics, err := h.cosmeticsService.GetProfilesCosmetics(ctx, profileIDs, seasonID)
+	if err != nil {
+		logger.Errorf(ctx, "[PROFILE COSMETICS] Failed to get chunk claim owners cosmetics: %v", err)
+		cosmetics = make(map[uuid.UUID]*domain.ProfileCosmetics)
+	}
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentChunkClaims(claims, cosmetics))
 }
 
 func (h *chunkClaimHandler) ClaimChunks(w http.ResponseWriter, r *http.Request) {

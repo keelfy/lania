@@ -10,8 +10,9 @@ type ChunkClaim struct {
 }
 
 type ChunkClaimProfile struct {
-	ID       uuid.UUID `json:"id"`
-	Username string    `json:"username"`
+	ID        uuid.UUID         `json:"id"`
+	Username  string            `json:"username"`
+	Cosmetics *ProfileCosmetics `json:"cosmetics"`
 }
 
 // ChunkClaims lists each claiming profile once instead of repeating it on every chunk it holds.

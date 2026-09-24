@@ -6,7 +6,8 @@ import (
 	"github.com/lania-smp/backend/internal/transport/http/responses"
 )
 
-func PresentChunkClaims(claims []*domain.ChunkClaim) *responses.ChunkClaims {
+// PresentChunkClaims lists the owners with their cosmetics; an owner missing from cosmetics wears none.
+func PresentChunkClaims(claims []*domain.ChunkClaim, cosmetics map[uuid.UUID]*domain.ProfileCosmetics) *responses.ChunkClaims {
 	res := &responses.ChunkClaims{
 		Claims:   make([]*responses.ChunkClaim, len(claims)),
 		Profiles: make([]*responses.ChunkClaimProfile, 0),
@@ -19,7 +20,9 @@ func PresentChunkClaims(claims []*domain.ChunkClaim) *responses.ChunkClaims {
 		if !seen[claim.ProfileID] {
 			seen[claim.ProfileID] = true
 			res.Profiles = append(res.Profiles, &responses.ChunkClaimProfile{
-				ID: claim.ProfileID, Username: claim.Profile.MinecraftUsername,
+				ID:        claim.ProfileID,
+				Username:  claim.Profile.MinecraftUsername,
+				Cosmetics: PresentProfileCosmetics(cosmetics[claim.ProfileID]),
 			})
 		}
 	}
