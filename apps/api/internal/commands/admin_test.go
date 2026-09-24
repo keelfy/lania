@@ -147,8 +147,7 @@ func TestCreateEDProductCommand_Validate(t *testing.T) {
 	t.Parallel()
 
 	valid := CreateEDProductCommand{
-		SessionKey:  "session-key",
-		CSRFToken:   "csrf-token",
+		UserAuth:    "user-auth",
 		Name:        "Лес",
 		Description: "Зелёный градиент",
 		PriceName:   domain.ProductPriceNameNameColor,
@@ -161,8 +160,7 @@ func TestCreateEDProductCommand_Validate(t *testing.T) {
 	}{
 		{"valid without image", func(*CreateEDProductCommand) {}, false},
 		{"valid with image", func(command *CreateEDProductCommand) { command.Image = []byte{1, 2, 3} }, false},
-		{"missing session key", func(command *CreateEDProductCommand) { command.SessionKey = "" }, true},
-		{"missing csrf token", func(command *CreateEDProductCommand) { command.CSRFToken = "" }, true},
+		{"missing user auth", func(command *CreateEDProductCommand) { command.UserAuth = "" }, true},
 		{"missing name", func(command *CreateEDProductCommand) { command.Name = "" }, true},
 		{"missing description", func(command *CreateEDProductCommand) { command.Description = "" }, true},
 		{"invalid price name", func(command *CreateEDProductCommand) { command.PriceName = "invalid" }, true},

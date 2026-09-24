@@ -190,8 +190,7 @@ export type EasyDonateProduct = {
 }
 
 export type CreateEasyDonateProduct = {
-  sessionKey: string
-  csrfToken: string
+  userAuth: string
   name: string
   description: string
   priceName: AdminProduct['priceName']

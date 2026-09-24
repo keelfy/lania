@@ -2,7 +2,7 @@
 
 import React from 'react'
 
-type EdCredentials = { sessionKey: string; csrfToken: string }
+type EdCredentials = { userAuth: string }
 
 type EdCredentialsStore = {
   hasCredentials: boolean
@@ -14,9 +14,9 @@ const EdCredentialsContext = React.createContext<EdCredentialsStore | null>(
   null,
 )
 
-// Holds the admin's EasyDonate session key and CSRF token in memory for the lifetime of the
-// products page, so several positions can be created in a row without retyping them. The values
-// live in a ref, not state: nothing here is written to web storage or sent anywhere but the one
+// Holds the admin's EasyDonate user_auth cookie in memory for the lifetime of the
+// products page, so several positions can be created in a row without retyping it. The value
+// lives in a ref, not state: nothing here is written to web storage or sent anywhere but the one
 // create-product request, and typing in the dialog must not re-render the rest of the page.
 export function EdCredentialsProvider({
   children,

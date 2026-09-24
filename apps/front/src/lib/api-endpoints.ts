@@ -732,8 +732,7 @@ export function createEasyDonateProduct(
   req: CreateEasyDonateProduct,
 ): Promise<EasyDonateProduct> {
   const form = new FormData()
-  form.set('sessionKey', req.sessionKey)
-  form.set('csrfToken', req.csrfToken)
+  form.set('userAuth', req.userAuth)
   form.set('name', req.name)
   form.set('description', req.description)
   form.set('priceName', req.priceName)

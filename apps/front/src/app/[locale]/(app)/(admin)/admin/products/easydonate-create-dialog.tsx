@@ -89,26 +89,22 @@ export default function EasyDonateCreateDialog({
     if (isPending || !productInfo) return
 
     const form = new FormData(event.currentTarget)
-    const sessionKey = editingCredentials
-      ? String(form.get('sessionKey') ?? '').trim()
-      : (getCredentials()?.sessionKey ?? '')
-    const csrfToken = editingCredentials
-      ? String(form.get('csrfToken') ?? '').trim()
-      : (getCredentials()?.csrfToken ?? '')
-    if (!sessionKey || !csrfToken) return
+    const userAuth = editingCredentials
+      ? String(form.get('userAuth') ?? '').trim()
+      : (getCredentials()?.userAuth ?? '')
+    if (!userAuth) return
     const image = imageInputRef.current?.files?.[0]
 
     startTransition(async () => {
       try {
         const result = await createEasyDonateProduct(clientApiFetcher, {
-          sessionKey,
-          csrfToken,
+          userAuth,
           name: productInfo.name,
           description: productInfo.description,
           priceName: productInfo.priceName,
           image,
         })
-        setCredentials({ sessionKey, csrfToken })
+        setCredentials({ userAuth })
         onCreated(result.easyDonateProductId)
         toast.success(t('created'))
         setOpen(false)
@@ -135,30 +131,17 @@ export default function EasyDonateCreateDialog({
             {editingCredentials ? (
               <fieldset className="grid gap-3 rounded-md border p-3">
                 <Field>
-                  <FieldLabel htmlFor="ed-session-key">
-                    {t('sessionKey')}
+                  <FieldLabel htmlFor="ed-user-auth">
+                    {t('userAuth')}
                   </FieldLabel>
                   <Input
-                    id="ed-session-key"
-                    name="sessionKey"
+                    id="ed-user-auth"
+                    name="userAuth"
                     type="password"
                     autoComplete="off"
                     required
                   />
-                  <FieldDescription>{t('sessionKeyHint')}</FieldDescription>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="ed-csrf-token">
-                    {t('csrfToken')}
-                  </FieldLabel>
-                  <Input
-                    id="ed-csrf-token"
-                    name="csrfToken"
-                    type="password"
-                    autoComplete="off"
-                    required
-                  />
-                  <FieldDescription>{t('csrfTokenHint')}</FieldDescription>
+                  <FieldDescription>{t('userAuthHint')}</FieldDescription>
                 </Field>
               </fieldset>
             ) : (

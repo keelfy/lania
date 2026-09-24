@@ -5,11 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,7 +29,7 @@ import (
 type EasyDonateService interface {
 	ConstructPaymentURL(ctx context.Context, queries sql.Queries, params EDConstructPaymentURLParams) (string, error)
 	// CreateShopProduct creates a position in the EasyDonate control panel using the admin's
-	// session cookie and CSRF token, and returns its numeric ID. EasyDonate has no public API for
+	// user_auth cookie, and returns its numeric ID. EasyDonate has no public API for
 	// this, so it reproduces what a browser does against the October CMS control panel.
 	CreateShopProduct(ctx context.Context, cmd *commands.CreateEDProductCommand) (int64, error)
 }
@@ -168,8 +172,28 @@ func (s *easyDonateService) ConstructPaymentURL(ctx context.Context, queries sql
 // shop's product table, in both the products page and the products_row AJAX partial.
 var edProductIDPattern = regexp.MustCompile(`data-product-id="(\d+)"`)
 
+// edCSRFMetaPattern matches the CSRF token October renders into every page for its AJAX framework.
+var edCSRFMetaPattern = regexp.MustCompile(`<meta\s+name="csrf-token"\s+content="([^"]+)"`)
+
+var edTitlePattern = regexp.MustCompile(`(?i)<title>([^<]*)`)
+
+const (
+	// edRememberCookie is the RainLab.User "remember me" cookie. It logs the admin in again and
+	// makes October start a fresh session, so the session cookie is never asked for.
+	edRememberCookie = "user_auth"
+	// edXSRFCookie is Laravel's copy of the session's CSRF token, used when a page has no meta tag.
+	edXSRFCookie = "XSRF-TOKEN"
+)
+
 type edProductsRowResponse struct {
 	ProductsRow string `json:"products_row"`
+}
+
+// edProductsPage is what the products page tells us before a position is created: the rows that
+// already exist and the CSRF token of the session October just started.
+type edProductsPage struct {
+	existingIDs map[string]struct{}
+	csrfToken   string
 }
 
 func (s *easyDonateService) CreateShopProduct(ctx context.Context, cmd *commands.CreateEDProductCommand) (int64, error) {
@@ -194,16 +218,26 @@ func (s *easyDonateService) CreateShopProduct(ctx context.Context, cmd *commands
 	if shopID == "" {
 		return 0, utils.NewInternalServerError("ED_SHOP_ID is not configured", nil)
 	}
-	productsURL := fmt.Sprintf("%s/shop/%s/products", config.GetEasyDonateControlPanelURL(), shopID)
+	productsURL, err := url.Parse(fmt.Sprintf("%s/shop/%s/products", config.GetEasyDonateControlPanelURL(), shopID))
+	if err != nil {
+		return 0, utils.NewInternalServerError("EasyDonate control panel URL is invalid", err)
+	}
 
-	httpClient := &http.Client{Timeout: 30 * time.Second}
+	// The jar carries user_auth into the first request and the session October starts in
+	// response into the second one, like a browser tab would.
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return 0, utils.NewInternalServerError("failed to create cookie jar", err)
+	}
+	jar.SetCookies(productsURL, []*http.Cookie{{Name: edRememberCookie, Value: cmd.UserAuth, Path: "/"}})
+	httpClient := &http.Client{Timeout: 30 * time.Second, Jar: jar}
 
-	existingIDs, err := s.fetchExistingEDProductIDs(ctx, httpClient, productsURL, cmd.SessionKey)
+	page, err := s.fetchEDProductsPage(ctx, httpClient, productsURL)
 	if err != nil {
 		return 0, err
 	}
 
-	newID, err := s.postEDProductCreate(ctx, httpClient, productsURL, cmd, amount, existingIDs)
+	newID, err := s.postEDProductCreate(ctx, httpClient, productsURL, cmd, amount, page)
 	if err != nil {
 		return 0, err
 	}
@@ -211,12 +245,12 @@ func (s *easyDonateService) CreateShopProduct(ctx context.Context, cmd *commands
 	return newID, nil
 }
 
-func (s *easyDonateService) fetchExistingEDProductIDs(ctx context.Context, httpClient *http.Client, productsURL, sessionKey string) (map[string]struct{}, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, productsURL, nil)
+func (s *easyDonateService) fetchEDProductsPage(ctx context.Context, httpClient *http.Client, productsURL *url.URL) (*edProductsPage, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, productsURL.String(), nil)
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to create request", err)
 	}
-	setEDCommonHeaders(req, sessionKey)
+	setEDCommonHeaders(req)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -234,27 +268,34 @@ func (s *easyDonateService) fetchExistingEDProductIDs(ctx context.Context, httpC
 	}
 
 	matches := edProductIDPattern.FindAllStringSubmatch(string(body), -1)
+	if len(matches) == 0 {
+		return nil, utils.NewUnauthorizedError("EasyDonate user_auth is invalid or expired", edPageDiagnostics(resp, body))
+	}
 	existingIDs := make(map[string]struct{}, len(matches))
 	for _, match := range matches {
 		existingIDs[match[1]] = struct{}{}
 	}
-	if len(matches) == 0 {
-		return nil, utils.NewUnauthorizedError("EasyDonate session is invalid or expired", nil)
+
+	page := &edProductsPage{existingIDs: existingIDs}
+	if match := edCSRFMetaPattern.FindSubmatch(body); match != nil {
+		page.csrfToken = html.UnescapeString(string(match[1]))
 	}
-	return existingIDs, nil
+	return page, nil
 }
 
-func (s *easyDonateService) postEDProductCreate(ctx context.Context, httpClient *http.Client, productsURL string, cmd *commands.CreateEDProductCommand, amount float64, existingIDs map[string]struct{}) (int64, error) {
+func (s *easyDonateService) postEDProductCreate(ctx context.Context, httpClient *http.Client, productsURL *url.URL, cmd *commands.CreateEDProductCommand, amount float64, page *edProductsPage) (int64, error) {
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 	fields := map[string]string{
-		"_token":      cmd.CSRFToken,
 		"name":        cmd.Name,
 		"price":       strconv.FormatFloat(amount, 'f', -1, 64),
 		"number":      "1",
 		"description": cmd.Description,
 		"type":        "group",
 		"commands[0]": "lpv user {user} add permission",
+	}
+	if page.csrfToken != "" {
+		fields["_token"] = page.csrfToken
 	}
 	for field, value := range fields {
 		if err := writer.WriteField(field, value); err != nil {
@@ -274,16 +315,27 @@ func (s *easyDonateService) postEDProductCreate(ctx context.Context, httpClient 
 		return 0, utils.NewInternalServerError("failed to build EasyDonate request", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, productsURL, &body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, productsURL.String(), &body)
 	if err != nil {
 		return 0, utils.NewInternalServerError("failed to create request", err)
 	}
-	setEDCommonHeaders(req, cmd.SessionKey)
+	setEDCommonHeaders(req)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("X-CSRF-TOKEN", cmd.CSRFToken)
 	req.Header.Set("X-October-Request-Handler", "onProductCreate")
 	req.Header.Set("X-October-Request-Partials", "products_row")
 	req.Header.Set("X-October-Request-Flash", "1")
+	if page.csrfToken != "" {
+		req.Header.Set("X-CSRF-TOKEN", page.csrfToken)
+	} else if xsrf := edJarCookie(httpClient.Jar, productsURL, edXSRFCookie); xsrf != "" {
+		// Laravel accepts the XSRF-TOKEN cookie echoed back decoded, which is what axios does.
+		decoded, err := url.PathUnescape(xsrf)
+		if err != nil {
+			decoded = xsrf
+		}
+		req.Header.Set("X-XSRF-TOKEN", decoded)
+	} else {
+		return 0, utils.NewInternalServerError("EasyDonate products page has no CSRF token", nil)
+	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -300,7 +352,7 @@ func (s *easyDonateService) postEDProductCreate(ctx context.Context, httpClient 
 	// net/http constant for it because it isn't in the standard registry.
 	const statusPageExpired = 419
 	if resp.StatusCode == statusPageExpired {
-		return 0, utils.NewUnauthorizedError("EasyDonate CSRF token is invalid or expired", nil)
+		return 0, utils.NewUnauthorizedError("EasyDonate rejected the CSRF token", nil)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return 0, edStatusError(resp.StatusCode, respBody)
@@ -314,7 +366,7 @@ func (s *easyDonateService) postEDProductCreate(ctx context.Context, httpClient 
 	matches := edProductIDPattern.FindAllStringSubmatch(response.ProductsRow, -1)
 	var newIDs []int64
 	for _, match := range matches {
-		if _, known := existingIDs[match[1]]; known {
+		if _, known := page.existingIDs[match[1]]; known {
 			continue
 		}
 		id, err := strconv.ParseInt(match[1], 10, 64)
@@ -339,14 +391,31 @@ func (s *easyDonateService) postEDProductCreate(ctx context.Context, httpClient 
 	return largest, nil
 }
 
-// setEDCommonHeaders sets the headers October's control panel expects on every AJAX request,
-// including the session cookie built from the admin's session key. It never logs cmd, the cookie
-// or the token.
-func setEDCommonHeaders(req *http.Request, sessionKey string) {
-	req.Header.Set("Cookie", "easydonate_session="+sessionKey)
+// setEDCommonHeaders sets the headers October's control panel expects on every AJAX request.
+// Cookies come from the client's jar. Nothing here logs cmd, the cookies or the token.
+func setEDCommonHeaders(req *http.Request) {
 	req.Header.Set("X-Requested-With", "XMLHttpRequest")
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("User-Agent", "Mozilla/5.0")
+}
+
+func edJarCookie(jar http.CookieJar, u *url.URL, name string) string {
+	for _, cookie := range jar.Cookies(u) {
+		if cookie.Name == name {
+			return cookie.Value
+		}
+	}
+	return ""
+}
+
+// edPageDiagnostics describes a products page that has no product rows, so the log shows whether
+// it was a login page, a redirect or an anti-bot stub. It carries no cookies and no body.
+func edPageDiagnostics(resp *http.Response, body []byte) error {
+	title := ""
+	if match := edTitlePattern.FindSubmatch(body); match != nil {
+		title = strings.TrimSpace(html.UnescapeString(string(match[1])))
+	}
+	return fmt.Errorf("status %d, final path %q, title %q", resp.StatusCode, resp.Request.URL.Path, title)
 }
 
 // edStatusError maps an unexpected EasyDonate control panel response to an error, without ever

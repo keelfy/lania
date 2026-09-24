@@ -208,8 +208,7 @@ func BindCreateEDProduct(r *http.Request) (*commands.CreateEDProductCommand, err
 	defer r.MultipartForm.RemoveAll()
 
 	cmd := &commands.CreateEDProductCommand{
-		SessionKey:  strings.TrimSpace(r.FormValue("sessionKey")),
-		CSRFToken:   strings.TrimSpace(r.FormValue("csrfToken")),
+		UserAuth:    strings.TrimSpace(r.FormValue("userAuth")),
 		Name:        strings.TrimSpace(r.FormValue("name")),
 		Description: strings.TrimSpace(r.FormValue("description")),
 		PriceName:   domain.ProductPriceName(strings.TrimSpace(r.FormValue("priceName"))),

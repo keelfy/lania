@@ -237,10 +237,9 @@ func (c *GrantCosmeticCommand) Validate() error {
 const MaxEDProductImageBytes int64 = 1024 * 1024
 
 type CreateEDProductCommand struct {
-	// SessionKey is the value of the admin's easydonate_session cookie. Never log it.
-	SessionKey string
-	// CSRFToken is the token of the control panel page the session belongs to. Never log it.
-	CSRFToken   string
+	// UserAuth is the value of the admin's user_auth cookie from the control panel. It logs in
+	// on its own, and the CSRF token is read from the page it opens. Never log it.
+	UserAuth    string
 	Name        string
 	Description string
 	// PriceName selects the tariff whose RUB amount becomes the EasyDonate price, so the shop
@@ -254,8 +253,7 @@ type CreateEDProductCommand struct {
 
 func (c *CreateEDProductCommand) Validate() error {
 	return validation.ValidateStruct(c,
-		validation.Field(&c.SessionKey, validation.Required),
-		validation.Field(&c.CSRFToken, validation.Required),
+		validation.Field(&c.UserAuth, validation.Required),
 		validation.Field(&c.Name, validation.Required),
 		validation.Field(&c.Description, validation.Required),
 		validation.Field(&c.PriceName, validation.Required, validation.By(func(value any) error {

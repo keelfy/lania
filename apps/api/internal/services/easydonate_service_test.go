@@ -39,13 +39,15 @@ func rubPrices() []*domain.ProductPrice {
 
 func validEDCommand() *commands.CreateEDProductCommand {
 	return &commands.CreateEDProductCommand{
-		SessionKey:  "session-key",
-		CSRFToken:   "csrf-token",
+		UserAuth:    "user-auth",
 		Name:        "Лес",
 		Description: "Зелёный градиент",
 		PriceName:   domain.ProductPriceNameNameColor,
 	}
 }
+
+// edProductsPageHTML is a products page with one existing row and the CSRF meta tag October renders.
+const edProductsPageHTML = `<meta name="csrf-token" content="page-token"><div data-product-id="1"></div>`
 
 func httpStatus(err error) int {
 	if customErr, ok := err.(*utils.CustomError); ok {
@@ -56,14 +58,17 @@ func httpStatus(err error) int {
 
 func TestEasyDonateService_CreateShopProduct(t *testing.T) {
 	t.Run("happy path returns the new product id", func(t *testing.T) {
-		var capturedCookie, capturedCSRFHeader string
+		var getCookie, capturedCSRFHeader string
+		var postCookies []*http.Cookie
 		var capturedFields map[string]string
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodGet {
-				fmt.Fprint(w, `<div data-product-id="1"></div>`)
+				getCookie = r.Header.Get("Cookie")
+				http.SetCookie(w, &http.Cookie{Name: "easydonate_session", Value: "fresh-session", Path: "/"})
+				fmt.Fprint(w, edProductsPageHTML)
 				return
 			}
-			capturedCookie = r.Header.Get("Cookie")
+			postCookies = r.Cookies()
 			capturedCSRFHeader = r.Header.Get("X-CSRF-TOKEN")
 			capturedFields = parseMultipartFields(t, r)
 			fmt.Fprint(w, `{"products_row": "<div data-product-id=\"1\"></div><div data-product-id=\"2\"></div>"}`)
@@ -78,11 +83,18 @@ func TestEasyDonateService_CreateShopProduct(t *testing.T) {
 		if id != 2 {
 			t.Errorf("id = %d, want 2", id)
 		}
-		if capturedCookie != "easydonate_session=session-key" {
-			t.Errorf("cookie = %q", capturedCookie)
+		if getCookie != "user_auth=user-auth" {
+			t.Errorf("GET cookie = %q", getCookie)
 		}
-		if capturedCSRFHeader != "csrf-token" {
-			t.Errorf("X-CSRF-TOKEN = %q", capturedCSRFHeader)
+		postCookieValues := map[string]string{}
+		for _, cookie := range postCookies {
+			postCookieValues[cookie.Name] = cookie.Value
+		}
+		if postCookieValues["user_auth"] != "user-auth" || postCookieValues["easydonate_session"] != "fresh-session" {
+			t.Errorf("POST cookies = %+v", postCookieValues)
+		}
+		if capturedCSRFHeader != "page-token" || capturedFields["_token"] != "page-token" {
+			t.Errorf("X-CSRF-TOKEN = %q, _token = %q", capturedCSRFHeader, capturedFields["_token"])
 		}
 		if capturedFields["type"] != "group" || capturedFields["commands[0]"] != "lpv user {user} add permission" {
 			t.Errorf("fields = %+v", capturedFields)
@@ -97,7 +109,7 @@ func TestEasyDonateService_CreateShopProduct(t *testing.T) {
 		var imageFilename string
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodGet {
-				fmt.Fprint(w, `<div data-product-id="1"></div>`)
+				fmt.Fprint(w, edProductsPageHTML)
 				return
 			}
 			_, params, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
@@ -134,7 +146,7 @@ func TestEasyDonateService_CreateShopProduct(t *testing.T) {
 	t.Run("several new ids returns the largest", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodGet {
-				fmt.Fprint(w, `<div data-product-id="1"></div>`)
+				fmt.Fprint(w, edProductsPageHTML)
 				return
 			}
 			fmt.Fprint(w, `{"products_row": "<div data-product-id=\"3\"></div><div data-product-id=\"9\"></div>"}`)
@@ -154,7 +166,7 @@ func TestEasyDonateService_CreateShopProduct(t *testing.T) {
 	t.Run("no new id is a conflict", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodGet {
-				fmt.Fprint(w, `<div data-product-id="1"></div>`)
+				fmt.Fprint(w, edProductsPageHTML)
 				return
 			}
 			fmt.Fprint(w, `{"products_row": "<div data-product-id=\"1\"></div>"}`)
@@ -188,7 +200,7 @@ func TestEasyDonateService_CreateShopProduct(t *testing.T) {
 	t.Run("419 on the POST is unauthorized", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodGet {
-				fmt.Fprint(w, `<div data-product-id="1"></div>`)
+				fmt.Fprint(w, edProductsPageHTML)
 				return
 			}
 			w.WriteHeader(419)
@@ -205,10 +217,50 @@ func TestEasyDonateService_CreateShopProduct(t *testing.T) {
 	t.Run("non-JSON 200 is an internal error carrying the body", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodGet {
-				fmt.Fprint(w, `<div data-product-id="1"></div>`)
+				fmt.Fprint(w, edProductsPageHTML)
 				return
 			}
 			fmt.Fprint(w, `not json at all`)
+		}))
+		defer server.Close()
+
+		service := newEDService(t, server.URL, rubPrices())
+		_, err := service.CreateShopProduct(context.Background(), validEDCommand())
+		if httpStatus(err) != http.StatusInternalServerError {
+			t.Fatalf("err = %v, want internal error", err)
+		}
+	})
+
+	t.Run("page without a meta tag falls back to the XSRF-TOKEN cookie", func(t *testing.T) {
+		var xsrfHeader, csrfHeader string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet {
+				http.SetCookie(w, &http.Cookie{Name: "XSRF-TOKEN", Value: "xsrf%3D%3D", Path: "/"})
+				fmt.Fprint(w, `<div data-product-id="1"></div>`)
+				return
+			}
+			xsrfHeader = r.Header.Get("X-XSRF-TOKEN")
+			csrfHeader = r.Header.Get("X-CSRF-TOKEN")
+			fmt.Fprint(w, `{"products_row": "<div data-product-id=\"2\"></div>"}`)
+		}))
+		defer server.Close()
+
+		service := newEDService(t, server.URL, rubPrices())
+		if _, err := service.CreateShopProduct(context.Background(), validEDCommand()); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if xsrfHeader != "xsrf==" || csrfHeader != "" {
+			t.Errorf("X-XSRF-TOKEN = %q, X-CSRF-TOKEN = %q", xsrfHeader, csrfHeader)
+		}
+	})
+
+	t.Run("page without any CSRF token fails before the POST", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet {
+				fmt.Fprint(w, `<div data-product-id="1"></div>`)
+				return
+			}
+			t.Error("POST should not be reached")
 		}))
 		defer server.Close()
 
