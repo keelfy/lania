@@ -32,3 +32,24 @@ export type MapWorld = {
 
 // The most chunks one request may claim or release, the API's MaxClaimBatch.
 export const MAX_CLAIM_BATCH = 256
+
+// An icon squaremap shows on the world, like the spawn.
+export type MapMarker = {
+  icon: string
+  x: number
+  z: number
+  label: string
+}
+
+export type MapPlayer = {
+  name: string
+  uuid: string
+  x: number
+  z: number
+}
+
+// What changes on the map while it is open: markers and the players online in the world.
+export type MapLive = {
+  markers: MapMarker[]
+  players: MapPlayer[]
+}

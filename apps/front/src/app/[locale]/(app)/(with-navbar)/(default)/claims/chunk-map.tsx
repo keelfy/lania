@@ -1,9 +1,15 @@
 'use client'
 
 import 'leaflet/dist/leaflet.css'
-import type { Coords, LayerGroup, Map as LeafletMap } from 'leaflet'
+import type {
+  Coords,
+  LatLngBoundsExpression,
+  LayerGroup,
+  Map as LeafletMap,
+  Marker,
+} from 'leaflet'
 import { useEffect, useRef, useState } from 'react'
-import { MapWorld } from '@/models/claim'
+import { ChunkPos, MapMarker, MapPlayer, MapWorld } from '@/models/claim'
 
 const CHUNK = 16
 
@@ -25,18 +31,27 @@ type Props = {
   // Fill colour of every claimed chunk, by chunkKey.
   claimColors: Map<string, string>
   selection: Map<string, { x: number; z: number; kind: SelectionKind }>
-  onChunkClick: (cx: number, cz: number, shift: boolean) => void
+  // The chunk whose details are shown, outlined on the map.
+  focused?: ChunkPos
+  markers: MapMarker[]
+  players: MapPlayer[]
+  // A left click gives the same chunk twice; a left drag gives the corners of the dragged area.
+  onChunkArea: (from: ChunkPos, to: ChunkPos) => void
   onChunkHover: (hover: ChunkHover | undefined) => void
 }
 
 // Draws squaremap tiles with a chunk grid, claimed chunks and the selection over them.
 // The projection is squaremap's own: latlng units are blocks scaled down by 2^maxZoom, north is -z.
+// The left button selects chunks; the map pans with the middle button (Leaflet's own drag) or a finger.
 export default function ChunkMap({
   mapUrl,
   world,
   claimColors,
   selection,
-  onChunkClick,
+  focused,
+  markers,
+  players,
+  onChunkArea,
   onChunkHover,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -45,17 +60,20 @@ export default function ChunkMap({
     map: LeafletMap
     claims: import('leaflet').GridLayer
     selection: LayerGroup
+    markers: LayerGroup
+    players: LayerGroup
   }>(undefined)
+  const playerMarkersRef = useRef(new Map<string, Marker>())
   const [ready, setReady] = useState(false)
 
   // Leaflet handlers live as long as the map, so they read the latest props through refs.
   const claimColorsRef = useRef(claimColors)
-  const clickRef = useRef(onChunkClick)
+  const areaRef = useRef(onChunkArea)
   const hoverRef = useRef(onChunkHover)
   useEffect(() => {
-    clickRef.current = onChunkClick
+    areaRef.current = onChunkArea
     hoverRef.current = onChunkHover
-  }, [onChunkClick, onChunkHover])
+  }, [onChunkArea, onChunkHover])
   useEffect(() => {
     claimColorsRef.current = claimColors
     layersRef.current?.claims.redraw()
@@ -64,20 +82,81 @@ export default function ChunkMap({
   useEffect(() => {
     let cancelled = false
     let map: LeafletMap | undefined
+    let stopSelecting: (() => void) | undefined
+    const container = containerRef.current
     const scale = 1 / 2 ** world.maxZoom
     const toLatLng = (x: number, z: number): [number, number] => [
       -z * scale,
       x * scale,
     ]
+    const chunkBounds = (
+      [ax, az]: ChunkPos,
+      [bx, bz]: ChunkPos,
+    ): [[number, number], [number, number]] => [
+      toLatLng(Math.min(ax, bx) * CHUNK, Math.min(az, bz) * CHUNK),
+      toLatLng((Math.max(ax, bx) + 1) * CHUNK, (Math.max(az, bz) + 1) * CHUNK),
+    ]
+
+    const onMouseDown = (e: MouseEvent) => {
+      const layers = layersRef.current
+      if (!layers) return
+      // The middle button is Leaflet's drag; without this the browser would start autoscroll.
+      if (e.button === 1) {
+        e.preventDefault()
+        return
+      }
+      if (e.button !== 0 || (e.target as Element).closest('.leaflet-control'))
+        return
+      // Runs in the capture phase, so Leaflet never sees the left button and does not pan.
+      e.stopPropagation()
+      e.preventDefault()
+
+      const chunkOf = (event: MouseEvent): ChunkPos => {
+        const latlng = layers.map.mouseEventToLatLng(event)
+        return [
+          Math.floor(Math.floor(latlng.lng / scale) / CHUNK),
+          Math.floor(Math.floor(-latlng.lat / scale) / CHUNK),
+        ]
+      }
+      const from = chunkOf(e)
+      let to = from
+      const area = layers.L.rectangle(chunkBounds(from, to), {
+        color: '#ffffff',
+        weight: 1,
+        dashArray: '4 4',
+        fillOpacity: 0.1,
+        interactive: false,
+      })
+
+      const onMove = (event: MouseEvent) => {
+        to = chunkOf(event)
+        area.setBounds(layers.L.latLngBounds(chunkBounds(from, to)))
+        if (to[0] !== from[0] || to[1] !== from[1]) area.addTo(layers.map)
+      }
+      const onUp = (event: MouseEvent) => {
+        if (event.button !== 0) return
+        stopSelecting?.()
+        areaRef.current(from, to)
+      }
+      stopSelecting = () => {
+        window.removeEventListener('mousemove', onMove)
+        window.removeEventListener('mouseup', onUp)
+        area.remove()
+        stopSelecting = undefined
+      }
+      window.addEventListener('mousemove', onMove)
+      window.addEventListener('mouseup', onUp)
+    }
 
     void import('leaflet').then((L) => {
-      if (cancelled || !containerRef.current) return
+      if (cancelled || !container) return
 
-      map = L.map(containerRef.current, {
+      map = L.map(container, {
         crs: L.CRS.Simple,
         preferCanvas: true,
         attributionControl: false,
         boxZoom: false,
+        doubleClickZoom: false,
         minZoom: 0,
         maxZoom: world.maxZoom + world.extraZoom,
       }).setView(toLatLng(world.spawn.x, world.spawn.z), world.maxZoom)
@@ -168,31 +247,41 @@ export default function ChunkMap({
       }
       const claims = new ClaimsLayer({ tileSize: 256 }).addTo(map)
       const selectionLayer = L.layerGroup().addTo(map)
+      const markerLayer = L.layerGroup().addTo(map)
+      const playerLayer = L.layerGroup().addTo(map)
 
-      const chunkAt = (latlng: import('leaflet').LatLng) => {
-        const x = Math.floor(latlng.lng / scale)
-        const z = Math.floor(-latlng.lat / scale)
-        return {
+      map.on('mousemove', (e) => {
+        const x = Math.floor(e.latlng.lng / scale)
+        const z = Math.floor(-e.latlng.lat / scale)
+        hoverRef.current({
           x,
           z,
           cx: Math.floor(x / CHUNK),
           cz: Math.floor(z / CHUNK),
-        }
-      }
-      map.on('mousemove', (e) => hoverRef.current(chunkAt(e.latlng)))
-      map.on('mouseout', () => hoverRef.current(undefined))
-      map.on('click', (e) => {
-        const { cx, cz } = chunkAt(e.latlng)
-        clickRef.current(cx, cz, e.originalEvent.shiftKey)
+        })
       })
+      map.on('mouseout', () => hoverRef.current(undefined))
+      // A tap on a touch screen arrives as a left click too.
+      container.addEventListener('mousedown', onMouseDown, true)
 
-      layersRef.current = { L, map, claims, selection: selectionLayer }
+      layersRef.current = {
+        L,
+        map,
+        claims,
+        selection: selectionLayer,
+        markers: markerLayer,
+        players: playerLayer,
+      }
       setReady(true)
     })
 
+    const playerMarkers = playerMarkersRef.current
     return () => {
       cancelled = true
+      stopSelecting?.()
+      container?.removeEventListener('mousedown', onMouseDown, true)
       layersRef.current = undefined
+      playerMarkers.clear()
       setReady(false)
       map?.remove()
     }
@@ -202,22 +291,97 @@ export default function ChunkMap({
     const layers = layersRef.current
     if (!ready || !layers) return
     const scale = 1 / 2 ** world.maxZoom
+    const chunkRect = (x: number, z: number): LatLngBoundsExpression => [
+      [-z * CHUNK * scale, x * CHUNK * scale],
+      [-(z + 1) * CHUNK * scale, (x + 1) * CHUNK * scale],
+    ]
     layers.selection.clearLayers()
     for (const { x, z, kind } of selection.values()) {
-      layers.L.rectangle(
-        [
-          [-z * CHUNK * scale, x * CHUNK * scale],
-          [-(z + 1) * CHUNK * scale, (x + 1) * CHUNK * scale],
-        ],
-        {
-          color: selectionColors[kind],
-          weight: 1,
-          fillOpacity: 0.45,
-          interactive: false,
-        },
-      ).addTo(layers.selection)
+      layers.L.rectangle(chunkRect(x, z), {
+        color: selectionColors[kind],
+        weight: 1,
+        fillOpacity: 0.45,
+        interactive: false,
+      }).addTo(layers.selection)
     }
-  }, [ready, selection, world.maxZoom])
+    if (focused) {
+      layers.L.rectangle(chunkRect(...focused), {
+        color: '#ffffff',
+        weight: 2,
+        fill: false,
+        interactive: false,
+      }).addTo(layers.selection)
+    }
+  }, [ready, selection, focused, world.maxZoom])
+
+  useEffect(() => {
+    const layers = layersRef.current
+    if (!ready || !layers) return
+    const scale = 1 / 2 ** world.maxZoom
+    layers.markers.clearLayers()
+    for (const marker of markers) {
+      const icon = layers.L.marker([-marker.z * scale, marker.x * scale], {
+        icon: layers.L.icon({
+          iconUrl: marker.icon,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        }),
+        // Interactive only so the label shows on hover; a left press still selects the chunk under it.
+        keyboard: false,
+      })
+      if (marker.label) {
+        icon.bindTooltip(textElement(marker.label), {
+          direction: 'top',
+          offset: [0, -8],
+        })
+      }
+      icon.addTo(layers.markers)
+    }
+  }, [ready, markers, world.maxZoom])
+
+  // Players are moved in place, so their nameplates do not blink on every poll.
+  useEffect(() => {
+    const layers = layersRef.current
+    if (!ready || !layers) return
+    const scale = 1 / 2 ** world.maxZoom
+    const current = playerMarkersRef.current
+    const online = new Set(players.map((player) => player.uuid))
+    for (const [uuid, marker] of current) {
+      if (online.has(uuid)) continue
+      marker.remove()
+      current.delete(uuid)
+    }
+    for (const player of players) {
+      const latlng: [number, number] = [-player.z * scale, player.x * scale]
+      const existing = current.get(player.uuid)
+      if (existing) {
+        existing.setLatLng(latlng)
+        continue
+      }
+      const face = document.createElement('img')
+      face.src = `https://crafatar-pub.neodium.fr/avatars/${player.uuid}?size=16&overlay`
+      face.alt = player.name
+      face.className = 'size-4 rounded-sm shadow ring-1 ring-black/60'
+      const marker = layers.L.marker(latlng, {
+        icon: layers.L.divIcon({
+          html: face,
+          className: '',
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        }),
+        interactive: false,
+        keyboard: false,
+        zIndexOffset: 1000,
+      })
+        .bindTooltip(textElement(player.name), {
+          permanent: true,
+          direction: 'right',
+          offset: [8, 0],
+        })
+        .addTo(layers.players)
+      current.set(player.uuid, marker)
+    }
+  }, [ready, players, world.maxZoom])
 
   return (
     <div
@@ -225,4 +389,11 @@ export default function ChunkMap({
       className="h-[70vh] w-full cursor-crosshair rounded-lg bg-[#1a1a1a]!"
     />
   )
+}
+
+// Leaflet writes a string tooltip as HTML; an element keeps names and labels as plain text.
+function textElement(text: string) {
+  const span = document.createElement('span')
+  span.textContent = text
+  return span
 }

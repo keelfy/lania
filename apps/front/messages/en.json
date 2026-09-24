@@ -1013,12 +1013,18 @@
       "nether": "Nether",
       "the_end": "The End"
     },
-    "hint": "Click selects a chunk, Shift+click selects a rectangle from the previous click.",
+    "hint": "Left click selects a chunk, drag to select an area. Hold the mouse wheel to move the map, scroll to zoom.",
     "hover": {
       "chunk": "chunk {x}, {z}",
       "block": "block {x}, {z}",
       "claimed": "claimed by {username} since {date}",
       "free": "free"
+    },
+    "focus": {
+      "close": "Close",
+      "blocks": "blocks x {x1}…{x2}, z {z1}…{z2}",
+      "owner": "Owner: <link>{username}</link>",
+      "since": "Claimed {date}"
     },
     "signIn": "Sign in to claim chunks.",
     "noAccess": "Players with access to the season can claim. <link>Get access</link>",
