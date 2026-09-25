@@ -104,7 +104,7 @@ export default async function CommunityProfilePage({
         <div className="flex max-w-2xl flex-col gap-8">
           <header className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              {profile.mojangUuid && (
+              {profile.mojangUuid && !profile.cosmetics.name.glythPrefix && (
                 <PlayerFace player={profile} className="size-10 rounded-sm" />
               )}
               <NamePrefixes cosmetics={profile.cosmetics.name} size={32} />

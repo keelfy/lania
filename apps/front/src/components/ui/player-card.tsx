@@ -119,9 +119,10 @@ export default function PlayerCard({
     >
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {profile?.mojangUuid && (
-            <PlayerFace player={profile} className="size-5" />
-          )}
+          {profile?.mojangUuid &&
+            !(nameCosmetics ?? profile.cosmetics.name).glythPrefix && (
+              <PlayerFace player={profile} className="size-5" />
+            )}
           <NamePrefixes cosmetics={nameCosmetics ?? profile?.cosmetics.name} />
           <McUsername
             username={displayName ?? 'Steve'}

@@ -51,6 +51,8 @@ export default function ProfileVerificationCard({
   const [code, setCode] = React.useState('')
   const [isStarting, startStarting] = React.useTransition()
   const [isConfirming, startConfirming] = React.useTransition()
+  // Until the admin rekeys the profile to the Mojang UUID, the proxy cannot match the licensed login to it.
+  const rekeyed = profile.mojangUuid === profile.mcUuid
 
   const start = () => {
     startStarting(async () => {
@@ -86,7 +88,13 @@ export default function ProfileVerificationCard({
           {profile.verified && <VerifiedBadge />}
         </CardTitle>
         <CardDescription>
-          {t(profile.verified ? 'verified' : 'description')}
+          {t(
+            profile.verified
+              ? 'verified'
+              : rekeyed
+                ? 'description'
+                : 'notRekeyed',
+          )}
         </CardDescription>
         {!profile.verified && (
           <CardAction>
@@ -94,7 +102,7 @@ export default function ProfileVerificationCard({
               variant="outline"
               size="sm"
               onClick={start}
-              disabled={isStarting}
+              disabled={!rekeyed || isStarting}
             >
               <BadgeCheckIcon className="size-4" />
               {t('start')}

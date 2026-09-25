@@ -235,6 +235,7 @@
       "title": "License verification",
       "description": "Optional. Prove that the licensed account is yours to get a checkmark next to the nickname",
       "verified": "License verified, the nickname has a checkmark",
+      "notRekeyed": "The profile is not moved to the licensed UUID yet. Verification opens after the move",
       "start": "Verify",
       "startFailed": "Could not start the verification",
       "dialogDescription": "The server shows the code only to the owner of the licensed account",

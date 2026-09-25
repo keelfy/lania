@@ -81,9 +81,7 @@ export default async function ProfilePage({ searchParams, params }: Props) {
   const accessStatusColor = accessStatusColors[accessStatus]
   const Icon = accessStatusIcons[accessStatus]
   // Only the licensed account of a profile keyed to its Mojang UUID can join and get the code.
-  const canVerify =
-    selectedProfile.verified ||
-    selectedProfile.mojangUuid === selectedProfile.mcUuid
+  const canVerify = selectedProfile.verified || !!selectedProfile.mojangUuid
   const primarySeason = seasons.find((season) => season.isPrimary)
 
   return (
