@@ -35,6 +35,9 @@ type MinecraftService interface {
 	// SetPlayerRolesInSeason writes the roles to the server of one season. It does nothing when the season has
 	// no shell address, because it has no server yet.
 	SetPlayerRolesInSeason(ctx context.Context, seasonID uuid.UUID, roles map[uuid.UUID]domain.Role) error
+	// RegisterPlayerInSeason makes LuckPerms of the season resolve the username of the profile before the
+	// player ever joins. It fails when the season has no shell address, because nothing could resolve it.
+	RegisterPlayerInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
 	// AddToWhitelist does nothing when the season has no shell address, because it has no server yet.
 	AddToWhitelist(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
 	// RemoveFromWhitelist does nothing when the season has no shell address, because it has no server yet.
@@ -196,6 +199,19 @@ func (s *minecraftService) SetPlayerRolesInSeason(ctx context.Context, seasonID 
 	roleGroups, groups := roleGroupsFor(roles)
 	if err := api.SetPlayerRoles(ctx, roleGroups, groups); err != nil {
 		return utils.NewInternalServerError("failed to set player roles", err)
+	}
+	return nil
+}
+
+func (s *minecraftService) RegisterPlayerInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error {
+	api, err := s.seasonShell(ctx, seasonID)
+	if errors.Is(err, errSeasonHasNoShell) {
+		return utils.NewConflictError("season has no server yet", err)
+	} else if err != nil {
+		return err
+	}
+	if err := api.RegisterPlayer(ctx, profile.MinecraftUUID, profile.MinecraftUsername); err != nil {
+		return utils.NewInternalServerError("failed to register player", err)
 	}
 	return nil
 }

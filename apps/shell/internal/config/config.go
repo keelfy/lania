@@ -99,6 +99,10 @@ func GetLuckpermsUserPermissionsTableName() string {
 	return getEnvOrDefault("LUCKPERMS_USER_PERMISSIONS_TABLE_NAME", "luckperms_user_permissions")
 }
 
+func GetLuckpermsPlayersTableName() string {
+	return getEnvOrDefault("LUCKPERMS_PLAYERS_TABLE_NAME", "luckperms_players")
+}
+
 func GetPlanUsersTableName() string {
 	return getEnvOrDefault("PLAN_USERS_TABLE_NAME", "plan_users")
 }

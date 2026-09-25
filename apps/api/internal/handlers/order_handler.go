@@ -268,6 +268,7 @@ func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 			paymentURL = fmt.Sprintf("/%s/orders/%s/donate", locale, orderID.String())
 		case domain.PaymentMethodEasyDonate:
 			edProductIDs := make(uuid.UUIDs, 0)
+			seasonIDs := make(uuid.UUIDs, 0)
 			profileID := uuid.Nil
 			for _, item := range itemsToOrder {
 				if profileID == uuid.Nil {
@@ -276,6 +277,9 @@ func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 					return utils.NewBadRequestError("all products must have the same profile id when using easy donate payment method", nil)
 				}
 				edProductIDs = append(edProductIDs, item.Product.ID)
+				if !slices.Contains(seasonIDs, item.SeasonID) {
+					seasonIDs = append(seasonIDs, item.SeasonID)
+				}
 			}
 
 			url, err := h.easyDonateService.ConstructPaymentURL(ctx, queries, services.EDConstructPaymentURLParams{
@@ -283,6 +287,7 @@ func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 				OrderID:    orderID,
 				ProductIDs: edProductIDs,
 				ProfileID:  profileID,
+				SeasonIDs:  seasonIDs,
 				Amount:     amount,
 				Currency:   currency,
 			})

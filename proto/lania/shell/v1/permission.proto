@@ -12,6 +12,8 @@ service PermissionService {
   rpc SetPlayerPrefix(SetPlayerPrefixRequest) returns (SetPlayerPrefixResponse);
   // SetPlayerRoles makes every listed player belong to exactly the given role group. Idempotent.
   rpc SetPlayerRoles(SetPlayerRolesRequest) returns (SetPlayerRolesResponse);
+  // RegisterPlayer makes LuckPerms know the player by username before the first join. Idempotent.
+  rpc RegisterPlayer(RegisterPlayerRequest) returns (RegisterPlayerResponse);
 }
 
 message GetPlayerGroupsRequest {
@@ -52,3 +54,10 @@ message SetPlayerRolesRequest {
 }
 
 message SetPlayerRolesResponse {}
+
+message RegisterPlayerRequest {
+  string minecraft_uuid = 1;
+  string username = 2;
+}
+
+message RegisterPlayerResponse {}

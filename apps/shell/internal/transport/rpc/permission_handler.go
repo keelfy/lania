@@ -80,3 +80,18 @@ func (h *PermissionHandler) SetPlayerRoles(ctx context.Context, req *shellv1.Set
 	}
 	return &shellv1.SetPlayerRolesResponse{}, nil
 }
+
+func (h *PermissionHandler) RegisterPlayer(ctx context.Context, req *shellv1.RegisterPlayerRequest) (*shellv1.RegisterPlayerResponse, error) {
+	mcUUID, err := parseUUID(req.GetMinecraftUuid())
+	if err != nil {
+		return nil, err
+	}
+
+	err = h.permissionService.RegisterPlayer(ctx, mcUUID, req.GetUsername())
+	if errors.Is(err, services.ErrInvalidUsername) {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	} else if err != nil {
+		return nil, internalError(err)
+	}
+	return &shellv1.RegisterPlayerResponse{}, nil
+}

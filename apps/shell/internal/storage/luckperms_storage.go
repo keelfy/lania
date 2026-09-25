@@ -27,6 +27,9 @@ type LuckpermsStorage interface {
 	FindPlayersWithPermissions(ctx context.Context, permissions []string) (uuid.UUIDs, error)
 	// ReplacePermissions applies every replacement in one transaction. A node in both lists stays once.
 	ReplacePermissions(ctx context.Context, replacements []PermissionReplacement) error
+	// SavePlayer maps the username to the player the way LuckPerms does on join, so commands can target
+	// a player who never joined. The primary group of a known player is kept.
+	SavePlayer(ctx context.Context, mcUUID uuid.UUID, username string) error
 }
 
 type luckpermsStorage struct {
@@ -140,5 +143,30 @@ func (s *luckpermsStorage) ReplacePermissions(ctx context.Context, replacements 
 			}
 		}
 		return nil
+	})
+}
+
+// LuckPerms keeps one player per username, so the username is taken from any other player first.
+const deletePlayersByUsername = `
+DELETE FROM %s
+WHERE username = ? AND uuid <> ?
+`
+
+const upsertPlayer = `
+INSERT INTO %s (uuid, username, primary_group)
+VALUES (?, ?, 'default')
+ON DUPLICATE KEY UPDATE username = VALUES(username)
+`
+
+func (s *luckpermsStorage) SavePlayer(ctx context.Context, mcUUID uuid.UUID, username string) error {
+	tableName := config.GetLuckpermsPlayersTableName()
+	// LuckPerms stores and looks up usernames in lower case.
+	username = strings.ToLower(username)
+	return beginTx(ctx, s.db, func(tx *stdsql.Tx) error {
+		if _, err := tx.ExecContext(ctx, fmt.Sprintf(deletePlayersByUsername, tableName), username, mcUUID.String()); err != nil {
+			return err
+		}
+		_, err := tx.ExecContext(ctx, fmt.Sprintf(upsertPlayer, tableName), mcUUID.String(), username)
+		return err
 	})
 }

@@ -63,7 +63,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	notificationService := services.NewNotificationService(mainStorage)
 	fulfillmentService := services.NewFulfillmentService(accessService, profileCosmeticsService, profileService, notificationService)
 	orderService := services.NewOrderService(mainStorage, freekassaService, productService, basketService, fulfillmentService)
-	easyDonateService := services.NewEasyDonateService(mainStorage, profileService, orderService)
+	easyDonateService := services.NewEasyDonateService(mainStorage, profileService, orderService, minecraftService)
 	purchaseService := services.NewPurchaseService(mainStorage, accessService, profileCosmeticsService)
 	orderHandler := handlers.NewOrderHandler(orderService, freekassaService, easyDonateService, productService, seasonService, basketService, purchaseService, mainStorage, oryAPI)
 	acquiringHandler := handlers.NewAcquiringHandler(mainStorage, orderService)

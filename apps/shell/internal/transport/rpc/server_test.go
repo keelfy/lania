@@ -82,6 +82,10 @@ func (s *fakeLuckpermsStorage) ReplacePermissions(context.Context, []storage.Per
 	return nil
 }
 
+func (s *fakeLuckpermsStorage) SavePlayer(context.Context, uuid.UUID, string) error {
+	return nil
+}
+
 type fakeConsole struct {
 	commands []string
 }

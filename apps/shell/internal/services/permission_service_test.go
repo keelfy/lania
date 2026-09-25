@@ -14,6 +14,18 @@ import (
 type stubLuckpermsStorage struct {
 	err          error
 	replacements []storage.PermissionReplacement
+	savedPlayers map[uuid.UUID]string
+}
+
+func (s *stubLuckpermsStorage) SavePlayer(_ context.Context, mcUUID uuid.UUID, username string) error {
+	if s.err != nil {
+		return s.err
+	}
+	if s.savedPlayers == nil {
+		s.savedPlayers = make(map[uuid.UUID]string)
+	}
+	s.savedPlayers[mcUUID] = username
+	return nil
 }
 
 func (s *stubLuckpermsStorage) FindPermissionsWithPrefix(context.Context, uuid.UUIDs, string) (map[uuid.UUID][]string, error) {
@@ -152,6 +164,32 @@ func TestSetPlayerRoles(t *testing.T) {
 		err := NewPermissionService(&stubLuckpermsStorage{err: errors.New("db down")}, console).SetPlayerRoles(ctx, roleGroups, map[uuid.UUID]string{admin: "admin"})
 		if err == nil || len(console.commands) != 0 {
 			t.Errorf("error = %v, sync commands = %v, want an error and no sync", err, console.commands)
+		}
+	})
+}
+
+func TestRegisterPlayer(t *testing.T) {
+	ctx := context.Background()
+	mcUUID := uuid.MustParse("0f0c2a3e-5a4b-4d4c-9f6e-3b1a2c3d4e5f")
+
+	t.Run("saves the player", func(t *testing.T) {
+		store := &stubLuckpermsStorage{}
+		if err := NewPermissionService(store, &stubConsole{}).RegisterPlayer(ctx, mcUUID, "Steve_1"); err != nil {
+			t.Fatalf("RegisterPlayer() error = %v", err)
+		}
+		if got := store.savedPlayers[mcUUID]; got != "Steve_1" {
+			t.Errorf("saved username = %q, want %q", got, "Steve_1")
+		}
+	})
+
+	t.Run("rejects an invalid username", func(t *testing.T) {
+		store := &stubLuckpermsStorage{}
+		err := NewPermissionService(store, &stubConsole{}).RegisterPlayer(ctx, mcUUID, "bad'name")
+		if !errors.Is(err, ErrInvalidUsername) {
+			t.Fatalf("RegisterPlayer() error = %v, want ErrInvalidUsername", err)
+		}
+		if len(store.savedPlayers) != 0 {
+			t.Errorf("saved players = %v, want none", store.savedPlayers)
 		}
 	})
 }

@@ -16,6 +16,7 @@ type fakeShell struct {
 	err       error
 	prefixes  []string
 	whitelist int
+	players   map[uuid.UUID]string
 	roles     map[uuid.UUID]string
 	roleGroup []string
 }
@@ -48,6 +49,17 @@ func (s *fakeShell) SetPlayerRoles(_ context.Context, roleGroups []string, roles
 	s.roleGroup = roleGroups
 	s.roles = roles
 	return s.err
+}
+
+func (s *fakeShell) RegisterPlayer(_ context.Context, mcUUID uuid.UUID, username string) error {
+	if s.err != nil {
+		return s.err
+	}
+	if s.players == nil {
+		s.players = make(map[uuid.UUID]string)
+	}
+	s.players[mcUUID] = username
+	return nil
 }
 
 func (s *fakeShell) AddToWhitelist(context.Context, uuid.UUID, string) error {
@@ -217,5 +229,31 @@ func TestMinecraftService_RoleAndPrefixInSeasonUseShellOfSeason(t *testing.T) {
 	}
 	if err := service.SetPrefixInSeason(ctx, second.ID, admin, "[X]"); err == nil {
 		t.Fatal("want an error when the server rejects the prefix")
+	}
+}
+
+func TestMinecraftService_RegisterPlayerGoesToTheSeasonServer(t *testing.T) {
+	profile := &domain.Profile{MinecraftUUID: uuid.New(), MinecraftUsername: "Steve"}
+	pool := fakeShellPool{"a:1": {}, "b:1": {}}
+	first, second, upcoming := season("a:1", true), season("b:1", true), season("", false)
+	service := NewMinecraftService(&fakeSeasons{seasons: []*domain.Season{first, second, upcoming}}, pool)
+	ctx := context.Background()
+
+	if err := service.RegisterPlayerInSeason(ctx, second.ID, profile); err != nil {
+		t.Fatal(err)
+	}
+	if pool["b:1"].players[profile.MinecraftUUID] != "Steve" {
+		t.Errorf("b:1 players = %v, want the profile", pool["b:1"].players)
+	}
+	if pool["a:1"].players != nil {
+		t.Error("another season must not get the player")
+	}
+
+	if err := service.RegisterPlayerInSeason(ctx, upcoming.ID, profile); err == nil {
+		t.Fatal("want an error when the season has no server")
+	}
+	pool["b:1"].err = errors.New("down")
+	if err := service.RegisterPlayerInSeason(ctx, second.ID, profile); err == nil {
+		t.Fatal("want an error when the server rejects the player")
 	}
 }

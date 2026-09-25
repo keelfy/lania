@@ -25,6 +25,8 @@ type ShellAPI interface {
 	// SetPlayerRoles makes every player belong to exactly the role group it maps to among roleGroups.
 	// An empty group leaves the player in no role group.
 	SetPlayerRoles(ctx context.Context, roleGroups []string, roles map[uuid.UUID]string) error
+	// RegisterPlayer makes LuckPerms resolve the username to the player before the first join.
+	RegisterPlayer(ctx context.Context, mcUUID uuid.UUID, username string) error
 	AddToWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error
 	// RemoveFromWhitelist forbids the player to join. It does nothing for a player that is not whitelisted.
 	RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error
@@ -176,6 +178,14 @@ func (api *shellAPI) SetPlayerRoles(ctx context.Context, roleGroups []string, ro
 		req.Roles[mcUUID.String()] = group
 	}
 	_, err := api.permission.SetPlayerRoles(ctx, req)
+	return err
+}
+
+func (api *shellAPI) RegisterPlayer(ctx context.Context, mcUUID uuid.UUID, username string) error {
+	_, err := api.permission.RegisterPlayer(ctx, &shellv1.RegisterPlayerRequest{
+		MinecraftUuid: mcUUID.String(),
+		Username:      username,
+	})
 	return err
 }
 

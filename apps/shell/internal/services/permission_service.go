@@ -26,6 +26,9 @@ type PermissionService interface {
 	// SetPlayerRoles makes every player of roles belong to exactly the role group it maps to, among roleGroups.
 	// An empty group leaves the player in no role group. A group that is not in roleGroups is an error.
 	SetPlayerRoles(ctx context.Context, roleGroups []string, roles map[uuid.UUID]string) error
+	// RegisterPlayer makes LuckPerms resolve the username to the player before the first join, so
+	// console commands that take a username, like the ones EasyDonate runs, do not fail. Idempotent.
+	RegisterPlayer(ctx context.Context, mcUUID uuid.UUID, username string) error
 }
 
 // ErrInvalidPrefix means the prefix cannot be passed to the console as one quoted argument.
@@ -142,4 +145,11 @@ func (s *permissionService) syncServer(ctx context.Context) {
 	default:
 		logger.Debugf(ctx, "%q: %s", command, output)
 	}
+}
+
+func (s *permissionService) RegisterPlayer(ctx context.Context, mcUUID uuid.UUID, username string) error {
+	if !usernamePattern.MatchString(username) {
+		return fmt.Errorf("%w: %q", ErrInvalidUsername, username)
+	}
+	return s.luckpermsStorage.SavePlayer(ctx, mcUUID, username)
 }

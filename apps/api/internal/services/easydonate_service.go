@@ -35,20 +35,23 @@ type EasyDonateService interface {
 }
 
 type easyDonateService struct {
-	storage        storage.MainStorage
-	profileService ProfileService
-	orderService   OrderService
+	storage          storage.MainStorage
+	profileService   ProfileService
+	orderService     OrderService
+	minecraftService MinecraftService
 }
 
 func NewEasyDonateService(
 	storage storage.MainStorage,
 	profileService ProfileService,
 	orderService OrderService,
+	minecraftService MinecraftService,
 ) EasyDonateService {
 	return &easyDonateService{
-		storage:        storage,
-		profileService: profileService,
-		orderService:   orderService,
+		storage:          storage,
+		profileService:   profileService,
+		orderService:     orderService,
+		minecraftService: minecraftService,
 	}
 }
 
@@ -82,8 +85,10 @@ type EDConstructPaymentURLParams struct {
 	OrderID    uuid.UUID
 	ProductIDs uuid.UUIDs
 	ProfileID  uuid.UUID
-	Amount     float64
-	Currency   domain.Currency
+	// SeasonIDs are the seasons the products are bought for.
+	SeasonIDs uuid.UUIDs
+	Amount    float64
+	Currency  domain.Currency
 }
 
 func (s *easyDonateService) ConstructPaymentURL(ctx context.Context, queries sql.Queries, params EDConstructPaymentURLParams) (string, error) {
@@ -107,6 +112,16 @@ func (s *easyDonateService) ConstructPaymentURL(ctx context.Context, queries sql
 	products := make([]edPaymentCreateProduct, 0, len(edProductIDs))
 	for _, edProductID := range edProductIDs {
 		products = append(products, edPaymentCreateProduct{ID: edProductID, Quantity: 1})
+	}
+
+	// EasyDonate counts a purchase only when its console command succeeds, and the command targets the
+	// player by username. LuckPerms cannot resolve the username of a player who never joined, so the
+	// player is registered first. Without it the player would pay for a purchase that EasyDonate rejects.
+	// Every season has its own LuckPerms database.
+	for _, seasonID := range params.SeasonIDs {
+		if err := s.minecraftService.RegisterPlayerInSeason(ctx, seasonID, profile); err != nil {
+			return "", err
+		}
 	}
 
 	payload := edPaymentCreateRequest{
