@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/shell/internal/config"
@@ -38,7 +39,7 @@ func NewServer(
 }
 
 func authInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-	if strings.HasPrefix(info.FullMethod, "/"+healthpb.Health_ServiceDesc.ServiceName+"/") {
+	if isHealthCheck(info.FullMethod) {
 		return handler(ctx, req)
 	}
 
@@ -57,14 +58,35 @@ func authInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, h
 	return nil, status.Error(codes.Unauthenticated, "invalid token")
 }
 
+// requestIDHeader carries the id of the API request, so shell logs can be matched with API logs.
+const requestIDHeader = "x-request-id"
+
 func loggingInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if ids := md.Get(requestIDHeader); len(ids) > 0 {
+		ctx = logger.WithRequestID(ctx, ids[0])
+	}
+
+	start := time.Now()
 	res, err := handler(ctx, req)
-	if err != nil {
-		logger.Errorf(ctx, "%s: %v", info.FullMethod, err)
-	} else {
-		logger.Debugf(ctx, "%s: ok", info.FullMethod)
+	elapsed := time.Since(start)
+
+	code := status.Code(err)
+	switch {
+	case isHealthCheck(info.FullMethod):
+		logger.Debugf(ctx, "%s: %s in %s", info.FullMethod, code, elapsed)
+	case code == codes.OK:
+		logger.Infof(ctx, "%s: %s in %s", info.FullMethod, code, elapsed)
+	case code == codes.Internal || code == codes.Unknown:
+		logger.Errorf(ctx, "%s: %s in %s: %v", info.FullMethod, code, elapsed, err)
+	default:
+		logger.Warnf(ctx, "%s: %s in %s: %v", info.FullMethod, code, elapsed, err)
 	}
 	return res, err
+}
+
+func isHealthCheck(method string) bool {
+	return strings.HasPrefix(method, "/"+healthpb.Health_ServiceDesc.ServiceName+"/")
 }
 
 func parseUUIDs(values []string) (uuid.UUIDs, error) {

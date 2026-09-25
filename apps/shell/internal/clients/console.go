@@ -3,10 +3,12 @@ package clients
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/gorcon/rcon"
 	"github.com/lania-smp/shell/internal/config"
+	"github.com/lania-smp/shell/internal/logger"
 )
 
 // ErrConsoleDisabled means no RCON address is configured.
@@ -51,5 +53,9 @@ func (c *rconConsole) Execute(ctx context.Context, command string) (string, erro
 	}
 	defer conn.Close()
 
-	return conn.Execute(command)
+	output, err := conn.Execute(command)
+	if err == nil {
+		logger.Infof(ctx, "rcon %q: %s", command, strings.TrimSpace(output))
+	}
+	return output, err
 }

@@ -91,11 +91,9 @@ func (s *permissionService) SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUI
 		commands = append(commands, fmt.Sprintf("lp user %s meta addprefix %s \"%s\"", mcUUID, prefixPriority, prefix))
 	}
 	for _, command := range commands {
-		output, err := s.console.Execute(ctx, command)
-		if err != nil {
+		if _, err := s.console.Execute(ctx, command); err != nil {
 			return fmt.Errorf("failed to run %q: %w", command, err)
 		}
-		logger.Debugf(ctx, "%q: %s", command, output)
 	}
 	return nil
 }
@@ -136,14 +134,12 @@ func (s *permissionService) SetPlayerRoles(ctx context.Context, roleGroups []str
 // Prefixes do not go through here: they are written by the server itself.
 func (s *permissionService) syncServer(ctx context.Context) {
 	command := config.GetLuckpermsSyncCommand()
-	output, err := s.console.Execute(ctx, command)
+	_, err := s.console.Execute(ctx, command)
 	switch {
 	case errors.Is(err, clients.ErrConsoleDisabled):
 		logger.Debugf(ctx, "skipping %q: rcon is not configured", command)
 	case err != nil:
 		logger.Warnf(ctx, "failed to run %q, in-game permissions stay stale until the next sync: %v", command, err)
-	default:
-		logger.Debugf(ctx, "%q: %s", command, output)
 	}
 }
 

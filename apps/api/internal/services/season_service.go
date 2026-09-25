@@ -85,7 +85,7 @@ func (s *seasonService) GetPrimarySeasonID(ctx context.Context) (uuid.UUID, erro
 
 func (s *seasonService) dropPrimarySeasonCache(ctx context.Context) {
 	if err := s.cache.DeleteKey(ctx, primarySeasonCacheKey); err != nil {
-		logger.Errorf(ctx, "[SEASON] Error dropping primary season cache: %v", err)
+		logger.Warnf(ctx, "[SEASON] Error dropping primary season cache: %v", err)
 	}
 }
 

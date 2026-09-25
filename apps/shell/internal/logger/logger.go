@@ -13,6 +13,18 @@ import (
 
 const levelFatal = slog.Level(12)
 
+type requestIDKey struct{}
+
+// WithRequestID tags every log line of the call with the request id of the API request that caused it.
+func WithRequestID(ctx context.Context, requestID string) context.Context {
+	return context.WithValue(ctx, requestIDKey{}, requestID)
+}
+
+func requestID(ctx context.Context) string {
+	id, _ := ctx.Value(requestIDKey{}).(string)
+	return id
+}
+
 // jsonLogger is set outside debug mode so production logs are structured for Loki.
 var jsonLogger *slog.Logger
 
@@ -48,7 +60,12 @@ func printJSON(ctx context.Context, level, message string) {
 		slogLevel = slog.LevelInfo
 	}
 
-	jsonLogger.Log(ctx, slogLevel, message)
+	var attrs []slog.Attr
+	if id := requestID(ctx); id != "" {
+		attrs = append(attrs, slog.String("request_id", id))
+	}
+
+	jsonLogger.LogAttrs(ctx, slogLevel, message, attrs...)
 
 	if level == "FATAL" {
 		os.Exit(1)
@@ -78,7 +95,12 @@ func println(ctx context.Context, level, message string) {
 		colorFunc = color.New(color.FgWhite).SprintfFunc()
 	}
 
-	log.Println(fmt.Sprintf("%s %s", colorFunc("[%s]", level), message))
+	coloredLevel := colorFunc("[%s]", level)
+	if id := requestID(ctx); id != "" {
+		coloredLevel = color.New(color.FgYellow).Sprintf("[%s] ", id) + coloredLevel
+	}
+
+	log.Println(fmt.Sprintf("%s %s", coloredLevel, message))
 
 	if level == "FATAL" {
 		log.Fatalln("Exiting...")

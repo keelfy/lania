@@ -5,13 +5,17 @@ import (
 	"sync"
 	"time"
 
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	shellv1 "github.com/lania-smp/backend/internal/gen/lania/shell/v1"
+	"github.com/lania-smp/backend/internal/logger"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // ShellAPI is the only way the API reaches a Minecraft server and its plugins. One ShellAPI serves one season.
@@ -80,7 +84,7 @@ func (p *shellPool) Get(address string) (ShellAPI, error) {
 	conn, err := grpc.NewClient(
 		address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(shellUnaryInterceptor),
+		grpc.WithChainUnaryInterceptor(shellLoggingInterceptor, shellUnaryInterceptor),
 	)
 	if err != nil {
 		return nil, err
@@ -96,12 +100,30 @@ func (p *shellPool) Get(address string) (ShellAPI, error) {
 	return api, nil
 }
 
+// shellLoggingInterceptor logs every call to a shell. Errors are warnings: callers decide whether a failure matters.
+func shellLoggingInterceptor(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	start := time.Now()
+	err := invoker(ctx, method, req, reply, cc, opts...)
+	elapsed := time.Since(start)
+
+	if code := status.Code(err); code == codes.OK {
+		logger.Infof(ctx, "[SHELL] %s %s: %s in %s", cc.Target(), method, code, elapsed)
+	} else {
+		logger.Warnf(ctx, "[SHELL] %s %s: %s in %s: %v", cc.Target(), method, code, elapsed, err)
+	}
+	return err
+}
+
 func shellUnaryInterceptor(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	ctx, cancel := context.WithTimeout(ctx, shellCallTimeout)
 	defer cancel()
 
 	if token := config.GetShellToken(); token != "" {
 		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
+	}
+	// The shell tags its logs with the id, so a page request can be followed across both services.
+	if requestID := chiMiddleware.GetReqID(ctx); requestID != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, "x-request-id", requestID)
 	}
 	return invoker(ctx, method, req, reply, cc, opts...)
 }

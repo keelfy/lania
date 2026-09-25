@@ -53,10 +53,8 @@ func (storage *cacheStorage) GetKey(ctx context.Context, key string) (string, er
 	}
 
 	value, err := stringCmd.Result()
-	if errors.Is(err, redis.Nil) {
-		return "", err
-	} else if err != nil {
-		logger.Errorf(ctx, "failed to get key '%s': %v", key, err)
+	if err != nil {
+		logGetError(ctx, key, err)
 		return "", err
 	}
 
@@ -72,7 +70,7 @@ func (storage *cacheStorage) GetInt64(ctx context.Context, key string) (int64, e
 
 	value, err := int64Cmd.Int64()
 	if err != nil {
-		logger.Errorf(ctx, "failed to get key '%s': %v", key, err)
+		logGetError(ctx, key, err)
 		return 0, err
 	}
 
@@ -88,7 +86,7 @@ func (storage *cacheStorage) GetBoolean(ctx context.Context, key string) (bool, 
 
 	value, err := cmd.Bool()
 	if err != nil {
-		logger.Errorf(ctx, "failed to get key '%s': %v", key, err)
+		logGetError(ctx, key, err)
 		return false, err
 	}
 
@@ -104,7 +102,7 @@ func (storage *cacheStorage) SetKey(ctx context.Context, key string, value inter
 
 	err := setCmd.Err()
 	if err != nil {
-		logger.Errorf(ctx, "failed to add key '%s': %v", key, err)
+		logger.Warnf(ctx, "failed to add key '%s': %v", key, err)
 		return err
 	}
 
@@ -122,9 +120,18 @@ func (storage *cacheStorage) DeleteKey(ctx context.Context, key string) error {
 	if err == redis.Nil {
 		return nil
 	} else if err != nil {
-		logger.Errorf(ctx, "failed to delete key '%s': %v", key, err)
+		logger.Warnf(ctx, "failed to delete key '%s': %v", key, err)
 	}
 
 	// logger.Debugf(ctx, "deleted key '%s'", key)
 	return err
+}
+
+// logGetError keeps misses at debug level, a cache failure only costs a fallback to the source.
+func logGetError(ctx context.Context, key string, err error) {
+	if errors.Is(err, redis.Nil) {
+		logger.Debugf(ctx, "cache miss for key '%s'", key)
+		return
+	}
+	logger.Warnf(ctx, "failed to get key '%s': %v", key, err)
 }
