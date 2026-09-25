@@ -20,6 +20,8 @@ export type AdminProfile = {
   legacyMcUuid?: string
   // The nickname became a licensed account of someone else.
   premiumConflict: boolean
+  // When the owner verified the licensed account; missing when not verified.
+  verifiedAt?: number
 }
 
 // One run of the premium rekey; lists hold usernames.

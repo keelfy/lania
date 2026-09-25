@@ -47,6 +47,7 @@ import {
   ProfileRole,
   ProfilesStats,
   ProfileStats,
+  ProfileVerification,
   SelectCosmeticOptionReq,
   UsernameCheck,
 } from '@/models/profile'
@@ -463,6 +464,30 @@ export function resyncProfile(
 ): Promise<ProfileResync> {
   return fetcher<ProfileResync>(`/v1/profiles/${id}/resync`, undefined, {
     method: 'POST',
+  })
+}
+
+// Opens a license verification: the next licensed login of the profile shows the code on the kick screen.
+export function startProfileVerification(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<ProfileVerification> {
+  return fetcher<ProfileVerification>(
+    `/v1/profiles/${id}/verification`,
+    undefined,
+    { method: 'POST' },
+  )
+}
+
+// Fails on a wrong code, and once the request expired or too many codes were wrong.
+export function confirmProfileVerification(
+  fetcher: ApiFetcher,
+  id: string,
+  code: string,
+): Promise<void> {
+  return fetcher<void>(`/v1/profiles/${id}/verification/confirm`, undefined, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
   })
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/lania-smp/backend/internal/domain"
 )
 
+// The profile columns end with verified_at, which is NULL unless the owner verified the current mc_uuid.
 func scanProfileRow(row *stdsql.Row) (*domain.Profile, error) {
 	var profile domain.Profile
 	err := row.Scan(
@@ -27,6 +28,7 @@ func scanProfileRow(row *stdsql.Row) (*domain.Profile, error) {
 		&profile.UpdatedBy,
 		&profile.LegacyMinecraftUUID,
 		&profile.PremiumConflict,
+		&profile.VerifiedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -51,6 +53,7 @@ func scanProfileRows(rows *stdsql.Rows, extra ...any) (*domain.Profile, error) {
 		&profile.UpdatedBy,
 		&profile.LegacyMinecraftUUID,
 		&profile.PremiumConflict,
+		&profile.VerifiedAt,
 	}, extra...)...)
 	if err != nil {
 		return nil, err
@@ -72,7 +75,8 @@ SELECT
 	p.updated_at,
 	p.updated_by,
 	p.legacy_mc_uuid,
-	p.premium_conflict
+	p.premium_conflict,
+	IF(p.verified_mc_uuid <=> p.mc_uuid, p.verified_at, NULL)
 FROM profiles p
 WHERE owner_user_id = ? 
 ORDER BY created_at ASC
@@ -134,7 +138,8 @@ SELECT
 	p.updated_at,
 	p.updated_by,
 	p.legacy_mc_uuid,
-	p.premium_conflict
+	p.premium_conflict,
+	IF(p.verified_mc_uuid <=> p.mc_uuid, p.verified_at, NULL)
 FROM profiles p
 %s
 %s
@@ -255,6 +260,7 @@ SELECT
 	p.updated_by,
 	p.legacy_mc_uuid,
 	p.premium_conflict,
+	IF(p.verified_mc_uuid <=> p.mc_uuid, p.verified_at, NULL),
 	pt.playtime
 FROM profile_playtimes pt
 JOIN profiles p ON p.mc_uuid = pt.mc_uuid
@@ -356,15 +362,19 @@ func (q *queries) ClaimProfile(ctx context.Context, profileID, ownerUserID uuid.
 	return affected > 0, nil
 }
 
+// The license verification belongs to the owner who did it, so it is dropped when the owner changes.
 const setProfileOwner = `
 UPDATE profiles
-SET owner_user_id = ?, updated_at = NOW(), updated_by = ?
+SET verified_mc_uuid = IF(owner_user_id <=> ?, verified_mc_uuid, NULL),
+	verified_at = IF(owner_user_id <=> ?, verified_at, NULL),
+	owner_user_id = ?, updated_at = NOW(), updated_by = ?
 WHERE id = ?
 `
 
 // SetProfileOwner gives the profile to the user, or leaves it without an owner when ownerUserID is nil.
+// A new owner loses the license verification of the previous one.
 func (q *queries) SetProfileOwner(ctx context.Context, profileID uuid.UUID, ownerUserID, updatedBy *uuid.UUID) error {
-	_, err := q.x.ExecContext(ctx, setProfileOwner, ownerUserID, updatedBy, profileID)
+	_, err := q.x.ExecContext(ctx, setProfileOwner, ownerUserID, ownerUserID, ownerUserID, updatedBy, profileID)
 	return err
 }
 
@@ -382,7 +392,8 @@ SELECT
 	p.updated_at,
 	p.updated_by,
 	p.legacy_mc_uuid,
-	p.premium_conflict
+	p.premium_conflict,
+	IF(p.verified_mc_uuid <=> p.mc_uuid, p.verified_at, NULL)
 FROM profiles p
 WHERE p.id = ?
 `
@@ -407,7 +418,8 @@ SELECT
 	p.updated_at,
 	p.updated_by,
 	p.legacy_mc_uuid,
-	p.premium_conflict
+	p.premium_conflict,
+	IF(p.verified_mc_uuid <=> p.mc_uuid, p.verified_at, NULL)
 FROM profiles p
 WHERE p.mc_uuid = ?
 `
@@ -500,7 +512,8 @@ SELECT
 	p.updated_at,
 	p.updated_by,
 	p.legacy_mc_uuid,
-	p.premium_conflict
+	p.premium_conflict,
+	IF(p.verified_mc_uuid <=> p.mc_uuid, p.verified_at, NULL)
 FROM profiles p
 WHERE p.mc_username = ?
 `

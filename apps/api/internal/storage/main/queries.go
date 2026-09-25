@@ -106,6 +106,18 @@ type Queries interface {
 	// CountUncheckedMojangProfiles counts profiles whose nickname was never looked up on Mojang.
 	CountUncheckedMojangProfiles(ctx context.Context) (int, error)
 
+	// Profile Verification
+	// UpsertProfileVerification opens a new verification request of the profile for ttl, replacing an earlier one.
+	UpsertProfileVerification(ctx context.Context, profileID uuid.UUID, ttl time.Duration) error
+	// FindOpenProfileVerification returns stdsql.ErrNoRows when the profile has no unexpired request.
+	FindOpenProfileVerification(ctx context.Context, profileID uuid.UUID) (*domain.ProfileVerification, error)
+	// SetProfileVerificationCode stores the issued code and keeps the request open for ttl more.
+	SetProfileVerificationCode(ctx context.Context, profileID uuid.UUID, code string, ttl time.Duration) error
+	IncrementProfileVerificationAttempts(ctx context.Context, profileID uuid.UUID) error
+	DeleteProfileVerification(ctx context.Context, profileID uuid.UUID) error
+	// SetProfileVerified marks mcUUID as the licensed account the owner proved.
+	SetProfileVerified(ctx context.Context, profileID, mcUUID uuid.UUID) error
+
 	// Profile Cosmetics
 	// FindNameColors returns every name color ordered by name.
 	FindNameColors(ctx context.Context) ([]*domain.NameColor, error)

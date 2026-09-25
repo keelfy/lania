@@ -21,6 +21,7 @@ var ProviderSet = wire.NewSet(
 	NewPlayerSyncService,
 	NewRoleSyncService,
 	NewProfileResyncService,
+	NewProfileVerificationService,
 	NewPremiumUUIDService,
 	NewProductService,
 	NewFulfillmentService,

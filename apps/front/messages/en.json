@@ -230,6 +230,25 @@
       "overview": "Overview",
       "settings": "Settings",
       "viewPublic": "Public profile"
+    },
+    "verification": {
+      "title": "License verification",
+      "description": "Optional. Prove that the licensed account is yours to get a checkmark next to the nickname",
+      "verified": "License verified, the nickname has a checkmark",
+      "start": "Verify",
+      "startFailed": "Could not start the verification",
+      "dialogDescription": "The server shows the code only to the owner of the licensed account",
+      "steps": {
+        "join": "Join <b>{address}</b> with the licensed account <b>{username}</b>",
+        "kick": "The server disconnects you and shows a code",
+        "type": "Type the code below"
+      },
+      "code": "Verification code",
+      "confirm": "Confirm",
+      "confirmFailed": "The code did not work",
+      "success": "License verified",
+      "expires": "The request lasts 10 minutes",
+      "restart": "Start again"
     }
   },
   "profileResync": {
@@ -361,7 +380,8 @@
       "player": "Player",
       "mod": "Moderator",
       "owner": "Owner"
-    }
+    },
+    "verified": "License verified"
   },
   "community": {
     "title": "Community",
@@ -801,7 +821,8 @@
         "cancel": "Cancel",
         "done": "Moved: {rekeyed}, skipped: {skipped}, failed: {failed}, not checked on Mojang yet: {unchecked}",
         "failed": "Failed to move profiles"
-      }
+      },
+      "verifiedAt": "License verified {date}"
     },
     "seasons": {
       "description": "Season metadata and the shell service of its game server.",

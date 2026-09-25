@@ -26,6 +26,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import AccessSeasonSelect from './access-season-select'
 import { loadProfilePage } from './load-profile-page'
+import ProfileVerificationCard from './profile-verification-card'
 
 const accessStatusColors = {
   active: 'text-primary',
@@ -79,6 +80,11 @@ export default async function ProfilePage({ searchParams, params }: Props) {
   const accessSeasonFree = isFreeAccess(getAccessMode(accessSeason))
   const accessStatusColor = accessStatusColors[accessStatus]
   const Icon = accessStatusIcons[accessStatus]
+  // Only the licensed account of a profile keyed to its Mojang UUID can join and get the code.
+  const canVerify =
+    selectedProfile.verified ||
+    selectedProfile.mojangUuid === selectedProfile.mcUuid
+  const primarySeason = seasons.find((season) => season.isPrimary)
 
   return (
     <>
@@ -170,6 +176,12 @@ export default async function ProfilePage({ searchParams, params }: Props) {
           </div>
         </CardContent>
       </Card>
+      {canVerify && (
+        <ProfileVerificationCard
+          profile={selectedProfile}
+          serverAddress={primarySeason?.publicAddress}
+        />
+      )}
       <Card className="px-6">
         <ProfileSeasonStats
           profileId={selectedProfile.id}

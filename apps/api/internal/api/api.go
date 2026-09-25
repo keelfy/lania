@@ -23,32 +23,33 @@ type LaniaAPI interface {
 }
 
 type laniaAPI struct {
-	statusHandler           handlers.StatusHandler
-	accessHandler           handlers.AccessHandler
-	profileHandler          handlers.ProfileHandler
-	profileCosmeticsHandler handlers.ProfileCosmeticsHandler
-	profileResyncHandler    handlers.ProfileResyncHandler
-	productHandler          handlers.ProductHandler
-	orderHandler            handlers.OrderHandler
-	freekassaHandler        handlers.AcquiringHandler
-	purchaseHandler         handlers.PurchaseHandler
-	basketHandler           handlers.BasketHandler
-	adminUserHandler        handlers.AdminUserHandler
-	adminProfileHandler     handlers.AdminProfileHandler
-	adminGrantHandler       handlers.AdminGrantHandler
-	adminCatalogHandler     handlers.AdminCatalogHandler
-	seasonHandler           handlers.SeasonHandler
-	seasonWorldHandler      handlers.SeasonWorldHandler
-	chunkClaimHandler       handlers.ChunkClaimHandler
-	notificationHandler     handlers.NotificationHandler
-	accountHandler          handlers.AccountHandler
-	uploadHandler           handlers.UploadHandler
-	integrationService      services.IntegrationService
-	mojangService           services.MojangService
-	playerSyncService       services.PlayerSyncService
-	roleSyncService         services.RoleSyncService
-	tokenAuth               *jwtAuth.JWTAuth
-	oryAPI                  clients.OryAPI
+	statusHandler              handlers.StatusHandler
+	accessHandler              handlers.AccessHandler
+	profileHandler             handlers.ProfileHandler
+	profileCosmeticsHandler    handlers.ProfileCosmeticsHandler
+	profileResyncHandler       handlers.ProfileResyncHandler
+	profileVerificationHandler handlers.ProfileVerificationHandler
+	productHandler             handlers.ProductHandler
+	orderHandler               handlers.OrderHandler
+	freekassaHandler           handlers.AcquiringHandler
+	purchaseHandler            handlers.PurchaseHandler
+	basketHandler              handlers.BasketHandler
+	adminUserHandler           handlers.AdminUserHandler
+	adminProfileHandler        handlers.AdminProfileHandler
+	adminGrantHandler          handlers.AdminGrantHandler
+	adminCatalogHandler        handlers.AdminCatalogHandler
+	seasonHandler              handlers.SeasonHandler
+	seasonWorldHandler         handlers.SeasonWorldHandler
+	chunkClaimHandler          handlers.ChunkClaimHandler
+	notificationHandler        handlers.NotificationHandler
+	accountHandler             handlers.AccountHandler
+	uploadHandler              handlers.UploadHandler
+	integrationService         services.IntegrationService
+	mojangService              services.MojangService
+	playerSyncService          services.PlayerSyncService
+	roleSyncService            services.RoleSyncService
+	tokenAuth                  *jwtAuth.JWTAuth
+	oryAPI                     clients.OryAPI
 }
 
 func NewLaniaAPI(
@@ -57,6 +58,7 @@ func NewLaniaAPI(
 	profileHandler handlers.ProfileHandler,
 	profileCosmeticsHandler handlers.ProfileCosmeticsHandler,
 	profileResyncHandler handlers.ProfileResyncHandler,
+	profileVerificationHandler handlers.ProfileVerificationHandler,
 	productHandler handlers.ProductHandler,
 	orderHandler handlers.OrderHandler,
 	freekassaHandler handlers.AcquiringHandler,
@@ -79,32 +81,33 @@ func NewLaniaAPI(
 	oryAPI clients.OryAPI,
 ) LaniaAPI {
 	return &laniaAPI{
-		statusHandler:           statusHandler,
-		accessHandler:           accessHandler,
-		profileHandler:          profileHandler,
-		profileCosmeticsHandler: profileCosmeticsHandler,
-		profileResyncHandler:    profileResyncHandler,
-		productHandler:          productHandler,
-		orderHandler:            orderHandler,
-		freekassaHandler:        freekassaHandler,
-		purchaseHandler:         purchaseHandler,
-		basketHandler:           basketHandler,
-		adminUserHandler:        adminUserHandler,
-		adminProfileHandler:     adminProfileHandler,
-		adminGrantHandler:       adminGrantHandler,
-		adminCatalogHandler:     adminCatalogHandler,
-		seasonHandler:           seasonHandler,
-		seasonWorldHandler:      seasonWorldHandler,
-		chunkClaimHandler:       chunkClaimHandler,
-		notificationHandler:     notificationHandler,
-		accountHandler:          accountHandler,
-		uploadHandler:           uploadHandler,
-		integrationService:      integrationService,
-		mojangService:           mojangService,
-		playerSyncService:       playerSyncService,
-		roleSyncService:         roleSyncService,
-		oryAPI:                  oryAPI,
-		tokenAuth:               jwtAuth.New("HS256", config.GetJWTSecret(), nil),
+		statusHandler:              statusHandler,
+		accessHandler:              accessHandler,
+		profileHandler:             profileHandler,
+		profileCosmeticsHandler:    profileCosmeticsHandler,
+		profileResyncHandler:       profileResyncHandler,
+		profileVerificationHandler: profileVerificationHandler,
+		productHandler:             productHandler,
+		orderHandler:               orderHandler,
+		freekassaHandler:           freekassaHandler,
+		purchaseHandler:            purchaseHandler,
+		basketHandler:              basketHandler,
+		adminUserHandler:           adminUserHandler,
+		adminProfileHandler:        adminProfileHandler,
+		adminGrantHandler:          adminGrantHandler,
+		adminCatalogHandler:        adminCatalogHandler,
+		seasonHandler:              seasonHandler,
+		seasonWorldHandler:         seasonWorldHandler,
+		chunkClaimHandler:          chunkClaimHandler,
+		notificationHandler:        notificationHandler,
+		accountHandler:             accountHandler,
+		uploadHandler:              uploadHandler,
+		integrationService:         integrationService,
+		mojangService:              mojangService,
+		playerSyncService:          playerSyncService,
+		roleSyncService:            roleSyncService,
+		oryAPI:                     oryAPI,
+		tokenAuth:                  jwtAuth.New("HS256", config.GetJWTSecret(), nil),
 	}
 }
 
@@ -204,8 +207,17 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				r.Post("/cosmetics/name-color", api.profileCosmeticsHandler.SelectProfileNameColor)
 				r.Post("/cosmetics/name-prefix/{type}", api.profileCosmeticsHandler.SelectProfileNamePrefix)
 				r.Post("/resync", api.profileResyncHandler.ResyncProfile)
+				r.Post("/verification", api.profileVerificationHandler.StartVerification)
+				r.Post("/verification/confirm", api.profileVerificationHandler.ConfirmVerification)
 			})
 		})
+	})
+
+	// called by the proxy plugin, not by browsers
+	r.Route("/internal", func(r chi.Router) {
+		api.useApiKey(r)
+
+		r.Post("/verification/login", api.profileVerificationHandler.VerificationLogin)
 	})
 
 	r.Route("/seasons", func(r chi.Router) {

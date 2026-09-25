@@ -56,7 +56,7 @@ async function getOnlineProfiles(seasonId: string) {
     params,
     { next: { revalidate: 15 } },
   )
-  return new Map(page.content.map((profile) => [profile.uuid, profile]))
+  return new Map(page.content.map((profile) => [profile.mcUuid, profile]))
 }
 
 export async function getMapDimensions(

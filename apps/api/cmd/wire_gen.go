@@ -58,6 +58,8 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	profileCosmeticsHandler := handlers.NewProfileCosmeticsHandler(profileCosmeticsService, profileService, minecraftService, seasonService, mainStorage)
 	profileResyncService := services.NewProfileResyncService(profileService, profileCosmeticsService, accessService, seasonService, minecraftService)
 	profileResyncHandler := handlers.NewProfileResyncHandler(profileResyncService)
+	profileVerificationService := services.NewProfileVerificationService(mainStorage)
+	profileVerificationHandler := handlers.NewProfileVerificationHandler(profileVerificationService)
 	productHandler := handlers.NewProductHandler(productService)
 	freekassaService := services.NewFreekassaService(mainStorage)
 	notificationService := services.NewNotificationService(mainStorage)
@@ -98,7 +100,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	integrationService := services.NewIntegrationService(mainStorage, orderService)
 	playerSyncService := services.NewPlayerSyncService(mainStorage, seasonService, minecraftService)
 	roleSyncService := services.NewRoleSyncService(mainStorage, minecraftService)
-	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminCatalogHandler, seasonHandler, seasonWorldHandler, chunkClaimHandler, notificationHandler, accountHandler, uploadHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
+	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, profileVerificationHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminCatalogHandler, seasonHandler, seasonWorldHandler, chunkClaimHandler, notificationHandler, accountHandler, uploadHandler, integrationService, mojangService, playerSyncService, roleSyncService, oryAPI)
 	return laniaAPI, func() {
 		cleanup2()
 		cleanup()

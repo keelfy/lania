@@ -33,6 +33,7 @@ import React from 'react'
 import McUsername from './mc-username'
 import NamePrefixes from './name-prefixes'
 import PlayerFace from './player-face'
+import VerifiedBadge from './verified-badge'
 
 type PlayerCardProps = React.ComponentProps<typeof Card> & {
   profileId: string | undefined
@@ -130,6 +131,7 @@ export default function PlayerCard({
               profile?.cosmetics.name.colors?.colors
             }
           />
+          {profile?.verified && <VerifiedBadge />}
           {displayName && (
             <Button
               variant="ghost"

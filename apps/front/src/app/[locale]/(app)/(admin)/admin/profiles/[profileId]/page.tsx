@@ -13,6 +13,7 @@ import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import AdminPageHeader from '../../admin-page-header'
+import { formatDate } from '../../format'
 import GrantsCard from './grants-card'
 import MergeCard from './merge-card'
 import MergedFromCard from './merged-from-card'
@@ -74,6 +75,13 @@ export default async function AdminProfilePage({ params }: Props) {
             <span>{t('uuid', { uuid: profile.mcUuid })}</span>
             {profile.legacyMcUuid && (
               <span>{t('legacyUuid', { uuid: profile.legacyMcUuid })}</span>
+            )}
+            {profile.verifiedAt && (
+              <span>
+                {t('verifiedAt', {
+                  date: formatDate(profile.verifiedAt, locale),
+                })}
+              </span>
             )}
           </span>
         }

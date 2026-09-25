@@ -9,6 +9,7 @@ import {
 import McUsername from '@/components/ui/mc-username'
 import NamePrefixes from '@/components/ui/name-prefixes'
 import PlayerFace from '@/components/ui/player-face'
+import VerifiedBadge from '@/components/ui/verified-badge'
 import ProfileSeasonStats from '@/components/profile-season-stats'
 import { getProfileDetailsByUsername } from '@/lib/api-endpoints'
 import { PROFILE_ROLE_COLORS } from '@/lib/profile-colors'
@@ -112,6 +113,7 @@ export default async function CommunityProfilePage({
                 colors={nameColors}
                 className="text-4xl sm:text-5xl"
               />
+              {profile.verified && <VerifiedBadge className="size-7" />}
               <CopyUsernameButton username={profile.username} />
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1">

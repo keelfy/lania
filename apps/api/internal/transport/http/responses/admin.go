@@ -27,6 +27,8 @@ type AdminProfile struct {
 	LegacyMinecraftUUID *uuid.UUID `json:"legacyMcUuid,omitempty"`
 	// PremiumConflict: the nickname became a licensed account of someone else.
 	PremiumConflict bool `json:"premiumConflict"`
+	// VerifiedAt is when the owner verified the licensed account, empty when not verified.
+	VerifiedAt *int64 `json:"verifiedAt,omitempty"`
 }
 
 type AdminProfileDetails struct {

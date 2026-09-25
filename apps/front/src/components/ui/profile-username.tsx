@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './popover'
 import PlayerFace from './player-face'
 import { cn } from '@/lib/utils'
 import PlayerCard from './player-card'
+import VerifiedBadge from './verified-badge'
 
 type Props = React.ComponentProps<'p'> & {
   colors?: string[] | string
@@ -30,6 +31,7 @@ export default function ProfileUsername({
             colors={colors ?? profile?.cosmetics.name.colors?.colors}
             {...props}
           />
+          {profile?.verified && <VerifiedBadge className="ml-1 size-4" />}
         </span>
       </PopoverTrigger>
       <PopoverContent className="max-w-sm min-w-max p-0">

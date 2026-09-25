@@ -12,7 +12,6 @@ export type SeasonAccess = {
 
 export type Profile = {
   id: string
-  uuid: string
   username: string
   role: ProfileRole
   cosmetics: ProfileCosmetics
@@ -20,7 +19,11 @@ export type Profile = {
   accessStatus: 'active' | 'inactive' | 'expired'
   // The status for every running season and every ended season the profile has access to.
   accesses: SeasonAccess[]
+  // The UUID the player has in game; for a licensed nickname it equals mojangUuid.
+  mcUuid: string
   mojangUuid?: string
+  // The owner proved in game that the licensed account is theirs.
+  verified?: boolean
 }
 
 export type PublicProfile = Profile & {
@@ -143,4 +146,9 @@ export type SeasonResync = {
 export type ProfileResync = {
   ok: boolean
   seasons: SeasonResync[]
+}
+
+// A verification request waits for the licensed player to join until expiresAt.
+export type ProfileVerification = {
+  expiresAt: number
 }

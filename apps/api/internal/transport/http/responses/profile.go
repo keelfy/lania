@@ -17,6 +17,8 @@ type Profile struct {
 	AccessStatus  string            `json:"accessStatus"`
 	Accesses      []*SeasonAccess   `json:"accesses"`
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`
+	// Verified: the owner proved in game that the licensed account is theirs.
+	Verified bool `json:"verified"`
 }
 
 type PublicProfile struct {
@@ -29,6 +31,8 @@ type PublicProfile struct {
 	Playtime      int64             `json:"playtime"`
 	LastSeenAt    *int64            `json:"lastSeenAt,omitempty"`
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`
+	// Verified: the owner proved in game that the licensed account is theirs.
+	Verified bool `json:"verified"`
 }
 
 type ProfileDetails struct {
@@ -45,6 +49,8 @@ type ProfileDetails struct {
 	Playtime      int64             `json:"playtime"`
 	IsOnline      bool              `json:"isOnline"`
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`
+	// Verified: the owner proved in game that the licensed account is theirs.
+	Verified bool `json:"verified"`
 }
 
 type ProfileSeasonStats struct {
@@ -155,4 +161,13 @@ type PartResync struct {
 	OK   bool   `json:"ok"`
 	// Error is missing when the part was written.
 	Error *string `json:"error,omitempty"`
+}
+
+type ProfileVerification struct {
+	ExpiresAt int64 `json:"expiresAt"`
+}
+
+// VerificationLogin has the code the proxy shows on the kick screen; empty lets the player in.
+type VerificationLogin struct {
+	Code string `json:"code,omitempty"`
 }

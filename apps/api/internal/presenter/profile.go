@@ -74,6 +74,7 @@ func PresentProfile(
 		AccessStatus:  string(accessStatus),
 		Accesses:      presentSeasonAccesses(seasonAccesses),
 		MojangUUID:    mojangUUID,
+		Verified:      profile.VerifiedAt != nil,
 	}
 }
 
@@ -97,6 +98,7 @@ func PresentPublicProfile(
 		Playtime:      playtime,
 		LastSeenAt:    timeToMillis(lastSeenAt),
 		MojangUUID:    mojangUUID,
+		Verified:      profile.VerifiedAt != nil,
 	}
 }
 
@@ -135,6 +137,7 @@ func PresentProfileDetails(
 		Playtime:      playtime,
 		IsOnline:      isOnline,
 		MojangUUID:    mojangUUID,
+		Verified:      profile.VerifiedAt != nil,
 	}
 }
 

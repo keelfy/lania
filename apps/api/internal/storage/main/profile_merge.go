@@ -222,6 +222,11 @@ SET payload = JSON_SET(payload, '$.profileId', ?)
 WHERE JSON_UNQUOTE(JSON_EXTRACT(payload, '$.profileId')) = ?
 `
 
+// An open verification request of the source is dropped: it proves nothing for the target's UUID.
+const deleteSourceVerification = `
+DELETE FROM profile_verifications WHERE profile_id = ?
+`
+
 // MergeProfileData moves every table that references the source profile into the target profile and reports
 // how many rows each table moved, summed or dropped as a duplicate. It must run inside a transaction that also
 // locked both profiles with LockProfilesForMerge; it does not touch the profiles row itself.
@@ -315,18 +320,25 @@ func (q *queries) MergeProfileData(ctx context.Context, sourceProfileID, sourceM
 		return nil, err
 	}
 
+	if _, err = execAffected(ctx, x, deleteSourceVerification, sourceProfileID); err != nil {
+		return nil, err
+	}
+
 	return counts, nil
 }
 
+// A license verification of the target stays only while its owner stays, like in SetProfileOwner.
 const updateProfileAfterMerge = `
 UPDATE profiles
-SET owner_user_id = ?, first_seen_at = ?, last_seen_at = ?, updated_at = NOW(), updated_by = ?
+SET verified_mc_uuid = IF(owner_user_id <=> ?, verified_mc_uuid, NULL),
+	verified_at = IF(owner_user_id <=> ?, verified_at, NULL),
+	owner_user_id = ?, first_seen_at = ?, last_seen_at = ?, updated_at = NOW(), updated_by = ?
 WHERE id = ?
 `
 
 // UpdateProfileAfterMerge writes the merged owner and seen dates onto the target profile.
 func (q *queries) UpdateProfileAfterMerge(ctx context.Context, targetProfileID uuid.UUID, ownerUserID *uuid.UUID, firstSeenAt, lastSeenAt *time.Time, updatedBy uuid.UUID) error {
-	_, err := q.x.ExecContext(ctx, updateProfileAfterMerge, ownerUserID, firstSeenAt, lastSeenAt, updatedBy, targetProfileID)
+	_, err := q.x.ExecContext(ctx, updateProfileAfterMerge, ownerUserID, ownerUserID, ownerUserID, firstSeenAt, lastSeenAt, updatedBy, targetProfileID)
 	return err
 }
 

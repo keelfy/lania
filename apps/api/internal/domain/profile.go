@@ -120,6 +120,9 @@ type Profile struct {
 	LegacyMinecraftUUID *uuid.UUID
 	// PremiumConflict marks a nickname that was free when checked and is a licensed account of someone else now.
 	PremiumConflict bool
+	// VerifiedAt is when the owner proved in game that the licensed account mc_uuid is theirs.
+	// It is nil when the profile was never verified or its mc_uuid changed since.
+	VerifiedAt *time.Time
 	// relations
 	Accesses   []*ProfileAccess
 	Playtimes  []*ProfilePlaytime
@@ -253,4 +256,13 @@ func GetRolePriority(role Role) int {
 		return RolePriorityPlayer
 	}
 	return RolePriorityPlayer
+}
+
+// ProfileVerification is an open request of the owner to verify the licensed account of the profile.
+type ProfileVerification struct {
+	ProfileID uuid.UUID
+	// Code is issued when the licensed player joins the server; nil until then.
+	Code      *string
+	Attempts  int
+	ExpiresAt time.Time
 }

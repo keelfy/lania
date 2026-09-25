@@ -38,6 +38,7 @@ func PresentAdminProfile(profile *domain.Profile) *responses.AdminProfile {
 
 		LegacyMinecraftUUID: profile.LegacyMinecraftUUID,
 		PremiumConflict:     profile.PremiumConflict,
+		VerifiedAt:          timeToMillis(profile.VerifiedAt),
 	}
 }
 
