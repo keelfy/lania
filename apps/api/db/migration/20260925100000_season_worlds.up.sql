@@ -29,6 +29,7 @@ WHERE (s.map_url IS NOT NULL OR EXISTS (SELECT 1 FROM chunk_claims c WHERE c.sea
   AND NOT EXISTS (SELECT 1 FROM season_worlds w WHERE w.season_id = s.id);
 
 -- Claims move from the season to its world; the squaremap world name they kept is a dimension of that world.
+-- Every step below is safe to repeat, so a run that failed halfway can be forced back and applied again.
 ALTER TABLE chunk_claims ADD COLUMN IF NOT EXISTS world_id uuid NULL AFTER id;
 UPDATE chunk_claims c
 JOIN season_worlds w ON w.season_id = c.season_id AND w.slug = 'survival'
@@ -36,15 +37,24 @@ SET c.world_id = w.id
 WHERE c.world_id IS NULL;
 ALTER TABLE chunk_claims
     MODIFY world_id uuid NOT NULL,
-    CHANGE COLUMN world dimension varchar(64) NOT NULL;
+    CHANGE COLUMN IF EXISTS world dimension varchar(64) NOT NULL;
 
 -- The new indexes come first so the profile foreign key always has an index to lean on.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_chunk_claims_world_active ON chunk_claims(world_id, dimension, chunk_x, chunk_z, active);
 CREATE INDEX IF NOT EXISTS idx_chunk_claims_profile_world ON chunk_claims(profile_id, world_id, active);
-ALTER TABLE chunk_claims ADD CONSTRAINT fk_chunk_claims_world FOREIGN KEY (world_id) REFERENCES season_worlds(id);
+ALTER TABLE chunk_claims ADD CONSTRAINT fk_chunk_claims_world FOREIGN KEY IF NOT EXISTS (world_id) REFERENCES season_worlds(id);
 
--- chunk_claims_ibfk_1 is the unnamed season_id foreign key of 20260924120000.
-ALTER TABLE chunk_claims DROP FOREIGN KEY IF EXISTS chunk_claims_ibfk_1;
+-- The season_id foreign key of 20260924120000 is unnamed, so its generated name is looked up rather than guessed.
+SET @season_fk = (
+    SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'chunk_claims' AND COLUMN_NAME = 'season_id'
+      AND REFERENCED_TABLE_NAME IS NOT NULL
+    LIMIT 1
+);
+SET @drop_season_fk = IF(@season_fk IS NULL, 'DO 0', CONCAT('ALTER TABLE chunk_claims DROP FOREIGN KEY `', @season_fk, '`'));
+PREPARE drop_season_fk FROM @drop_season_fk;
+EXECUTE drop_season_fk;
+DEALLOCATE PREPARE drop_season_fk;
 DROP INDEX IF EXISTS idx_chunk_claims_active ON chunk_claims;
 DROP INDEX IF EXISTS idx_chunk_claims_profile ON chunk_claims;
 ALTER TABLE chunk_claims DROP COLUMN IF EXISTS season_id;
