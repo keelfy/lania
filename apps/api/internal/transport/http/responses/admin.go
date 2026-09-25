@@ -23,6 +23,10 @@ type AdminProfile struct {
 	OwnerUserID   *uuid.UUID `json:"ownerUserId,omitempty"`
 	Role          string     `json:"role"`
 	CreatedAt     int64      `json:"createdAt"`
+	// LegacyMinecraftUUID is the offline UUID the profile had before it moved to its Mojang UUID.
+	LegacyMinecraftUUID *uuid.UUID `json:"legacyMcUuid,omitempty"`
+	// PremiumConflict: the nickname became a licensed account of someone else.
+	PremiumConflict bool `json:"premiumConflict"`
 }
 
 type AdminProfileDetails struct {
@@ -149,4 +153,11 @@ type UploadedImage struct {
 // EasyDonateProduct is the id of the position lania just created in the EasyDonate control panel.
 type EasyDonateProduct struct {
 	EasyDonateProductID int64 `json:"easyDonateProductId"`
+}
+
+type PremiumRekeyReport struct {
+	Rekeyed   []string `json:"rekeyed"`
+	Skipped   []string `json:"skipped"`
+	Failed    []string `json:"failed"`
+	Unchecked int      `json:"unchecked"`
 }

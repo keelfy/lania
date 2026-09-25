@@ -80,3 +80,7 @@ func NewConflictError(msg string, err error) error {
 func NewTooManyRequestsError(msg string, err error) error {
 	return &CustomError{HttpStatus: http.StatusTooManyRequests, Message: msg, OriginalError: err}
 }
+
+func NewServiceUnavailableError(msg string, err error) error {
+	return &CustomError{HttpStatus: http.StatusServiceUnavailable, Message: msg, OriginalError: err}
+}

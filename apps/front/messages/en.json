@@ -786,6 +786,21 @@
         },
         "mergedFromTitle": "Merged from",
         "mergedFromDescription": "Profiles whose data was moved into this one. They no longer exist."
+      },
+      "uuid": "In-game UUID: {uuid}",
+      "legacyUuid": "Offline UUID before the licensed account: {uuid}",
+      "premiumConflict": {
+        "title": "The nickname became someone else's licensed account",
+        "description": "The player can no longer join with this nickname. Ask them to change it and merge the old profile into the new one."
+      },
+      "rekey": {
+        "button": "Move licensed to Mojang UUID",
+        "confirmTitle": "Move profiles to their Mojang UUID?",
+        "confirmDescription": "Profiles with a licensed nickname get the Mojang UUID they have in game. Role, prefix and whitelist are written to the server again. Safe to repeat.",
+        "confirm": "Move",
+        "cancel": "Cancel",
+        "done": "Moved: {rekeyed}, skipped: {skipped}, failed: {failed}, not checked on Mojang yet: {unchecked}",
+        "failed": "Failed to move profiles"
       }
     },
     "seasons": {

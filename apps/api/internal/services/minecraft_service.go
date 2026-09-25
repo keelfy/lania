@@ -44,6 +44,8 @@ type MinecraftService interface {
 	RemoveFromWhitelist(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
 	// ListChangedPlaytimes returns playtime of players whose last session in the season ended at or after sinceMs.
 	ListChangedPlaytimes(ctx context.Context, seasonID uuid.UUID, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error)
+	// GetPlaytimesInSeason returns playtime of every player asked for, zero for one that never played in the season.
+	GetPlaytimesInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error)
 }
 
 type minecraftService struct {
@@ -248,4 +250,12 @@ func (s *minecraftService) ListChangedPlaytimes(ctx context.Context, seasonID uu
 		return nil, err
 	}
 	return api.ListChangedPlaytimes(ctx, sinceMs)
+}
+
+func (s *minecraftService) GetPlaytimesInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
+	api, err := s.seasonShell(ctx, seasonID)
+	if err != nil {
+		return nil, err
+	}
+	return api.GetPlaytimes(ctx, mcUUIDs)
 }

@@ -16,6 +16,7 @@ import AdminPageHeader from '../admin-page-header'
 import AdminSearch from '../admin-search'
 import { formatDate } from '../format'
 import RoleBadge from '../role-badge'
+import RekeyPremiumButton from './rekey-premium-button'
 
 // The longest Minecraft username.
 const MAX_SEARCH_LENGTH = 16
@@ -62,12 +63,15 @@ export default async function AdminProfilesPage({
       <AdminPageHeader
         title={t('title')}
         actions={
-          <AdminSearch
-            path={path}
-            defaultValue={search}
-            placeholder={t('searchPlaceholder')}
-            maxLength={MAX_SEARCH_LENGTH}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AdminSearch
+              path={path}
+              defaultValue={search}
+              placeholder={t('searchPlaceholder')}
+              maxLength={MAX_SEARCH_LENGTH}
+            />
+            <RekeyPremiumButton />
+          </div>
         }
       />
       {!profiles ? (

@@ -1,4 +1,5 @@
 import ProfileResyncCard from '@/components/profile-resync-card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { requireAdmin } from '@/lib/admin'
 import {
   getAdminCosmetics,
@@ -67,8 +68,24 @@ export default async function AdminProfilePage({ params }: Props) {
         backHref={`/${locale}/admin/profiles`}
         backLabel={t('back')}
         title={profile.username}
-        description={<span className="font-mono text-xs">{profile.id}</span>}
+        description={
+          <span className="flex flex-col font-mono text-xs">
+            <span>{profile.id}</span>
+            <span>{t('uuid', { uuid: profile.mcUuid })}</span>
+            {profile.legacyMcUuid && (
+              <span>{t('legacyUuid', { uuid: profile.legacyMcUuid })}</span>
+            )}
+          </span>
+        }
       />
+      {profile.premiumConflict && (
+        <Alert variant="destructive">
+          <AlertTitle>{t('premiumConflict.title')}</AlertTitle>
+          <AlertDescription>
+            {t('premiumConflict.description')}
+          </AlertDescription>
+        </Alert>
+      )}
       <OwnerCard profileId={profile.id} owner={profile.owner} locale={locale} />
       <RoleCard profileId={profile.id} role={profile.role} />
       <ProfileResyncCard profileId={profile.id} asAdmin />

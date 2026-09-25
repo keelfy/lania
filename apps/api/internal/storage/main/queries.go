@@ -84,6 +84,15 @@ type Queries interface {
 	FindMinecraftUUIDsByRoles(ctx context.Context, roles []domain.Role) (uuid.UUIDs, error)
 	FindProfileByID(ctx context.Context, profileID uuid.UUID) (*domain.Profile, error)
 	FindProfileByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID) (*domain.Profile, error)
+	// FindProfileByUsername matches the username without regard to case, like Minecraft does.
+	FindProfileByUsername(ctx context.Context, username string) (*domain.Profile, error)
+	// RekeyProfile moves the profile from oldMcUUID to newMcUUID and keeps the first UUID it ever had as legacy.
+	// It reports false when the profile is no longer at oldMcUUID.
+	RekeyProfile(ctx context.Context, profileID, oldMcUUID, newMcUUID uuid.UUID) (bool, error)
+	SetProfilePremiumConflict(ctx context.Context, mcUUID uuid.UUID) error
+	// FindLegacyMinecraftUUIDs maps the legacy UUID of every rekeyed profile to its current one, for profiles where
+	// either of the two is among mcUUIDs.
+	FindLegacyMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]uuid.UUID, error)
 	// FindProfilesByIDs returns the profiles that exist among ids; a missing id is simply absent from the result.
 	FindProfilesByIDs(ctx context.Context, ids uuid.UUIDs) ([]*domain.Profile, error)
 
@@ -91,6 +100,11 @@ type Queries interface {
 	FindProfileMojangUUIDsByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]uuid.UUID, error)
 	FindMojangLookupTargets(ctx context.Context, notCheckedSince time.Time, limit int) ([]*domain.MojangLookupTarget, error)
 	UpsertProfileMojangUUID(ctx context.Context, mcUUID uuid.UUID, mojangUUID *uuid.UUID) error
+	// FindPremiumRekeyTargets returns profiles whose nickname has a Mojang account while mc_uuid is not that account,
+	// premium conflicts excluded.
+	FindPremiumRekeyTargets(ctx context.Context) ([]*domain.PremiumRekeyTarget, error)
+	// CountUncheckedMojangProfiles counts profiles whose nickname was never looked up on Mojang.
+	CountUncheckedMojangProfiles(ctx context.Context) (int, error)
 
 	// Profile Cosmetics
 	// FindNameColors returns every name color ordered by name.

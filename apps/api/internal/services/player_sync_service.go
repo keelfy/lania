@@ -91,6 +91,9 @@ func (s *playerSyncService) syncPlayers(ctx context.Context, seasonID uuid.UUID,
 	if err != nil {
 		return 0, err
 	}
+	if err := s.addLegacyPlaytimes(ctx, seasonID, playtimes); err != nil {
+		return 0, err
+	}
 
 	var latestMs int64
 	err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
@@ -112,6 +115,59 @@ func (s *playerSyncService) syncPlayers(ctx context.Context, seasonID uuid.UUID,
 		logger.Debugf(ctx, "[PLAYER SYNC] Synced %d players of season %s changed since %d", len(playtimes), seasonID, sinceMs)
 	}
 	return latestMs, nil
+}
+
+// addLegacyPlaytimes sums playtime a rekeyed profile played under its offline UUID into its current UUID.
+// Either UUID may be missing from the changed ones, so both are read again for every such profile.
+func (s *playerSyncService) addLegacyPlaytimes(ctx context.Context, seasonID uuid.UUID, playtimes map[uuid.UUID]*domain.Playtime) error {
+	changed := make(uuid.UUIDs, 0, len(playtimes))
+	for mcUUID := range playtimes {
+		changed = append(changed, mcUUID)
+	}
+	legacy, err := s.storage.Queries().FindLegacyMinecraftUUIDs(ctx, changed)
+	if err != nil || len(legacy) == 0 {
+		return err
+	}
+
+	both := make(uuid.UUIDs, 0, 2*len(legacy))
+	for legacyUUID, mcUUID := range legacy {
+		both = append(both, legacyUUID, mcUUID)
+	}
+	fresh, err := s.minecraftService.GetPlaytimesInSeason(ctx, seasonID, both)
+	if err != nil {
+		return err
+	}
+	for legacyUUID, mcUUID := range legacy {
+		delete(playtimes, legacyUUID)
+		playtimes[mcUUID] = sumPlaytimes(fresh[mcUUID], fresh[legacyUUID])
+	}
+	return nil
+}
+
+// sumPlaytimes adds up playtime of one player under two UUIDs: the first session of both, the last session of both.
+func sumPlaytimes(a, b *domain.Playtime) *domain.Playtime {
+	if a == nil {
+		a = &domain.Playtime{}
+	}
+	if b == nil {
+		b = &domain.Playtime{}
+	}
+	sum := &domain.Playtime{TotalPlaytime: a.TotalPlaytime + b.TotalPlaytime}
+	sum.FirstSessionStart = pickMillis(a.FirstSessionStart, b.FirstSessionStart, func(x, y int64) int64 { return min(x, y) })
+	sum.LastSessionEnd = pickMillis(a.LastSessionEnd, b.LastSessionEnd, func(x, y int64) int64 { return max(x, y) })
+	return sum
+}
+
+// pickMillis chooses between two optional dates, a missing one never wins.
+func pickMillis(a, b *int64, choose func(x, y int64) int64) *int64 {
+	switch {
+	case a == nil:
+		return b
+	case b == nil:
+		return a
+	}
+	picked := choose(*a, *b)
+	return &picked
 }
 
 func syncPlayer(ctx context.Context, queries sql.Queries, seasonID, mcUUID uuid.UUID, playtime *domain.Playtime) error {

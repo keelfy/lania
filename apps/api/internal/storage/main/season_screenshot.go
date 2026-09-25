@@ -163,7 +163,7 @@ func (q *queries) SetSeasonScreenshotAuthors(ctx context.Context, screenshotID u
 const findProfilesByIDs = `
 SELECT
 	id, mc_uuid, mc_username, owner_user_id, first_seen_at, last_seen_at,
-	role, is_slim, created_at, updated_at, updated_by
+	role, is_slim, created_at, updated_at, updated_by, legacy_mc_uuid, premium_conflict
 FROM profiles
 WHERE id IN ('%s')
 `

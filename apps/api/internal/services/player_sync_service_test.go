@@ -56,3 +56,45 @@ func TestSyncPlayerWithoutSessionKeepsStoredDate(t *testing.T) {
 		t.Errorf("last seen = %v and %v, want nil so the stored dates stay", queries.playtimeSeen, queries.profileSeen)
 	}
 }
+
+type legacySyncQueries struct {
+	sql.Queries
+	legacy map[uuid.UUID]uuid.UUID
+}
+
+func (q *legacySyncQueries) FindLegacyMinecraftUUIDs(context.Context, uuid.UUIDs) (map[uuid.UUID]uuid.UUID, error) {
+	return q.legacy, nil
+}
+
+type playtimeMinecraftService struct {
+	MinecraftService
+	playtimes map[uuid.UUID]*domain.Playtime
+}
+
+func (s *playtimeMinecraftService) GetPlaytimesInSeason(context.Context, uuid.UUID, uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
+	return s.playtimes, nil
+}
+
+func TestAddLegacyPlaytimesSumsBothUUIDs(t *testing.T) {
+	offline, mojang := uuid.New(), uuid.New()
+	first, oldEnd, newEnd := int64(100), int64(500), int64(900)
+	minecraft := &playtimeMinecraftService{playtimes: map[uuid.UUID]*domain.Playtime{
+		offline: {TotalPlaytime: 3000, FirstSessionStart: &first, LastSessionEnd: &oldEnd},
+		mojang:  {TotalPlaytime: 2000, LastSessionEnd: &newEnd},
+	}}
+	service := &playerSyncService{
+		storage:          &stubMainStorage{queries: &legacySyncQueries{legacy: map[uuid.UUID]uuid.UUID{offline: mojang}}},
+		minecraftService: minecraft,
+	}
+	// Only the new UUID played since the cursor.
+	playtimes := map[uuid.UUID]*domain.Playtime{mojang: {TotalPlaytime: 2000, LastSessionEnd: &newEnd}}
+
+	if err := service.addLegacyPlaytimes(context.Background(), uuid.New(), playtimes); err != nil {
+		t.Fatal(err)
+	}
+
+	got := playtimes[mojang]
+	if len(playtimes) != 1 || got.TotalPlaytime != 5000 || *got.FirstSessionStart != first || *got.LastSessionEnd != newEnd {
+		t.Errorf("playtimes = %v, want 5000 ms under the Mojang UUID from the first offline session to the last new one", playtimes)
+	}
+}

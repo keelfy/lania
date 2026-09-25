@@ -35,6 +35,9 @@ func PresentAdminProfile(profile *domain.Profile) *responses.AdminProfile {
 		OwnerUserID:   profile.OwnerUserID,
 		Role:          string(profile.Role),
 		CreatedAt:     profile.CreatedAt.UnixMilli(),
+
+		LegacyMinecraftUUID: profile.LegacyMinecraftUUID,
+		PremiumConflict:     profile.PremiumConflict,
 	}
 }
 
@@ -173,4 +176,13 @@ func PresentUploadedImage(image *domain.UploadedImage) *responses.UploadedImage 
 
 func PresentEasyDonateProduct(easyDonateProductID int64) *responses.EasyDonateProduct {
 	return &responses.EasyDonateProduct{EasyDonateProductID: easyDonateProductID}
+}
+
+func PresentPremiumRekeyReport(report *domain.PremiumRekeyReport) *responses.PremiumRekeyReport {
+	// Empty lists stay arrays in JSON.
+	res := &responses.PremiumRekeyReport{Rekeyed: []string{}, Skipped: []string{}, Failed: []string{}, Unchecked: report.Unchecked}
+	res.Rekeyed = append(res.Rekeyed, report.Rekeyed...)
+	res.Skipped = append(res.Skipped, report.Skipped...)
+	res.Failed = append(res.Failed, report.Failed...)
+	return res
 }

@@ -314,6 +314,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 		})
 
 		r.Get("/profiles", api.adminProfileHandler.GetProfiles)
+		r.Post("/profiles/rekey-premium", api.adminProfileHandler.RekeyPremiumProfiles)
 		r.Route("/profiles/{profileId}", func(r chi.Router) {
 			r.Get("/", api.adminProfileHandler.GetProfileDetails)
 			r.Put("/owner", api.adminProfileHandler.TransferProfile)

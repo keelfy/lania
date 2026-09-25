@@ -16,6 +16,19 @@ export type AdminProfile = {
   ownerUserId?: string
   role: ProfileRole
   createdAt: number
+  // The offline UUID the profile had before it moved to its Mojang UUID.
+  legacyMcUuid?: string
+  // The nickname became a licensed account of someone else.
+  premiumConflict: boolean
+}
+
+// One run of the premium rekey; lists hold usernames.
+export type PremiumRekeyReport = {
+  rekeyed: string[]
+  skipped: string[]
+  failed: string[]
+  // Profiles never looked up on Mojang yet.
+  unchecked: number
 }
 
 export type AdminUserDetails = AdminUser & {

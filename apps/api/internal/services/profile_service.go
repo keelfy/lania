@@ -51,17 +51,20 @@ type profileService struct {
 	storage                 storage.MainStorage
 	profileCosmeticsService ProfileCosmeticsService
 	minecraftService        MinecraftService
+	mojangService           MojangService
 }
 
 func NewProfileService(
 	storage storage.MainStorage,
 	profileCosmeticsService ProfileCosmeticsService,
 	minecraftService MinecraftService,
+	mojangService MojangService,
 ) ProfileService {
 	return &profileService{
 		storage:                 storage,
 		profileCosmeticsService: profileCosmeticsService,
 		minecraftService:        minecraftService,
+		mojangService:           mojangService,
 	}
 }
 
@@ -225,13 +228,9 @@ func (s *profileService) SetProfileRole(ctx context.Context, profileID uuid.UUID
 	return profile, nil
 }
 
+// A profile is found by its username rather than by a UUID computed from it: a premium profile has its Mojang UUID.
 func (s *profileService) GetOrCreateProfileByUsername(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) (*domain.Profile, error) {
-	minecraftUUID, err := utils.GetOfflinePlayerUUID(username)
-	if err != nil {
-		return nil, err
-	}
-
-	profile, err := s.storage.Queries().FindProfileByMinecraftUUID(ctx, minecraftUUID)
+	profile, err := s.storage.Queries().FindProfileByUsername(ctx, username)
 	if err != nil && err != stdsql.ErrNoRows {
 		logger.Errorf(ctx, "failed to find profile by username %s: %v", username, err)
 	} else if profile != nil && err == nil {
@@ -241,7 +240,7 @@ func (s *profileService) GetOrCreateProfileByUsername(ctx context.Context, queri
 		return profile, nil
 	}
 
-	err = s.createProfile(ctx, queries, ownerUserID, minecraftUUID, username)
+	minecraftUUID, err := s.createProfile(ctx, queries, ownerUserID, username)
 	if err != nil {
 		return nil, err
 	}
@@ -269,12 +268,13 @@ func (s *profileService) claimProfile(ctx context.Context, queries sql.Queries, 
 }
 
 func (s *profileService) GetProfileByUsername(ctx context.Context, username string) (*domain.Profile, error) {
-	minecraftUUID, err := utils.GetOfflinePlayerUUID(username)
-	if err != nil {
-		return nil, err
+	profile, err := s.storage.Queries().FindProfileByUsername(ctx, username)
+	if err == stdsql.ErrNoRows {
+		return nil, utils.NewNotFoundError("profile not found", err)
+	} else if err != nil {
+		return nil, utils.NewInternalServerError("failed to find profile by username", err)
 	}
-
-	return s.GetProfileByMinecraftUUID(ctx, minecraftUUID)
+	return profile, nil
 }
 
 func (s *profileService) GetProfileByMinecraftUUID(ctx context.Context, minecraftUUID uuid.UUID) (*domain.Profile, error) {
@@ -288,18 +288,21 @@ func (s *profileService) GetProfileByMinecraftUUID(ctx context.Context, minecraf
 }
 
 func (s *profileService) CreateProfileByUsername(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) error {
-	minecraftUUID, err := utils.GetOfflinePlayerUUID(username)
-	if err != nil {
-		return err
-	}
-
-	return s.createProfile(ctx, queries, ownerUserID, minecraftUUID, username)
+	_, err := s.createProfile(ctx, queries, ownerUserID, username)
+	return err
 }
 
-func (s *profileService) createProfile(ctx context.Context, queries sql.Queries, ownerUserID, mcUUID uuid.UUID, username string) error {
+// createProfile gives the profile the UUID the server gives its nickname, and returns it.
+// The Mojang lookup is stored too, so the background sync does not ask again.
+func (s *profileService) createProfile(ctx context.Context, queries sql.Queries, ownerUserID uuid.UUID, username string) (uuid.UUID, error) {
 	authUserID, err := utils.GetUserIDFromCtx(ctx)
 	if err != nil {
-		return err
+		return uuid.Nil, err
+	}
+
+	mcUUID, mojangUUID, err := s.mojangService.ResolveGameUUID(ctx, username)
+	if err != nil {
+		return uuid.Nil, err
 	}
 
 	profileID := uuid.New()
@@ -313,14 +316,19 @@ func (s *profileService) createProfile(ctx context.Context, queries sql.Queries,
 		UpdatedBy:         authUserID,
 	})
 	if err != nil {
-		return utils.NewInternalServerError("failed to insert profile", err)
+		return uuid.Nil, utils.NewInternalServerError("failed to insert profile", err)
+	}
+
+	err = queries.UpsertProfileMojangUUID(ctx, mcUUID, mojangUUID)
+	if err != nil {
+		return uuid.Nil, utils.NewInternalServerError("failed to store profile mojang uuid", err)
 	}
 
 	err = s.profileCosmeticsService.AddProfileNameColorOption(ctx, queries, profileID, config.GetDefaultNameColorID(), nil, nil)
 	if err != nil {
-		return utils.NewInternalServerError("failed to add profile name default color option", err)
+		return uuid.Nil, utils.NewInternalServerError("failed to add profile name default color option", err)
 	}
-	return nil
+	return mcUUID, nil
 }
 
 func (s *profileService) GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error) {

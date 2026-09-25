@@ -41,7 +41,8 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 		return nil, nil, err
 	}
 	minecraftService := services.NewMinecraftService(seasonService, shellPool)
-	profileService := services.NewProfileService(mainStorage, profileCosmeticsService, minecraftService)
+	mojangService := services.NewMojangService(mainStorage, cacheStorage)
+	profileService := services.NewProfileService(mainStorage, profileCosmeticsService, minecraftService, mojangService)
 	accessService := services.NewAccessService(mainStorage, minecraftService)
 	oryAPI, err := clients.NewOryAPI(ctx)
 	if err != nil {
@@ -53,7 +54,6 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	basketService := services.NewBasketService(mainStorage)
 	productService := services.NewProductService(mainStorage)
 	accessHandler := handlers.NewAccessHandler(profileService, accessService, seasonService, identityService, basketService, productService, mainStorage)
-	mojangService := services.NewMojangService(mainStorage, cacheStorage)
 	profileHandler := handlers.NewProfileHandler(profileService, accessService, seasonService, minecraftService, mojangService, profileCosmeticsService)
 	profileCosmeticsHandler := handlers.NewProfileCosmeticsHandler(profileCosmeticsService, profileService, minecraftService, seasonService, mainStorage)
 	profileResyncService := services.NewProfileResyncService(profileService, profileCosmeticsService, accessService, seasonService, minecraftService)
@@ -73,7 +73,8 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	adminUserHandler := handlers.NewAdminUserHandler(adminUserService)
 	adminProfileService := services.NewAdminProfileService(profileService, adminUserService)
 	adminProfileMergeService := services.NewAdminProfileMergeService(mainStorage, seasonService, minecraftService, profileResyncService, notificationService)
-	adminProfileHandler := handlers.NewAdminProfileHandler(profileService, adminProfileService, adminProfileMergeService)
+	premiumUUIDService := services.NewPremiumUUIDService(mainStorage, seasonService, accessService, minecraftService, profileResyncService)
+	adminProfileHandler := handlers.NewAdminProfileHandler(profileService, adminProfileService, adminProfileMergeService, premiumUUIDService)
 	adminGrantService := services.NewAdminGrantService(mainStorage, profileService, productService, seasonService, fulfillmentService, accessService, profileCosmeticsService, minecraftService, notificationService)
 	adminGrantHandler := handlers.NewAdminGrantHandler(adminGrantService)
 	adminCatalogService := services.NewAdminCatalogService(mainStorage)

@@ -14,6 +14,7 @@ import {
   SaveNameColor,
   SaveNamePrefix,
   SaveProduct,
+  PremiumRekeyReport,
   ProfileMerge,
   ProfileMergeSummary,
   UploadedImage,
@@ -399,6 +400,17 @@ export function getAdminProfile(
   id: string,
 ): Promise<AdminProfileDetails> {
   return fetcher<AdminProfileDetails>(`/v1/admin/profiles/${id}`)
+}
+
+// Moves profiles of licensed nicknames to their Mojang UUID. Safe to repeat.
+export function rekeyPremiumProfiles(
+  fetcher: ApiFetcher,
+): Promise<PremiumRekeyReport> {
+  return fetcher<PremiumRekeyReport>(
+    '/v1/admin/profiles/rekey-premium',
+    undefined,
+    { method: 'POST' },
+  )
 }
 
 export function transferProfileOwner(

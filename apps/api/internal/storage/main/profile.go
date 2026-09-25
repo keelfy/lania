@@ -25,6 +25,8 @@ func scanProfileRow(row *stdsql.Row) (*domain.Profile, error) {
 		&profile.CreatedAt,
 		&profile.UpdatedAt,
 		&profile.UpdatedBy,
+		&profile.LegacyMinecraftUUID,
+		&profile.PremiumConflict,
 	)
 	if err != nil {
 		return nil, err
@@ -47,6 +49,8 @@ func scanProfileRows(rows *stdsql.Rows, extra ...any) (*domain.Profile, error) {
 		&profile.CreatedAt,
 		&profile.UpdatedAt,
 		&profile.UpdatedBy,
+		&profile.LegacyMinecraftUUID,
+		&profile.PremiumConflict,
 	}, extra...)...)
 	if err != nil {
 		return nil, err
@@ -66,7 +70,9 @@ SELECT
 	p.is_slim,
 	p.created_at,
 	p.updated_at,
-	p.updated_by
+	p.updated_by,
+	p.legacy_mc_uuid,
+	p.premium_conflict
 FROM profiles p
 WHERE owner_user_id = ? 
 ORDER BY created_at ASC
@@ -126,7 +132,9 @@ SELECT
 	p.is_slim,
 	p.created_at,
 	p.updated_at,
-	p.updated_by
+	p.updated_by,
+	p.legacy_mc_uuid,
+	p.premium_conflict
 FROM profiles p
 %s
 %s
@@ -245,6 +253,8 @@ SELECT
 	p.created_at,
 	p.updated_at,
 	p.updated_by,
+	p.legacy_mc_uuid,
+	p.premium_conflict,
 	pt.playtime
 FROM profile_playtimes pt
 JOIN profiles p ON p.mc_uuid = pt.mc_uuid
@@ -370,7 +380,9 @@ SELECT
 	p.is_slim,
 	p.created_at,
 	p.updated_at,
-	p.updated_by
+	p.updated_by,
+	p.legacy_mc_uuid,
+	p.premium_conflict
 FROM profiles p
 WHERE p.id = ?
 `
@@ -393,7 +405,9 @@ SELECT
 	p.is_slim,
 	p.created_at,
 	p.updated_at,
-	p.updated_by
+	p.updated_by,
+	p.legacy_mc_uuid,
+	p.premium_conflict
 FROM profiles p
 WHERE p.mc_uuid = ?
 `
@@ -470,4 +484,91 @@ func (q *queries) FindMinecraftUUIDsByRoles(ctx context.Context, roles []domain.
 		mcUUIDs = append(mcUUIDs, mcUUID)
 	}
 	return mcUUIDs, rows.Err()
+}
+
+const findProfileByUsername = `
+SELECT
+	p.id,
+	p.mc_uuid,
+	p.mc_username,
+	p.owner_user_id,
+	p.first_seen_at,
+	p.last_seen_at,
+	p.role,
+	p.is_slim,
+	p.created_at,
+	p.updated_at,
+	p.updated_by,
+	p.legacy_mc_uuid,
+	p.premium_conflict
+FROM profiles p
+WHERE p.mc_username = ?
+`
+
+func (q *queries) FindProfileByUsername(ctx context.Context, username string) (*domain.Profile, error) {
+	row := q.x.QueryRowContext(ctx, findProfileByUsername, username)
+	return scanProfileRow(row)
+}
+
+// legacy_mc_uuid is assigned before mc_uuid: MariaDB reads the already updated value in later assignments.
+const rekeyProfile = `
+UPDATE profiles
+SET legacy_mc_uuid = COALESCE(legacy_mc_uuid, mc_uuid), mc_uuid = ?, updated_at = NOW()
+WHERE id = ? AND mc_uuid = ?
+`
+
+func (q *queries) RekeyProfile(ctx context.Context, profileID, oldMcUUID, newMcUUID uuid.UUID) (bool, error) {
+	res, err := q.x.ExecContext(ctx, rekeyProfile, newMcUUID, profileID, oldMcUUID)
+	if err != nil {
+		return false, err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return affected > 0, nil
+}
+
+const setProfilePremiumConflict = `
+UPDATE profiles SET premium_conflict = 1, updated_at = NOW() WHERE mc_uuid = ?
+`
+
+func (q *queries) SetProfilePremiumConflict(ctx context.Context, mcUUID uuid.UUID) error {
+	_, err := q.x.ExecContext(ctx, setProfilePremiumConflict, mcUUID)
+	return err
+}
+
+const findLegacyMinecraftUUIDs = `
+SELECT legacy_mc_uuid, mc_uuid
+FROM profiles
+WHERE legacy_mc_uuid IS NOT NULL AND (legacy_mc_uuid IN (%[1]s) OR mc_uuid IN (%[1]s))
+`
+
+func (q *queries) FindLegacyMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]uuid.UUID, error) {
+	res := make(map[uuid.UUID]uuid.UUID)
+	if len(mcUUIDs) == 0 {
+		return res, nil
+	}
+
+	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(mcUUIDs)), ",")
+	args := make([]any, 0, 2*len(mcUUIDs))
+	for range 2 {
+		for _, mcUUID := range mcUUIDs {
+			args = append(args, mcUUID)
+		}
+	}
+	rows, err := q.x.QueryContext(ctx, fmt.Sprintf(findLegacyMinecraftUUIDs, placeholders), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var legacyUUID, mcUUID uuid.UUID
+		if err := rows.Scan(&legacyUUID, &mcUUID); err != nil {
+			return nil, err
+		}
+		res[legacyUUID] = mcUUID
+	}
+	return res, rows.Err()
 }

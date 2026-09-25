@@ -115,6 +115,11 @@ type Profile struct {
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	UpdatedBy         *uuid.UUID
+	// LegacyMinecraftUUID is the offline UUID the profile had before it was rekeyed to its Mojang UUID.
+	// Plan still has the playtime played under it.
+	LegacyMinecraftUUID *uuid.UUID
+	// PremiumConflict marks a nickname that was free when checked and is a licensed account of someone else now.
+	PremiumConflict bool
 	// relations
 	Accesses   []*ProfileAccess
 	Playtimes  []*ProfilePlaytime
@@ -159,6 +164,28 @@ type ProfileSeasonStats struct {
 type MojangLookupTarget struct {
 	MinecraftUUID     uuid.UUID
 	MinecraftUsername string
+	// CheckedBefore is set when an earlier lookup found no Mojang account with the username.
+	CheckedBefore bool
+}
+
+// PremiumRekeyTarget is a profile whose nickname is a Mojang account while the profile still has another UUID.
+type PremiumRekeyTarget struct {
+	ProfileID         uuid.UUID
+	MinecraftUUID     uuid.UUID
+	MinecraftUsername string
+	MojangUUID        uuid.UUID
+}
+
+// PremiumRekeyReport sums up one run of the premium rekey.
+type PremiumRekeyReport struct {
+	// Rekeyed are the profiles moved to their Mojang UUID.
+	Rekeyed []string
+	// Skipped are the profiles left alone: their UUID is neither the offline one nor the Mojang one.
+	Skipped []string
+	// Failed are the profiles that could not be moved; the run can be repeated.
+	Failed []string
+	// Unchecked is how many profiles were never looked up on Mojang yet; the background sync gets to them.
+	Unchecked int
 }
 
 type ProfileViolation struct {

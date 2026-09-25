@@ -21,23 +21,27 @@ type AdminProfileHandler interface {
 	PreviewMergeProfiles(w http.ResponseWriter, r *http.Request)
 	MergeProfiles(w http.ResponseWriter, r *http.Request)
 	GetProfileMerges(w http.ResponseWriter, r *http.Request)
+	RekeyPremiumProfiles(w http.ResponseWriter, r *http.Request)
 }
 
 type adminProfileHandler struct {
 	profileService           services.ProfileService
 	adminProfileService      services.AdminProfileService
 	adminProfileMergeService services.AdminProfileMergeService
+	premiumUUIDService       services.PremiumUUIDService
 }
 
 func NewAdminProfileHandler(
 	profileService services.ProfileService,
 	adminProfileService services.AdminProfileService,
 	adminProfileMergeService services.AdminProfileMergeService,
+	premiumUUIDService services.PremiumUUIDService,
 ) AdminProfileHandler {
 	return &adminProfileHandler{
 		profileService:           profileService,
 		adminProfileService:      adminProfileService,
 		adminProfileMergeService: adminProfileMergeService,
+		premiumUUIDService:       premiumUUIDService,
 	}
 }
 
@@ -211,4 +215,17 @@ func (h *adminProfileHandler) GetProfileMerges(w http.ResponseWriter, r *http.Re
 	}
 
 	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileMerges(merges))
+}
+
+// RekeyPremiumProfiles moves profiles of licensed nicknames to their Mojang UUID. It is safe to repeat.
+func (h *adminProfileHandler) RekeyPremiumProfiles(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	report, err := h.premiumUUIDService.RekeyPremiumProfiles(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentPremiumRekeyReport(report))
 }
