@@ -86,9 +86,9 @@ func (s *permissionService) SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUI
 		return fmt.Errorf("%w: %q", ErrInvalidPrefix, prefix)
 	}
 
-	commands := []string{fmt.Sprintf("lp user %s meta clear prefix", mcUUID)}
+	commands := []string{fmt.Sprintf("lpv user %s meta clear prefix", mcUUID)}
 	if prefix != "" {
-		commands = append(commands, fmt.Sprintf("lp user %s meta addprefix %s \"%s\"", mcUUID, prefixPriority, prefix))
+		commands = append(commands, fmt.Sprintf("lpv user %s meta addprefix %s \"%s\"", mcUUID, prefixPriority, prefix))
 	}
 	for _, command := range commands {
 		if _, err := s.console.Execute(ctx, command); err != nil {
