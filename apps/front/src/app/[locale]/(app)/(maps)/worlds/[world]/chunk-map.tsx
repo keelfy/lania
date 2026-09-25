@@ -117,10 +117,12 @@ export default function ChunkMap({
         (e.target as Element).closest('.leaflet-control')
       )
         return
-      const button = e.button
       // Runs in the capture phase, so Leaflet never sees the left or right button and does not pan.
       e.stopPropagation()
       e.preventDefault()
+      // One area at a time: the other button pressed mid-drag must not start a second one.
+      if (stopSelecting) return
+      const button = e.button
 
       const chunkOf = (event: MouseEvent): ChunkPos => {
         const latlng = layers.map.mouseEventToLatLng(event)
@@ -140,6 +142,11 @@ export default function ChunkMap({
       })
 
       const onMove = (event: MouseEvent) => {
+        // The button was released outside the window, where no mouseup reached us.
+        if (!(event.buttons & (button === 2 ? 2 : 1))) {
+          stopSelecting?.()
+          return
+        }
         to = chunkOf(event)
         area.setBounds(layers.L.latLngBounds(chunkBounds(from, to)))
         if (to[0] !== from[0] || to[1] !== from[1]) area.addTo(layers.map)
