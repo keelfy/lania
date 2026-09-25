@@ -1,3 +1,4 @@
+import AttentionDot from '@/components/ui/attention-dot'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -44,16 +45,22 @@ const menuItems = [
 
 type Props = {
   isAdmin?: boolean
+  // The user has a profile to act on; the menu marks the way to it.
+  profilesNeedAction?: boolean
 }
 
-export default function UserDropdownMenu({ isAdmin = false }: Props) {
+export default function UserDropdownMenu({
+  isAdmin = false,
+  profilesNeedAction = false,
+}: Props) {
   const t = useTranslations('navbar.userDropdown')
   const locale = useLocale()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="icon">
+        <Button size="icon" className="relative">
           <UserIcon className="size-6" />
+          {profilesNeedAction && <AttentionDot />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -63,6 +70,12 @@ export default function UserDropdownMenu({ isAdmin = false }: Props) {
               <Link href={item.href}>
                 <item.icon className="size-4" />
                 {t(item.label)}
+                {item.href === '/profiles' && profilesNeedAction && (
+                  <span
+                    aria-hidden
+                    className="ml-auto size-2 rounded-full bg-red-500"
+                  />
+                )}
               </Link>
             </DropdownMenuItem>
           ))}

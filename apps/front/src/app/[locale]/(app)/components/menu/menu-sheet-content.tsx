@@ -85,6 +85,8 @@ const menuItems = [
 type Props = {
   sessionActive: boolean
   isAdmin: boolean
+  // The user has a profile to act on; the menu marks the way to it.
+  profilesNeedAction: boolean
   locale: Locale
   currency: Currency
 }
@@ -92,6 +94,7 @@ type Props = {
 export default function MenuSheetContent({
   sessionActive,
   isAdmin,
+  profilesNeedAction,
   locale,
   currency,
 }: Props) {
@@ -118,6 +121,12 @@ export default function MenuSheetContent({
                   >
                     <item.icon className="size-5" />
                     {t(item.label)}
+                    {item.href === '/profiles' && profilesNeedAction && (
+                      <span
+                        aria-hidden
+                        className="size-2 rounded-full bg-red-500"
+                      />
+                    )}
                   </Link>
                 </SheetClose>
               ))}

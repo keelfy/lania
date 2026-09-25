@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import {
   Card,
-  CardAction,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
 import VerifiedBadge from '@/components/ui/verified-badge'
 import {
   confirmProfileVerification,
@@ -24,27 +25,97 @@ import {
 } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
+import { cn } from '@/lib/utils'
 import { Profile } from '@/models/profile'
-import { BadgeCheckIcon } from 'lucide-react'
+import {
+  BadgeCheckIcon,
+  ExternalLinkIcon,
+  MinusIcon,
+  PlusIcon,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
+import { useSelectedProfile } from './use-selected-profile'
 
 type Props = {
-  profile: Profile
+  profiles: Profile[]
   // Where the player joins to get the code.
   serverAddress?: string
+  className?: string
 }
 
 const CODE_LENGTH = 6
+const BUY_URL =
+  'https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc'
+
+// The license of the selected profile: the optional checkmark for a licensed nickname, and what playing without
+// a license means for a free one.
+export default function ProfileLicenseCard({
+  profiles,
+  serverAddress,
+  className,
+}: Props) {
+  const profile = useSelectedProfile(profiles)
+  if (!profile) return null
+  return profile.mojangUuid ? (
+    <ProfileVerificationCard
+      key={profile.id}
+      profile={profile}
+      serverAddress={serverAddress}
+      className={className}
+    />
+  ) : (
+    <UnlicensedCard className={className} />
+  )
+}
+
+function UnlicensedCard({ className }: { className?: string }) {
+  const t = useTranslations('profiles.verification.unlicensed')
+  return (
+    <Card className={cn('gap-4', className)}>
+      <CardHeader>
+        <CardTitle className="text-lg">{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3 text-sm">
+        <ul className="flex flex-col gap-2">
+          <li className="flex gap-2">
+            <PlusIcon className="mt-0.5 size-4 shrink-0 text-green-500" />
+            {t('pros.access')}
+          </li>
+          {(['nickname', 'security', 'badge'] as const).map((con) => (
+            <li key={con} className="flex gap-2">
+              <MinusIcon className="text-destructive mt-0.5 size-4 shrink-0" />
+              {t(`cons.${con}`)}
+            </li>
+          ))}
+        </ul>
+        <Separator />
+        <p className="text-muted-foreground">{t('advice')}</p>
+        <Button variant="outline" size="sm" asChild>
+          <a href={BUY_URL} target="_blank" rel="noopener noreferrer">
+            {t('buy')}
+            <ExternalLinkIcon className="size-4" />
+          </a>
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
 
 // The optional license checkmark. Only a profile keyed to its Mojang UUID can get it: the proxy shows the code
 // to the licensed player, and the owner types it here.
-export default function ProfileVerificationCard({
+function ProfileVerificationCard({
   profile,
   serverAddress,
-}: Props) {
+  className,
+}: {
+  profile: Profile
+  serverAddress?: string
+  className?: string
+}) {
   const t = useTranslations('profiles.verification')
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
@@ -53,6 +124,8 @@ export default function ProfileVerificationCard({
   const [isConfirming, startConfirming] = React.useTransition()
   // Until the admin rekeys the profile to the Mojang UUID, the proxy cannot match the licensed login to it.
   const rekeyed = profile.mojangUuid === profile.mcUuid
+  // Verification is what the site expects from the owner here, so the card stands out until it is done.
+  const awaits = rekeyed && !profile.verified
 
   const start = () => {
     startStarting(async () => {
@@ -81,7 +154,12 @@ export default function ProfileVerificationCard({
   }
 
   return (
-    <Card>
+    <Card
+      className={cn(
+        awaits && 'border-primary/60 ring-primary/20 ring-2',
+        className,
+      )}
+    >
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           {t('title')}
@@ -96,20 +174,21 @@ export default function ProfileVerificationCard({
                 : 'notRekeyed',
           )}
         </CardDescription>
-        {!profile.verified && (
-          <CardAction>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={start}
-              disabled={!rekeyed || isStarting}
-            >
-              <BadgeCheckIcon className="size-4" />
-              {t('start')}
-            </Button>
-          </CardAction>
-        )}
       </CardHeader>
+      {!profile.verified && (
+        <CardContent>
+          <Button
+            variant={awaits ? 'default' : 'outline'}
+            size="sm"
+            className="w-full"
+            onClick={start}
+            disabled={!rekeyed || isStarting}
+          >
+            <BadgeCheckIcon className="size-4" />
+            {t('start')}
+          </Button>
+        </CardContent>
+      )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>

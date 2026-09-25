@@ -6,6 +6,7 @@ import {
 } from '@/lib/api-endpoints'
 import { getCurrentSession } from '@/lib/get-current-session'
 import { serverApiFetcher } from '@/lib/server'
+import { getCurrentUserProfiles } from '@/lib/user-profiles'
 import { Profile, ProfileCosmeticOptions } from '@/models/profile'
 import { cache } from 'react'
 
@@ -13,16 +14,7 @@ const DEFAULT_COSMETIC_OPTIONS: ProfileCosmeticOptions = {
   name: { colors: [], glythPrefixes: [], specialPrefixes: [] },
 }
 
-// The layout and the page both need these, and cache() makes them one request.
-export const getProfiles = cache(async (): Promise<Profile[]> => {
-  const session = await getCurrentSession()
-  return getUserProfiles(serverApiFetcher, session?.identity?.id).catch(
-    (error) => {
-      console.error(error)
-      return []
-    },
-  )
-})
+export const getProfiles = getCurrentUserProfiles
 
 export const getAllSeasons = cache(() =>
   getSeasons(serverApiFetcher).catch(() => []),

@@ -249,7 +249,21 @@
       "confirmFailed": "The code did not work",
       "success": "License verified",
       "expires": "The request lasts 10 minutes",
-      "restart": "Start again"
+      "restart": "Start again",
+      "unlicensed": {
+        "title": "Unlicensed account",
+        "description": "The nickname does not belong to a licensed Minecraft account. You can play on the server, but know what it means",
+        "pros": {
+          "access": "Access to the server, seasons and cosmetics is the same as with a license"
+        },
+        "cons": {
+          "nickname": "If someone buys Minecraft with this nickname, the server lets the license owner in under it. The progress then has to be moved by the administration",
+          "security": "The account is protected only by the server password, not by a Microsoft account",
+          "badge": "The licensed checkmark is not available"
+        },
+        "advice": "We recommend buying Minecraft: the nickname becomes yours, and you support the game developers. If the nickname changes after the purchase, contact the administration and we will move the profile",
+        "buy": "Buy Minecraft"
+      }
     }
   },
   "profileResync": {

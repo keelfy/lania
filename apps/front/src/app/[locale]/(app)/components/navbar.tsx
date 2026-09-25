@@ -1,4 +1,5 @@
 import DeerIcon from '@/components/icons/DeerIcon'
+import AttentionDot from '@/components/ui/attention-dot'
 import { Button } from '@/components/ui/button'
 import {
   NavigationMenu,
@@ -13,6 +14,7 @@ import { Currency, CURRENCY_COOKIE, DEFAULT_CURRENCY } from '@/lib/currency'
 import { isAdminSession } from '@/lib/admin'
 import { getCurrentSession } from '@/lib/get-current-session'
 import { Locale } from '@/lib/locale'
+import { awaitsVerification, getCurrentUserProfiles } from '@/lib/user-profiles'
 import { cn } from '@/lib/utils'
 import {
   BellIcon,
@@ -88,6 +90,10 @@ export default async function Navbar({
   const session = await getCurrentSession()
   const isSessionActive = session?.active === true
   const isAdmin = isAdminSession(session)
+  // A profile the owner can verify now; the user menu marks the way to it.
+  const profilesNeedAction = (await getCurrentUserProfiles()).some(
+    awaitsVerification,
+  )
   const currency =
     ((await cookies()).get(CURRENCY_COOKIE)?.value as Currency) ??
     DEFAULT_CURRENCY
@@ -148,20 +154,25 @@ export default async function Navbar({
         <ShoppingBasketButton />
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden">
+            <Button variant="ghost" size="icon" className="relative lg:hidden">
               <MenuIcon className="size-8" />
+              {profilesNeedAction && <AttentionDot />}
             </Button>
           </SheetTrigger>
           <DynamicMenuSheetContent
             sessionActive={isSessionActive}
             isAdmin={isAdmin}
+            profilesNeedAction={profilesNeedAction}
             locale={currentLocale as Locale}
             currency={currency}
           />
         </Sheet>
         <div className="relative hidden items-center gap-6 lg:flex">
           {isSessionActive ? (
-            <UserDropdownMenu isAdmin={isAdmin} />
+            <UserDropdownMenu
+              isAdmin={isAdmin}
+              profilesNeedAction={profilesNeedAction}
+            />
           ) : (
             <SignInButton />
           )}

@@ -4,7 +4,12 @@ import RichText from '@/components/ui/rich-text'
 import { cn } from '@/lib/utils'
 import { getTranslations } from 'next-intl/server'
 import React from 'react'
-import { getProfiles, isFreeAccessSeason } from './load-profile-page'
+import {
+  getAllSeasons,
+  getProfiles,
+  isFreeAccessSeason,
+} from './load-profile-page'
+import ProfileLicenseCard from './profile-license-card'
 import ProfileNav from './profile-nav'
 import ProfilePlayerCard from './profile-player-card'
 import ProfileSelectWrapper from './profile-select-wrapper'
@@ -18,9 +23,10 @@ type Props = React.PropsWithChildren<{
 export default async function ProfilesLayout({ children, params }: Props) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'profiles' })
-  const [profiles, freeAccess] = await Promise.all([
+  const [profiles, freeAccess, seasons] = await Promise.all([
     getProfiles(),
     isFreeAccessSeason(),
+    getAllSeasons(),
   ])
   const hasProfiles = profiles.length > 0
 
@@ -35,11 +41,16 @@ export default async function ProfilesLayout({ children, params }: Props) {
         </h2>
         <ProfileSelectWrapper profiles={profiles} />
       </div>
-      <ProfilePlayerCard
-        profiles={profiles}
-        locale={locale}
-        className="lg:col-start-1 lg:row-span-3 lg:row-start-1"
-      />
+      <div className="flex flex-col gap-4 lg:col-start-1 lg:row-span-3 lg:row-start-1">
+        <ProfilePlayerCard profiles={profiles} locale={locale} />
+        <ProfileLicenseCard
+          profiles={profiles}
+          serverAddress={
+            seasons.find((season) => season.isPrimary)?.publicAddress
+          }
+          className="w-full sm:max-w-sm"
+        />
+      </div>
       {hasProfiles && (
         <div className="lg:col-start-2 lg:row-start-2">
           <ProfileNav profiles={profiles} />
