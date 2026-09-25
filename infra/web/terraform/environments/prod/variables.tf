@@ -146,50 +146,6 @@ variable "default_name_color_id" {
   default = "2628bf9d-5b7c-438b-900a-67753261a823"
 }
 
-variable "freekassa_base_payment_url" {
-  type    = string
-  default = ""
-}
-
-variable "freekassa_merchant_id" {
-  type    = string
-  default = ""
-}
-
-variable "freekassa_merchant_password_1" {
-  type      = string
-  default   = ""
-  sensitive = true
-}
-
-variable "freekassa_merchant_password_2" {
-  type      = string
-  default   = ""
-  sensitive = true
-}
-
-variable "donation_alerts_client_id" {
-  type    = string
-  default = ""
-}
-
-variable "donation_alerts_client_secret" {
-  type      = string
-  default   = ""
-  sensitive = true
-}
-
-variable "donation_alerts_socket_connection_token" {
-  type      = string
-  default   = ""
-  sensitive = true
-}
-
-variable "donation_alerts_user_id" {
-  type    = string
-  default = ""
-}
-
 variable "twitch_client_id" {
   type    = string
   default = ""

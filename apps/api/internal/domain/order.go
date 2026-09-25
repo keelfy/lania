@@ -18,9 +18,7 @@ const (
 type PaymentMethod string
 
 const (
-	PaymentMethodFreekassa      PaymentMethod = "freekassa"
-	PaymentMethodDonationAlerts PaymentMethod = "donation-alerts"
-	PaymentMethodEasyDonate     PaymentMethod = "easy-donate"
+	PaymentMethodEasyDonate PaymentMethod = "easy-donate"
 )
 
 type OrderAmounts struct {
@@ -56,4 +54,14 @@ type OrderItem struct {
 	Product *Product
 	Profile *Profile
 	Season  *Season
+}
+
+// OrderStatuses lists every order status in the order an order goes through them.
+var OrderStatuses = []OrderStatus{OrderStatusCreated, OrderStatusProcessing, OrderStatusCompleted, OrderStatusFailed}
+
+// OrderFilter narrows the admin order list. An empty status keeps every status.
+// Search matches the order ID, the EasyDonate payment ID or a recipient username, all by prefix.
+type OrderFilter struct {
+	Status OrderStatus
+	Search string
 }

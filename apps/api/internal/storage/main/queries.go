@@ -200,16 +200,16 @@ type Queries interface {
 	FindOrdersByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Order, error)
 	FindOrderByExternalID(ctx context.Context, externalID string) (*domain.Order, error)
 	UpdateOrderExternalIDByID(ctx context.Context, id uuid.UUID, externalID string) error
+	FindAdminOrders(ctx context.Context, filter domain.OrderFilter, size, from int) ([]*domain.Order, error)
+	CountAdminOrders(ctx context.Context, filter domain.OrderFilter) (int64, error)
+	CountOrdersByStatus(ctx context.Context) (map[domain.OrderStatus]int64, error)
+	FindAdminOrderItems(ctx context.Context, orderIDs uuid.UUIDs, locale string) ([]*domain.OrderItem, error)
 
 	// Basket
 	InsertBasketItem(ctx context.Context, arg InsertBasketItemParams) error
 	FindBasketItemsByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.BasketItem, error)
 	ClearBasketItemsByUserID(ctx context.Context, userID uuid.UUID) error
 	DeleteBasketItemByIDs(ctx context.Context, ids []uuid.UUID) error
-
-	// Integration
-	FindOAuth2IntegrationByServiceName(ctx context.Context, serviceName domain.IntegrationService) (*domain.OAuth2Integration, error)
-	UpdateOAuth2Integration(ctx context.Context, arg UpdateOAuth2IntegrationParams) error
 
 	// Easy Donate
 	FindEDProductsByProductIDs(ctx context.Context, productIDs uuid.UUIDs) ([]int64, error)

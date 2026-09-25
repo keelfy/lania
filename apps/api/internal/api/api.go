@@ -10,7 +10,6 @@ import (
 	jwtAuth "github.com/go-chi/jwtauth/v5"
 	"github.com/lania-smp/backend/internal/clients"
 	"github.com/lania-smp/backend/internal/config"
-	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/handlers"
 	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/middleware"
@@ -31,12 +30,13 @@ type laniaAPI struct {
 	profileVerificationHandler handlers.ProfileVerificationHandler
 	productHandler             handlers.ProductHandler
 	orderHandler               handlers.OrderHandler
-	freekassaHandler           handlers.AcquiringHandler
+	acquiringHandler           handlers.AcquiringHandler
 	purchaseHandler            handlers.PurchaseHandler
 	basketHandler              handlers.BasketHandler
 	adminUserHandler           handlers.AdminUserHandler
 	adminProfileHandler        handlers.AdminProfileHandler
 	adminGrantHandler          handlers.AdminGrantHandler
+	adminOrderHandler          handlers.AdminOrderHandler
 	adminCatalogHandler        handlers.AdminCatalogHandler
 	seasonHandler              handlers.SeasonHandler
 	seasonWorldHandler         handlers.SeasonWorldHandler
@@ -44,7 +44,6 @@ type laniaAPI struct {
 	notificationHandler        handlers.NotificationHandler
 	accountHandler             handlers.AccountHandler
 	uploadHandler              handlers.UploadHandler
-	integrationService         services.IntegrationService
 	mojangService              services.MojangService
 	playerSyncService          services.PlayerSyncService
 	roleSyncService            services.RoleSyncService
@@ -61,12 +60,13 @@ func NewLaniaAPI(
 	profileVerificationHandler handlers.ProfileVerificationHandler,
 	productHandler handlers.ProductHandler,
 	orderHandler handlers.OrderHandler,
-	freekassaHandler handlers.AcquiringHandler,
+	acquiringHandler handlers.AcquiringHandler,
 	purchaseHandler handlers.PurchaseHandler,
 	basketHandler handlers.BasketHandler,
 	adminUserHandler handlers.AdminUserHandler,
 	adminProfileHandler handlers.AdminProfileHandler,
 	adminGrantHandler handlers.AdminGrantHandler,
+	adminOrderHandler handlers.AdminOrderHandler,
 	adminCatalogHandler handlers.AdminCatalogHandler,
 	seasonHandler handlers.SeasonHandler,
 	seasonWorldHandler handlers.SeasonWorldHandler,
@@ -74,7 +74,6 @@ func NewLaniaAPI(
 	notificationHandler handlers.NotificationHandler,
 	accountHandler handlers.AccountHandler,
 	uploadHandler handlers.UploadHandler,
-	integrationService services.IntegrationService,
 	mojangService services.MojangService,
 	playerSyncService services.PlayerSyncService,
 	roleSyncService services.RoleSyncService,
@@ -89,12 +88,13 @@ func NewLaniaAPI(
 		profileVerificationHandler: profileVerificationHandler,
 		productHandler:             productHandler,
 		orderHandler:               orderHandler,
-		freekassaHandler:           freekassaHandler,
+		acquiringHandler:           acquiringHandler,
 		purchaseHandler:            purchaseHandler,
 		basketHandler:              basketHandler,
 		adminUserHandler:           adminUserHandler,
 		adminProfileHandler:        adminProfileHandler,
 		adminGrantHandler:          adminGrantHandler,
+		adminOrderHandler:          adminOrderHandler,
 		adminCatalogHandler:        adminCatalogHandler,
 		seasonHandler:              seasonHandler,
 		seasonWorldHandler:         seasonWorldHandler,
@@ -102,7 +102,6 @@ func NewLaniaAPI(
 		notificationHandler:        notificationHandler,
 		accountHandler:             accountHandler,
 		uploadHandler:              uploadHandler,
-		integrationService:         integrationService,
 		mojangService:              mojangService,
 		playerSyncService:          playerSyncService,
 		roleSyncService:            roleSyncService,
@@ -116,17 +115,6 @@ func (api *laniaAPI) BuildAPI(ctx context.Context) (*chi.Mux, error) {
 		return nil, err
 	}
 	r := chi.NewRouter()
-
-	// connect to donation alerts centrifugo
-	integration, err := api.integrationService.GetOAuth2IntegrationByServiceName(ctx, domain.IntegrationServiceDonationAlert)
-	if err != nil {
-		logger.Errorf(ctx, "failed to get oauth2 integration by service name: %v", err)
-		return nil, err
-	}
-
-	go func() {
-		api.integrationService.ConnectToCentrifugo(ctx, integration.AccessToken)
-	}()
 
 	// look up mojang uuids of profiles in background to stay within the mojang rate limit
 	go api.mojangService.RunProfileSync(ctx)
@@ -283,6 +271,8 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 		r.Get("/users", api.adminUserHandler.GetUsers)
 		r.Get("/users/{userId}", api.adminUserHandler.GetUserDetails)
 
+		r.Get("/orders", api.adminOrderHandler.GetOrders)
+
 		r.Route("/cosmetics", func(r chi.Router) {
 			r.Get("/", api.adminCatalogHandler.GetCosmetics)
 			r.Post("/name-colors", api.adminCatalogHandler.CreateNameColor)
@@ -345,8 +335,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 	})
 
 	r.Route("/callbacks", func(r chi.Router) {
-		r.Post("/freekassa", api.freekassaHandler.HandleFreekassaResult)
-		r.Post("/easydonate", api.freekassaHandler.HandleEasyDonateResult)
+		r.Post("/easydonate", api.acquiringHandler.HandleEasyDonateResult)
 	})
 
 	r.Route("/basket", func(r chi.Router) {

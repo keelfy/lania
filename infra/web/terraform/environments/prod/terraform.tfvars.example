@@ -43,16 +43,6 @@ oidc_yandex_client_secret  = ""
 oidc_twitch_client_id      = ""
 oidc_twitch_client_secret  = ""
 
-freekassa_base_payment_url    = ""
-freekassa_merchant_id         = ""
-freekassa_merchant_password_1 = ""
-freekassa_merchant_password_2 = ""
-
-donation_alerts_client_id               = ""
-donation_alerts_client_secret           = ""
-donation_alerts_socket_connection_token = ""
-donation_alerts_user_id                 = ""
-
 twitch_client_id     = ""
 twitch_client_secret = ""
 

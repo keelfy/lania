@@ -2,6 +2,7 @@ import {
   AdminCosmeticsCatalog,
   AdminProduct,
   AdminGrant,
+  AdminOrders,
   AdminProfile,
   AdminProfileDetails,
   AdminUser,
@@ -25,6 +26,7 @@ import {
   CreateOrderReq,
   CreateOrderRes,
   Order,
+  OrderStatus,
   PurchasedProduct,
 } from '@/models/order'
 import { Product, ProductMetadata } from '@/models/product'
@@ -394,6 +396,21 @@ export function getAdminProfiles(
   params.set('size', size.toString())
   if (search) params.set('search', search)
   return fetcher<Paginated<AdminProfile>>('/v1/admin/profiles', params)
+}
+
+export function getAdminOrders(
+  fetcher: ApiFetcher,
+  page: number = 0,
+  search: string = '',
+  status?: OrderStatus,
+  size: number = 25,
+): Promise<AdminOrders> {
+  const params = new URLSearchParams()
+  params.set('page', page.toString())
+  params.set('size', size.toString())
+  if (search) params.set('search', search)
+  if (status) params.set('status', status)
+  return fetcher<AdminOrders>('/v1/admin/orders', params)
 }
 
 export function getAdminProfile(

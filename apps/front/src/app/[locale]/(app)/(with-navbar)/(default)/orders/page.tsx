@@ -1,5 +1,4 @@
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { getOrders, getUserProfiles } from '@/lib/api-endpoints'
 import {
   Currency,
@@ -12,7 +11,6 @@ import { serverApiFetcher } from '@/lib/server'
 import { ArrowRightIcon, CheckIcon, ClockIcon, XIcon } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers'
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import OrderProductsSection from './order-products-section'
 
@@ -122,17 +120,6 @@ export default async function OrdersPage({ params }: Props) {
                   </p>
                 </div>
               </div>
-              {order.status === 'created' && (
-                <Button size="default" asChild className="w-full md:w-fit">
-                  <Link
-                    href={`/${locale}/orders/${order.id}/donate`}
-                    className="flex items-center gap-2"
-                  >
-                    <ArrowRightIcon className="inline-block size-4" />
-                    Продолжить оплату
-                  </Link>
-                </Button>
-              )}
             </div>
           )
         })}

@@ -48,7 +48,7 @@ type AccessSource string
 const (
 	AccessSourceFree         AccessSource = "free"
 	AccessSourceRegistration AccessSource = "registration"
-	AccessSourceFreekassa    AccessSource = "freekassa"
+	AccessSourceOrder        AccessSource = "order"
 	AccessSourceAdmin        AccessSource = "admin"
 )
 

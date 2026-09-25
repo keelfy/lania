@@ -149,9 +149,7 @@
     "inTheBasket": "Уже в корзине",
     "buy": "Купить",
     "paymentMethod": {
-      "easyDonate": "Картой (₽, Global)",
-      "donationAlerts": "Донатом",
-      "freekassa": "Криптой"
+      "easyDonate": "Картой (₽, Global)"
     },
     "items": {
       "delete": "Удалить",
@@ -621,7 +619,8 @@
       "cosmetics": "Косметика",
       "nameColors": "Цвета ника",
       "namePrefixes": "Префиксы",
-      "products": "Товары"
+      "products": "Товары",
+      "orders": "Заказы"
     },
     "users": {
       "title": "Пользователи",
@@ -643,6 +642,35 @@
       "profileColumns": {
         "username": "Ник",
         "role": "Роль",
+        "createdAt": "Создан"
+      }
+    },
+    "orders": {
+      "title": "Заказы",
+      "description": "Заказы всех игроков, новые сверху. Оплата идёт через EasyDonate.",
+      "searchPlaceholder": "ID заказа, платежа EasyDonate или ник",
+      "loadFailed": "Не удалось загрузить заказы",
+      "noResults": "Заказов с такими условиями нет",
+      "allStatuses": "Все",
+      "previousPage": "Назад",
+      "nextPage": "Дальше",
+      "pageOf": "Страница {page} из {total}",
+      "noPayment": "Платёж не создан",
+      "payment": "Платёж №{id}",
+      "unknownProduct": "Удалённый товар",
+      "updatedAt": "Изменён {date}",
+      "statuses": {
+        "created": "Ждёт оплаты",
+        "processing": "Выдаётся",
+        "completed": "Выдан",
+        "failed": "Оплачен, не выдан"
+      },
+      "columns": {
+        "order": "Заказ",
+        "items": "Состав",
+        "buyer": "Покупатель",
+        "amount": "Сумма",
+        "status": "Статус",
         "createdAt": "Создан"
       }
     },
@@ -724,7 +752,6 @@
         "sources": {
           "free": "Бесплатно",
           "registration": "Регистрация",
-          "freekassa": "Оплата",
           "admin": "Админ",
           "order": "Заказ",
           "manual": "Вручную"

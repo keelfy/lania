@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"slices"
 	"sync"
@@ -27,7 +26,6 @@ type OrderHandler interface {
 
 type orderHandler struct {
 	orderService      services.OrderService
-	freekassaService  services.FreekassaService
 	easyDonateService services.EasyDonateService
 	productService    services.ProductService
 	seasonService     services.SeasonService
@@ -39,7 +37,6 @@ type orderHandler struct {
 
 func NewOrderHandler(
 	orderService services.OrderService,
-	freekassaService services.FreekassaService,
 	easyDonateService services.EasyDonateService,
 	productService services.ProductService,
 	seasonService services.SeasonService,
@@ -50,7 +47,6 @@ func NewOrderHandler(
 ) OrderHandler {
 	return &orderHandler{
 		orderService:      orderService,
-		freekassaService:  freekassaService,
 		easyDonateService: easyDonateService,
 		productService:    productService,
 		seasonService:     seasonService,
@@ -261,11 +257,6 @@ func (h *orderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		amount := overallAmountMap[currency]
 
 		switch cmd.PaymentMethod {
-		case domain.PaymentMethodFreekassa:
-			paymentURL = h.freekassaService.ConstructPaymentURL(ctx, email, orderID, amount, currency)
-		case domain.PaymentMethodDonationAlerts:
-			locale := utils.GetLocaleFromCtx(ctx)
-			paymentURL = fmt.Sprintf("/%s/orders/%s/donate", locale, orderID.String())
 		case domain.PaymentMethodEasyDonate:
 			edProductIDs := make(uuid.UUIDs, 0)
 			seasonIDs := make(uuid.UUIDs, 0)

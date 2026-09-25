@@ -19,13 +19,11 @@ var IsAvatarSize = validation.In(
 var AccessSource = validation.In(
 	domain.AccessSourceFree,
 	domain.AccessSourceRegistration,
-	domain.AccessSourceFreekassa,
+	domain.AccessSourceOrder,
 )
 
 var MinecraftUsername = validation.Match(regexp.MustCompile(`^[a-zA-Z0-9_]{3,16}$`))
 
 var PaymentMethod = validation.In(
-	domain.PaymentMethodFreekassa,
-	domain.PaymentMethodDonationAlerts,
 	domain.PaymentMethodEasyDonate,
 )

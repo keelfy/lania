@@ -1,4 +1,6 @@
+import { OrderAmount, OrderStatus } from './order'
 import { ProfileResync, ProfileRole } from './profile'
+import { Paginated } from './types'
 
 export type AdminUser = {
   id: string
@@ -211,4 +213,33 @@ export type CreateEasyDonateProduct = {
   description: string
   priceName: AdminProduct['priceName']
   image?: File
+}
+
+export type AdminOrderItem = {
+  id: string
+  productId: string
+  productName: string
+  profileId: string
+  username: string
+  seasonId: string
+  seasonName: string
+  amounts: OrderAmount[]
+  quantity: number
+}
+
+export type AdminOrder = {
+  id: string
+  userId: string
+  status: OrderStatus
+  amounts: OrderAmount[]
+  // EasyDonate payment ID, missing until the payment is created.
+  externalId?: string
+  createdAt: number
+  updatedAt: number
+  items: AdminOrderItem[]
+}
+
+// A page of orders with the number of orders in each status, whatever the filter.
+export type AdminOrders = Paginated<AdminOrder> & {
+  statusCounts: Record<OrderStatus, number>
 }

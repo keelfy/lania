@@ -1,8 +1,6 @@
 import { Currency } from '@/lib/currency'
 
 export enum PaymentMethod {
-  DonationAlerts = 'donation-alerts',
-  Freekassa = 'freekassa',
   EasyDonate = 'easy-donate',
 }
 

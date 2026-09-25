@@ -195,56 +195,6 @@ func GetDefaultNameColorID() uuid.UUID {
 	return uuid.MustParse(os.Getenv("DEFAULT_NAME_COLOR_ID"))
 }
 
-/** Freekassa */
-
-func GetFreekassaBasePaymentURL() string {
-	return os.Getenv("FREEKASSA_BASE_PAYMENT_URL")
-}
-
-func GetFreekassaMerchantID() int64 {
-	value, err := strconv.ParseInt(os.Getenv("FREEKASSA_MERCHANT_ID"), 10, 64)
-	if err != nil {
-		log.Printf("Error parsing FREEKASSA_MERCHANT_ID: %v", err)
-		return 0
-	}
-	return value
-}
-
-func GetFreekassaMerchantPassword1() string {
-	return os.Getenv("FREEKASSA_MERCHANT_PASSWORD_1")
-}
-
-func GetFreekassaMerchantPassword2() string {
-	return os.Getenv("FREEKASSA_MERCHANT_PASSWORD_2")
-}
-
-/** Donation Alerts */
-
-func GetDonationAlertsClientID() string {
-	return os.Getenv("DONATION_ALERTS_CLIENT_ID")
-}
-
-func GetDonationAlertsClientSecret() string {
-	return os.Getenv("DONATION_ALERTS_CLIENT_SECRET")
-}
-
-func GetDonationAlertsScope() string {
-	return os.Getenv("DONATION_ALERTS_SCOPE")
-}
-
-func GetDonationAlertSocketConnectionToken() string {
-	return os.Getenv("DONATION_ALERTS_SOCKET_CONNECTION_TOKEN")
-}
-
-func GetDonationAlertsUserID() int64 {
-	value, err := strconv.ParseInt(os.Getenv("DONATION_ALERTS_USER_ID"), 10, 64)
-	if err != nil {
-		log.Printf("Error parsing DONATION_ALERTS_USER_ID: %v", err)
-		return 0
-	}
-	return value
-}
-
 /** Easy Donate */
 
 func GetEasyDonateCreatePaymentEndpoint() string {

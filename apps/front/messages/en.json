@@ -150,9 +150,7 @@
     "inTheBasket": "In the basket",
     "buy": "Buy",
     "paymentMethod": {
-      "easyDonate": "By card",
-      "donationAlerts": "Donation",
-      "freekassa": "Crypto"
+      "easyDonate": "By card"
     },
     "items": {
       "delete": "Delete",
@@ -622,7 +620,8 @@
       "cosmetics": "Cosmetics",
       "nameColors": "Name colors",
       "namePrefixes": "Prefixes",
-      "products": "Products"
+      "products": "Products",
+      "orders": "Orders"
     },
     "users": {
       "title": "Users",
@@ -644,6 +643,35 @@
       "profileColumns": {
         "username": "Username",
         "role": "Role",
+        "createdAt": "Created"
+      }
+    },
+    "orders": {
+      "title": "Orders",
+      "description": "Orders of every player, newest first. Payments go through EasyDonate.",
+      "searchPlaceholder": "Order ID, EasyDonate payment ID or username",
+      "loadFailed": "Failed to load orders",
+      "noResults": "No orders match these filters",
+      "allStatuses": "All",
+      "previousPage": "Back",
+      "nextPage": "Next",
+      "pageOf": "Page {page} of {total}",
+      "noPayment": "No payment yet",
+      "payment": "Payment #{id}",
+      "unknownProduct": "Deleted product",
+      "updatedAt": "Changed {date}",
+      "statuses": {
+        "created": "Awaiting payment",
+        "processing": "Granting",
+        "completed": "Granted",
+        "failed": "Paid, not granted"
+      },
+      "columns": {
+        "order": "Order",
+        "items": "Items",
+        "buyer": "Buyer",
+        "amount": "Amount",
+        "status": "Status",
         "createdAt": "Created"
       }
     },
@@ -725,7 +753,6 @@
         "sources": {
           "free": "Free",
           "registration": "Registration",
-          "freekassa": "Payment",
           "admin": "Admin",
           "order": "Order",
           "manual": "Manual"

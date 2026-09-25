@@ -30,16 +30,6 @@ resource "local_sensitive_file" "env" {
     max_profiles_per_user = var.max_profiles_per_user
     default_name_color_id = var.default_name_color_id
 
-    freekassa_base_payment_url    = var.freekassa_base_payment_url
-    freekassa_merchant_id         = var.freekassa_merchant_id
-    freekassa_merchant_password_1 = var.freekassa_merchant_password_1
-    freekassa_merchant_password_2 = var.freekassa_merchant_password_2
-
-    donation_alerts_client_id               = var.donation_alerts_client_id
-    donation_alerts_client_secret           = var.donation_alerts_client_secret
-    donation_alerts_socket_connection_token = var.donation_alerts_socket_connection_token
-    donation_alerts_user_id                 = var.donation_alerts_user_id
-
     twitch_client_id     = var.twitch_client_id
     twitch_client_secret = var.twitch_client_secret
 

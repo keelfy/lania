@@ -11,6 +11,8 @@ type Props = {
   defaultValue?: string
   placeholder: string
   maxLength: number
+  // Query params the search keeps, for example the status filter of the orders page.
+  params?: Record<string, string>
 }
 
 export default function AdminSearch({
@@ -18,6 +20,7 @@ export default function AdminSearch({
   defaultValue,
   placeholder,
   maxLength,
+  params: keptParams,
 }: Props) {
   const router = useRouter()
   const [value, setValue] = React.useState(defaultValue ?? '')
@@ -25,10 +28,10 @@ export default function AdminSearch({
 
   React.useEffect(() => {
     if (search === (defaultValue ?? '')) return
-    const params = new URLSearchParams()
+    const params = new URLSearchParams(keptParams)
     if (search) params.set('q', search)
     router.replace(`${path}?${params.toString()}`)
-  }, [search, defaultValue, path, router])
+  }, [search, defaultValue, path, router, keptParams])
 
   return (
     <Input

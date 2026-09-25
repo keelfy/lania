@@ -99,7 +99,7 @@ func TestFulfillmentGrantProduct(t *testing.T) {
 		colorID := uuid.New()
 		color := product(domain.ProductCategoryNameColor, domain.NameColorProductMetadata{NameColorID: colorID})
 
-		if err := svc.GrantProduct(ctx, nil, profile.ID, seasonID, color, domain.AccessSourceFreekassa, &orderItemID); err != nil {
+		if err := svc.GrantProduct(ctx, nil, profile.ID, seasonID, color, domain.AccessSourceOrder, &orderItemID); err != nil {
 			t.Fatal(err)
 		}
 		got := cosmetics.color

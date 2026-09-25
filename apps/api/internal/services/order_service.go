@@ -22,11 +22,14 @@ type OrderService interface {
 	GetOrdersByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Order, error)
 	GetOrderByExternalID(ctx context.Context, externalID string) (*domain.Order, error)
 	UpdateOrderExternalIDByID(ctx context.Context, queries sql.Queries, id uuid.UUID, externalID string) error
+	// GetAdminOrders returns a page of orders of every user with their items, and the number of matching orders.
+	GetAdminOrders(ctx context.Context, filter domain.OrderFilter, pagination *domain.Pagination) ([]*domain.Order, int64, error)
+	// CountOrdersByStatus counts the orders of every user in each status.
+	CountOrdersByStatus(ctx context.Context) (map[domain.OrderStatus]int64, error)
 }
 
 type orderService struct {
 	storage            storage.MainStorage
-	freekassaService   FreekassaService
 	productService     ProductService
 	basketService      BasketService
 	fulfillmentService FulfillmentService
@@ -34,14 +37,12 @@ type orderService struct {
 
 func NewOrderService(
 	storage storage.MainStorage,
-	freekassaService FreekassaService,
 	productService ProductService,
 	basketService BasketService,
 	fulfillmentService FulfillmentService,
 ) OrderService {
 	return &orderService{
 		storage:            storage,
-		freekassaService:   freekassaService,
 		productService:     productService,
 		basketService:      basketService,
 		fulfillmentService: fulfillmentService,
@@ -187,7 +188,7 @@ func (s *orderService) handleOrderCompletion(ctx context.Context, order *domain.
 }
 
 func (s *orderService) handleOrderItemCompletion(ctx context.Context, queries sql.Queries, item *domain.OrderItem, product *domain.Product) error {
-	return s.fulfillmentService.GrantProduct(ctx, queries, item.ProfileID, item.SeasonID, product, domain.AccessSourceFreekassa, &item.ID)
+	return s.fulfillmentService.GrantProduct(ctx, queries, item.ProfileID, item.SeasonID, product, domain.AccessSourceOrder, &item.ID)
 }
 
 func (s *orderService) GetOrderByExternalID(ctx context.Context, externalID string) (*domain.Order, error) {
@@ -208,4 +209,42 @@ func (s *orderService) UpdateOrderExternalIDByID(ctx context.Context, queries sq
 		return utils.NewInternalServerError("failed to update order external id by id", err)
 	}
 	return nil
+}
+
+func (s *orderService) GetAdminOrders(ctx context.Context, filter domain.OrderFilter, pagination *domain.Pagination) ([]*domain.Order, int64, error) {
+	queries := s.storage.Queries()
+	count, err := queries.CountAdminOrders(ctx, filter)
+	if err != nil {
+		return nil, 0, utils.NewInternalServerError("failed to count orders", err)
+	}
+	orders, err := queries.FindAdminOrders(ctx, filter, pagination.Size, pagination.From)
+	if err != nil {
+		return nil, 0, utils.NewInternalServerError("failed to get orders", err)
+	}
+
+	orderIDs := make(uuid.UUIDs, len(orders))
+	byID := make(map[uuid.UUID]*domain.Order, len(orders))
+	for i, order := range orders {
+		orderIDs[i] = order.ID
+		order.Items = make([]*domain.OrderItem, 0)
+		byID[order.ID] = order
+	}
+	items, err := queries.FindAdminOrderItems(ctx, orderIDs, utils.GetLocaleFromCtx(ctx))
+	if err != nil {
+		return nil, 0, utils.NewInternalServerError("failed to get order items", err)
+	}
+	for _, item := range items {
+		if order, ok := byID[item.OrderID]; ok {
+			order.Items = append(order.Items, item)
+		}
+	}
+	return orders, count, nil
+}
+
+func (s *orderService) CountOrdersByStatus(ctx context.Context) (map[domain.OrderStatus]int64, error) {
+	counts, err := s.storage.Queries().CountOrdersByStatus(ctx)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to count orders by status", err)
+	}
+	return counts, nil
 }

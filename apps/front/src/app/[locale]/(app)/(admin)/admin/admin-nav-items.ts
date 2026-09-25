@@ -4,6 +4,7 @@ import {
   LucideIcon,
   PackageIcon,
   PaletteIcon,
+  ReceiptIcon,
   UsersIcon,
 } from 'lucide-react'
 
@@ -27,4 +28,5 @@ export const ADMIN_NAV_ITEMS: readonly {
     ],
   },
   { href: '/admin/products', labelKey: 'products', icon: PackageIcon },
+  { href: '/admin/orders', labelKey: 'orders', icon: ReceiptIcon },
 ] as const

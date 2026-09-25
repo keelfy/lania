@@ -23,10 +23,8 @@ import { Season } from '@/models/season'
 import {
   ArrowRightIcon,
   BanknoteIcon,
-  BitcoinIcon,
   BrushCleaningIcon,
   ClockIcon,
-  HandCoinsIcon,
   Loader2Icon,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -55,10 +53,6 @@ export default function BasketList({
   const [isCreatingOrder, startCreatingOrder] = React.useTransition()
   const [isDeletingFromBasket, startDeletingFromBasket] = React.useTransition()
 
-  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>(
-    PaymentMethod.EasyDonate,
-  )
-
   const ignoredItems = React.useMemo(() => {
     return items.filter((item) => {
       const product = products.find((product) => product.id === item.productId)
@@ -86,7 +80,7 @@ export default function BasketList({
   const onCreateOrder = React.useCallback(() => {
     startCreatingOrder(async () => {
       await createOrder(clientApiFetcher, {
-        paymentMethod,
+        paymentMethod: PaymentMethod.EasyDonate,
         products: items
           .filter((item) => !ignoredItems.some((i) => i.id == item.id))
           .map((item) => ({
@@ -102,7 +96,7 @@ export default function BasketList({
           errorToast(t('error'), err)
         })
     })
-  }, [items, paymentMethod, ignoredItems, t])
+  }, [items, ignoredItems, t])
 
   const onBasketClear = () => {
     startDeletingFromBasket(async () => {
@@ -192,60 +186,12 @@ export default function BasketList({
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-            <Button
-              variant={
-                paymentMethod === PaymentMethod.EasyDonate
-                  ? 'outline'
-                  : 'secondary'
-              }
-              className="h-auto w-full border-1 border-transparent py-2"
-              onClick={() => setPaymentMethod(PaymentMethod.EasyDonate)}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <div className="flex items-center gap-2">
-                  <BanknoteIcon className="size-4" />
-                  {t('paymentMethod.easyDonate')}
-                </div>
-                <p className="text-muted-foreground text-xs">EasyDonate</p>
+            <div className="flex flex-col items-center gap-1 rounded-md border py-2 text-sm font-medium">
+              <div className="flex items-center gap-2">
+                <BanknoteIcon className="size-4" />
+                {t('paymentMethod.easyDonate')}
               </div>
-            </Button>
-            <div className="flex items-center gap-2 hidden">
-              <Button
-                variant={
-                  paymentMethod === PaymentMethod.DonationAlerts
-                    ? 'outline'
-                    : 'secondary'
-                }
-                className="h-auto flex-1 border-1 border-transparent py-2"
-                onClick={() => setPaymentMethod(PaymentMethod.DonationAlerts)}
-              >
-                <div className="flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-2">
-                    <HandCoinsIcon className="size-4" />
-                    {t('paymentMethod.donationAlerts')}
-                  </div>
-                  <p className="text-muted-foreground text-xs">
-                    DonationAlerts
-                  </p>
-                </div>
-              </Button>
-              <Button
-                variant={
-                  paymentMethod === PaymentMethod.Freekassa
-                    ? 'outline'
-                    : 'secondary'
-                }
-                className="h-auto flex-1 border-1 border-transparent py-2"
-                onClick={() => setPaymentMethod(PaymentMethod.Freekassa)}
-              >
-                <div className="flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-2">
-                    <BitcoinIcon className="size-4" />
-                    {t('paymentMethod.freekassa')}
-                  </div>
-                  <p className="text-muted-foreground text-xs">FreeKassa</p>
-                </div>
-              </Button>
+              <p className="text-muted-foreground text-xs">EasyDonate</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
