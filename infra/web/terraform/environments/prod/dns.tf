@@ -4,6 +4,7 @@ locals {
     www      = "www"
     api      = "api"
     accounts = "accounts"
+    grafana  = "grafana"
   }
 }
 

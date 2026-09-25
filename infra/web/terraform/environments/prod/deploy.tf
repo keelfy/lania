@@ -53,6 +53,8 @@ resource "local_sensitive_file" "env" {
     postgres_password = var.postgres_password
     postgres_db       = var.postgres_db
 
+    grafana_admin_password = var.grafana_admin_password
+
     kratos_secrets_cookie       = var.kratos_secrets_cookie
     kratos_secrets_cipher       = var.kratos_secrets_cipher
     courier_smtp_connection_uri = var.courier_smtp_connection_uri

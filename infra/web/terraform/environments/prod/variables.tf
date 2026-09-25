@@ -237,6 +237,12 @@ variable "postgres_db" {
   default = "kratos"
 }
 
+variable "grafana_admin_password" {
+  description = "Password of the Grafana `admin` user at grafana.<domain>"
+  type        = string
+  sensitive   = true
+}
+
 variable "kratos_secrets_cookie" {
   type      = string
   sensitive = true

@@ -27,6 +27,8 @@ default_name_color_id = "2628bf9d-5b7c-438b-900a-67753261a823"
 
 postgres_password = "CHANGEME"
 
+grafana_admin_password = "CHANGEME"
+
 kratos_secrets_cookie       = "CHANGEME"
 kratos_secrets_cipher       = "CHANGEME-32-BYTES-LONG-SECRET!!"
 courier_smtp_connection_uri = "smtps://user:pass@smtp.example.com:465/"

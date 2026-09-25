@@ -4,18 +4,69 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
+	"os"
 
 	"github.com/fatih/color"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/lania-smp/backend/internal/config"
 )
 
+const levelFatal = slog.Level(12)
+
+// jsonLogger is set outside debug mode so production logs are structured for Loki.
+var jsonLogger *slog.Logger
+
 func PrepareLogger() {
+	if !config.IsDebug() {
+		jsonLogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+				if a.Key == slog.LevelKey && a.Value.Any() == levelFatal {
+					a.Value = slog.StringValue("FATAL")
+				}
+				return a
+			},
+		}))
+		return
+	}
+
 	log.SetFlags(log.LstdFlags)
 	color.NoColor = false // enable color output
 }
 
+func printJSON(ctx context.Context, level, message string) {
+	var slogLevel slog.Level
+	switch level {
+	case "DEBUG":
+		slogLevel = slog.LevelDebug
+	case "WARN":
+		slogLevel = slog.LevelWarn
+	case "ERROR":
+		slogLevel = slog.LevelError
+	case "FATAL":
+		slogLevel = levelFatal
+	default:
+		slogLevel = slog.LevelInfo
+	}
+
+	var attrs []slog.Attr
+	if requestId := chiMiddleware.GetReqID(ctx); requestId != "" {
+		attrs = append(attrs, slog.String("request_id", requestId))
+	}
+
+	jsonLogger.LogAttrs(ctx, slogLevel, message, attrs...)
+
+	if level == "FATAL" {
+		os.Exit(1)
+	}
+}
+
 func println(ctx context.Context, level, message string) {
+	if jsonLogger != nil {
+		printJSON(ctx, level, message)
+		return
+	}
+
 	var colorFunc func(format string, a ...any) string
 
 	switch level {

@@ -22,6 +22,10 @@ prefixed `lania-` to avoid clashing with anything else on the box.
 - **postgres** + **kratos** — Ory Kratos auth. Public API routed at
   `accounts.lania.network`; the Kratos admin API (4434) has no route and is
   not reachable from outside the `lania-web-net` network.
+- **loki** + **alloy** + **grafana** — logs. Alloy tails stdout of every
+  `lania-*` container through the Docker socket and pushes it to Loki (30-day
+  retention, `observability/loki.yml`). Grafana is routed at
+  `grafana.lania.network`, login `admin` / `grafana_admin_password`.
 
 `front`, `api`, and `kratos` each join two networks: `lania-web-net` (talk to
 the databases) and the external `edge` network (so the shared Traefik can
@@ -101,6 +105,13 @@ docker exec -it lania-mariadb mysql -u root -p
 docker exec -it lania-postgres psql -U postgres -d kratos
 docker exec -it lania-kratos wget -qO- http://localhost:4434/admin/identities
 ```
+
+## Logs
+
+Open Grafana → Explore → Loki. Labels: `container`, `service`, `project`.
+`api` and `shell` print JSON outside `DEBUG=true`, so filter with e.g.
+`{service="api"} | json | level="ERROR"`. Docker keeps only the last ~30 MB
+per container locally (`x-logging` in the compose file).
 
 ## Adding a second site to this server
 

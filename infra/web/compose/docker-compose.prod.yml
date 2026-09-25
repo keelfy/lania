@@ -1,5 +1,12 @@
 name: lania-web
 
+# Bounded local copy of container output; long-term history lives in Loki.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 networks:
   lania-web-net:
     name: lania-web-net
@@ -11,11 +18,15 @@ volumes:
   lania-mariadb-data:
   lania-postgres-data:
   lania-redis-data:
+  lania-loki-data:
+  lania-alloy-data:
+  lania-grafana-data:
 
 services:
   front:
     image: ghcr.io/lania-smp/frontend:${IMAGE_TAG:-latest}
     container_name: lania-front
+    logging: *logging
     restart: unless-stopped
     env_file:
       - .env
@@ -43,6 +54,7 @@ services:
   api:
     image: ghcr.io/lania-smp/backend:${IMAGE_TAG:-latest}
     container_name: lania-api
+    logging: *logging
     restart: unless-stopped
     env_file:
       - .env
@@ -68,6 +80,7 @@ services:
   shell:
     image: ghcr.io/lania-smp/shell:${IMAGE_TAG:-latest}
     container_name: lania-shell
+    logging: *logging
     restart: unless-stopped
     env_file:
       - .env
@@ -82,6 +95,7 @@ services:
   mariadb:
     image: mariadb:12
     container_name: lania-mariadb
+    logging: *logging
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
@@ -96,6 +110,7 @@ services:
   mariadb-migrate:
     image: ghcr.io/lania-smp/backend:${IMAGE_TAG:-latest}
     container_name: lania-mariadb-migrate
+    logging: *logging
     environment:
       DATABASE_PUBLIC_URL: mysql://${DATABASE_USER}:${DATABASE_PASSWORD}@tcp(${DATABASE_HOST}:${DATABASE_PORT})/${DATABASE_NAME}
     depends_on:
@@ -109,6 +124,7 @@ services:
   redis:
     image: redis:6
     container_name: lania-redis
+    logging: *logging
     restart: unless-stopped
     volumes:
       - lania-redis-data:/data
@@ -119,6 +135,7 @@ services:
   postgres:
     image: postgres:16
     container_name: lania-postgres
+    logging: *logging
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -133,6 +150,7 @@ services:
   kratos-migrate:
     image: oryd/kratos:v1.3.1
     container_name: lania-kratos-migrate
+    logging: *logging
     environment:
       - DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
     depends_on:
@@ -147,6 +165,7 @@ services:
   kratos:
     image: oryd/kratos:v1.3.1
     container_name: lania-kratos
+    logging: *logging
     restart: unless-stopped
     depends_on:
       - kratos-migrate
@@ -168,3 +187,60 @@ services:
       - "traefik.http.routers.lania-accounts.entrypoints=websecure"
       - "traefik.http.routers.lania-accounts.tls.certresolver=letsencrypt"
       - "traefik.http.services.lania-accounts.loadbalancer.server.port=4433"
+
+  loki:
+    image: grafana/loki:3.7.8
+    container_name: lania-loki
+    logging: *logging
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./observability/loki.yml:/etc/loki/loki.yml:ro
+      - lania-loki-data:/loki
+    networks:
+      - lania-web-net
+    mem_limit: 512m
+
+  alloy:
+    image: grafana/alloy:v1.19.2
+    container_name: lania-alloy
+    logging: *logging
+    restart: unless-stopped
+    depends_on:
+      - loki
+    command: run --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    volumes:
+      - ./observability/config.alloy:/etc/alloy/config.alloy:ro
+      - lania-alloy-data:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - lania-web-net
+    mem_limit: 256m
+
+  grafana:
+    image: grafana/grafana:13.2.2
+    container_name: lania-grafana
+    logging: *logging
+    restart: unless-stopped
+    depends_on:
+      - loki
+    environment:
+      GF_SERVER_ROOT_URL: https://grafana.lania.network
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - lania-grafana-data:/var/lib/grafana
+    networks:
+      - lania-web-net
+      - edge
+    mem_limit: 256m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=edge"
+      - "traefik.http.routers.lania-grafana.rule=Host(`grafana.lania.network`)"
+      - "traefik.http.routers.lania-grafana.entrypoints=websecure"
+      - "traefik.http.routers.lania-grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lania-grafana.loadbalancer.server.port=3000"
