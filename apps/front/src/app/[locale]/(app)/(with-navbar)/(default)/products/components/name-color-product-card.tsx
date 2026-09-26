@@ -14,11 +14,15 @@ export default function UsernameColorProductCard({ item, ...props }: Props) {
 
   return (
     <ProductCard item={item} {...props}>
-      <McUsername
-        username={item.name}
-        colors={colors}
-        className="w-fit py-3 text-center text-2xl font-bold"
-      />
+      {/* Two lines are always reserved so descriptions line up across a row. */}
+      <div className="my-3 flex min-h-[2lh] items-center text-2xl leading-tight">
+        <McUsername
+          username={item.name}
+          colors={colors}
+          title={item.name}
+          className="line-clamp-2 font-bold text-balance"
+        />
+      </div>
     </ProductCard>
   )
 }

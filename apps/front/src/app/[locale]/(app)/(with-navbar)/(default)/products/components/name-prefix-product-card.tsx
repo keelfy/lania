@@ -15,11 +15,19 @@ export default function NamePrefixProductCard({ item, ...props }: Props) {
 
   return (
     <ProductCard item={item} {...props}>
-      <div className="flex items-center gap-2 py-3">
-        <Image src={prefix} alt={prefix} width={32} height={32} />
+      {/* Two lines are always reserved so descriptions line up across a row. */}
+      <div className="my-3 flex min-h-[2lh] items-center gap-3 text-xl leading-tight">
+        <Image
+          src={prefix}
+          alt=""
+          width={32}
+          height={32}
+          className="size-8 shrink-0"
+        />
         <McUsername
           username={item.name}
-          className="text-center text-xl font-bold"
+          title={item.name}
+          className="line-clamp-2 font-bold text-balance"
         />
       </div>
     </ProductCard>
