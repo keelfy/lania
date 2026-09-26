@@ -273,6 +273,8 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 
 		r.Get("/orders", api.adminOrderHandler.GetOrders)
 
+		r.Post("/announcements", api.notificationHandler.SendAnnouncement)
+
 		r.Route("/cosmetics", func(r chi.Router) {
 			r.Get("/", api.adminCatalogHandler.GetCosmetics)
 			r.Post("/name-colors", api.adminCatalogHandler.CreateNameColor)

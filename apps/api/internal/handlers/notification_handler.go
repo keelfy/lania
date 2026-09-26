@@ -11,20 +11,30 @@ import (
 	"github.com/lania-smp/backend/internal/services"
 	"github.com/lania-smp/backend/internal/transport/http/binders"
 	"github.com/lania-smp/backend/internal/transport/http/requests"
+	"github.com/lania-smp/backend/internal/transport/http/responses"
 	"github.com/lania-smp/backend/internal/utils"
 )
 
 type NotificationHandler interface {
 	GetNotifications(w http.ResponseWriter, r *http.Request)
 	MarkNotificationsRead(w http.ResponseWriter, r *http.Request)
+	// SendAnnouncement is for admins: it sends news to every user.
+	SendAnnouncement(w http.ResponseWriter, r *http.Request)
 }
 
 type notificationHandler struct {
 	notificationService services.NotificationService
+	announcementService services.AnnouncementService
 }
 
-func NewNotificationHandler(notificationService services.NotificationService) NotificationHandler {
-	return &notificationHandler{notificationService: notificationService}
+func NewNotificationHandler(
+	notificationService services.NotificationService,
+	announcementService services.AnnouncementService,
+) NotificationHandler {
+	return &notificationHandler{
+		notificationService: notificationService,
+		announcementService: announcementService,
+	}
 }
 
 func (h *notificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +71,28 @@ func (h *notificationHandler) MarkNotificationsRead(w http.ResponseWriter, r *ht
 	}
 
 	h.writeNotifications(w, r, authUserID)
+}
+
+func (h *notificationHandler) SendAnnouncement(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	cmd, err := binders.BindSendAnnouncement(r)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	if err := cmd.Validate(); err != nil {
+		utils.HttpError(ctx, w, utils.NewBadRequestError("", err))
+		return
+	}
+
+	recipients, err := h.announcementService.SendAnnouncement(ctx, cmd.Payload())
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, &responses.AnnouncementSent{Recipients: recipients})
 }
 
 // writeNotifications answers with the list the query asks for, so marking as read needs no second request.

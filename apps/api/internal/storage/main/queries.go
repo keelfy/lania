@@ -3,6 +3,7 @@ package sql
 import (
 	"context"
 	stdsql "database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -232,6 +233,8 @@ type Queries interface {
 
 	// Notification
 	InsertNotification(ctx context.Context, arg InsertNotificationParams) error
+	// InsertNotifications stores the same notification for every user in userIDs.
+	InsertNotifications(ctx context.Context, userIDs uuid.UUIDs, notificationType domain.NotificationType, payload json.RawMessage) error
 	// FindNotificationsByUserID returns the notifications of the user that match the filter, newest first.
 	FindNotificationsByUserID(ctx context.Context, userID uuid.UUID, filter domain.NotificationFilter) ([]*domain.Notification, error)
 	CountUnreadNotificationsByUserID(ctx context.Context, userID uuid.UUID) (int64, error)

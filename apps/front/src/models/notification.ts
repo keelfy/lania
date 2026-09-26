@@ -1,9 +1,14 @@
+import { Locale } from '@/lib/locale'
 import { GrantType } from './admin'
 
 export type NotificationType =
   | 'cosmetic-granted'
   | 'cosmetic-revoked'
   | 'profile-merged'
+  | 'announcement'
+
+// A text an admin wrote in each language of the site.
+export type LocalizedText = Record<Locale, string>
 
 // The payload of a cosmetic-granted and a cosmetic-revoked notification.
 // The item name and the profile name are copied in by the backend, so an old
@@ -32,6 +37,16 @@ export type ProfileMergeNotificationPayload = {
   sourceUsername: string
 }
 
+// The payload of an announcement: news an admin sent to every user by hand.
+// Unlike the other payloads it carries the text itself, in every language.
+export type AnnouncementNotificationPayload = {
+  title: LocalizedText
+  // body is missing from a headline-only announcement.
+  body?: LocalizedText
+  // link is a path on the site, like /shop.
+  link?: string
+}
+
 type NotificationBase = {
   id: string
   readAt?: string
@@ -48,8 +63,16 @@ export type ProfileMergeNotification = NotificationBase & {
   payload: ProfileMergeNotificationPayload
 }
 
+export type AnnouncementNotification = NotificationBase & {
+  type: 'announcement'
+  payload: AnnouncementNotificationPayload
+}
+
 // A discriminated union on type, so narrowing on notification.type also narrows notification.payload.
-export type Notification = CosmeticNotification | ProfileMergeNotification
+export type Notification =
+  | CosmeticNotification
+  | ProfileMergeNotification
+  | AnnouncementNotification
 
 // unreadCount counts every unread notification, also the ones past the end of content.
 export type NotificationList = {
@@ -64,4 +87,11 @@ export type NotificationQuery = {
   unread?: boolean
   offset?: number
   limit?: number
+}
+
+export type SendAnnouncement = AnnouncementNotificationPayload
+
+export type AnnouncementSent = {
+  // recipients is how many users got the announcement.
+  recipients: number
 }

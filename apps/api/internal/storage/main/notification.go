@@ -39,6 +39,30 @@ func (q *queries) InsertNotification(ctx context.Context, arg InsertNotification
 	return err
 }
 
+const insertNotificationsPrefix = `
+INSERT INTO notifications (
+	user_id,
+	type,
+	payload,
+	created_at
+) VALUES
+`
+
+// InsertNotifications stores the same notification for every user in userIDs with one statement.
+func (q *queries) InsertNotifications(ctx context.Context, userIDs uuid.UUIDs, notificationType domain.NotificationType, payload json.RawMessage) error {
+	if len(userIDs) == 0 {
+		return nil
+	}
+
+	query := insertNotificationsPrefix + strings.TrimSuffix(strings.Repeat("(?, ?, ?, now()),", len(userIDs)), ",")
+	args := make([]any, 0, len(userIDs)*3)
+	for _, userID := range userIDs {
+		args = append(args, userID, string(notificationType), []byte(payload))
+	}
+	_, err := q.x.ExecContext(ctx, query, args...)
+	return err
+}
+
 const findNotificationsByUserID = `
 SELECT
 	id,

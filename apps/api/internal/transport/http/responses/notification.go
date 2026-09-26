@@ -25,3 +25,8 @@ type NotificationList struct {
 	// HasMore tells that more notifications follow past the end of Content.
 	HasMore bool `json:"hasMore"`
 }
+
+// AnnouncementSent tells the admin how many users got the announcement.
+type AnnouncementSent struct {
+	Recipients int `json:"recipients"`
+}

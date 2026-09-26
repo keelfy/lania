@@ -2,13 +2,17 @@
 
 import McUsername from '@/components/ui/mc-username'
 import { Link } from '@/i18n/navigation'
+import { DEFAULT_LOCALE, Locale } from '@/lib/locale'
 import { formatTimeAgo } from '@/lib/time-ago'
 import { cn } from '@/lib/utils'
 import {
+  AnnouncementNotification,
   CosmeticNotification,
+  LocalizedText,
   Notification,
   ProfileMergeNotification,
 } from '@/models/notification'
+import { MegaphoneIcon } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import Image from 'next/image'
 
@@ -24,6 +28,14 @@ type Props = {
 // NotificationItem is one notification of the bell menu and of the notifications page.
 // A click opens what the notification is about and reads the notification.
 export default function NotificationItem(props: Props) {
+  if (props.notification.type === 'announcement') {
+    return (
+      <AnnouncementItem
+        {...props}
+        notification={props.notification as AnnouncementNotification}
+      />
+    )
+  }
   if (props.notification.type === 'profile-merged') {
     return (
       <ProfileMergeItem
@@ -168,6 +180,83 @@ function ProfileMergeItem({
         </p>
       </Link>
     </li>
+  )
+}
+
+const rowClassName =
+  'group hover:bg-accent/60 focus-visible:ring-ring relative block w-full px-4 py-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset'
+const unreadRowClassName =
+  'bg-accent/40 before:bg-primary before:absolute before:inset-y-0 before:left-0 before:w-0.5'
+
+function AnnouncementItem({
+  notification,
+  markUnread = false,
+  onOpen,
+}: Props & { notification: AnnouncementNotification }) {
+  const t = useTranslations('navbar.notifications.items')
+  const locale = useLocale() as Locale
+  const { payload } = notification
+  const unread = markUnread && !notification.readAt
+  const body = payload.body && localized(payload.body, locale)
+
+  const content = (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <p className="flex min-w-0 items-start gap-2 text-base font-semibold">
+          <MegaphoneIcon className="text-primary mt-1 size-4 shrink-0" />
+          <span className="min-w-0 break-words">
+            {localized(payload.title, locale)}
+          </span>
+        </p>
+        <RelativeTime date={notification.createdAt} />
+      </div>
+      {body && (
+        <p
+          className={cn(
+            'mt-1 break-words whitespace-pre-line',
+            markUnread && !unread ? 'text-muted-foreground' : 'text-foreground',
+          )}
+        >
+          {body}
+        </p>
+      )}
+      {payload.link && (
+        <span className="text-primary mt-1 block text-right text-xs font-medium group-hover:underline">
+          {t('open')}
+        </span>
+      )}
+    </>
+  )
+
+  return (
+    <li>
+      {payload.link ? (
+        <Link
+          href={payload.link}
+          onClick={() => onOpen(notification)}
+          className={cn(rowClassName, unread && unreadRowClassName)}
+        >
+          {content}
+        </Link>
+      ) : (
+        // Nothing to open: the click only reads the notification.
+        <button
+          type="button"
+          onClick={() => onOpen(notification)}
+          className={cn(rowClassName, unread && unreadRowClassName)}
+        >
+          {content}
+        </button>
+      )}
+    </li>
+  )
+}
+
+// localized picks the text in the locale of the page, falling back to the default locale
+// and then to any text, so an announcement never shows up blank.
+function localized(text: LocalizedText, locale: Locale) {
+  return (
+    text[locale] || text[DEFAULT_LOCALE] || Object.values(text).find(Boolean)
   )
 }
 

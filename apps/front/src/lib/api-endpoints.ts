@@ -21,7 +21,12 @@ import {
   UploadedImage,
 } from '@/models/admin'
 import { BasketItem } from '@/models/basket'
-import { NotificationList, NotificationQuery } from '@/models/notification'
+import {
+  AnnouncementSent,
+  NotificationList,
+  NotificationQuery,
+  SendAnnouncement,
+} from '@/models/notification'
 import {
   CreateOrderReq,
   CreateOrderRes,
@@ -429,6 +434,18 @@ export function rekeyPremiumProfiles(
     undefined,
     { method: 'POST' },
   )
+}
+
+// Sends the announcement to every user as a notification.
+export function sendAnnouncement(
+  fetcher: ApiFetcher,
+  announcement: SendAnnouncement,
+): Promise<AnnouncementSent> {
+  return fetcher<AnnouncementSent>('/v1/admin/announcements', undefined, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(announcement),
+  })
 }
 
 export function transferProfileOwner(

@@ -474,7 +474,8 @@
           "glyth": "Glyth “{item}” revoked",
           "special": "Special prefix “{item}” revoked"
         },
-        "merged": "{source}'s data was merged in"
+        "merged": "{source}'s data was merged in",
+        "open": "Learn more →"
       }
     },
     "signIn": "Sign in",
@@ -629,7 +630,8 @@
       "nameColors": "Name colors",
       "namePrefixes": "Prefixes",
       "products": "Products",
-      "orders": "Orders"
+      "orders": "Orders",
+      "announcements": "Announcements"
     },
     "users": {
       "title": "Users",
@@ -1120,6 +1122,26 @@
         "texts": "Storefront texts",
         "sale": "Sale"
       }
+    },
+    "announcements": {
+      "description": "News for every user of the site: it shows up in the notification bell in the language each user picked.",
+      "fields": {
+        "title": "Title",
+        "body": "Text",
+        "link": "Link"
+      },
+      "bodyLength": "{length} of {max}. Optional, but once written it is needed in every language.",
+      "linkHint": "A path on the site, like /shop. The language is added on its own. Leave empty if there is nothing to open.",
+      "preview": "Preview",
+      "previewPlaceholder": "News headline",
+      "previewHint": "This is how users with your current interface language will see the notification.",
+      "send": "Send to everyone",
+      "confirmTitle": "Send the news to every user?",
+      "confirmDescription": "Every registered user gets the notification. A sent announcement cannot be taken back.",
+      "confirm": "Send",
+      "cancel": "Cancel",
+      "sent": "News sent to {recipients, plural, one {# user} other {# users}}",
+      "sendFailed": "Failed to send the news"
     }
   },
   "claims": {

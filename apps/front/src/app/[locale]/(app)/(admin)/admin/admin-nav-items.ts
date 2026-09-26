@@ -2,6 +2,7 @@ import {
   CalendarRangeIcon,
   IdCardIcon,
   LucideIcon,
+  MegaphoneIcon,
   PackageIcon,
   PaletteIcon,
   ReceiptIcon,
@@ -29,4 +30,9 @@ export const ADMIN_NAV_ITEMS: readonly {
   },
   { href: '/admin/products', labelKey: 'products', icon: PackageIcon },
   { href: '/admin/orders', labelKey: 'orders', icon: ReceiptIcon },
+  {
+    href: '/admin/announcements',
+    labelKey: 'announcements',
+    icon: MegaphoneIcon,
+  },
 ] as const
