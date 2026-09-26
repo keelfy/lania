@@ -5,7 +5,8 @@ import { Currency, CURRENCY_SYMBOLS } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { Product, ProductMetadata } from '@/models/product'
 import { ArrowUpRightIcon, SparklesIcon } from 'lucide-react'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
+import { useTranslations } from 'next-intl'
 import React from 'react'
 
 type Props = React.ComponentProps<'div'> & {
@@ -20,6 +21,7 @@ export default function ProductCard({
   currency,
   ...props
 }: React.PropsWithChildren<Props>) {
+  const t = useTranslations('products.card')
   // Server Component: Date.now() reflects the current request time, not a
   // memoized render — the purity rule targets client render idempotency.
   const isNew =
@@ -42,7 +44,7 @@ export default function ProductCard({
             variant="secondary"
           >
             <SparklesIcon className="size-3 animate-pulse" />
-            Новинка
+            {t('new')}
           </Badge>
         )}
         {children}
@@ -55,7 +57,7 @@ export default function ProductCard({
         <div className="flex items-center justify-between gap-2">
           <Button variant="secondary" size="default" className="flex-1" asChild>
             <Link href={`/products/${item.category}/${item.id}`}>
-              Подробнее
+              {t('open')}
               <ArrowUpRightIcon className="size-4" />
             </Link>
           </Button>

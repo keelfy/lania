@@ -131,7 +131,9 @@ export default async function ShopPage({ searchParams, params }: Props) {
         <div className="mt-4 space-y-1.5">
           <div className="flex items-center gap-2">
             <CoinsIcon className="size-4" />
-            <p className="text-lg font-semibold tracking-tight">Валюта</p>
+            <p className="text-lg font-semibold tracking-tight">
+              {t('currency')}
+            </p>
           </div>
           <CurrencySelect currency={currency} className="w-full" />
         </div>

@@ -127,6 +127,51 @@
       "upgrade": "Upgrades",
       "name-color": "Username colors",
       "name-prefix": "Glyths"
+    },
+    "currency": "Currency",
+    "card": {
+      "new": "New",
+      "open": "Details"
+    },
+    "page": {
+      "price": "{price} / 1 pc.",
+      "seasonNotice": "You buy the product for one server season. A season lasts at least <b>3 months</b>.",
+      "deliveryNotice": "The product arrives on the Lania game server within an hour after the payment completes.",
+      "selectProfile": "Choose a game profile",
+      "noAccess": {
+        "title": "No access",
+        "description": "You can buy this product, but you cannot use it until you buy <link>access for <b>{username}</b></link> for the current season."
+      },
+      "owned": {
+        "button": "Already bought",
+        "description": "<b>{username}</b> already has this product in the current season. Choose another profile to buy it again."
+      },
+      "related": "You may also like",
+      "allInCategory": "Whole category",
+      "nameColor": {
+        "description": "A gradient color for your in-game nickname. Everyone sees it in the player list, above your character, in chat and on your profile on the site."
+      },
+      "namePrefix": {
+        "description": "An icon before your in-game nickname. Everyone sees it in the player list, above your character, in chat and on your profile on the site."
+      },
+      "seasonAccess": {
+        "description": "Server access for one player until the end of the current season.",
+        "limit": "You can hold up to 2 active accesses on the server at a time.",
+        "agreement": "By getting access to the server, you agree to the <rules>game rules</rules>, the <tos>terms of service</tos>, the <privacy>privacy policy</privacy>, the <refund>refund policy</refund> and the <payments>payment terms</payments>."
+      },
+      "tryOn": {
+        "title": "Try it on your nickname",
+        "username": "Nickname",
+        "withGlyph": "With a glyph",
+        "withColor": "With a name color",
+        "none": "None",
+        "current": "Yours"
+      },
+      "preview": {
+        "label": "How the nickname looks in game",
+        "message": "Hi all! How do you like my name?",
+        "reply": "Looks great"
+      }
     }
   },
   "seasonSelect": {

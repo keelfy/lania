@@ -1,46 +1,43 @@
 import McUsername from '@/components/ui/mc-username'
-import { NameColorProductMetadata, Product } from '@/models/product'
-import NameColorTryForm from './name-color-try-form'
 import { cn } from '@/lib/utils'
+import {
+  NameColorProductMetadata,
+  NamePrefixProductMetadata,
+  Product,
+  ProductCategory,
+} from '@/models/product'
+import { useTranslations } from 'next-intl'
+import NameTryOn from './name-try-on'
 
 type Props = React.ComponentProps<'div'> & {
   item: Product<NameColorProductMetadata>
+  // Glyphs on sale, to try the color with.
+  pairings: Product<NamePrefixProductMetadata>[]
 }
 
 export default function NameColorProductDetails({
   item,
+  pairings,
   className,
   ...props
 }: Props) {
+  const t = useTranslations('products.page')
+
   return (
-    <div className={cn('flex flex-col', className)} {...props}>
-      <McUsername
-        username={item.name}
-        colors={item.metadata.colors}
-        className="scroll-m-20 text-4xl leading-tight font-bold text-balance sm:text-5xl lg:text-6xl"
-      />
-      <div className="mt-2">
-        <p>
-          Градиентный цвет для вашего никнейма в игре. Имя вашего персонажа с
-          этим цветом будет отображаться:
-        </p>
-        <ul className="mt-5 ml-6 list-disc [&>li]:mt-1">
-          <li>В списке игроков</li>
-          <li>В чате</li>
-          <li>В профиле</li>
-          <li>Над головой игрока</li>
-          <li>и больше...</li>
-        </ul>
-      </div>
-      <h2 className="mt-8 scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">
-        Попробуйте имя вашего персонажа!
-      </h2>
-      <div className="mt-6">
-        <NameColorTryForm
-          defaultUsername={item.name ?? 'Steve'}
+    <div className={cn('flex flex-col gap-8', className)} {...props}>
+      <div className="flex flex-col gap-3">
+        <McUsername
+          username={item.name}
           colors={item.metadata.colors}
+          className="scroll-m-20 text-4xl leading-tight font-bold text-balance sm:text-5xl lg:text-6xl"
         />
+        <p className="max-w-prose">{t('nameColor.description')}</p>
       </div>
+      <NameTryOn
+        category={ProductCategory.NameColor}
+        item={item}
+        pairings={pairings}
+      />
     </div>
   )
 }
