@@ -107,6 +107,19 @@ func (h *profileCosmeticsHandler) GetProfileCosmeticOptions(w http.ResponseWrite
 
 	wg.Wait()
 
+	if mayUseAnyCosmetic(ctx, profile) {
+		nameColorOptions, err = h.profileCosmeticsService.AppendCatalogNameColorOptions(ctx, nameColorOptions, profileID)
+		if err != nil {
+			utils.HttpError(ctx, w, err)
+			return
+		}
+		glythPrefixOptions, err = h.profileCosmeticsService.AppendCatalogNamePrefixOptions(ctx, glythPrefixOptions, profileID, domain.ProfilePrefixTypeGlyth)
+		if err != nil {
+			utils.HttpError(ctx, w, err)
+			return
+		}
+	}
+
 	res := presenter.PresentProfileCosmeticOptions(nameColorOptions, glythPrefixOptions, specialPrefixOptions)
 	utils.WriteHttpJsonResponse(ctx, w, res)
 }
@@ -150,6 +163,9 @@ func (h *profileCosmeticsHandler) SelectProfileNameColor(w http.ResponseWriter, 
 	}
 
 	nameColorOption, err := h.profileCosmeticsService.GetProfileNameColorOptionByIDAndProfileID(ctx, req.OptionID, profileID, &seasonID)
+	if isNotFound(err) && mayUseAnyCosmetic(ctx, profile) {
+		nameColorOption, err = h.profileCosmeticsService.GetCatalogNameColorOption(ctx, req.OptionID, profileID)
+	}
 	if err != nil {
 		utils.HttpError(ctx, w, err)
 		return
@@ -218,6 +234,9 @@ func (h *profileCosmeticsHandler) SelectProfileNamePrefix(w http.ResponseWriter,
 	var namePrefixOption *domain.ProfileNamePrefixOption
 	if req.OptionID != uuid.Nil {
 		namePrefixOption, err = h.profileCosmeticsService.GetProfileNamePrefixOptionByIDAndProfileIDAndType(ctx, req.OptionID, profileID, prefixType, &seasonID)
+		if isNotFound(err) && mayUseAnyCosmetic(ctx, profile) {
+			namePrefixOption, err = h.profileCosmeticsService.GetCatalogNamePrefixOption(ctx, req.OptionID, profileID, prefixType)
+		}
 		if err != nil {
 			utils.HttpError(ctx, w, err)
 			return
@@ -241,6 +260,23 @@ func (h *profileCosmeticsHandler) SelectProfileNamePrefix(w http.ResponseWriter,
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// mayUseAnyCosmetic tells whether the profile may show any cosmetic on the site without a grant.
+// Owners and admins of the site may do it on their profiles, and so may profiles with the owner or admin role.
+func mayUseAnyCosmetic(ctx context.Context, profile *domain.Profile) bool {
+	if profile.Role.IsAdmin() {
+		return true
+	}
+	session, err := utils.GetSessionFromCtx(ctx)
+	if err != nil {
+		return false
+	}
+	return domain.RoleFromMetadata(session.Identity.MetadataPublic).IsAdmin()
+}
+
+func isNotFound(err error) bool {
+	return utils.MapCustomErrorToHttpStatus(err) == http.StatusNotFound
 }
 
 // pushPrefix builds the chat prefix from the selection in the season, as queries sees it, and sends it to the season server.

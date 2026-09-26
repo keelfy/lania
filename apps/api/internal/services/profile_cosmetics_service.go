@@ -19,6 +19,15 @@ type ProfileCosmeticsService interface {
 	GetProfileNamePrefixOptionsByProfileIDAndType(ctx context.Context, profileID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) ([]*domain.ProfileNamePrefixOption, error)
 	GetProfileNameColorOptionByIDAndProfileID(ctx context.Context, optionID uuid.UUID, profileID uuid.UUID, seasonID *uuid.UUID) (*domain.ProfileNameColorOption, error)
 	GetProfileNamePrefixOptionByIDAndProfileIDAndType(ctx context.Context, optionID uuid.UUID, profileID uuid.UUID, prefixType domain.ProfilePrefixType, seasonID *uuid.UUID) (*domain.ProfileNamePrefixOption, error)
+	// AppendCatalogNameColorOptions adds every name color on the site that options do not cover yet.
+	// Such an option is not a grant: its ID is the ID of the name color. Only staff that may use any cosmetic gets them.
+	AppendCatalogNameColorOptions(ctx context.Context, options []*domain.ProfileNameColorOption, profileID uuid.UUID) ([]*domain.ProfileNameColorOption, error)
+	// AppendCatalogNamePrefixOptions is AppendCatalogNameColorOptions for name prefixes of the type.
+	AppendCatalogNamePrefixOptions(ctx context.Context, options []*domain.ProfileNamePrefixOption, profileID uuid.UUID, prefixType domain.ProfilePrefixType) ([]*domain.ProfileNamePrefixOption, error)
+	// GetCatalogNameColorOption returns the option that AppendCatalogNameColorOptions makes for the name color.
+	GetCatalogNameColorOption(ctx context.Context, nameColorID, profileID uuid.UUID) (*domain.ProfileNameColorOption, error)
+	// GetCatalogNamePrefixOption returns the option that AppendCatalogNamePrefixOptions makes for the name prefix.
+	GetCatalogNamePrefixOption(ctx context.Context, namePrefixID, profileID uuid.UUID, prefixType domain.ProfilePrefixType) (*domain.ProfileNamePrefixOption, error)
 	// SelectProfileNameColor, SelectProfileNamePrefix and ClearProfilePrefixByType change what the profile
 	// shows in one season. The other seasons keep their selection.
 	SelectProfileNameColor(ctx context.Context, queries sql.Queries, profileID, seasonID, nameColorID uuid.UUID) error
@@ -93,6 +102,79 @@ func (s *profileCosmeticsService) GetProfileNamePrefixOptionByIDAndProfileIDAndT
 		return nil, utils.NewInternalServerError("failed to get profile name prefix option by id and profile id and type", err)
 	}
 	return namePrefixOption, nil
+}
+
+func (s *profileCosmeticsService) AppendCatalogNameColorOptions(ctx context.Context, options []*domain.ProfileNameColorOption, profileID uuid.UUID) ([]*domain.ProfileNameColorOption, error) {
+	nameColors, err := s.storage.Queries().FindNameColors(ctx)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get name colors", err)
+	}
+	covered := make(map[uuid.UUID]struct{}, len(options))
+	for _, option := range options {
+		covered[option.NameColorID] = struct{}{}
+	}
+	for _, nameColor := range nameColors {
+		if _, ok := covered[nameColor.ID]; !ok {
+			options = append(options, catalogNameColorOption(nameColor, profileID))
+		}
+	}
+	return options, nil
+}
+
+func (s *profileCosmeticsService) AppendCatalogNamePrefixOptions(ctx context.Context, options []*domain.ProfileNamePrefixOption, profileID uuid.UUID, prefixType domain.ProfilePrefixType) ([]*domain.ProfileNamePrefixOption, error) {
+	namePrefixes, err := s.storage.Queries().FindNamePrefixes(ctx)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get name prefixes", err)
+	}
+	covered := make(map[uuid.UUID]struct{}, len(options))
+	for _, option := range options {
+		covered[option.NamePrefixID] = struct{}{}
+	}
+	for _, namePrefix := range namePrefixes {
+		if _, ok := covered[namePrefix.ID]; !ok {
+			options = append(options, catalogNamePrefixOption(namePrefix, profileID, prefixType))
+		}
+	}
+	return options, nil
+}
+
+func (s *profileCosmeticsService) GetCatalogNameColorOption(ctx context.Context, nameColorID, profileID uuid.UUID) (*domain.ProfileNameColorOption, error) {
+	nameColor, err := s.storage.Queries().FindNameColorByID(ctx, nameColorID)
+	if err == stdsql.ErrNoRows {
+		return nil, utils.NewNotFoundError("profile name color option not found", nil)
+	} else if err != nil {
+		return nil, utils.NewInternalServerError("failed to get name color", err)
+	}
+	return catalogNameColorOption(nameColor, profileID), nil
+}
+
+func (s *profileCosmeticsService) GetCatalogNamePrefixOption(ctx context.Context, namePrefixID, profileID uuid.UUID, prefixType domain.ProfilePrefixType) (*domain.ProfileNamePrefixOption, error) {
+	namePrefix, err := s.storage.Queries().FindNamePrefixByID(ctx, namePrefixID)
+	if err == stdsql.ErrNoRows {
+		return nil, utils.NewNotFoundError("profile name prefix option not found", nil)
+	} else if err != nil {
+		return nil, utils.NewInternalServerError("failed to get name prefix", err)
+	}
+	return catalogNamePrefixOption(namePrefix, profileID, prefixType), nil
+}
+
+func catalogNameColorOption(nameColor *domain.NameColor, profileID uuid.UUID) *domain.ProfileNameColorOption {
+	return &domain.ProfileNameColorOption{
+		ID:          nameColor.ID,
+		ProfileID:   profileID,
+		NameColorID: nameColor.ID,
+		NameColor:   nameColor,
+	}
+}
+
+func catalogNamePrefixOption(namePrefix *domain.NamePrefix, profileID uuid.UUID, prefixType domain.ProfilePrefixType) *domain.ProfileNamePrefixOption {
+	return &domain.ProfileNamePrefixOption{
+		ID:           namePrefix.ID,
+		ProfileID:    profileID,
+		NamePrefixID: namePrefix.ID,
+		Type:         prefixType,
+		NamePrefix:   namePrefix,
+	}
 }
 
 func (s *profileCosmeticsService) SelectProfileNameColor(ctx context.Context, queries sql.Queries, profileID, seasonID, nameColorID uuid.UUID) error {

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	stdsql "database/sql"
 	"net/http"
 	"testing"
 
@@ -26,6 +27,25 @@ type cosmeticsQueries struct {
 	writes           []selection
 	insertedColors   []sql.InsertProfileNameColorOptionParams
 	insertedPrefixes []sql.InsertProfileNamePrefixOptionParams
+	catalogColors    []*domain.NameColor
+	catalogPrefixes  []*domain.NamePrefix
+}
+
+func (q *cosmeticsQueries) FindNameColors(context.Context) ([]*domain.NameColor, error) {
+	return q.catalogColors, nil
+}
+
+func (q *cosmeticsQueries) FindNamePrefixes(context.Context) ([]*domain.NamePrefix, error) {
+	return q.catalogPrefixes, nil
+}
+
+func (q *cosmeticsQueries) FindNameColorByID(_ context.Context, id uuid.UUID) (*domain.NameColor, error) {
+	for _, nameColor := range q.catalogColors {
+		if nameColor.ID == id {
+			return nameColor, nil
+		}
+	}
+	return nil, stdsql.ErrNoRows
 }
 
 func (q *cosmeticsQueries) FindProfilesSeasonCosmetics(_ context.Context, profileIDs uuid.UUIDs, seasonID, defaultNameColorID uuid.UUID) (map[uuid.UUID]*domain.ProfileCosmetics, error) {
@@ -159,5 +179,33 @@ func TestProfileCosmeticsService_PurchasedOptionsAreNeverPermanent(t *testing.T)
 				t.Errorf("stored %d options, want the season purchase and the permanent grant", len(queries.insertedColors)+len(queries.insertedPrefixes))
 			}
 		})
+	}
+}
+
+func TestProfileCosmeticsService_CatalogOptions(t *testing.T) {
+	ctx := context.Background()
+	service, queries := newCosmeticsFixture()
+	profileID := uuid.New()
+	owned, other := &domain.NameColor{ID: uuid.New()}, &domain.NameColor{ID: uuid.New()}
+	queries.catalogColors = []*domain.NameColor{owned, other}
+	grant := &domain.ProfileNameColorOption{ID: uuid.New(), ProfileID: profileID, NameColorID: owned.ID, NameColor: owned}
+
+	options, err := service.AppendCatalogNameColorOptions(ctx, []*domain.ProfileNameColorOption{grant}, profileID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(options) != 2 || options[0] != grant {
+		t.Fatalf("options = %v, want the grant and one catalog option", options)
+	}
+	if options[1].ID != other.ID || options[1].NameColorID != other.ID {
+		t.Errorf("catalog option = %+v, want the ID of the name color as the option ID", options[1])
+	}
+
+	option, err := service.GetCatalogNameColorOption(ctx, other.ID, profileID)
+	if err != nil || option.NameColorID != other.ID {
+		t.Errorf("GetCatalogNameColorOption = %+v, %v, want the name color", option, err)
+	}
+	if _, err := service.GetCatalogNameColorOption(ctx, uuid.New(), profileID); err == nil {
+		t.Error("GetCatalogNameColorOption for an unknown name color succeeded, want not found")
 	}
 }
