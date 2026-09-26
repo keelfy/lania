@@ -1,6 +1,8 @@
 export type UsernameCheck = {
   status: 'taken' | 'owned_by_you' | 'available'
   hasAccess: boolean
+  // A Mojang account has the nickname: the server lets only its owner in.
+  premium: boolean
 }
 
 export type ProfileRole = 'admin' | 'player' | 'mod' | 'owner'

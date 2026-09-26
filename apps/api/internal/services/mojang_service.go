@@ -45,6 +45,9 @@ type MojangService interface {
 	// with it, the offline UUID otherwise. mojangUUID is nil for a free nickname. It asks Mojang every time and
 	// fails with a service unavailable error when Mojang cannot answer, so the UUID is never guessed.
 	ResolveGameUUID(ctx context.Context, username string) (gameUUID uuid.UUID, mojangUUID *uuid.UUID, err error)
+	// IsPremiumUsername reports whether a Mojang account has the nickname. Answers are cached for an hour, so
+	// typing a nickname does not hit Mojang on every check.
+	IsPremiumUsername(ctx context.Context, username string) (bool, error)
 	// RunProfileSync looks up Mojang UUIDs of profiles until ctx is done.
 	RunProfileSync(ctx context.Context)
 }
@@ -95,6 +98,27 @@ func (s *mojangService) ResolveGameUUID(ctx context.Context, username string) (u
 		return mojangUUID, &mojangUUID, nil
 	}
 	return offlineUUID, nil, nil
+}
+
+func (s *mojangService) IsPremiumUsername(ctx context.Context, username string) (bool, error) {
+	if !mojangUsernameRegexp.MatchString(username) {
+		return false, nil
+	}
+
+	cacheKey := fmt.Sprintf("mojang_premium_username:%s", strings.ToLower(username))
+	if cached, err := s.cache.GetBoolean(ctx, cacheKey); err == nil {
+		return cached, nil
+	}
+
+	found, err := s.lookupUUIDsByUsernames(ctx, []string{username})
+	if err != nil {
+		return false, err
+	}
+	_, premium := found[strings.ToLower(username)]
+	if err := s.cache.SetKey(ctx, cacheKey, premium, time.Hour); err != nil {
+		logger.Debugf(ctx, "[MOJANG] Error setting cache for %s: %v", username, err)
+	}
+	return premium, nil
 }
 
 func (s *mojangService) RunProfileSync(ctx context.Context) {

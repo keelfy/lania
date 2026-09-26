@@ -515,7 +515,12 @@
         "description": "Specify the name of the player for which you are obtaining access to the server.",
         "deleteProfile": "Delete",
         "checking": "Checking...",
-        "available": "Available"
+        "available": "Available",
+        "premium": {
+          "title": "This nickname belongs to a licensed Minecraft account",
+          "description": "The server lets <b>{username}</b> in only from that licensed account. A pirated launcher won't get in. If the account isn't yours, choose another nickname.",
+          "acknowledge": "I own the licensed account {username} and understand I can't play on the server without it"
+        }
       },
       "stepSeason": {
         "title": "Choose a season",
@@ -548,6 +553,9 @@
       },
       "terms": {
         "required": "You must agree to the terms"
+      },
+      "premium": {
+        "required": "Confirm that the account is yours or choose another nickname"
       }
     }
   },

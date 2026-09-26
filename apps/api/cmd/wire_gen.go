@@ -53,7 +53,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	identityService := services.NewIdentityService(oryAPI)
 	basketService := services.NewBasketService(mainStorage)
 	productService := services.NewProductService(mainStorage)
-	accessHandler := handlers.NewAccessHandler(profileService, accessService, seasonService, identityService, basketService, productService, mainStorage)
+	accessHandler := handlers.NewAccessHandler(profileService, accessService, seasonService, identityService, basketService, productService, mojangService, mainStorage)
 	profileHandler := handlers.NewProfileHandler(profileService, accessService, seasonService, minecraftService, mojangService, profileCosmeticsService)
 	profileCosmeticsHandler := handlers.NewProfileCosmeticsHandler(profileCosmeticsService, profileService, minecraftService, seasonService, mainStorage)
 	profileResyncService := services.NewProfileResyncService(profileService, profileCosmeticsService, accessService, seasonService, minecraftService)

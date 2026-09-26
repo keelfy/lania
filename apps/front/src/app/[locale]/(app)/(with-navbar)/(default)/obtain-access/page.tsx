@@ -44,6 +44,7 @@ import { toast } from 'sonner'
 import SignInButton from '../../components/sign-in-button'
 import { createObtainAccessFormSchema, ObtainAccessFormValues } from './form'
 import { UsernameField } from './username-field'
+import { PremiumNotice } from './premium-notice'
 import { useBasket } from '@/context/basket'
 import { Season } from '@/models/season'
 
@@ -87,15 +88,34 @@ export default function ObtainAccessPage({ params }: Props) {
   const { refresh } = useBasket()
 
   const seasonId = season?.id
+  // The last checked nickname that belongs to a Mojang account.
+  const [premiumUsername, setPremiumUsername] = React.useState<string | null>(
+    null,
+  )
   const form = useForm<ObtainAccessFormValues>({
+    // Validate while typing, so a premium nickname is flagged before submit.
+    mode: 'onChange',
     // react-hook-form reads the latest resolver on every validation.
-    resolver: zodResolver(createObtainAccessFormSchema(seasonId)),
+    resolver: zodResolver(
+      createObtainAccessFormSchema(seasonId, (checked, premium) =>
+        setPremiumUsername(premium ? checked : null),
+      ),
+    ),
     defaultValues: {
       username: queryUsernames,
+      premiumAcknowledged: false,
     },
   })
 
   const username = useWatch({ control: form.control, name: 'username' })
+  const premium =
+    !!premiumUsername &&
+    premiumUsername.toLowerCase() === username?.toLowerCase()
+
+  // The acknowledgement is about one nickname: another one asks again.
+  React.useEffect(() => {
+    form.setValue('premiumAcknowledged', false)
+  }, [premiumUsername, form])
 
   // The same username can have access to one season and not to another.
   React.useEffect(() => {
@@ -208,6 +228,7 @@ export default function ObtainAccessPage({ params }: Props) {
                 {t('steps.step2.description')}
               </p>
               <UsernameField form={form} />
+              {premium && <PremiumNotice form={form} username={username} />}
             </li>
             {/** step 3: create the profile and either grant access right away
              * (free registration) or add the season pass to the basket */}

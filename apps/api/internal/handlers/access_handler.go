@@ -30,6 +30,7 @@ type accessHandler struct {
 	identityService services.IdentityService
 	basketService   services.BasketService
 	productService  services.ProductService
+	mojangService   services.MojangService
 	storage         storage.MainStorage
 }
 
@@ -40,6 +41,7 @@ func NewAccessHandler(
 	identityService services.IdentityService,
 	basketService services.BasketService,
 	productService services.ProductService,
+	mojangService services.MojangService,
 	storage storage.MainStorage,
 ) AccessHandler {
 	return &accessHandler{
@@ -49,6 +51,7 @@ func NewAccessHandler(
 		identityService: identityService,
 		basketService:   basketService,
 		productService:  productService,
+		mojangService:   mojangService,
 		storage:         storage,
 	}
 }
@@ -108,9 +111,16 @@ func (h *accessHandler) CheckUsernames(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		// Only a warning for the player: when Mojang cannot answer, the check still passes.
+		premium, err := h.mojangService.IsPremiumUsername(ctx, username)
+		if err != nil {
+			logger.Warnf(ctx, "failed to check if username %v is premium: %v", username, err)
+		}
+
 		resList[i] = &responses.CheckUsername{
 			Status:    status,
 			HasAccess: hasAccess,
+			Premium:   premium,
 		}
 	}
 

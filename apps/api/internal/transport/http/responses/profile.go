@@ -104,6 +104,8 @@ const (
 type CheckUsername struct {
 	Status    UsernameStatus `json:"status"`
 	HasAccess bool           `json:"hasAccess"`
+	// Premium is true when a Mojang account has the nickname: the server lets only its owner in.
+	Premium bool `json:"premium"`
 }
 
 type ProfileNameColorOption struct {
