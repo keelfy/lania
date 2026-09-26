@@ -31,6 +31,13 @@ type SquaremapPlayers = {
 // The shape of a squaremap world name, which the site calls a dimension, e.g. minecraft_overworld.
 export const DIMENSION_NAME = /^[a-z0-9_]{1,64}$/
 
+// squaremap writes UUIDs without dashes; the API and the rest of the site use the dashed form.
+function dashedUuid(uuid: string) {
+  const hex = uuid.replace(/-/g, '').toLowerCase()
+  if (hex.length !== 32) return uuid
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
+
 const dimensionOrder: MapDimension['type'][] = ['normal', 'nether', 'the_end']
 
 async function fetchJson<T>(url: string, init: RequestInit): Promise<T> {
@@ -126,7 +133,8 @@ export async function getMapLive(
       ),
     players: players.players
       .filter((player) => player.world === dimension)
-      .map(({ name, uuid, x, z }) => {
+      .map(({ name, uuid: rawUuid, x, z }) => {
+        const uuid = dashedUuid(rawUuid)
         const profile = profiles.get(uuid)
         return {
           name,
