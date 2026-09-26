@@ -216,7 +216,7 @@ func (h *accessHandler) grantFreeAccess(
 			}
 		}
 
-		if !isAccessForExistingProfile && len(existingProfiles) >= maxProfilesPerUser {
+		if !isAccessForExistingProfile && cmd.ExceedsProfileLimit(len(existingProfiles), maxProfilesPerUser) {
 			utils.HttpError(ctx, w, utils.NewBadRequestError(fmt.Sprintf("you can't have more than %d profiles", maxProfilesPerUser), nil))
 			return
 		}
@@ -286,7 +286,7 @@ func (h *accessHandler) ObtainAccessForProfiles(w http.ResponseWriter, r *http.R
 			}
 		}
 
-		if !isAccessForExistingProfile && len(existingProfiles) >= maxProfilesPerUser {
+		if !isAccessForExistingProfile && cmd.ExceedsProfileLimit(len(existingProfiles), maxProfilesPerUser) {
 			utils.HttpError(ctx, w, utils.NewBadRequestError(fmt.Sprintf("you can't have more than %d profiles", maxProfilesPerUser), nil))
 			return
 		}

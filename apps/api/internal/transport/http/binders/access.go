@@ -25,11 +25,17 @@ func BindObtainProfileAccesses(r *http.Request) (*commands.ObtainAccessByUsernam
 		return nil, err
 	}
 
+	session, err := utils.GetSessionFromCtx(r.Context())
+	if err != nil {
+		return nil, err
+	}
+
 	return &commands.ObtainAccessByUsernamesCommand{
 		SeasonID:    seasonID,
 		Source:      domain.AccessSourceFree,
 		Usernames:   strings.Split(usernames, ","),
 		OwnerUserID: authUserID,
+		OwnerRole:   domain.RoleFromMetadata(session.Identity.MetadataPublic),
 	}, nil
 }
 

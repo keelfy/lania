@@ -12,7 +12,14 @@ type ObtainAccessByUsernamesCommand struct {
 	SeasonID    uuid.UUID
 	Source      domain.AccessSource
 	OwnerUserID uuid.UUID
+	OwnerRole   domain.Role
 	Usernames   []string
+}
+
+// ExceedsProfileLimit tells whether adding a new profile to profileCount existing ones
+// breaks the per-user limit. Admins have no limit.
+func (c *ObtainAccessByUsernamesCommand) ExceedsProfileLimit(profileCount, limit int) bool {
+	return !c.OwnerRole.IsAdmin() && profileCount >= limit
 }
 
 func (c *ObtainAccessByUsernamesCommand) Validate() error {
