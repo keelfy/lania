@@ -31,7 +31,7 @@ import {
 import { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import UsernameColorProductCard from './components/name-color-product-card'
 import NamePrefixProductCard from './components/name-prefix-product-card'
 import UpgradeProductCard from './components/upgrade-color-product-card'
