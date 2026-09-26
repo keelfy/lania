@@ -2,6 +2,17 @@
 
 import ImageUploadField from '@/components/admin/image-upload-field'
 import McUsername from '@/components/ui/mc-username'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +26,8 @@ import { Switch } from '@/components/ui/switch'
 import {
   createNameColor,
   createNamePrefix,
+  deleteNameColor,
+  deleteNamePrefix,
   updateNameColor,
   updateNamePrefix,
   uploadGlythPreview,
@@ -86,6 +99,11 @@ export default function CosmeticsManager({
     item.name.toLocaleLowerCase().includes(query),
   )
   const key = `${selection.type}-${selection.item?.id ?? 'new'}`
+  const selectedProducts = linkedProducts(
+    products,
+    selection.type,
+    selection.item?.id,
+  )
 
   function selectColor(item?: AdminNameColor) {
     setSelection({ type: 'color', item })
@@ -142,6 +160,23 @@ export default function CosmeticsManager({
         router.refresh()
       } catch (error) {
         errorToast(t('saveFailed'), error)
+      }
+    })
+  }
+
+  function remove() {
+    const item = selection.item
+    if (!item || isPending) return
+    startTransition(async () => {
+      try {
+        if (selection.type === 'color')
+          await deleteNameColor(clientApiFetcher, item.id)
+        else await deleteNamePrefix(clientApiFetcher, item.id)
+        toast.success(t('deleted'))
+        startCreate(selection.type)
+        router.refresh()
+      } catch (error) {
+        errorToast(t('deleteFailed'), error)
       }
     })
   }
@@ -273,9 +308,17 @@ export default function CosmeticsManager({
                   onPrefixChange={setPrefixToken}
                 />
               )}
-              <Button disabled={isPending} className="w-fit">
-                {t('save')}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button disabled={isPending}>{t('save')}</Button>
+                {selection.item && (
+                  <DeleteCosmeticButton
+                    disabled={isPending || selectedProducts.length > 0}
+                    blockedByProduct={selectedProducts.length > 0}
+                    onConfirm={remove}
+                    t={t}
+                  />
+                )}
+              </div>
             </FieldGroup>
             <div className="flex flex-col gap-4">
               <CosmeticPreview
@@ -285,20 +328,56 @@ export default function CosmeticsManager({
                 t={t}
               />
               {selection.item && (
-                <LinkedProducts
-                  products={linkedProducts(
-                    products,
-                    selection.type,
-                    selection.item.id,
-                  )}
-                  t={t}
-                />
+                <LinkedProducts products={selectedProducts} t={t} />
               )}
             </div>
           </form>
         </section>
       </div>
     </div>
+  )
+}
+
+function DeleteCosmeticButton({
+  disabled,
+  blockedByProduct,
+  onConfirm,
+  t,
+}: {
+  disabled: boolean
+  blockedByProduct: boolean
+  onConfirm: () => void
+  t: ReturnType<typeof useTranslations>
+}) {
+  return (
+    <>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button type="button" variant="destructive" disabled={disabled}>
+            {t('delete')}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteConfirmDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={onConfirm}>
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {blockedByProduct && (
+        <span className="text-muted-foreground text-sm">
+          {t('deleteBlockedByProduct')}
+        </span>
+      )}
+    </>
   )
 }
 

@@ -130,6 +130,10 @@ type Queries interface {
 	UpdateNameColor(ctx context.Context, id uuid.UUID, name string, colors []string) error
 	InsertNamePrefix(ctx context.Context, id uuid.UUID, name string, metadata domain.NamePrefixMetadata) error
 	UpdateNamePrefix(ctx context.Context, id uuid.UUID, name string, metadata domain.NamePrefixMetadata) error
+	CountNameColorOwners(ctx context.Context, id uuid.UUID) (int, error)
+	CountNamePrefixOwners(ctx context.Context, id uuid.UUID) (int, error)
+	DeleteNameColor(ctx context.Context, id, defaultNameColorID uuid.UUID) error
+	DeleteNamePrefix(ctx context.Context, id uuid.UUID) error
 	InsertProfileNameColorOption(ctx context.Context, arg InsertProfileNameColorOptionParams) error
 	InsertProfileNamePrefixOption(ctx context.Context, arg InsertProfileNamePrefixOptionParams) error
 	FindProfileNameColorOptionsByProfileID(ctx context.Context, profileID uuid.UUID, seasonID *uuid.UUID) ([]*domain.ProfileNameColorOption, error)

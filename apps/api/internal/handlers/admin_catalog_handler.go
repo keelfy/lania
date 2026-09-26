@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
+
+	"github.com/google/uuid"
 
 	"github.com/lania-smp/backend/internal/commands"
 	"github.com/lania-smp/backend/internal/domain"
@@ -17,6 +20,8 @@ type AdminCatalogHandler interface {
 	UpdateNameColor(http.ResponseWriter, *http.Request)
 	CreateNamePrefix(http.ResponseWriter, *http.Request)
 	UpdateNamePrefix(http.ResponseWriter, *http.Request)
+	DeleteNameColor(http.ResponseWriter, *http.Request)
+	DeleteNamePrefix(http.ResponseWriter, *http.Request)
 	GetProducts(http.ResponseWriter, *http.Request)
 	CreateProduct(http.ResponseWriter, *http.Request)
 	UpdateProduct(http.ResponseWriter, *http.Request)
@@ -112,6 +117,28 @@ func (h *adminCatalogHandler) CreateNamePrefix(w http.ResponseWriter, r *http.Re
 }
 func (h *adminCatalogHandler) UpdateNamePrefix(w http.ResponseWriter, r *http.Request) {
 	h.saveNamePrefix(w, r, true)
+}
+
+func (h *adminCatalogHandler) deleteCosmetic(w http.ResponseWriter, r *http.Request, remove func(context.Context, uuid.UUID) (*domain.CosmeticsCatalog, error)) {
+	ctx := r.Context()
+	id, err := binders.BindPathVariableAsUUID(r, binders.CosmeticIDVariable)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	catalog, err := remove(ctx, id)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentAdminCosmeticsCatalog(catalog))
+}
+
+func (h *adminCatalogHandler) DeleteNameColor(w http.ResponseWriter, r *http.Request) {
+	h.deleteCosmetic(w, r, h.service.DeleteNameColor)
+}
+func (h *adminCatalogHandler) DeleteNamePrefix(w http.ResponseWriter, r *http.Request) {
+	h.deleteCosmetic(w, r, h.service.DeleteNamePrefix)
 }
 
 func (h *adminCatalogHandler) GetProducts(w http.ResponseWriter, r *http.Request) {

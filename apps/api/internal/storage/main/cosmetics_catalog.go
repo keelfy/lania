@@ -138,3 +138,52 @@ func (q *queries) FindNamePrefixByID(ctx context.Context, namePrefixID uuid.UUID
 	}
 	return &namePrefix, nil
 }
+
+// CountNameColorOwners returns how many profiles have the name color and it is not revoked.
+func (q *queries) CountNameColorOwners(ctx context.Context, id uuid.UUID) (int, error) {
+	var count int
+	err := q.x.QueryRowContext(ctx, "SELECT COUNT(DISTINCT profile_id) FROM profile_name_color_options WHERE name_color_id = ? AND revoked_at IS NULL", id).Scan(&count)
+	return count, err
+}
+
+// CountNamePrefixOwners returns how many profiles have the name prefix and it is not revoked.
+func (q *queries) CountNamePrefixOwners(ctx context.Context, id uuid.UUID) (int, error) {
+	var count int
+	err := q.x.QueryRowContext(ctx, "SELECT COUNT(DISTINCT profile_id) FROM profile_name_prefix_options WHERE name_prefix_id = ? AND revoked_at IS NULL", id).Scan(&count)
+	return count, err
+}
+
+func (q *queries) execAll(ctx context.Context, id uuid.UUID, statements ...string) error {
+	for _, statement := range statements {
+		if _, err := q.x.ExecContext(ctx, statement, id); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// DeleteNameColor removes the name color with its revoked grants and the selections left from them.
+// A grant that is not revoked keeps the foreign key, so the delete fails with 1451.
+// Profiles that still show it in the legacy column fall back to defaultNameColorID.
+func (q *queries) DeleteNameColor(ctx context.Context, id, defaultNameColorID uuid.UUID) error {
+	if _, err := q.x.ExecContext(ctx, "UPDATE profiles SET name_color_id = ? WHERE name_color_id = ?", defaultNameColorID, id); err != nil {
+		return err
+	}
+	return q.execAll(ctx, id,
+		"UPDATE profile_season_cosmetics SET name_color_id = NULL WHERE name_color_id = ?",
+		"DELETE FROM profile_name_color_options WHERE name_color_id = ? AND revoked_at IS NOT NULL",
+		"DELETE FROM name_colors WHERE id = ?",
+	)
+}
+
+// DeleteNamePrefix removes the name prefix with its revoked grants and the selections left from them.
+// A grant that is not revoked keeps the foreign key, so the delete fails with 1451.
+func (q *queries) DeleteNamePrefix(ctx context.Context, id uuid.UUID) error {
+	return q.execAll(ctx, id,
+		"UPDATE profile_season_cosmetics SET glyth_prefix_id = NULL WHERE glyth_prefix_id = ?",
+		"UPDATE profile_season_cosmetics SET special_prefix_id = NULL WHERE special_prefix_id = ?",
+		"DELETE FROM profile_prefixes WHERE name_prefix_id = ?",
+		"DELETE FROM profile_name_prefix_options WHERE name_prefix_id = ? AND revoked_at IS NOT NULL",
+		"DELETE FROM name_prefixes WHERE id = ?",
+	)
+}

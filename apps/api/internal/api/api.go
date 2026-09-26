@@ -281,6 +281,8 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Put("/name-colors/{cosmeticId}", api.adminCatalogHandler.UpdateNameColor)
 			r.Post("/name-prefixes", api.adminCatalogHandler.CreateNamePrefix)
 			r.Put("/name-prefixes/{cosmeticId}", api.adminCatalogHandler.UpdateNamePrefix)
+			r.Delete("/name-colors/{cosmeticId}", api.adminCatalogHandler.DeleteNameColor)
+			r.Delete("/name-prefixes/{cosmeticId}", api.adminCatalogHandler.DeleteNamePrefix)
 		})
 
 		r.Route("/worlds/{worldId}", func(r chi.Router) {

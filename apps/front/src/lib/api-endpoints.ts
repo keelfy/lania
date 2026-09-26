@@ -759,6 +759,24 @@ export function updateNamePrefix(
   })
 }
 
+export function deleteNameColor(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<AdminCosmeticsCatalog> {
+  return fetcher(`/v1/admin/cosmetics/name-colors/${id}`, undefined, {
+    method: 'DELETE',
+  })
+}
+
+export function deleteNamePrefix(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<AdminCosmeticsCatalog> {
+  return fetcher(`/v1/admin/cosmetics/name-prefixes/${id}`, undefined, {
+    method: 'DELETE',
+  })
+}
+
 // token is the in-game glyth token (":glyth_popcat:"), used to name the object key.
 export function uploadGlythPreview(
   fetcher: ApiFetcher,

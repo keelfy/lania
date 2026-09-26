@@ -10,6 +10,7 @@ import (
 	mysql "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/commands"
+	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/storage"
 	sql "github.com/lania-smp/backend/internal/storage/main"
@@ -22,6 +23,8 @@ type AdminCatalogService interface {
 	UpdateNameColor(ctx context.Context, cmd *commands.SaveNameColorCommand) (*domain.CosmeticsCatalog, error)
 	CreateNamePrefix(ctx context.Context, cmd *commands.SaveNamePrefixCommand) (*domain.CosmeticsCatalog, error)
 	UpdateNamePrefix(ctx context.Context, cmd *commands.SaveNamePrefixCommand) (*domain.CosmeticsCatalog, error)
+	DeleteNameColor(ctx context.Context, id uuid.UUID) (*domain.CosmeticsCatalog, error)
+	DeleteNamePrefix(ctx context.Context, id uuid.UUID) (*domain.CosmeticsCatalog, error)
 	GetProducts(ctx context.Context) ([]*domain.Product, error)
 	CreateProduct(ctx context.Context, cmd *commands.SaveProductCommand) (*domain.Product, error)
 	UpdateProduct(ctx context.Context, cmd *commands.SaveProductCommand) (*domain.Product, error)
@@ -96,6 +99,85 @@ func (s *adminCatalogService) UpdateNamePrefix(ctx context.Context, cmd *command
 	}
 	if err := s.storage.Queries().UpdateNamePrefix(ctx, cmd.ID, cmd.Name, prefixMetadata(cmd)); err != nil {
 		return nil, catalogWriteError("failed to update name prefix", err)
+	}
+	return s.GetCosmetics(ctx)
+}
+
+// ensureCosmeticUnused fails when the cosmetic is sold by a product or a profile still has it.
+func ensureCosmeticUnused(ctx context.Context, queries sql.Queries, category domain.ProductCategory, id uuid.UUID) error {
+	products, err := queries.FindAdminProducts(ctx)
+	if err != nil {
+		return utils.NewInternalServerError("failed to get admin products", err)
+	}
+	for _, product := range products {
+		if product.Category == category && sameUUID(linkedCosmeticID(product), &id) {
+			return utils.NewConflictError("cosmetic is linked to a product", nil)
+		}
+	}
+	count := queries.CountNamePrefixOwners
+	if category == domain.ProductCategoryNameColor {
+		count = queries.CountNameColorOwners
+	}
+	owners, err := count(ctx, id)
+	if err != nil {
+		return utils.NewInternalServerError("failed to count cosmetic owners", err)
+	}
+	if owners > 0 {
+		return utils.NewConflictError("cosmetic is owned by players", nil)
+	}
+	return nil
+}
+
+func cosmeticDeleteError(message string, err error) error {
+	var customErr *utils.CustomError
+	if errors.As(err, &customErr) {
+		return err
+	}
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1451 {
+		return utils.NewConflictError("cosmetic is owned by players", err)
+	}
+	return utils.NewInternalServerError(message, err)
+}
+
+// DeleteNameColor removes a name color nobody has. The default color is never removed.
+func (s *adminCatalogService) DeleteNameColor(ctx context.Context, id uuid.UUID) (*domain.CosmeticsCatalog, error) {
+	defaultNameColorID := config.GetDefaultNameColorID()
+	if id == defaultNameColorID {
+		return nil, utils.NewConflictError("default name color cannot be deleted", nil)
+	}
+	err := s.storage.BeginTx(ctx, func(queries sql.Queries) error {
+		if _, err := queries.FindNameColorByID(ctx, id); errors.Is(err, stdsql.ErrNoRows) {
+			return utils.NewNotFoundError("name color not found", err)
+		} else if err != nil {
+			return err
+		}
+		if err := ensureCosmeticUnused(ctx, queries, domain.ProductCategoryNameColor, id); err != nil {
+			return err
+		}
+		return queries.DeleteNameColor(ctx, id, defaultNameColorID)
+	})
+	if err != nil {
+		return nil, cosmeticDeleteError("failed to delete name color", err)
+	}
+	return s.GetCosmetics(ctx)
+}
+
+// DeleteNamePrefix removes a name prefix nobody has.
+func (s *adminCatalogService) DeleteNamePrefix(ctx context.Context, id uuid.UUID) (*domain.CosmeticsCatalog, error) {
+	err := s.storage.BeginTx(ctx, func(queries sql.Queries) error {
+		if _, err := queries.FindNamePrefixByID(ctx, id); errors.Is(err, stdsql.ErrNoRows) {
+			return utils.NewNotFoundError("name prefix not found", err)
+		} else if err != nil {
+			return err
+		}
+		if err := ensureCosmeticUnused(ctx, queries, domain.ProductCategoryNamePrefix, id); err != nil {
+			return err
+		}
+		return queries.DeleteNamePrefix(ctx, id)
+	})
+	if err != nil {
+		return nil, cosmeticDeleteError("failed to delete name prefix", err)
 	}
 	return s.GetCosmetics(ctx)
 }
