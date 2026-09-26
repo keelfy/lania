@@ -1122,6 +1122,7 @@
       "the_end": "The End"
     },
     "hint": "Left click selects a chunk or a dragged area, right click deselects. Hold the mouse wheel to move the map, scroll to zoom.",
+    "touchHint": "Tap to select a chunk, \"Clear\" to deselect. Drag with a finger to move the map, pinch to zoom.",
     "hover": {
       "chunk": "chunk {x}, {z}",
       "block": "block {x}, {z}",
@@ -1149,6 +1150,7 @@
     "rules": "A claim protects nothing in game. It records who took a chunk and when: in a dispute, whoever claimed first is right.",
     "claimsOff": "Claims are off in this dimension.",
     "viewOnly": "Claims are off in this world.",
-    "viewHint": "Click a chunk to see whose it is. Hold the wheel to move the map, scroll to zoom."
+    "viewHint": "Click a chunk to see whose it is. Hold the wheel to move the map, scroll to zoom.",
+    "touchViewHint": "Tap a chunk to see whose it is. Drag with a finger to move the map, pinch to zoom."
   }
 }

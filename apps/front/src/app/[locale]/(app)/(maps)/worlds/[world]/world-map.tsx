@@ -16,6 +16,7 @@ import {
 } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
+import { useMediaQuery } from '@/lib/use-media-query'
 import {
   ChunkClaim,
   ChunkClaims,
@@ -67,6 +68,8 @@ export default function WorldMap({
   header,
 }: Props) {
   const t = useTranslations('claims')
+  // Phones have no mouse buttons to describe: a tap selects, a finger pans.
+  const touch = useMediaQuery('(pointer: coarse)')
   const locale = useLocale()
   const session = useAuthStore((state) => state.session)
   const signedIn = session?.active === true
@@ -346,9 +349,14 @@ export default function WorldMap({
             )}
           </div>
         )}
-        <div className="bg-background/80 pointer-events-none absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-wrap gap-x-4 rounded-md px-2 py-1 font-mono text-xs backdrop-blur">
-          {hover ? (
-            <>
+        <div className="bg-background/80 pointer-events-none absolute bottom-3 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] flex-col rounded-md px-2 py-1 font-mono text-xs backdrop-blur">
+          <span className="text-muted-foreground">
+            {claimsOn || isAdmin
+              ? t(touch ? 'touchHint' : 'hint')
+              : t(touch ? 'touchViewHint' : 'viewHint')}
+          </span>
+          {hover && (
+            <div className="flex flex-wrap gap-x-4">
               <span>{t('hover.chunk', { x: hover.cx, z: hover.cz })}</span>
               <span className="text-muted-foreground">
                 {t('hover.block', { x: hover.x, z: hover.z })}
@@ -363,11 +371,7 @@ export default function WorldMap({
               ) : (
                 <span className="text-muted-foreground">{t('hover.free')}</span>
               )}
-            </>
-          ) : (
-            <span className="text-muted-foreground">
-              {claimsOn || isAdmin ? t('hint') : t('viewHint')}
-            </span>
+            </div>
           )}
         </div>
       </div>
