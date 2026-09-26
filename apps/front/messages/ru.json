@@ -990,6 +990,8 @@
         "claimDimensionsHint": "Где работают брони. Остальные измерения на карте только для просмотра.",
         "otherDimensionsPlaceholder": "Другие измерения squaremap через запятую",
         "claimLimitHint": "Сколько чанков один игровой профиль может забронировать в этом мире.",
+        "claimMinPlaytimeHoursHint": "Сколько часов нужно наиграть на этом сервере, чтобы бронировать чанки. 0 — без ограничения.",
+        "planServerHint": "Имя сервера в Plan. По нему считаются часы для брони; пусто — часы по всей сети сезона.",
         "dimensions": {
           "minecraft_overworld": "Верхний мир",
           "minecraft_the_nether": "Незер",
@@ -1002,6 +1004,8 @@
           "mapUrl": "Карта (squaremap)",
           "claimDimensions": "Измерения с бронями",
           "claimLimit": "Лимит броней",
+          "claimMinPlaytimeHours": "Часы для брони",
+          "planServer": "Сервер в Plan",
           "position": "Позиция"
         },
         "columns": {
@@ -1132,6 +1136,7 @@
     "signIn": "Войдите, чтобы бронировать чанки.",
     "noAccess": "Бронировать могут игроки с доступом к сезону. <link>Получить доступ</link>",
     "held": "Здесь: {count} · лимит мира: {limit}",
+    "minPlaytime": "Бронь от {hours} ч игры на этом сервере",
     "clear": "Сбросить",
     "claim": "Забронировать {count}",
     "release": "Освободить {count}",

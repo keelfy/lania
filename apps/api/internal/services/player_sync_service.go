@@ -133,7 +133,7 @@ func (s *playerSyncService) addLegacyPlaytimes(ctx context.Context, seasonID uui
 	for legacyUUID, mcUUID := range legacy {
 		both = append(both, legacyUUID, mcUUID)
 	}
-	fresh, err := s.minecraftService.GetPlaytimesInSeason(ctx, seasonID, both)
+	fresh, err := s.minecraftService.GetPlaytimesInSeason(ctx, seasonID, nil, both)
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,7 @@ package lania.shell.v1;
 service PlayerService {
   // GetOnlineStatus reports whether each player is currently online.
   rpc GetOnlineStatus(GetOnlineStatusRequest) returns (GetOnlineStatusResponse);
-  // GetPlaytime returns playtime on the current server for each player.
+  // GetPlaytime returns playtime on the server network, or on one of its servers, for each player.
   rpc GetPlaytime(GetPlaytimeRequest) returns (GetPlaytimeResponse);
   // ListChangedPlaytimes returns playtime of every player whose last session ended at or after since_ms.
   // Used for periodic sync, so the caller does not need to know player UUIDs in advance.
@@ -28,6 +28,8 @@ message GetOnlineStatusResponse {
 
 message GetPlaytimeRequest {
   repeated string minecraft_uuids = 1;
+  // Plan name of one server of the network to count sessions on. Absent counts every server.
+  optional string server_name = 2;
 }
 
 message GetPlaytimeResponse {

@@ -25,8 +25,9 @@ type ShellAPI interface {
 	ListOnlinePlayers(ctx context.Context) (uuid.UUIDs, error)
 	// ListChangedPlaytimes returns playtime of players whose last session ended at or after sinceMs.
 	ListChangedPlaytimes(ctx context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error)
-	// GetPlaytimes returns playtime of every player asked for, zero for one that never played.
-	GetPlaytimes(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error)
+	// GetPlaytimes returns playtime of every player asked for, zero for one that never played. A Plan server name
+	// counts only that server of the network; nil counts every server.
+	GetPlaytimes(ctx context.Context, mcUUIDs uuid.UUIDs, serverName *string) (map[uuid.UUID]*domain.Playtime, error)
 	SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUID, prefix string) error
 	// SetPlayerRoles makes every player belong to exactly the role group it maps to among roleGroups.
 	// An empty group leaves the player in no role group.
@@ -175,8 +176,8 @@ func (api *shellAPI) ListChangedPlaytimes(ctx context.Context, sinceMs int64) (m
 	return parsePlaytimes(res.GetPlaytimes())
 }
 
-func (api *shellAPI) GetPlaytimes(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
-	res, err := api.player.GetPlaytime(ctx, &shellv1.GetPlaytimeRequest{MinecraftUuids: mcUUIDs.Strings()})
+func (api *shellAPI) GetPlaytimes(ctx context.Context, mcUUIDs uuid.UUIDs, serverName *string) (map[uuid.UUID]*domain.Playtime, error) {
+	res, err := api.player.GetPlaytime(ctx, &shellv1.GetPlaytimeRequest{MinecraftUuids: mcUUIDs.Strings(), ServerName: serverName})
 	if err != nil {
 		return nil, err
 	}

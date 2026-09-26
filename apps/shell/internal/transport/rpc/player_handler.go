@@ -42,7 +42,7 @@ func (h *PlayerHandler) GetPlaytime(ctx context.Context, req *shellv1.GetPlaytim
 		return nil, err
 	}
 
-	playtimes, err := h.playerService.GetPlaytime(ctx, mcUUIDs)
+	playtimes, err := h.playerService.GetPlaytime(ctx, mcUUIDs, req.ServerName)
 	if err != nil {
 		return nil, internalError(err)
 	}

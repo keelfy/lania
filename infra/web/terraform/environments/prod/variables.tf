@@ -111,6 +111,12 @@ variable "plan_sessions_table_name" {
   default     = "plan_sessions"
 }
 
+variable "plan_servers_table_name" {
+  description = "Plan servers table in the main database"
+  type        = string
+  default     = "plan_servers"
+}
+
 variable "flectone_player_table_name" {
   description = "FlectonePulse player table in the main database"
   type        = string

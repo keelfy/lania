@@ -33,7 +33,7 @@ const (
 type PlayerServiceClient interface {
 	// GetOnlineStatus reports whether each player is currently online.
 	GetOnlineStatus(ctx context.Context, in *GetOnlineStatusRequest, opts ...grpc.CallOption) (*GetOnlineStatusResponse, error)
-	// GetPlaytime returns playtime on the current server for each player.
+	// GetPlaytime returns playtime on the server network, or on one of its servers, for each player.
 	GetPlaytime(ctx context.Context, in *GetPlaytimeRequest, opts ...grpc.CallOption) (*GetPlaytimeResponse, error)
 	// ListChangedPlaytimes returns playtime of every player whose last session ended at or after since_ms.
 	// Used for periodic sync, so the caller does not need to know player UUIDs in advance.
@@ -99,7 +99,7 @@ func (c *playerServiceClient) ListOnlinePlayers(ctx context.Context, in *ListOnl
 type PlayerServiceServer interface {
 	// GetOnlineStatus reports whether each player is currently online.
 	GetOnlineStatus(context.Context, *GetOnlineStatusRequest) (*GetOnlineStatusResponse, error)
-	// GetPlaytime returns playtime on the current server for each player.
+	// GetPlaytime returns playtime on the server network, or on one of its servers, for each player.
 	GetPlaytime(context.Context, *GetPlaytimeRequest) (*GetPlaytimeResponse, error)
 	// ListChangedPlaytimes returns playtime of every player whose last session ended at or after since_ms.
 	// Used for periodic sync, so the caller does not need to know player UUIDs in advance.

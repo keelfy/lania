@@ -111,6 +111,10 @@ func GetPlanSessionsTableName() string {
 	return getEnvOrDefault("PLAN_SESSIONS_TABLE_NAME", "plan_sessions")
 }
 
+func GetPlanServersTableName() string {
+	return getEnvOrDefault("PLAN_SERVERS_TABLE_NAME", "plan_servers")
+}
+
 func GetFlectonePlayerTableName() string {
 	return getEnvOrDefault("FLECTONE_PLAYER_TABLE_NAME", "player")
 }

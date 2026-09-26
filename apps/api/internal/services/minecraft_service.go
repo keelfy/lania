@@ -45,7 +45,8 @@ type MinecraftService interface {
 	// ListChangedPlaytimes returns playtime of players whose last session in the season ended at or after sinceMs.
 	ListChangedPlaytimes(ctx context.Context, seasonID uuid.UUID, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error)
 	// GetPlaytimesInSeason returns playtime of every player asked for, zero for one that never played in the season.
-	GetPlaytimesInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error)
+	// A Plan server name counts only that server of the season network; nil counts every server.
+	GetPlaytimesInSeason(ctx context.Context, seasonID uuid.UUID, serverName *string, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error)
 }
 
 type minecraftService struct {
@@ -252,10 +253,10 @@ func (s *minecraftService) ListChangedPlaytimes(ctx context.Context, seasonID uu
 	return api.ListChangedPlaytimes(ctx, sinceMs)
 }
 
-func (s *minecraftService) GetPlaytimesInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
+func (s *minecraftService) GetPlaytimesInSeason(ctx context.Context, seasonID uuid.UUID, serverName *string, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
 	api, err := s.seasonShell(ctx, seasonID)
 	if err != nil {
 		return nil, err
 	}
-	return api.GetPlaytimes(ctx, mcUUIDs)
+	return api.GetPlaytimes(ctx, mcUUIDs, serverName)
 }

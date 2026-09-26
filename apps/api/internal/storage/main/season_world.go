@@ -11,7 +11,8 @@ import (
 )
 
 const seasonWorldColumns = `
-	id, season_id, slug, name, preview_image, map_url, claim_limit, claim_dimensions, position
+	id, season_id, slug, name, preview_image, map_url, claim_limit, claim_dimensions, plan_server,
+	claim_min_playtime_hours, position
 FROM season_worlds`
 
 func scanSeasonWorld(row interface{ Scan(...any) error }) (*domain.SeasonWorld, error) {
@@ -19,7 +20,7 @@ func scanSeasonWorld(row interface{ Scan(...any) error }) (*domain.SeasonWorld, 
 	var dimensions string
 	err := row.Scan(
 		&world.ID, &world.SeasonID, &world.Slug, &world.Name, &world.PreviewImage,
-		&world.MapURL, &world.ClaimLimit, &dimensions, &world.Position,
+		&world.MapURL, &world.ClaimLimit, &dimensions, &world.PlanServer, &world.ClaimMinPlaytimeHours, &world.Position,
 	)
 	if err != nil {
 		return nil, err
@@ -55,15 +56,17 @@ func (q *queries) FindSeasonWorldByID(ctx context.Context, worldID uuid.UUID) (*
 }
 
 type SaveSeasonWorldParams struct {
-	ID              uuid.UUID
-	SeasonID        uuid.UUID
-	Slug            string
-	Name            string
-	PreviewImage    *string
-	MapURL          *string
-	ClaimLimit      int
-	ClaimDimensions []string
-	Position        int
+	ID                    uuid.UUID
+	SeasonID              uuid.UUID
+	Slug                  string
+	Name                  string
+	PreviewImage          *string
+	MapURL                *string
+	ClaimLimit            int
+	ClaimDimensions       []string
+	PlanServer            *string
+	ClaimMinPlaytimeHours int
+	Position              int
 }
 
 func claimDimensionsJSON(dimensions []string) (string, error) {
@@ -75,8 +78,11 @@ func claimDimensionsJSON(dimensions []string) (string, error) {
 }
 
 const insertSeasonWorld = `
-INSERT INTO season_worlds (id, season_id, slug, name, preview_image, map_url, claim_limit, claim_dimensions, position)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO season_worlds (
+	id, season_id, slug, name, preview_image, map_url, claim_limit, claim_dimensions, plan_server,
+	claim_min_playtime_hours, position
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 func (q *queries) CreateSeasonWorld(ctx context.Context, arg SaveSeasonWorldParams) error {
@@ -85,14 +91,16 @@ func (q *queries) CreateSeasonWorld(ctx context.Context, arg SaveSeasonWorldPara
 		return err
 	}
 	_, err = q.x.ExecContext(ctx, insertSeasonWorld,
-		arg.ID, arg.SeasonID, arg.Slug, arg.Name, arg.PreviewImage, arg.MapURL, arg.ClaimLimit, dimensions, arg.Position,
+		arg.ID, arg.SeasonID, arg.Slug, arg.Name, arg.PreviewImage, arg.MapURL, arg.ClaimLimit, dimensions,
+		arg.PlanServer, arg.ClaimMinPlaytimeHours, arg.Position,
 	)
 	return err
 }
 
 const updateSeasonWorld = `
 UPDATE season_worlds SET
-	slug = ?, name = ?, preview_image = ?, map_url = ?, claim_limit = ?, claim_dimensions = ?, position = ?
+	slug = ?, name = ?, preview_image = ?, map_url = ?, claim_limit = ?, claim_dimensions = ?, plan_server = ?,
+	claim_min_playtime_hours = ?, position = ?
 WHERE id = ?
 `
 
@@ -103,7 +111,8 @@ func (q *queries) UpdateSeasonWorld(ctx context.Context, arg SaveSeasonWorldPara
 		return false, err
 	}
 	result, err := q.x.ExecContext(ctx, updateSeasonWorld,
-		arg.Slug, arg.Name, arg.PreviewImage, arg.MapURL, arg.ClaimLimit, dimensions, arg.Position, arg.ID,
+		arg.Slug, arg.Name, arg.PreviewImage, arg.MapURL, arg.ClaimLimit, dimensions, arg.PlanServer,
+		arg.ClaimMinPlaytimeHours, arg.Position, arg.ID,
 	)
 	if err != nil {
 		return false, err

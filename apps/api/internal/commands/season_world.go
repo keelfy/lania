@@ -15,15 +15,17 @@ var worldSlugPattern = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 const maxClaimDimensions = 16
 
 type SaveSeasonWorldCommand struct {
-	ID              uuid.UUID
-	SeasonID        uuid.UUID
-	Slug            string
-	Name            string
-	PreviewImage    *string
-	MapURL          *string
-	ClaimLimit      int
-	ClaimDimensions []string
-	Position        int
+	ID                    uuid.UUID
+	SeasonID              uuid.UUID
+	Slug                  string
+	Name                  string
+	PreviewImage          *string
+	MapURL                *string
+	ClaimLimit            int
+	ClaimDimensions       []string
+	PlanServer            *string
+	ClaimMinPlaytimeHours int
+	Position              int
 }
 
 func (c *SaveSeasonWorldCommand) Validate() error {
@@ -33,6 +35,8 @@ func (c *SaveSeasonWorldCommand) Validate() error {
 		validation.Field(&c.PreviewImage, validation.By(validateRuneLength(c.PreviewImage, 1, 512))),
 		validation.Field(&c.MapURL, validation.By(validateRuneLength(c.MapURL, 1, 512)), validation.By(validateHTTPURL(c.MapURL))),
 		validation.Field(&c.ClaimLimit, validation.Min(0), validation.Max(100000)),
+		validation.Field(&c.PlanServer, validation.By(validateRuneLength(c.PlanServer, 1, 100))),
+		validation.Field(&c.ClaimMinPlaytimeHours, validation.Min(0), validation.Max(10000)),
 		validation.Field(&c.ClaimDimensions, validation.Length(0, maxClaimDimensions),
 			validation.By(func(any) error {
 				seen := make(map[string]bool, len(c.ClaimDimensions))

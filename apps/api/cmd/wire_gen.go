@@ -84,7 +84,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	seasonHandler := handlers.NewSeasonHandler(seasonService)
 	seasonWorldService := services.NewSeasonWorldService(mainStorage, seasonService)
 	seasonWorldHandler := handlers.NewSeasonWorldHandler(seasonWorldService)
-	chunkClaimService := services.NewChunkClaimService(mainStorage, seasonService, seasonWorldService)
+	chunkClaimService := services.NewChunkClaimService(mainStorage, seasonService, seasonWorldService, minecraftService)
 	chunkClaimHandler := handlers.NewChunkClaimHandler(chunkClaimService, profileCosmeticsService)
 	notificationHandler := handlers.NewNotificationHandler(notificationService)
 	accountService := services.NewAccountService(mainStorage, oryAPI, profileService, profileCosmeticsService, profileResyncService)

@@ -13,7 +13,8 @@ func PresentSeasonWorld(world *domain.SeasonWorld) *responses.SeasonWorld {
 	return &responses.SeasonWorld{
 		ID: world.ID, SeasonID: world.SeasonID, Slug: world.Slug, Name: world.Name,
 		PreviewImage: world.PreviewImage, MapURL: world.MapURL,
-		ClaimLimit: world.ClaimLimit, ClaimDimensions: dimensions, Position: world.Position,
+		ClaimLimit: world.ClaimLimit, ClaimDimensions: dimensions,
+		PlanServer: world.PlanServer, ClaimMinPlaytimeHours: world.ClaimMinPlaytimeHours, Position: world.Position,
 	}
 }
 

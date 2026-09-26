@@ -414,6 +414,11 @@ export default function WorldMap({
                 {t('held', { count: held, limit: world.claimLimit })}
               </span>
             )}
+            {profileId && world.claimMinPlaytimeHours > 0 && (
+              <span className="text-muted-foreground text-sm">
+                {t('minPlaytime', { hours: world.claimMinPlaytimeHours })}
+              </span>
+            )}
           </>
         )}
         <div className="ms-auto flex flex-wrap gap-2">

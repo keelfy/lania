@@ -21,10 +21,19 @@ import (
 
 type fakePlanStorage struct {
 	playtimes map[uuid.UUID]*domain.Playtime
+	// servers holds playtime on one server of the network, by Plan server name.
+	servers map[string]map[uuid.UUID]*domain.Playtime
 }
 
-func (s *fakePlanStorage) FindPlaytimes(_ context.Context, _ uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
-	return s.playtimes, nil
+func (s *fakePlanStorage) FindPlaytimes(_ context.Context, _ uuid.UUIDs, serverName *string) (map[uuid.UUID]*domain.Playtime, error) {
+	if serverName == nil {
+		return s.playtimes, nil
+	}
+	found := make(map[uuid.UUID]*domain.Playtime)
+	for mcUUID, playtime := range s.servers[*serverName] {
+		found[mcUUID] = playtime
+	}
+	return found, nil
 }
 
 func (s *fakePlanStorage) FindPlaytimesChangedSince(_ context.Context, sinceMs int64) (map[uuid.UUID]*domain.Playtime, error) {
@@ -116,7 +125,10 @@ func newTestEnv(t *testing.T) *testEnv {
 
 	server := NewServer(
 		NewPlayerHandler(services.NewPlayerService(
-			&fakePlanStorage{playtimes: map[uuid.UUID]*domain.Playtime{knownUUID: {TotalMs: 3000, FirstSeenMs: &first, LastSeenMs: &last}}},
+			&fakePlanStorage{
+				playtimes: map[uuid.UUID]*domain.Playtime{knownUUID: {TotalMs: 3000, FirstSeenMs: &first, LastSeenMs: &last}},
+				servers:   map[string]map[uuid.UUID]*domain.Playtime{"farms": {knownUUID: {TotalMs: 1000, FirstSeenMs: &first, LastSeenMs: &first}}},
+			},
 			&fakeFlectoneStorage{online: map[uuid.UUID]bool{knownUUID: true}},
 		)),
 		NewPermissionHandler(services.NewPermissionService(luckperms, console)),
@@ -172,6 +184,18 @@ func TestPlayerService(t *testing.T) {
 	unknown, ok := playtimes.GetPlaytimes()[unknownUUID.String()]
 	if !ok || unknown.GetTotalMs() != 0 || unknown.FirstSeenMs != nil || unknown.LastSeenMs != nil {
 		t.Errorf("unknown player must have empty playtime, got %v", unknown)
+	}
+
+	farms := "farms"
+	onServer, err := client.GetPlaytime(ctx, &shellv1.GetPlaytimeRequest{MinecraftUuids: uuids, ServerName: &farms})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := onServer.GetPlaytimes()[knownUUID.String()].GetTotalMs(); got != 1000 {
+		t.Errorf("playtime on the farms server must be 1000, got %d", got)
+	}
+	if unknown, ok := onServer.GetPlaytimes()[unknownUUID.String()]; !ok || unknown.GetTotalMs() != 0 {
+		t.Errorf("unknown player must have empty playtime on the server, got %v", unknown)
 	}
 
 	onlinePlayers, err := client.ListOnlinePlayers(ctx, &shellv1.ListOnlinePlayersRequest{})

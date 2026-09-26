@@ -14,5 +14,9 @@ type SeasonWorld struct {
 	ClaimLimit int     `json:"claimLimit"`
 	// ClaimDimensions are the squaremap world names where chunks can be claimed; empty for a view-only map.
 	ClaimDimensions []string `json:"claimDimensions"`
-	Position        int      `json:"position"`
+	// PlanServer is the Plan name of the world server; missing counts playtime on the whole season network.
+	PlanServer *string `json:"planServer,omitempty"`
+	// ClaimMinPlaytimeHours is the playtime on the world server a profile needs to claim chunks.
+	ClaimMinPlaytimeHours int `json:"claimMinPlaytimeHours"`
+	Position              int `json:"position"`
 }

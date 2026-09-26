@@ -5,6 +5,7 @@ import (
 	stdsql "database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	mysql "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
@@ -27,13 +28,21 @@ type ChunkClaimService interface {
 }
 
 type chunkClaimService struct {
-	storage       storage.MainStorage
-	seasonService SeasonService
-	worldService  SeasonWorldService
+	storage          storage.MainStorage
+	seasonService    SeasonService
+	worldService     SeasonWorldService
+	minecraftService MinecraftService
 }
 
-func NewChunkClaimService(storage storage.MainStorage, seasonService SeasonService, worldService SeasonWorldService) ChunkClaimService {
-	return &chunkClaimService{storage: storage, seasonService: seasonService, worldService: worldService}
+func NewChunkClaimService(
+	storage storage.MainStorage,
+	seasonService SeasonService,
+	worldService SeasonWorldService,
+	minecraftService MinecraftService,
+) ChunkClaimService {
+	return &chunkClaimService{
+		storage: storage, seasonService: seasonService, worldService: worldService, minecraftService: minecraftService,
+	}
 }
 
 func (s *chunkClaimService) GetActiveClaims(ctx context.Context, worldID uuid.UUID, dimension string) (*domain.SeasonWorld, []*domain.ChunkClaim, error) {
@@ -98,6 +107,9 @@ func (s *chunkClaimService) ClaimChunks(ctx context.Context, cmd *commands.Claim
 	if !hasAccess {
 		return utils.NewForbiddenError("the profile has no access to the season", nil)
 	}
+	if err := s.checkClaimPlaytime(ctx, world, profile); err != nil {
+		return err
+	}
 
 	err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
 		if err := queries.LockProfile(ctx, profile.ID); err != nil {
@@ -120,6 +132,30 @@ func (s *chunkClaimService) ClaimChunks(ctx context.Context, cmd *commands.Claim
 		return queries.InsertChunkClaims(ctx, world.ID, cmd.Dimension, profile.ID, cmd.Chunks)
 	})
 	return claimWriteError("failed to claim chunks", err)
+}
+
+// checkClaimPlaytime refuses a profile that has played less than the world asks on the world server. Playtime
+// under the offline UUID of a rekeyed profile counts too.
+func (s *chunkClaimService) checkClaimPlaytime(ctx context.Context, world *domain.SeasonWorld, profile *domain.Profile) error {
+	if world.ClaimMinPlaytimeHours <= 0 {
+		return nil
+	}
+	mcUUIDs := uuid.UUIDs{profile.MinecraftUUID}
+	if profile.LegacyMinecraftUUID != nil {
+		mcUUIDs = append(mcUUIDs, *profile.LegacyMinecraftUUID)
+	}
+	playtimes, err := s.minecraftService.GetPlaytimesInSeason(ctx, world.SeasonID, world.PlanServer, mcUUIDs)
+	if err != nil {
+		return utils.NewServiceUnavailableError("failed to get playtime on the world server", err)
+	}
+	var played time.Duration
+	for _, playtime := range playtimes {
+		played += time.Duration(playtime.TotalPlaytime) * time.Millisecond
+	}
+	if played < world.ClaimMinPlaytime() {
+		return utils.NewForbiddenError(fmt.Sprintf("claims need %d hours played on the world server", world.ClaimMinPlaytimeHours), nil)
+	}
+	return nil
 }
 
 func (s *chunkClaimService) ReleaseChunks(ctx context.Context, cmd *commands.ClaimChunksCommand) error {

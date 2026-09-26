@@ -57,7 +57,8 @@ func (s *seasonWorldService) GetSeasonWorld(ctx context.Context, worldID uuid.UU
 func saveSeasonWorldParams(id uuid.UUID, cmd *commands.SaveSeasonWorldCommand) sql.SaveSeasonWorldParams {
 	return sql.SaveSeasonWorldParams{
 		ID: id, SeasonID: cmd.SeasonID, Slug: cmd.Slug, Name: cmd.Name, PreviewImage: cmd.PreviewImage,
-		MapURL: cmd.MapURL, ClaimLimit: cmd.ClaimLimit, ClaimDimensions: cmd.ClaimDimensions, Position: cmd.Position,
+		MapURL: cmd.MapURL, ClaimLimit: cmd.ClaimLimit, ClaimDimensions: cmd.ClaimDimensions,
+		PlanServer: cmd.PlanServer, ClaimMinPlaytimeHours: cmd.ClaimMinPlaytimeHours, Position: cmd.Position,
 	}
 }
 

@@ -54,7 +54,10 @@ type SaveSeasonWorld struct {
 	// ClaimLimit falls back to domain.DefaultClaimLimit when the request leaves it out.
 	ClaimLimit      *int     `json:"claimLimit"`
 	ClaimDimensions []string `json:"claimDimensions"`
-	Position        int      `json:"position"`
+	PlanServer      *string  `json:"planServer"`
+	// ClaimMinPlaytimeHours falls back to domain.DefaultClaimMinPlaytimeHours when the request leaves it out.
+	ClaimMinPlaytimeHours *int `json:"claimMinPlaytimeHours"`
+	Position              int  `json:"position"`
 }
 
 type SaveSeasonScreenshot struct {

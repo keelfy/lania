@@ -71,7 +71,7 @@ type playtimeMinecraftService struct {
 	playtimes map[uuid.UUID]*domain.Playtime
 }
 
-func (s *playtimeMinecraftService) GetPlaytimesInSeason(context.Context, uuid.UUID, uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
+func (s *playtimeMinecraftService) GetPlaytimesInSeason(context.Context, uuid.UUID, *string, uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
 	return s.playtimes, nil
 }
 

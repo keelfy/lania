@@ -114,8 +114,10 @@ func (x *GetOnlineStatusResponse) GetOnline() map[string]bool {
 type GetPlaytimeRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	MinecraftUuids []string               `protobuf:"bytes,1,rep,name=minecraft_uuids,json=minecraftUuids,proto3" json:"minecraft_uuids,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Plan name of one server of the network to count sessions on. Absent counts every server.
+	ServerName    *string `protobuf:"bytes,2,opt,name=server_name,json=serverName,proto3,oneof" json:"server_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetPlaytimeRequest) Reset() {
@@ -153,6 +155,13 @@ func (x *GetPlaytimeRequest) GetMinecraftUuids() []string {
 		return x.MinecraftUuids
 	}
 	return nil
+}
+
+func (x *GetPlaytimeRequest) GetServerName() string {
+	if x != nil && x.ServerName != nil {
+		return *x.ServerName
+	}
+	return ""
 }
 
 type GetPlaytimeResponse struct {
@@ -445,9 +454,12 @@ const file_lania_shell_v1_player_proto_rawDesc = "" +
 	"\x06online\x18\x01 \x03(\v23.lania.shell.v1.GetOnlineStatusResponse.OnlineEntryR\x06online\x1a9\n" +
 	"\vOnlineEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\bR\x05value:\x028\x01\"=\n" +
+	"\x05value\x18\x02 \x01(\bR\x05value:\x028\x01\"s\n" +
 	"\x12GetPlaytimeRequest\x12'\n" +
-	"\x0fminecraft_uuids\x18\x01 \x03(\tR\x0eminecraftUuids\"\xbf\x01\n" +
+	"\x0fminecraft_uuids\x18\x01 \x03(\tR\x0eminecraftUuids\x12$\n" +
+	"\vserver_name\x18\x02 \x01(\tH\x00R\n" +
+	"serverName\x88\x01\x01B\x0e\n" +
+	"\f_server_name\"\xbf\x01\n" +
 	"\x13GetPlaytimeResponse\x12P\n" +
 	"\tplaytimes\x18\x01 \x03(\v22.lania.shell.v1.GetPlaytimeResponse.PlaytimesEntryR\tplaytimes\x1aV\n" +
 	"\x0ePlaytimesEntry\x12\x10\n" +
@@ -530,6 +542,7 @@ func file_lania_shell_v1_player_proto_init() {
 	if File_lania_shell_v1_player_proto != nil {
 		return
 	}
+	file_lania_shell_v1_player_proto_msgTypes[2].OneofWrappers = []any{}
 	file_lania_shell_v1_player_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

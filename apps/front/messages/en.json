@@ -991,6 +991,8 @@
         "claimDimensionsHint": "Where claims work. Other dimensions are view-only on the map.",
         "otherDimensionsPlaceholder": "Other squaremap dimensions, comma-separated",
         "claimLimitHint": "How many chunks one game profile may claim in this world.",
+        "claimMinPlaytimeHoursHint": "Hours a profile must play on this server before it can claim chunks. 0 turns the check off.",
+        "planServerHint": "Server name in Plan. Playtime for claims is counted on it; empty counts the whole season network.",
         "dimensions": {
           "minecraft_overworld": "Overworld",
           "minecraft_the_nether": "Nether",
@@ -1003,6 +1005,8 @@
           "mapUrl": "Map (squaremap)",
           "claimDimensions": "Claim dimensions",
           "claimLimit": "Claim limit",
+          "claimMinPlaytimeHours": "Hours to claim",
+          "planServer": "Plan server",
           "position": "Position"
         },
         "columns": {
@@ -1133,6 +1137,7 @@
     "signIn": "Sign in to claim chunks.",
     "noAccess": "Players with access to the season can claim. <link>Get access</link>",
     "held": "Here: {count} · world limit: {limit}",
+    "minPlaytime": "Claims need {hours} h played on this server",
     "clear": "Clear",
     "claim": "Claim {count}",
     "release": "Release {count}",

@@ -46,7 +46,7 @@ left out of this stack. Add them later if a feature actually needs them.
 > **Plugin tables**: the LuckPerms, Plan and Flectone tables live in the main
 > database and are written by the Minecraft plugins. Their names are set with
 > `LUCKPERMS_USER_PERMISSIONS_TABLE_NAME`, `LUCKPERMS_PLAYERS_TABLE_NAME`, `PLAN_USERS_TABLE_NAME`,
-> `PLAN_SESSIONS_TABLE_NAME` and `FLECTONE_PLAYER_TABLE_NAME`. Only `shell`
+> `PLAN_SESSIONS_TABLE_NAME`, `PLAN_SERVERS_TABLE_NAME` and `FLECTONE_PLAYER_TABLE_NAME`. Only `shell`
 > touches them; the API talks to `shell` over gRPC (`SHELL_ADDRESS`, `SHELL_TOKEN`).
 
 ## One-time setup

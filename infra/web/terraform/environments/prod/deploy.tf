@@ -21,6 +21,7 @@ resource "local_sensitive_file" "env" {
     luckperms_user_permissions_table_name = var.luckperms_user_permissions_table_name
     plan_users_table_name                 = var.plan_users_table_name
     plan_sessions_table_name              = var.plan_sessions_table_name
+    plan_servers_table_name               = var.plan_servers_table_name
     flectone_player_table_name            = var.flectone_player_table_name
 
     shell_token   = var.shell_token

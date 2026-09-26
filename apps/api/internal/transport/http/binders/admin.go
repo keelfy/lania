@@ -105,18 +105,24 @@ func BindSaveSeasonWorld(r *http.Request) (*commands.SaveSeasonWorldCommand, err
 	if req.ClaimLimit != nil {
 		claimLimit = *req.ClaimLimit
 	}
+	minPlaytimeHours := domain.DefaultClaimMinPlaytimeHours
+	if req.ClaimMinPlaytimeHours != nil {
+		minPlaytimeHours = *req.ClaimMinPlaytimeHours
+	}
 	dimensions := make([]string, len(req.ClaimDimensions))
 	for i, dimension := range req.ClaimDimensions {
 		dimensions[i] = strings.TrimSpace(dimension)
 	}
 	return &commands.SaveSeasonWorldCommand{
-		Slug:            strings.TrimSpace(req.Slug),
-		Name:            strings.TrimSpace(req.Name),
-		PreviewImage:    optionalTrimmed(req.PreviewImage),
-		MapURL:          optionalTrimmed(req.MapURL),
-		ClaimLimit:      claimLimit,
-		ClaimDimensions: dimensions,
-		Position:        req.Position,
+		Slug:                  strings.TrimSpace(req.Slug),
+		Name:                  strings.TrimSpace(req.Name),
+		PreviewImage:          optionalTrimmed(req.PreviewImage),
+		MapURL:                optionalTrimmed(req.MapURL),
+		ClaimLimit:            claimLimit,
+		ClaimDimensions:       dimensions,
+		PlanServer:            optionalTrimmed(req.PlanServer),
+		ClaimMinPlaytimeHours: minPlaytimeHours,
+		Position:              req.Position,
 	}, nil
 }
 

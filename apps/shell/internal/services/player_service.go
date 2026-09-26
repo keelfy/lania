@@ -11,8 +11,9 @@ import (
 type PlayerService interface {
 	// GetOnlineStatus returns an entry for every requested player.
 	GetOnlineStatus(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
-	// GetPlaytime returns an entry for every requested player.
-	GetPlaytime(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error)
+	// GetPlaytime returns an entry for every requested player: playtime on the named server of the network, or on
+	// every server when serverName is nil.
+	GetPlaytime(ctx context.Context, mcUUIDs uuid.UUIDs, serverName *string) (map[uuid.UUID]*domain.Playtime, error)
 	// ListOnlinePlayers returns every player that is online right now.
 	ListOnlinePlayers(ctx context.Context) (uuid.UUIDs, error)
 	// ListChangedPlaytimes returns playtime of players whose last session ended at or after sinceMs.
@@ -44,8 +45,8 @@ func (s *playerService) GetOnlineStatus(ctx context.Context, mcUUIDs uuid.UUIDs)
 	return online, nil
 }
 
-func (s *playerService) GetPlaytime(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error) {
-	playtimes, err := s.planStorage.FindPlaytimes(ctx, mcUUIDs)
+func (s *playerService) GetPlaytime(ctx context.Context, mcUUIDs uuid.UUIDs, serverName *string) (map[uuid.UUID]*domain.Playtime, error) {
+	playtimes, err := s.planStorage.FindPlaytimes(ctx, mcUUIDs, serverName)
 	if err != nil {
 		return nil, err
 	}

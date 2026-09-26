@@ -125,6 +125,8 @@ function WorldFormDialog({
           ...others,
         ]),
       ],
+      planServer: optionalString(form, 'planServer'),
+      claimMinPlaytimeHours: Number(form.get('claimMinPlaytimeHours') ?? 0),
       position: Number(form.get('position') ?? 0),
     }
 
@@ -255,6 +257,36 @@ function WorldFormDialog({
                   defaultValue={world?.claimLimit ?? 100}
                 />
                 <FieldDescription>{t('claimLimitHint')}</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor={`${idPrefix}-claim-min-playtime`}>
+                  {t('fields.claimMinPlaytimeHours')}
+                </FieldLabel>
+                <Input
+                  id={`${idPrefix}-claim-min-playtime`}
+                  name="claimMinPlaytimeHours"
+                  type="number"
+                  min={0}
+                  max={10000}
+                  required
+                  defaultValue={world?.claimMinPlaytimeHours ?? 5}
+                />
+                <FieldDescription>
+                  {t('claimMinPlaytimeHoursHint')}
+                </FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor={`${idPrefix}-plan-server`}>
+                  {t('fields.planServer')}
+                </FieldLabel>
+                <Input
+                  id={`${idPrefix}-plan-server`}
+                  name="planServer"
+                  maxLength={100}
+                  defaultValue={world?.planServer}
+                  placeholder="survival"
+                />
+                <FieldDescription>{t('planServerHint')}</FieldDescription>
               </Field>
               <Field>
                 <FieldLabel htmlFor={`${idPrefix}-position`}>
