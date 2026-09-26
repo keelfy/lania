@@ -14,17 +14,18 @@ export default function NamePrefixProductDetails({
 }: Props) {
   return (
     <div className={cn('flex flex-col', className)} {...props}>
-      <div className="flex items-center gap-4">
+      {/* The icon is sized in lines so it keeps up with the title and sits on its first line. */}
+      <div className="flex items-start gap-4 text-4xl leading-tight sm:text-5xl lg:text-6xl">
         <Image
           src={item.metadata.prefix}
-          alt={item.metadata.prefix}
-          width={40}
-          height={40}
-          className="-translate-y-1"
+          alt=""
+          width={64}
+          height={64}
+          className="size-[1lh] shrink-0 p-[0.1lh] [image-rendering:pixelated]"
         />
         <McUsername
           username={item.name}
-          className="scroll-m-20 text-center text-6xl font-bold"
+          className="scroll-m-20 font-bold text-balance"
         />
       </div>
       <div className="mt-2">

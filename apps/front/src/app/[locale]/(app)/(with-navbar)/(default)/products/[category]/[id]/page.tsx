@@ -111,7 +111,7 @@ export default async function ProductPage({ params }: Props) {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="mt-4 flex flex-col gap-8 lg:flex-row">
-        {getItemComponent()}
+        <div className="min-w-0 flex-1">{getItemComponent()}</div>
         <div className="flex flex-col gap-4">
           <div className="bg-card flex h-fit w-full flex-col rounded-lg p-8 lg:w-max lg:max-w-xs">
             <h3 className="text-4xl font-bold text-nowrap">

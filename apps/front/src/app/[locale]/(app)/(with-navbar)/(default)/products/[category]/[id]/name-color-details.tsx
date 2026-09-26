@@ -17,7 +17,7 @@ export default function NameColorProductDetails({
       <McUsername
         username={item.name}
         colors={item.metadata.colors}
-        className="scroll-m-20 text-center text-6xl font-bold"
+        className="scroll-m-20 text-4xl leading-tight font-bold text-balance sm:text-5xl lg:text-6xl"
       />
       <div className="mt-2">
         <p>
