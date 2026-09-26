@@ -319,7 +319,7 @@ func (s *easyDonateService) postEDProductCreate(ctx context.Context, httpClient 
 		"number":      "1",
 		"description": cmd.Description,
 		"type":        "group",
-		"commands[0]": "lpv user {user} add permission",
+		"commands[0]": "lpv user {user} permission set " + commands.EDProductPermission(cmd.EnglishName),
 	}
 	if page.csrfToken != "" {
 		fields["_token"] = page.csrfToken

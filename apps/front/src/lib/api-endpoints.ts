@@ -837,6 +837,7 @@ export function createEasyDonateProduct(
   form.set('userAuth', req.userAuth)
   form.set('name', req.name)
   form.set('description', req.description)
+  form.set('englishName', req.englishName)
   form.set('priceName', req.priceName)
   if (req.image) {
     form.set('image', req.image)

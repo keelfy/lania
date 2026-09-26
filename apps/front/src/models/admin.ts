@@ -218,6 +218,7 @@ export type CreateEasyDonateProduct = {
   userAuth: string
   name: string
   description: string
+  englishName: string
   priceName: AdminProduct['priceName']
   image?: File
 }

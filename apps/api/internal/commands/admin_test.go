@@ -156,6 +156,7 @@ func TestCreateEDProductCommand_Validate(t *testing.T) {
 		UserAuth:    "user-auth",
 		Name:        "Лес",
 		Description: "Зелёный градиент",
+		EnglishName: "Forest",
 		PriceName:   domain.ProductPriceNameNameColor,
 	}
 
@@ -169,6 +170,8 @@ func TestCreateEDProductCommand_Validate(t *testing.T) {
 		{"missing user auth", func(command *CreateEDProductCommand) { command.UserAuth = "" }, true},
 		{"missing name", func(command *CreateEDProductCommand) { command.Name = "" }, true},
 		{"missing description", func(command *CreateEDProductCommand) { command.Description = "" }, true},
+		{"missing english name", func(command *CreateEDProductCommand) { command.EnglishName = "" }, true},
+		{"english name without latin", func(command *CreateEDProductCommand) { command.EnglishName = "Лес!" }, true},
 		{"invalid price name", func(command *CreateEDProductCommand) { command.PriceName = "invalid" }, true},
 		{"image too large", func(command *CreateEDProductCommand) { command.Image = make([]byte, MaxEDProductImageBytes+1) }, true},
 	}
@@ -182,5 +185,21 @@ func TestCreateEDProductCommand_Validate(t *testing.T) {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestEDProductPermission(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]string{
+		"Forest":           "easydonate.forest",
+		"Forest Gradient":  "easydonate.forest_gradient",
+		"  Neon--Pink 2! ": "easydonate.neon_pink_2",
+		"Season_Access":    "easydonate.season_access",
+	}
+	for name, want := range tests {
+		if got := EDProductPermission(name); got != want {
+			t.Errorf("EDProductPermission(%q) = %q, want %q", name, got, want)
+		}
 	}
 }

@@ -132,6 +132,7 @@ export default function ProductsManager({
     return {
       name: String(data?.get('name-ru') ?? '').trim(),
       description: String(data?.get('description-ru') ?? '').trim(),
+      englishName: String(data?.get('name-en') ?? '').trim(),
       priceName: priceByCategory[category],
     }
   }

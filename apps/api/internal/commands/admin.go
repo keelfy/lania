@@ -264,6 +264,9 @@ type CreateEDProductCommand struct {
 	UserAuth    string
 	Name        string
 	Description string
+	// EnglishName is the product's English name. Its snake_case form becomes the LuckPerms
+	// permission in the EasyDonate command, see EDProductPermission.
+	EnglishName string
 	// PriceName selects the tariff whose RUB amount becomes the EasyDonate price, so the shop
 	// cannot drift away from lania's own prices.
 	PriceName domain.ProductPriceName
@@ -273,11 +276,26 @@ type CreateEDProductCommand struct {
 	ImageContentType string
 }
 
+var edPermissionSeparators = regexp.MustCompile(`[^a-z0-9]+`)
+
+// EDProductPermission turns an English product name into the permission the EasyDonate command
+// sets, e.g. "Forest Gradient" -> "easydonate.forest_gradient".
+func EDProductPermission(englishName string) string {
+	key := edPermissionSeparators.ReplaceAllString(strings.ToLower(englishName), "_")
+	return "easydonate." + strings.Trim(key, "_")
+}
+
 func (c *CreateEDProductCommand) Validate() error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.UserAuth, validation.Required),
 		validation.Field(&c.Name, validation.Required),
 		validation.Field(&c.Description, validation.Required),
+		validation.Field(&c.EnglishName, validation.Required, validation.By(func(value any) error {
+			if EDProductPermission(value.(string)) == "easydonate." {
+				return errors.New("must contain latin letters or digits")
+			}
+			return nil
+		})),
 		validation.Field(&c.PriceName, validation.Required, validation.By(func(value any) error {
 			priceName := value.(domain.ProductPriceName)
 			if priceName != domain.ProductPriceNameSeasonAccess && priceName != domain.ProductPriceNameNameColor && priceName != domain.ProductPriceNameNamePrefix {

@@ -30,6 +30,7 @@ import { useEdCredentials } from './ed-credentials-context'
 type ProductInfo = {
   name: string
   description: string
+  englishName: string
   priceName: AdminProduct['priceName']
 }
 
@@ -101,6 +102,7 @@ export default function EasyDonateCreateDialog({
           userAuth,
           name: productInfo.name,
           description: productInfo.description,
+          englishName: productInfo.englishName,
           priceName: productInfo.priceName,
           image,
         })
@@ -168,15 +170,18 @@ export default function EasyDonateCreateDialog({
                 className="text-sm"
               />
               <FieldDescription>{t('imageHint')}</FieldDescription>
+              {/* Field stretches its direct children to full width, so the preview gets a wrapper. */}
               {preview && (
-                <Image
-                  src={preview}
-                  alt=""
-                  width={64}
-                  height={64}
-                  unoptimized
-                  className="border-border mt-2 rounded-md border object-cover"
-                />
+                <div>
+                  <Image
+                    src={preview}
+                    alt=""
+                    width={64}
+                    height={64}
+                    unoptimized
+                    className="border-border size-16 rounded-md border object-contain"
+                  />
+                </div>
               )}
             </Field>
             {productInfo && (
@@ -184,6 +189,7 @@ export default function EasyDonateCreateDialog({
                 <p className="mb-1 font-medium">{t('summary')}</p>
                 <p>{productInfo.name}</p>
                 <p>{productInfo.description}</p>
+                <p>{productInfo.englishName}</p>
                 <p>{productInfo.priceName}</p>
               </div>
             )}

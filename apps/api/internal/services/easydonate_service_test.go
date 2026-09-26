@@ -42,6 +42,7 @@ func validEDCommand() *commands.CreateEDProductCommand {
 		UserAuth:    "user-auth",
 		Name:        "Лес",
 		Description: "Зелёный градиент",
+		EnglishName: "Forest Gradient",
 		PriceName:   domain.ProductPriceNameNameColor,
 	}
 }
@@ -96,7 +97,7 @@ func TestEasyDonateService_CreateShopProduct(t *testing.T) {
 		if capturedCSRFHeader != "page-token" || capturedFields["_token"] != "page-token" {
 			t.Errorf("X-CSRF-TOKEN = %q, _token = %q", capturedCSRFHeader, capturedFields["_token"])
 		}
-		if capturedFields["type"] != "group" || capturedFields["commands[0]"] != "lpv user {user} add permission" {
+		if capturedFields["type"] != "group" || capturedFields["commands[0]"] != "lpv user {user} permission set easydonate.forest_gradient" {
 			t.Errorf("fields = %+v", capturedFields)
 		}
 		if capturedFields["price"] != "199" {

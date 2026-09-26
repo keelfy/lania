@@ -272,6 +272,7 @@ func BindCreateEDProduct(r *http.Request) (*commands.CreateEDProductCommand, err
 		UserAuth:    strings.TrimSpace(r.FormValue("userAuth")),
 		Name:        strings.TrimSpace(r.FormValue("name")),
 		Description: strings.TrimSpace(r.FormValue("description")),
+		EnglishName: strings.TrimSpace(r.FormValue("englishName")),
 		PriceName:   domain.ProductPriceName(strings.TrimSpace(r.FormValue("priceName"))),
 	}
 
