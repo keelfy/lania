@@ -39,6 +39,7 @@ import {
   AdminNameColor,
   AdminNamePrefix,
   AdminProduct,
+  CosmeticNames,
 } from '@/models/admin'
 import { CURRENCY_SYMBOLS, Currency } from '@/lib/currency'
 import { PlusIcon, ShoppingBagIcon } from 'lucide-react'
@@ -92,12 +93,12 @@ export default function CosmeticsManager({
   const [prefixToken, setPrefixToken] = React.useState('')
 
   const query = search.trim().toLocaleLowerCase()
-  const colorOptions = catalog.nameColors.filter((item) =>
-    item.name.toLocaleLowerCase().includes(query),
-  )
-  const prefixes = catalog.namePrefixes.filter((item) =>
-    item.name.toLocaleLowerCase().includes(query),
-  )
+  const matches = (item: { name: string; names: CosmeticNames }) =>
+    [item.name, item.names.ru].some((value) =>
+      value?.toLocaleLowerCase().includes(query),
+    )
+  const colorOptions = catalog.nameColors.filter(matches)
+  const prefixes = catalog.namePrefixes.filter(matches)
   const key = `${selection.type}-${selection.item?.id ?? 'new'}`
   const selectedProducts = linkedProducts(
     products,
@@ -133,6 +134,7 @@ export default function CosmeticsManager({
         if (selection.type === 'color') {
           const payload = {
             name: String(form.get('name') ?? '').trim(),
+            names: formNames(form),
             colors: String(form.get('colors') ?? '')
               .split(',')
               .map((value) => value.trim())
@@ -148,6 +150,7 @@ export default function CosmeticsManager({
           }
           const payload = {
             name: String(form.get('name') ?? '').trim(),
+            names: formNames(form),
             prefix: String(form.get('prefix') ?? '').trim(),
             image,
             noSpace,
@@ -288,7 +291,14 @@ export default function CosmeticsManager({
                   defaultValue={selection.item?.name}
                   onChange={(event) => setName(event.target.value)}
                 />
+                <FieldDescription>{t('nameHint')}</FieldDescription>
               </Field>
+              <RuNameField
+                id={`${key}-names-ru`}
+                value={selection.item?.names.ru}
+                fallback={name}
+                t={t}
+              />
               {selection.type === 'color' ? (
                 <ColorFields
                   item={selection.item}
@@ -335,6 +345,38 @@ export default function CosmeticsManager({
         </section>
       </div>
     </div>
+  )
+}
+
+// A blank translation is left out, so the main name stands in for it.
+function formNames(form: FormData): CosmeticNames {
+  const ru = String(form.get('names-ru') ?? '').trim()
+  return ru ? { ru } : {}
+}
+
+function RuNameField({
+  id,
+  value,
+  fallback,
+  t,
+}: {
+  id: string
+  value?: string
+  fallback: string
+  t: ReturnType<typeof useTranslations>
+}) {
+  return (
+    <Field>
+      <FieldLabel htmlFor={id}>{t('fields.nameRu')}</FieldLabel>
+      <Input
+        id={id}
+        name="names-ru"
+        maxLength={255}
+        defaultValue={value}
+        placeholder={fallback}
+      />
+      <FieldDescription>{t('nameRuHint')}</FieldDescription>
+    </Field>
   )
 }
 

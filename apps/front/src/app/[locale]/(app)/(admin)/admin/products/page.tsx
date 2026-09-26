@@ -4,7 +4,7 @@ import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
 import AdminPageHeader from '../admin-page-header'
 import { EdCredentialsProvider } from './ed-credentials-context'
-import ProductsManager from './products-manager'
+import ProductsManager, { DefaultDescriptions } from './products-manager'
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -12,6 +12,19 @@ export default async function AdminProductsPage({ params }: Props) {
   await requireAdmin()
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'admin' })
+  // A product carries texts in both languages, so the defaults of both are needed whatever the admin's locale.
+  const [ru, en] = await Promise.all(
+    (['ru', 'en'] as const).map((textLocale) =>
+      getTranslations({
+        locale: textLocale,
+        namespace: 'admin.products.defaultDescriptions',
+      }),
+    ),
+  )
+  const defaultDescriptions: DefaultDescriptions = {
+    'name-color': { ru: ru('name-color'), en: en('name-color') },
+    'name-prefix': { ru: ru('name-prefix'), en: en('name-prefix') },
+  }
   const [products, catalog] = await Promise.all([
     getAdminProducts(serverApiFetcher),
     getAdminCosmetics(serverApiFetcher),
@@ -22,6 +35,7 @@ export default async function AdminProductsPage({ params }: Props) {
         title={t('nav.products')}
         products={products}
         catalog={catalog}
+        defaultDescriptions={defaultDescriptions}
       />
     </EdCredentialsProvider>
   ) : (

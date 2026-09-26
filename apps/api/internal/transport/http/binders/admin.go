@@ -189,6 +189,17 @@ func dedupeUUIDs(ids []uuid.UUID) uuid.UUIDs {
 	return result
 }
 
+// bindCosmeticNames trims the translations and drops the blank ones, so a blank locale shows the main name.
+func bindCosmeticNames(names map[string]string) domain.CosmeticNames {
+	res := make(domain.CosmeticNames, len(names))
+	for locale, name := range names {
+		if name = strings.TrimSpace(name); name != "" {
+			res[strings.ToLower(locale)] = name
+		}
+	}
+	return res
+}
+
 func BindSaveNameColor(r *http.Request) (*commands.SaveNameColorCommand, error) {
 	var req requests.SaveNameColor
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -198,7 +209,7 @@ func BindSaveNameColor(r *http.Request) (*commands.SaveNameColorCommand, error) 
 	for _, color := range req.Colors {
 		colors = append(colors, strings.TrimSpace(color))
 	}
-	return &commands.SaveNameColorCommand{Name: strings.TrimSpace(req.Name), Colors: colors}, nil
+	return &commands.SaveNameColorCommand{Name: strings.TrimSpace(req.Name), Names: bindCosmeticNames(req.Names), Colors: colors}, nil
 }
 
 func BindUpdateNameColor(r *http.Request) (*commands.SaveNameColorCommand, error) {
@@ -215,7 +226,7 @@ func BindSaveNamePrefix(r *http.Request) (*commands.SaveNamePrefixCommand, error
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, utils.NewBadRequestError("request body is invalid", err)
 	}
-	return &commands.SaveNamePrefixCommand{Name: strings.TrimSpace(req.Name), Prefix: strings.TrimSpace(req.Prefix), Image: strings.TrimSpace(req.Image), NoSpace: req.NoSpace}, nil
+	return &commands.SaveNamePrefixCommand{Name: strings.TrimSpace(req.Name), Names: bindCosmeticNames(req.Names), Prefix: strings.TrimSpace(req.Prefix), Image: strings.TrimSpace(req.Image), NoSpace: req.NoSpace}, nil
 }
 
 func BindUpdateNamePrefix(r *http.Request) (*commands.SaveNamePrefixCommand, error) {

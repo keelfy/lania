@@ -81,7 +81,8 @@ SELECT
 	pnc.name_color_id,
 	pnc.for_season_id,
 	nc.colors AS name_colors,
-	nc.name AS name_color_name
+	nc.name AS name_color_name,
+	nc.names AS name_color_names
 FROM profile_name_color_options pnc
 LEFT JOIN name_colors nc ON pnc.name_color_id = nc.id
 WHERE pnc.profile_id = ? AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL) AND pnc.revoked_at IS NULL
@@ -100,6 +101,7 @@ func (q *queries) FindProfileNameColorOptionsByProfileID(ctx context.Context, pr
 		var option domain.ProfileNameColorOption
 		var nameColor domain.NameColor
 		var colors json.RawMessage
+		var names []byte
 		err := rows.Scan(
 			&option.ID,
 			&option.ProfileID,
@@ -107,8 +109,12 @@ func (q *queries) FindProfileNameColorOptionsByProfileID(ctx context.Context, pr
 			&option.ForSeasonID,
 			&colors,
 			&nameColor.Name,
+			&names,
 		)
 		if err != nil {
+			return nil, err
+		}
+		if nameColor.Names, err = unmarshalNames(names); err != nil {
 			return nil, err
 		}
 		metadata := domain.NameColorMetadata{}
@@ -133,6 +139,7 @@ SELECT
 	pnc.order_item_id,
 	pnc.created_at,
 	np.name AS name_prefix_name,
+	np.names AS name_prefix_names,
 	np.metadata AS name_prefix_metadata
 FROM profile_name_prefix_options pnc
 LEFT JOIN name_prefixes np ON pnc.name_prefix_id = np.id
@@ -154,6 +161,7 @@ func (q *queries) FindProfileNamePrefixOptionsByProfileIDAndType(ctx context.Con
 		var option domain.ProfileNamePrefixOption
 		var namePrefix domain.NamePrefix
 		var rawMetadata json.RawMessage
+		var names []byte
 		err := rows.Scan(
 			&option.ID,
 			&option.ProfileID,
@@ -163,9 +171,13 @@ func (q *queries) FindProfileNamePrefixOptionsByProfileIDAndType(ctx context.Con
 			&option.OrderItemID,
 			&option.CreatedAt,
 			&namePrefix.Name,
+			&names,
 			&rawMetadata,
 		)
 		if err != nil {
+			return nil, err
+		}
+		if namePrefix.Names, err = unmarshalNames(names); err != nil {
 			return nil, err
 		}
 		metadata := domain.NamePrefixMetadata{}
@@ -228,6 +240,7 @@ SELECT
 	pnp.order_item_id,
 	pnp.created_at,
 	np.name AS name_prefix_name,
+	np.names AS name_prefix_names,
 	np.metadata AS name_prefix_metadata
 FROM profile_name_prefix_options pnp
 LEFT JOIN name_prefixes np ON pnp.name_prefix_id = np.id
@@ -239,6 +252,7 @@ func (q *queries) FindProfileNamePrefixOptionByIDAndProfileIDAndType(ctx context
 	var option domain.ProfileNamePrefixOption
 	var namePrefix domain.NamePrefix
 	var rawMetadata json.RawMessage
+	var names []byte
 	err := row.Scan(
 		&option.ID,
 		&option.ProfileID,
@@ -248,9 +262,13 @@ func (q *queries) FindProfileNamePrefixOptionByIDAndProfileIDAndType(ctx context
 		&option.OrderItemID,
 		&option.CreatedAt,
 		&namePrefix.Name,
+		&names,
 		&rawMetadata,
 	)
 	if err != nil {
+		return nil, err
+	}
+	if namePrefix.Names, err = unmarshalNames(names); err != nil {
 		return nil, err
 	}
 	metadata := domain.NamePrefixMetadata{}
@@ -271,7 +289,8 @@ SELECT
 	pnc.name_color_id,
 	pnc.for_season_id,
 	nc.colors AS name_colors,
-	nc.name AS name_color_name
+	nc.name AS name_color_name,
+	nc.names AS name_color_names
 FROM profile_name_color_options pnc
 LEFT JOIN name_colors nc ON pnc.name_color_id = nc.id
 WHERE pnc.profile_id IN (SELECT id FROM profiles WHERE owner_user_id = ?) AND (pnc.for_season_id = ? OR pnc.for_season_id IS NULL) AND pnc.revoked_at IS NULL
@@ -290,6 +309,7 @@ func (q *queries) FindProfileNameColorOptionsByProfileOwnerUserID(ctx context.Co
 		var option domain.ProfileNameColorOption
 		var nameColor domain.NameColor
 		var colors json.RawMessage
+		var names []byte
 		err := rows.Scan(
 			&option.ID,
 			&option.ProfileID,
@@ -297,8 +317,12 @@ func (q *queries) FindProfileNameColorOptionsByProfileOwnerUserID(ctx context.Co
 			&option.ForSeasonID,
 			&colors,
 			&nameColor.Name,
+			&names,
 		)
 		if err != nil {
+			return nil, err
+		}
+		if nameColor.Names, err = unmarshalNames(names); err != nil {
 			return nil, err
 		}
 		metadata := domain.NameColorMetadata{}
@@ -323,6 +347,7 @@ SELECT
 	pnc.order_item_id,
 	pnc.created_at,
 	np.name AS name_prefix_name,
+	np.names AS name_prefix_names,
 	np.metadata AS name_prefix_metadata
 FROM profile_name_prefix_options pnc
 LEFT JOIN name_prefixes np ON pnc.name_prefix_id = np.id
@@ -344,6 +369,7 @@ func (q *queries) FindProfileNamePrefixOptionsByProfileOwnerUserIDAndType(ctx co
 		var option domain.ProfileNamePrefixOption
 		var namePrefix domain.NamePrefix
 		var rawMetadata json.RawMessage
+		var names []byte
 		err := rows.Scan(
 			&option.ID,
 			&option.ProfileID,
@@ -353,9 +379,13 @@ func (q *queries) FindProfileNamePrefixOptionsByProfileOwnerUserIDAndType(ctx co
 			&option.OrderItemID,
 			&option.CreatedAt,
 			&namePrefix.Name,
+			&names,
 			&rawMetadata,
 		)
 		if err != nil {
+			return nil, err
+		}
+		if namePrefix.Names, err = unmarshalNames(names); err != nil {
 			return nil, err
 		}
 		metadata := domain.NamePrefixMetadata{}
@@ -377,12 +407,15 @@ SELECT
 	p.id,
 	COALESCE(nc.id, dnc.id),
 	COALESCE(nc.name, dnc.name),
+	COALESCE(nc.names, dnc.names),
 	COALESCE(nc.colors, dnc.colors),
 	gp.id,
 	gp.name,
+	gp.names,
 	gp.metadata,
 	sp.id,
 	sp.name,
+	sp.names,
 	sp.metadata
 FROM profiles p
 LEFT JOIN profile_season_cosmetics psc ON psc.profile_id = p.id AND psc.season_id = ?
@@ -418,12 +451,12 @@ func (q *queries) FindProfilesSeasonCosmetics(ctx context.Context, profileIDs uu
 		var colorID, glythID, specialID uuid.NullUUID
 		var colorName, glythName, specialName stdsql.NullString
 		// []byte, because a NULL of an unselected prefix cannot be scanned into json.RawMessage.
-		var colors, glythMetadata, specialMetadata []byte
+		var colorNames, colors, glythNames, glythMetadata, specialNames, specialMetadata []byte
 		err := rows.Scan(
 			&profileID,
-			&colorID, &colorName, &colors,
-			&glythID, &glythName, &glythMetadata,
-			&specialID, &specialName, &specialMetadata,
+			&colorID, &colorName, &colorNames, &colors,
+			&glythID, &glythName, &glythNames, &glythMetadata,
+			&specialID, &specialName, &specialNames, &specialMetadata,
 		)
 		if err != nil {
 			return nil, err
@@ -435,11 +468,14 @@ func (q *queries) FindProfilesSeasonCosmetics(ctx context.Context, profileIDs uu
 			if err := json.Unmarshal(colors, &selected.NameColor.Metadata); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal name color metadata for name color %s: %w", colorID.UUID, err)
 			}
+			if selected.NameColor.Names, err = unmarshalNames(colorNames); err != nil {
+				return nil, err
+			}
 		}
-		if selected.Glyth, err = scanSelectedNamePrefix(glythID, glythName, glythMetadata); err != nil {
+		if selected.Glyth, err = scanSelectedNamePrefix(glythID, glythName, glythNames, glythMetadata); err != nil {
 			return nil, err
 		}
-		if selected.Special, err = scanSelectedNamePrefix(specialID, specialName, specialMetadata); err != nil {
+		if selected.Special, err = scanSelectedNamePrefix(specialID, specialName, specialNames, specialMetadata); err != nil {
 			return nil, err
 		}
 		cosmetics[profileID] = selected
@@ -448,11 +484,15 @@ func (q *queries) FindProfilesSeasonCosmetics(ctx context.Context, profileIDs uu
 }
 
 // scanSelectedNamePrefix builds the name prefix of a joined row, nil when the profile selected none.
-func scanSelectedNamePrefix(id uuid.NullUUID, name stdsql.NullString, rawMetadata []byte) (*domain.NamePrefix, error) {
+func scanSelectedNamePrefix(id uuid.NullUUID, name stdsql.NullString, rawNames, rawMetadata []byte) (*domain.NamePrefix, error) {
 	if !id.Valid {
 		return nil, nil
 	}
-	prefix := &domain.NamePrefix{ID: id.UUID, Name: name.String}
+	names, err := unmarshalNames(rawNames)
+	if err != nil {
+		return nil, err
+	}
+	prefix := &domain.NamePrefix{ID: id.UUID, Name: name.String, Names: names}
 	if err := json.Unmarshal(rawMetadata, &prefix.Metadata); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal name prefix metadata for name prefix %s: %w", id.UUID, err)
 	}

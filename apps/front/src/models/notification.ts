@@ -20,6 +20,8 @@ export type CosmeticNotificationPayload = {
   prefixType?: 'glyth' | 'special'
   itemId: string
   itemName: string
+  // itemNames translates itemName, by locale; itemName stands in for a missing locale.
+  itemNames?: Partial<Record<Locale, string>>
   // colors is set for a name color, prefixImage for a name prefix.
   // Both are missing from the notifications made before they were added.
   colors?: string[]

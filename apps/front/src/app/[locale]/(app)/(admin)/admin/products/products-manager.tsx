@@ -29,7 +29,7 @@ import {
   AdminProduct,
   SaveProduct,
 } from '@/models/admin'
-import { PlusIcon } from 'lucide-react'
+import { PlusIcon, WandSparklesIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -37,6 +37,14 @@ import React from 'react'
 import { toast } from 'sonner'
 import AdminPageHeader from '../admin-page-header'
 import EasyDonateCreateDialog from './easydonate-create-dialog'
+
+type ProductTexts = { name: string; description: string }
+
+// Default storefront descriptions, one per locale, for the categories that have them.
+export type DefaultDescriptions = Record<
+  'name-color' | 'name-prefix',
+  Record<'ru' | 'en', string>
+>
 
 const priceByCategory = {
   upgrade: 'season_access',
@@ -48,10 +56,12 @@ export default function ProductsManager({
   title,
   products,
   catalog,
+  defaultDescriptions,
 }: {
   title: string
   products: AdminProduct[]
   catalog: AdminCosmeticsCatalog
+  defaultDescriptions: DefaultDescriptions
 }) {
   const t = useTranslations('admin.products')
   const router = useRouter()
@@ -85,6 +95,36 @@ export default function ProductsManager({
     const name = String(data.get('name-ru') ?? '').trim()
     const description = String(data.get('description-ru') ?? '').trim()
     setRuFilled(Boolean(name && description))
+  }
+
+  const cosmetic =
+    category === 'name-color'
+      ? catalog.nameColors.find((item) => item.id === cosmeticId)
+      : category === 'name-prefix'
+        ? catalog.namePrefixes.find((item) => item.id === cosmeticId)
+        : undefined
+
+  // Fills the texts from the cosmetic's names and the category's default description.
+  // English uses the main name, other locales its translation when there is one.
+  // Access has no defaults, so the button is offered for cosmetics only.
+  function autofill() {
+    const form = formRef.current
+    if (!form || !cosmetic || category === 'upgrade') return
+    for (const locale of ['ru', 'en'] as const) {
+      const texts: ProductTexts = {
+        name: (locale === 'ru' && cosmetic.names.ru) || cosmetic.name,
+        description: defaultDescriptions[category][locale],
+      }
+      for (const field of ['name', 'description'] as const) {
+        const element = form.elements.namedItem(`${field}-${locale}`)
+        if (
+          element instanceof HTMLInputElement ||
+          element instanceof HTMLTextAreaElement
+        )
+          element.value = texts[field]
+      }
+    }
+    checkRuFilled(form)
   }
 
   function getProductInfo() {
@@ -310,7 +350,24 @@ export default function ProductsManager({
               </div>
             </FormSection>
 
-            <FormSection title={t('sections.texts')}>
+            <FormSection
+              title={t('sections.texts')}
+              action={
+                category !== 'upgrade' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!cosmetic}
+                    title={cosmetic ? undefined : t('autofillNeedsCosmetic')}
+                    onClick={autofill}
+                  >
+                    <WandSparklesIcon />
+                    {t('autofill')}
+                  </Button>
+                )
+              }
+            >
               <div className="grid gap-6 md:grid-cols-2">
                 <LocalizationFields locale="ru" values={ru} t={t} />
                 <LocalizationFields locale="en" values={en} t={t} />
@@ -398,16 +455,21 @@ export default function ProductsManager({
 
 function FormSection({
   title,
+  action,
   children,
 }: {
   title: string
+  action?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
     <div className="grid gap-4 border-b p-5">
-      <h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-        {title}
-      </h3>
+      <div className="flex min-h-8 items-center justify-between gap-3">
+        <h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+          {title}
+        </h3>
+        {action}
+      </div>
       {children}
     </div>
   )

@@ -56,6 +56,8 @@ type CosmeticNotificationPayload struct {
 	ItemID     uuid.UUID         `json:"itemId"`
 	// ItemName is copied in so the notification survives a rename of the item.
 	ItemName string `json:"itemName"`
+	// ItemNames translates ItemName, by locale; ItemName stands in for a missing locale.
+	ItemNames CosmeticNames `json:"itemNames,omitempty"`
 	// Colors is set for a name color only, so the bell menu can paint the name without asking for the item.
 	Colors []string `json:"colors,omitempty"`
 	// PrefixImage is set for a name prefix only.

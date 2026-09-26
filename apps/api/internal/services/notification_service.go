@@ -175,6 +175,7 @@ func (s *notificationService) fillCosmetic(ctx context.Context, queries sql.Quer
 			return err
 		}
 		payload.ItemName = nameColor.Name
+		payload.ItemNames = nameColor.Names
 		payload.Colors = nameColor.Metadata.Colors
 		return nil
 	case domain.GrantTypeNamePrefix:
@@ -183,6 +184,7 @@ func (s *notificationService) fillCosmetic(ctx context.Context, queries sql.Quer
 			return err
 		}
 		payload.ItemName = namePrefix.Name
+		payload.ItemNames = namePrefix.Names
 		payload.PrefixImage = namePrefix.Metadata.Image
 		return nil
 	}

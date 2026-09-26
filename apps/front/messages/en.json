@@ -1054,16 +1054,19 @@
       "prefixTokenHint": "The glyth's in-game token, e.g. :glyth_popcat:. Names the file on upload.",
       "preview": "Chat preview",
       "fields": {
-        "name": "Name",
+        "name": "Main name",
         "colors": "Colors",
         "prefix": "Game prefix",
         "image": "Image location",
-        "noSpace": "No space"
+        "noSpace": "No space",
+        "nameRu": "Name in Russian"
       },
       "linkedProduct": "Linked product",
       "linkedProductNone": "This cosmetic isn't linked to any product and can't be purchased.",
       "productActive": "Active",
-      "productDraft": "Draft"
+      "productDraft": "Draft",
+      "nameHint": "Unique. Players see it in English and wherever there is no translation.",
+      "nameRuHint": "Leave blank to show the main name."
     },
     "uploads": {
       "choose": "Choose file",
@@ -1128,6 +1131,12 @@
         "main": "General",
         "texts": "Storefront texts",
         "sale": "Sale"
+      },
+      "autofill": "Autofill",
+      "autofillNeedsCosmetic": "Select a cosmetic first",
+      "defaultDescriptions": {
+        "name-color": "Gradient color for your nickname",
+        "name-prefix": "Icon that appears before your name"
       }
     },
     "announcements": {

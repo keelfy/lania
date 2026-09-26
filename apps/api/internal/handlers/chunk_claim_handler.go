@@ -57,7 +57,7 @@ func (h *chunkClaimHandler) GetChunkClaims(w http.ResponseWriter, r *http.Reques
 		logger.Errorf(ctx, "[PROFILE COSMETICS] Failed to get chunk claim owners cosmetics: %v", err)
 		cosmetics = make(map[uuid.UUID]*domain.ProfileCosmetics)
 	}
-	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentChunkClaims(claims, cosmetics))
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentChunkClaims(claims, cosmetics, utils.GetLocaleFromCtx(ctx)))
 }
 
 func (h *chunkClaimHandler) ClaimChunks(w http.ResponseWriter, r *http.Request) {

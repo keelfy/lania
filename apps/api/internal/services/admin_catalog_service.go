@@ -62,7 +62,7 @@ func catalogWriteError(message string, err error) error {
 }
 
 func (s *adminCatalogService) CreateNameColor(ctx context.Context, cmd *commands.SaveNameColorCommand) (*domain.CosmeticsCatalog, error) {
-	if err := s.storage.Queries().InsertNameColor(ctx, uuid.New(), cmd.Name, cmd.Colors); err != nil {
+	if err := s.storage.Queries().InsertNameColor(ctx, uuid.New(), cmd.Name, cmd.Names, cmd.Colors); err != nil {
 		return nil, catalogWriteError("failed to create name color", err)
 	}
 	return s.GetCosmetics(ctx)
@@ -74,7 +74,7 @@ func (s *adminCatalogService) UpdateNameColor(ctx context.Context, cmd *commands
 	} else if err != nil {
 		return nil, utils.NewInternalServerError("failed to find name color", err)
 	}
-	if err := s.storage.Queries().UpdateNameColor(ctx, cmd.ID, cmd.Name, cmd.Colors); err != nil {
+	if err := s.storage.Queries().UpdateNameColor(ctx, cmd.ID, cmd.Name, cmd.Names, cmd.Colors); err != nil {
 		return nil, catalogWriteError("failed to update name color", err)
 	}
 	return s.GetCosmetics(ctx)
@@ -85,7 +85,7 @@ func prefixMetadata(cmd *commands.SaveNamePrefixCommand) domain.NamePrefixMetada
 }
 
 func (s *adminCatalogService) CreateNamePrefix(ctx context.Context, cmd *commands.SaveNamePrefixCommand) (*domain.CosmeticsCatalog, error) {
-	if err := s.storage.Queries().InsertNamePrefix(ctx, uuid.New(), cmd.Name, prefixMetadata(cmd)); err != nil {
+	if err := s.storage.Queries().InsertNamePrefix(ctx, uuid.New(), cmd.Name, cmd.Names, prefixMetadata(cmd)); err != nil {
 		return nil, catalogWriteError("failed to create name prefix", err)
 	}
 	return s.GetCosmetics(ctx)
@@ -97,7 +97,7 @@ func (s *adminCatalogService) UpdateNamePrefix(ctx context.Context, cmd *command
 	} else if err != nil {
 		return nil, utils.NewInternalServerError("failed to find name prefix", err)
 	}
-	if err := s.storage.Queries().UpdateNamePrefix(ctx, cmd.ID, cmd.Name, prefixMetadata(cmd)); err != nil {
+	if err := s.storage.Queries().UpdateNamePrefix(ctx, cmd.ID, cmd.Name, cmd.Names, prefixMetadata(cmd)); err != nil {
 		return nil, catalogWriteError("failed to update name prefix", err)
 	}
 	return s.GetCosmetics(ctx)

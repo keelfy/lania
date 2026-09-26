@@ -239,7 +239,7 @@ func (h *profileHandler) presentPublicProfiles(ctx context.Context, profiles []*
 			nullableMojangUUID = &mojangUUID
 		}
 
-		res[i] = presenter.PresentPublicProfile(profile, nullableMojangUUID, presenter.PresentProfileCosmetics(cosmetics[profile.ID]), onlineMap[profile.MinecraftUUID], playtimes[profile.MinecraftUUID], seenAt(lastSeenMap, profile.MinecraftUUID))
+		res[i] = presenter.PresentPublicProfile(profile, nullableMojangUUID, presenter.PresentProfileCosmetics(cosmetics[profile.ID], utils.GetLocaleFromCtx(ctx)), onlineMap[profile.MinecraftUUID], playtimes[profile.MinecraftUUID], seenAt(lastSeenMap, profile.MinecraftUUID))
 	}
 	return res
 }
@@ -319,7 +319,7 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 			nullableMojangUUID = &mojangUUID
 		}
 
-		res[i] = presenter.PresentProfile(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), presenter.PresentProfileCosmetics(cosmetics[profile.ID]))
+		res[i] = presenter.PresentProfile(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), presenter.PresentProfileCosmetics(cosmetics[profile.ID], utils.GetLocaleFromCtx(ctx)))
 	}
 
 	utils.WriteHttpJsonResponse(ctx, w, res)
@@ -441,6 +441,6 @@ func (h *profileHandler) writeProfileDetails(w http.ResponseWriter, r *http.Requ
 		logger.Errorf(ctx, "[PROFILE COSMETICS] Failed to get profile cosmetics: %v", err)
 	}
 
-	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), seasonsPlaytimes[profile.MinecraftUUID], isOnline, isModelSlim, presenter.PresentProfileCosmetics(cosmetics[profile.ID]), seenAt(lastSeenMap, profile.MinecraftUUID))
+	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), seasonsPlaytimes[profile.MinecraftUUID], isOnline, isModelSlim, presenter.PresentProfileCosmetics(cosmetics[profile.ID], utils.GetLocaleFromCtx(ctx)), seenAt(lastSeenMap, profile.MinecraftUUID))
 	utils.WriteHttpJsonResponse(ctx, w, res)
 }

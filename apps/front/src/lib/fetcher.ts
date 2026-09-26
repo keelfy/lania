@@ -11,11 +11,16 @@ export async function apiFetcher<T>(
   params: URLSearchParams,
   options: RequestInit = {},
   cookies?: string,
+  locale?: string,
 ): Promise<T> {
   try {
     const headers = new Headers(options.headers)
     if (cookies) {
       headers.set('Cookie', cookies)
+    }
+    // The API names cosmetics in this language. An explicit ?locale= still wins.
+    if (locale && !headers.has('Accept-Language')) {
+      headers.set('Accept-Language', locale)
     }
 
     const url = new URL(baseURL + path)

@@ -2,8 +2,11 @@ package commands
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
+	"slices"
 	"strings"
+	"unicode/utf8"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
@@ -112,15 +115,31 @@ type GrantCosmeticCommand struct {
 	SeasonID   *uuid.UUID
 }
 
+// validCosmeticNames accepts translations into CosmeticNameLocales only, each with a name that fits the storefront.
+var validCosmeticNames = validation.By(func(value any) error {
+	for locale, name := range value.(domain.CosmeticNames) {
+		if !slices.Contains(domain.CosmeticNameLocales, locale) {
+			return fmt.Errorf("locale %q is not supported", locale)
+		}
+		if utf8.RuneCountInString(name) > 255 {
+			return fmt.Errorf("%s: must be at most 255 characters", locale)
+		}
+	}
+	return nil
+})
+
 type SaveNameColorCommand struct {
-	ID     uuid.UUID
-	Name   string
+	ID   uuid.UUID
+	Name string
+	// Names translates Name. A missing locale shows Name.
+	Names  domain.CosmeticNames
 	Colors []string
 }
 
 func (c *SaveNameColorCommand) Validate() error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.Name, validation.Required, validation.Length(1, 255)),
+		validation.Field(&c.Names, validCosmeticNames),
 		validation.Field(&c.Colors, validation.By(func(value any) error {
 			for _, color := range value.([]string) {
 				if !hexColorPattern.MatchString(color) {
@@ -133,8 +152,10 @@ func (c *SaveNameColorCommand) Validate() error {
 }
 
 type SaveNamePrefixCommand struct {
-	ID      uuid.UUID
-	Name    string
+	ID   uuid.UUID
+	Name string
+	// Names translates Name. A missing locale shows Name.
+	Names   domain.CosmeticNames
 	Prefix  string
 	Image   string
 	NoSpace bool
@@ -143,6 +164,7 @@ type SaveNamePrefixCommand struct {
 func (c *SaveNamePrefixCommand) Validate() error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.Name, validation.Required, validation.Length(1, 255)),
+		validation.Field(&c.Names, validCosmeticNames),
 		validation.Field(&c.Prefix, validation.Required),
 		validation.Field(&c.Image, validation.Required, validation.RuneLength(1, 512), validation.Match(imageLocationPattern)),
 	)

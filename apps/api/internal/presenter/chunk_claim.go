@@ -6,8 +6,8 @@ import (
 	"github.com/lania-smp/backend/internal/transport/http/responses"
 )
 
-// PresentChunkClaims lists the owners with their cosmetics; an owner missing from cosmetics wears none.
-func PresentChunkClaims(claims []*domain.ChunkClaim, cosmetics map[uuid.UUID]*domain.ProfileCosmetics) *responses.ChunkClaims {
+// PresentChunkClaims lists the owners with their cosmetics named in the locale; an owner missing from cosmetics wears none.
+func PresentChunkClaims(claims []*domain.ChunkClaim, cosmetics map[uuid.UUID]*domain.ProfileCosmetics, locale string) *responses.ChunkClaims {
 	res := &responses.ChunkClaims{
 		Claims:   make([]*responses.ChunkClaim, len(claims)),
 		Profiles: make([]*responses.ChunkClaimProfile, 0),
@@ -22,7 +22,7 @@ func PresentChunkClaims(claims []*domain.ChunkClaim, cosmetics map[uuid.UUID]*do
 			res.Profiles = append(res.Profiles, &responses.ChunkClaimProfile{
 				ID:        claim.ProfileID,
 				Username:  claim.Profile.MinecraftUsername,
-				Cosmetics: PresentProfileCosmetics(cosmetics[claim.ProfileID]),
+				Cosmetics: PresentProfileCosmetics(cosmetics[claim.ProfileID], locale),
 			})
 		}
 	}

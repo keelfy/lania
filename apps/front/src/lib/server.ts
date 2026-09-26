@@ -1,3 +1,4 @@
+import { getLocale } from 'next-intl/server'
 import { headers } from 'next/headers'
 import { apiFetcher } from './fetcher'
 
@@ -7,5 +8,5 @@ export async function serverApiFetcher<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const cookies = (await headers()).get('cookie') ?? ''
-  return apiFetcher<T>(url, params, options, cookies)
+  return apiFetcher<T>(url, params, options, cookies, await getLocale())
 }

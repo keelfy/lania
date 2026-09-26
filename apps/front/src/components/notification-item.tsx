@@ -58,6 +58,7 @@ function CosmeticItem({
   onOpen,
 }: Props & { notification: CosmeticNotification }) {
   const t = useTranslations('navbar.notifications.items')
+  const locale = useLocale() as Locale
   const { payload } = notification
   const granted = notification.type === 'cosmetic-granted'
   const unread = markUnread && !notification.readAt
@@ -120,7 +121,7 @@ function CosmeticItem({
               )}
             >
               {t(`${granted ? 'granted' : 'revoked'}.${kind}`, {
-                item: payload.itemName,
+                item: payload.itemNames?.[locale] || payload.itemName,
               })}
             </p>
             {payload.seasonName && (

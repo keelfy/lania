@@ -104,17 +104,21 @@ type AdminGrant struct {
 }
 
 type AdminNameColor struct {
-	ID     uuid.UUID `json:"id"`
-	Name   string    `json:"name"`
-	Colors []string  `json:"colors"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	// Names translates Name, by locale; only ru for now. Always an object, empty when none is set.
+	Names  map[string]string `json:"names"`
+	Colors []string          `json:"colors"`
 }
 
 type AdminNamePrefix struct {
-	ID      uuid.UUID `json:"id"`
-	Name    string    `json:"name"`
-	Image   string    `json:"image"`
-	Prefix  string    `json:"prefix"`
-	NoSpace bool      `json:"noSpace"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	// Names translates Name, by locale; only ru for now. Always an object, empty when none is set.
+	Names   map[string]string `json:"names"`
+	Image   string            `json:"image"`
+	Prefix  string            `json:"prefix"`
+	NoSpace bool              `json:"noSpace"`
 }
 
 type AdminCosmeticsCatalog struct {

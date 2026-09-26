@@ -9,8 +9,8 @@ import (
 	"github.com/lania-smp/backend/internal/utils"
 )
 
-// PresentProfileCosmetics shows what a profile wears. A nil cosmetics stands for a profile that could not be read.
-func PresentProfileCosmetics(cosmetics *domain.ProfileCosmetics) *responses.ProfileCosmetics {
+// PresentProfileCosmetics shows what a profile wears, named in the locale. A nil cosmetics stands for a profile that could not be read.
+func PresentProfileCosmetics(cosmetics *domain.ProfileCosmetics, locale string) *responses.ProfileCosmetics {
 	if cosmetics == nil {
 		cosmetics = &domain.ProfileCosmetics{}
 	}
@@ -20,7 +20,7 @@ func PresentProfileCosmetics(cosmetics *domain.ProfileCosmetics) *responses.Prof
 	if nameColor != nil {
 		nameColorResponse = &responses.NameColor{
 			ID:     nameColor.ID,
-			Name:   nameColor.Name,
+			Name:   nameColor.LocalizedName(locale),
 			Colors: nameColor.Metadata.Colors,
 		}
 	}
@@ -28,7 +28,7 @@ func PresentProfileCosmetics(cosmetics *domain.ProfileCosmetics) *responses.Prof
 	if glyth != nil {
 		glythResponse = &responses.NamePrefix{
 			ID:     glyth.ID,
-			Name:   glyth.Name,
+			Name:   glyth.LocalizedName(locale),
 			Prefix: glyth.Metadata.Prefix,
 			Image:  glyth.Metadata.Image,
 		}
@@ -37,7 +37,7 @@ func PresentProfileCosmetics(cosmetics *domain.ProfileCosmetics) *responses.Prof
 	if special != nil {
 		specialResponse = &responses.NamePrefix{
 			ID:     special.ID,
-			Name:   special.Name,
+			Name:   special.LocalizedName(locale),
 			Prefix: special.Metadata.Prefix,
 			Image:  special.Metadata.Image,
 		}
@@ -159,13 +159,13 @@ func PresentProfileStats(stats []*domain.ProfileSeasonStats) *responses.ProfileS
 	return res
 }
 
-func PresentProfileCosmeticOptions(nameColorOptions []*domain.ProfileNameColorOption, glythPrefixOptions []*domain.ProfileNamePrefixOption, specialPrefixOptions []*domain.ProfileNamePrefixOption) *responses.ProfileCosmeticOptions {
+func PresentProfileCosmeticOptions(nameColorOptions []*domain.ProfileNameColorOption, glythPrefixOptions []*domain.ProfileNamePrefixOption, specialPrefixOptions []*domain.ProfileNamePrefixOption, locale string) *responses.ProfileCosmeticOptions {
 	nameColors := make([]*responses.ProfileNameColorOption, len(nameColorOptions))
 	for i, profileNameColor := range nameColorOptions {
 		nameColors[i] = &responses.ProfileNameColorOption{
 			ID:          profileNameColor.ID,
 			NameColorID: profileNameColor.NameColorID,
-			Name:        profileNameColor.NameColor.Name,
+			Name:        profileNameColor.NameColor.LocalizedName(locale),
 			Colors:      profileNameColor.NameColor.Metadata.Colors,
 			ProfileID:   profileNameColor.ProfileID,
 			ForSeasonID: profileNameColor.ForSeasonID,
@@ -176,7 +176,7 @@ func PresentProfileCosmeticOptions(nameColorOptions []*domain.ProfileNameColorOp
 		glyths[i] = &responses.ProfileNamePrefixOption{
 			ID:           profileNamePrefix.ID,
 			NamePrefixID: profileNamePrefix.NamePrefixID,
-			Name:         profileNamePrefix.NamePrefix.Name,
+			Name:         profileNamePrefix.NamePrefix.LocalizedName(locale),
 			Prefix:       profileNamePrefix.NamePrefix.Metadata.Prefix,
 			Image:        profileNamePrefix.NamePrefix.Metadata.Image,
 			ProfileID:    profileNamePrefix.ProfileID,
@@ -188,7 +188,7 @@ func PresentProfileCosmeticOptions(nameColorOptions []*domain.ProfileNameColorOp
 		specials[i] = &responses.ProfileNamePrefixOption{
 			ID:           profileNamePrefix.ID,
 			NamePrefixID: profileNamePrefix.NamePrefixID,
-			Name:         profileNamePrefix.NamePrefix.Name,
+			Name:         profileNamePrefix.NamePrefix.LocalizedName(locale),
 			Prefix:       profileNamePrefix.NamePrefix.Metadata.Prefix,
 			Image:        profileNamePrefix.NamePrefix.Metadata.Image,
 			ProfileID:    profileNamePrefix.ProfileID,

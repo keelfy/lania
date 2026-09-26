@@ -137,6 +137,13 @@ func PresentAdminGrants(grants []*domain.Grant) []*responses.AdminGrant {
 	return res
 }
 
+func presentCosmeticNames(names domain.CosmeticNames) map[string]string {
+	if names == nil {
+		return map[string]string{}
+	}
+	return names
+}
+
 func PresentAdminCosmeticsCatalog(catalog *domain.CosmeticsCatalog) *responses.AdminCosmeticsCatalog {
 	res := &responses.AdminCosmeticsCatalog{
 		NameColors:   make([]*responses.AdminNameColor, len(catalog.NameColors)),
@@ -147,10 +154,10 @@ func PresentAdminCosmeticsCatalog(catalog *domain.CosmeticsCatalog) *responses.A
 		if colors == nil {
 			colors = []string{}
 		}
-		res.NameColors[i] = &responses.AdminNameColor{ID: nameColor.ID, Name: nameColor.Name, Colors: colors}
+		res.NameColors[i] = &responses.AdminNameColor{ID: nameColor.ID, Name: nameColor.Name, Names: presentCosmeticNames(nameColor.Names), Colors: colors}
 	}
 	for i, namePrefix := range catalog.NamePrefixes {
-		res.NamePrefixes[i] = &responses.AdminNamePrefix{ID: namePrefix.ID, Name: namePrefix.Name, Image: namePrefix.Metadata.Image, Prefix: namePrefix.Metadata.Prefix, NoSpace: namePrefix.Metadata.NoSpace}
+		res.NamePrefixes[i] = &responses.AdminNamePrefix{ID: namePrefix.ID, Name: namePrefix.Name, Names: presentCosmeticNames(namePrefix.Names), Image: namePrefix.Metadata.Image, Prefix: namePrefix.Metadata.Prefix, NoSpace: namePrefix.Metadata.NoSpace}
 	}
 	return res
 }

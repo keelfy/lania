@@ -128,16 +128,23 @@ export type GrantProductReq = {
   seasonId: string
 }
 
+// Translations of the main name, by locale. The main name stands in for a missing one.
+export type CosmeticNames = Partial<Record<'ru', string>>
+
 export type AdminNameColor = {
   id: string
+  // Unique main name, shown in English and wherever a translation is missing.
   name: string
+  names: CosmeticNames
   // Gradient stops, empty for a plain color.
   colors: string[]
 }
 
 export type AdminNamePrefix = {
   id: string
+  // Unique main name, shown in English and wherever a translation is missing.
   name: string
+  names: CosmeticNames
   image: string
   prefix: string
   noSpace: boolean
@@ -158,10 +165,10 @@ export type GrantCosmeticReq = {
   seasonId?: string
 }
 
-export type SaveNameColor = Pick<AdminNameColor, 'name' | 'colors'>
+export type SaveNameColor = Pick<AdminNameColor, 'name' | 'names' | 'colors'>
 export type SaveNamePrefix = Pick<
   AdminNamePrefix,
-  'name' | 'prefix' | 'image' | 'noSpace'
+  'name' | 'names' | 'prefix' | 'image' | 'noSpace'
 >
 
 export type AdminProductLocalization = {

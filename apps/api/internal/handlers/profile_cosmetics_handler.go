@@ -120,7 +120,7 @@ func (h *profileCosmeticsHandler) GetProfileCosmeticOptions(w http.ResponseWrite
 		}
 	}
 
-	res := presenter.PresentProfileCosmeticOptions(nameColorOptions, glythPrefixOptions, specialPrefixOptions)
+	res := presenter.PresentProfileCosmeticOptions(nameColorOptions, glythPrefixOptions, specialPrefixOptions, utils.GetLocaleFromCtx(ctx))
 	utils.WriteHttpJsonResponse(ctx, w, res)
 }
 

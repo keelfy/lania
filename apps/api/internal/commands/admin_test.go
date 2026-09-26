@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -68,6 +69,10 @@ func TestSaveNameColorCommand_Validate(t *testing.T) {
 		{"valid gradient", SaveNameColorCommand{Name: "Forest", Colors: []string{"#16A34A", "#22C55E"}}, false},
 		{"plain color", SaveNameColorCommand{Name: "Default"}, false},
 		{"invalid color", SaveNameColorCommand{Name: "Forest", Colors: []string{"green"}}, true},
+		{"russian name", SaveNameColorCommand{Name: "Forest", Names: domain.CosmeticNames{"ru": "Лес"}}, false},
+		{"english is the main name", SaveNameColorCommand{Name: "Forest", Names: domain.CosmeticNames{"en": "Forest"}}, true},
+		{"unsupported locale", SaveNameColorCommand{Name: "Forest", Names: domain.CosmeticNames{"de": "Wald"}}, true},
+		{"too long name", SaveNameColorCommand{Name: "Forest", Names: domain.CosmeticNames{"ru": strings.Repeat("л", 256)}}, true},
 	}
 
 	for _, tt := range tests {
@@ -94,6 +99,7 @@ func TestSaveNamePrefixCommand_Validate(t *testing.T) {
 		{"unsupported scheme", SaveNamePrefixCommand{Name: "Popcat", Prefix: ":glyth_popcat:", Image: "ftp://bucket/popcat.png"}, true},
 		{"blank image", SaveNamePrefixCommand{Name: "Popcat", Prefix: ":glyth_popcat:"}, true},
 		{"blank prefix", SaveNamePrefixCommand{Name: "Popcat", Image: "s3://bucket/glyth_preview/popcat.png"}, true},
+		{"unsupported locale", SaveNamePrefixCommand{Name: "Popcat", Names: domain.CosmeticNames{"es": "Gato"}, Prefix: ":glyth_popcat:", Image: "s3://bucket/glyth_preview/popcat.png"}, true},
 	}
 
 	for _, tt := range tests {

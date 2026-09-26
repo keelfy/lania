@@ -68,15 +68,19 @@ type SaveSeasonScreenshot struct {
 }
 
 type SaveNameColor struct {
-	Name   string   `json:"name"`
-	Colors []string `json:"colors"`
+	Name string `json:"name"`
+	// Names translates Name, by locale; only ru for now.
+	Names  map[string]string `json:"names"`
+	Colors []string          `json:"colors"`
 }
 
 type SaveNamePrefix struct {
-	Name    string `json:"name"`
-	Prefix  string `json:"prefix"`
-	Image   string `json:"image"`
-	NoSpace bool   `json:"noSpace"`
+	Name string `json:"name"`
+	// Names translates Name, by locale; only ru for now.
+	Names   map[string]string `json:"names"`
+	Prefix  string            `json:"prefix"`
+	Image   string            `json:"image"`
+	NoSpace bool              `json:"noSpace"`
 }
 
 type SaveProductLocalization struct {
