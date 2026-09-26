@@ -3,9 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Minecraft Rus by BOGDAN: the game font with Cyrillic. Scaled to the metrics of the previous Minecraft.ttf,
+   so the text keeps its size and baseline. */
 @font-face {
   font-family: 'Minecraft';
-  src: url('/fonts/Minecraft.ttf') format('truetype');
+  src: url('/fonts/MinecraftRus.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
 }
