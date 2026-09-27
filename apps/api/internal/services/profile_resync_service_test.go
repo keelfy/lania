@@ -25,6 +25,7 @@ type resyncMinecraft struct {
 	prefixWrites map[uuid.UUID]int
 	roleErr      map[uuid.UUID]error
 	prefixErr    map[uuid.UUID]error
+	streamers    map[uuid.UUID]bool
 	seasonErr    map[uuid.UUID]error
 }
 
@@ -32,6 +33,13 @@ func (m *resyncMinecraft) SetPlayerRolesInSeason(_ context.Context, seasonID uui
 	m.roles = roles
 	m.roleWrites[seasonID]++
 	return m.roleErr[seasonID]
+}
+
+func (m *resyncMinecraft) SetPlayerStreamersInSeason(_ context.Context, _ uuid.UUID, streamers map[uuid.UUID]bool) error {
+	for mcUUID, isStreamer := range streamers {
+		m.streamers[mcUUID] = isStreamer
+	}
+	return nil
 }
 
 func (m *resyncMinecraft) SetPrefixInSeason(_ context.Context, seasonID, _ uuid.UUID, prefix string) error {
@@ -80,6 +88,7 @@ func newResyncMinecraft() *resyncMinecraft {
 		roleWrites:   make(map[uuid.UUID]int),
 		prefixWrites: make(map[uuid.UUID]int),
 		prefixes:     make(map[uuid.UUID]string),
+		streamers:    make(map[uuid.UUID]bool),
 	}
 }
 

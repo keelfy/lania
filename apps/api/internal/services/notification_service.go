@@ -33,6 +33,9 @@ type NotificationService interface {
 	// NotifyProfileMerged tells the owner of the target profile that an admin moved sourceUsername's data into it.
 	// A profile without an owner is skipped. A failure is logged, not returned, so a notification never undoes the merge.
 	NotifyProfileMerged(ctx context.Context, queries sql.Queries, profile *domain.Profile, sourceUsername string)
+	// NotifyStreamer tells the owner of the profile about the streamer role: approved, rejected with reason or
+	// revoked. A profile without an owner is skipped. A failure is logged, not returned.
+	NotifyStreamer(ctx context.Context, queries sql.Queries, profile *domain.Profile, notificationType domain.NotificationType, reason string)
 }
 
 type notificationService struct {
@@ -163,6 +166,31 @@ func (s *notificationService) NotifyProfileMerged(ctx context.Context, queries s
 	})
 	if err != nil {
 		logger.Errorf(ctx, "failed to store a profile merge notification for user %s: %v", *profile.OwnerUserID, err)
+	}
+}
+
+func (s *notificationService) NotifyStreamer(ctx context.Context, queries sql.Queries, profile *domain.Profile, notificationType domain.NotificationType, reason string) {
+	if profile == nil || profile.OwnerUserID == nil {
+		return
+	}
+
+	payloadJSON, err := json.Marshal(domain.StreamerNotificationPayload{
+		ProfileID:       profile.ID,
+		ProfileUsername: profile.MinecraftUsername,
+		Reason:          reason,
+	})
+	if err != nil {
+		logger.Errorf(ctx, "failed to build the payload of a streamer notification: %v", err)
+		return
+	}
+
+	err = queries.InsertNotification(ctx, sql.InsertNotificationParams{
+		UserID:  *profile.OwnerUserID,
+		Type:    notificationType,
+		Payload: payloadJSON,
+	})
+	if err != nil {
+		logger.Errorf(ctx, "failed to store a streamer notification for user %s: %v", *profile.OwnerUserID, err)
 	}
 }
 

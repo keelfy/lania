@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -107,6 +108,7 @@ func (s *profileResyncService) ResyncProfile(ctx context.Context, profileID uuid
 
 	// What cannot be read is a failure of its part on every server, not a reason to skip the servers.
 	accessed, accessErr := s.accessedSeasons(ctx, profile)
+	streamers, streamerErr := s.profileService.GetStreamerProfileIDs(ctx, uuid.UUIDs{profile.ID})
 
 	report := &domain.ProfileResync{}
 	for _, season := range seasons {
@@ -115,7 +117,13 @@ func (s *profileResyncService) ResyncProfile(ctx context.Context, profileID uuid
 			continue
 		}
 
+		// The streamer group is a part of the role: both are groups on the server.
 		roleErr := s.minecraftService.SetPlayerRolesInSeason(ctx, season.ID, map[uuid.UUID]domain.Role{profile.MinecraftUUID: profile.Role})
+		if streamerErr != nil {
+			roleErr = errors.Join(roleErr, streamerErr)
+		} else {
+			roleErr = errors.Join(roleErr, s.minecraftService.SetPlayerStreamersInSeason(ctx, season.ID, map[uuid.UUID]bool{profile.MinecraftUUID: streamers[profile.ID]}))
+		}
 		// Every season keeps its own selection, so the prefix is built for each one.
 		prefix, cosmeticsErr := s.profileCosmeticsService.GetProfileChatPrefix(ctx, profile.ID, season.ID)
 		if cosmeticsErr == nil {
@@ -172,6 +180,9 @@ func (s *profileResyncService) MoveProfileOnServers(ctx context.Context, profile
 			}
 			if err := s.minecraftService.SetPlayerRolesInSeason(ctx, season.ID, map[uuid.UUID]domain.Role{old.MinecraftUUID: domain.RolePlayer}); err != nil {
 				logger.Errorf(ctx, "[PROFILE RESYNC] Failed to reset the role of old uuid %s of profile %s in season %s: %v", old.MinecraftUUID, profileID, season.ID, err)
+			}
+			if err := s.minecraftService.SetPlayerStreamersInSeason(ctx, season.ID, map[uuid.UUID]bool{old.MinecraftUUID: false}); err != nil {
+				logger.Errorf(ctx, "[PROFILE RESYNC] Failed to take old uuid %s of profile %s out of the streamer group in season %s: %v", old.MinecraftUUID, profileID, season.ID, err)
 			}
 			if err := s.minecraftService.SetPrefixInSeason(ctx, season.ID, old.MinecraftUUID, ""); err != nil {
 				logger.Errorf(ctx, "[PROFILE RESYNC] Failed to clear the prefix of old uuid %s of profile %s in season %s: %v", old.MinecraftUUID, profileID, season.ID, err)

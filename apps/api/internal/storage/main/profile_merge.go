@@ -232,6 +232,21 @@ const moveProfileUsernameChanges = `
 UPDATE profile_username_changes SET profile_id = ? WHERE profile_id = ?
 `
 
+// The streamer role of the source moves only when the target has none: the target's own card wins.
+// The merge service stamps the target's role, so role sync pushes the streamer group of the merged profile.
+const dropDuplicateStreamer = `
+DELETE FROM streamers
+WHERE profile_id = ? AND EXISTS (SELECT 1 FROM (SELECT profile_id FROM streamers WHERE profile_id = ?) existing)
+`
+
+const moveStreamer = `
+UPDATE streamers SET profile_id = ? WHERE profile_id = ?
+`
+
+const moveStreamerApplications = `
+UPDATE streamer_applications SET profile_id = ? WHERE profile_id = ?
+`
+
 // An open verification request of the source is dropped: it proves nothing for the target's UUID.
 const deleteSourceVerification = `
 DELETE FROM profile_verifications WHERE profile_id = ?
@@ -334,6 +349,16 @@ func (q *queries) MergeProfileData(ctx context.Context, sourceProfileID, sourceM
 		return nil, err
 	}
 	if _, err = execAffected(ctx, x, moveProfileUsernameChanges, targetProfileID, sourceProfileID); err != nil {
+		return nil, err
+	}
+
+	if _, err = execAffected(ctx, x, dropDuplicateStreamer, sourceProfileID, targetProfileID); err != nil {
+		return nil, err
+	}
+	if _, err = execAffected(ctx, x, moveStreamer, targetProfileID, sourceProfileID); err != nil {
+		return nil, err
+	}
+	if _, err = execAffected(ctx, x, moveStreamerApplications, targetProfileID, sourceProfileID); err != nil {
 		return nil, err
 	}
 

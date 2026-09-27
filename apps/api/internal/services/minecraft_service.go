@@ -34,6 +34,12 @@ type MinecraftService interface {
 	ListOnlineInSeason(ctx context.Context, seasonID uuid.UUID) (uuid.UUIDs, error)
 	// SetPlayerRoles writes the roles to every active server. Every server is tried, even when one fails.
 	SetPlayerRoles(ctx context.Context, roles map[uuid.UUID]domain.Role) error
+	// SetPlayerStreamers puts the players into the streamer group of every active server, or takes them out of it.
+	// Other groups stay. Every server is tried, even when one fails.
+	SetPlayerStreamers(ctx context.Context, streamers map[uuid.UUID]bool) error
+	// SetPlayerStreamersInSeason is SetPlayerStreamers for the server of one season. It does nothing when the
+	// season has no shell address, because it has no server yet.
+	SetPlayerStreamersInSeason(ctx context.Context, seasonID uuid.UUID, streamers map[uuid.UUID]bool) error
 	// SetPrefixInSeason writes the prefix to the server of one season. It does nothing when the season has
 	// no shell address, because it has no server yet.
 	SetPrefixInSeason(ctx context.Context, seasonID, mcUUID uuid.UUID, prefix string) error
@@ -167,13 +173,35 @@ func roleGroupsFor(roles map[uuid.UUID]domain.Role) (roleGroups []string, groups
 	return roleGroups, groups
 }
 
+// streamerGroupsFor maps the players to the streamer group. The streamer group is apart from the staff groups,
+// so pushing it leaves the staff group of the player as it is.
+func streamerGroupsFor(streamers map[uuid.UUID]bool) (roleGroups []string, groups map[uuid.UUID]string) {
+	groups = make(map[uuid.UUID]string, len(streamers))
+	for mcUUID, isStreamer := range streamers {
+		group := ""
+		if isStreamer {
+			group = domain.StreamerGroup
+		}
+		groups[mcUUID] = group
+	}
+	return []string{domain.StreamerGroup}, groups
+}
+
 func (s *minecraftService) SetPlayerRoles(ctx context.Context, roles map[uuid.UUID]domain.Role) error {
+	roleGroups, groups := roleGroupsFor(roles)
+	return s.setGroupsOnActiveShells(ctx, roleGroups, groups)
+}
+
+func (s *minecraftService) SetPlayerStreamers(ctx context.Context, streamers map[uuid.UUID]bool) error {
+	roleGroups, groups := streamerGroupsFor(streamers)
+	return s.setGroupsOnActiveShells(ctx, roleGroups, groups)
+}
+
+func (s *minecraftService) setGroupsOnActiveShells(ctx context.Context, roleGroups []string, groups map[uuid.UUID]string) error {
 	apis, err := s.activeShells(ctx)
 	if err != nil {
 		return err
 	}
-
-	roleGroups, groups := roleGroupsFor(roles)
 
 	// Every server is tried, so one server down does not keep the others on the old roles.
 	var failures []error
@@ -202,13 +230,22 @@ func (s *minecraftService) SetPrefixInSeason(ctx context.Context, seasonID, mcUU
 }
 
 func (s *minecraftService) SetPlayerRolesInSeason(ctx context.Context, seasonID uuid.UUID, roles map[uuid.UUID]domain.Role) error {
+	roleGroups, groups := roleGroupsFor(roles)
+	return s.setGroupsInSeason(ctx, seasonID, roleGroups, groups)
+}
+
+func (s *minecraftService) SetPlayerStreamersInSeason(ctx context.Context, seasonID uuid.UUID, streamers map[uuid.UUID]bool) error {
+	roleGroups, groups := streamerGroupsFor(streamers)
+	return s.setGroupsInSeason(ctx, seasonID, roleGroups, groups)
+}
+
+func (s *minecraftService) setGroupsInSeason(ctx context.Context, seasonID uuid.UUID, roleGroups []string, groups map[uuid.UUID]string) error {
 	api, err := s.seasonShell(ctx, seasonID)
 	if errors.Is(err, errSeasonHasNoShell) {
 		return nil
 	} else if err != nil {
 		return err
 	}
-	roleGroups, groups := roleGroupsFor(roles)
 	if err := api.SetPlayerRoles(ctx, roleGroups, groups); err != nil {
 		return utils.NewInternalServerError("failed to set player roles", err)
 	}

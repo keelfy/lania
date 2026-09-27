@@ -77,10 +77,11 @@ func (r Role) Valid() bool {
 	return false
 }
 
-// ProfileRole is the role of one player.
+// ProfileRole is the role of one player. The streamer role goes next to any other role.
 type ProfileRole struct {
 	MinecraftUUID uuid.UUID
 	Role          Role
+	IsStreamer    bool
 }
 
 // StaffRoles are the roles that make a profile part of the server staff.

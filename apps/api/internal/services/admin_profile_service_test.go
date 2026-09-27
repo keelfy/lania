@@ -14,6 +14,18 @@ type stubProfileService struct {
 	ProfileService
 	profiles map[uuid.UUID]*domain.Profile
 	setCalls int
+	// streamers are the profiles with the streamer role.
+	streamers map[uuid.UUID]bool
+}
+
+func (s *stubProfileService) GetStreamerProfileIDs(_ context.Context, profileIDs uuid.UUIDs) (map[uuid.UUID]bool, error) {
+	res := make(map[uuid.UUID]bool)
+	for _, profileID := range profileIDs {
+		if s.streamers[profileID] {
+			res[profileID] = true
+		}
+	}
+	return res, nil
 }
 
 func (s *stubProfileService) GetProfileByID(_ context.Context, id uuid.UUID) (*domain.Profile, error) {

@@ -63,10 +63,15 @@ func (s *roleSyncService) syncRoles(ctx context.Context) error {
 	}
 
 	roles := make(map[uuid.UUID]domain.Role, len(changes))
+	streamers := make(map[uuid.UUID]bool, len(changes))
 	for _, change := range changes {
 		roles[change.MinecraftUUID] = change.Role
+		streamers[change.MinecraftUUID] = change.IsStreamer
 	}
-	if err := s.minecraftService.SetPlayerRoles(ctx, roles); err != nil {
+	// The streamer group goes even when the staff groups fail: they are apart on the server.
+	rolesErr := s.minecraftService.SetPlayerRoles(ctx, roles)
+	streamersErr := s.minecraftService.SetPlayerStreamers(ctx, streamers)
+	if err := errors.Join(rolesErr, streamersErr); err != nil {
 		return err
 	}
 
