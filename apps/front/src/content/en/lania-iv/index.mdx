@@ -1,4 +1,66 @@
-# Введение
+import { Cards } from 'nextra/components/cards'
+import { ALargeSmallIcon, CommandIcon, ShieldIcon, AppWindowMacIcon, FrameIcon, SmileIcon, TextIcon, GamepadIcon, BoxIcon } from 'lucide-react'
+import { Callout } from 'nextra/components/callout'
+import { PickaxeIcon } from 'lucide-react'
 
-Это база знаний сети серверов Lania. Здесь вы, скорее всего, найдете ответы на большинство ваших вопросов. 
-Если вы не нашли интересующую вас тему, то можете обратиться в нашу [поддержку](/support).
+# Introduction
+
+This is the knowledge base of the Lania server network. You will most likely find answers to most of your questions here.
+
+<br/><Cards.Card
+  icon={<ShieldIcon />}
+  title="Read the rules of the game servers"
+  href="/en/wiki/rules"
+  arrow
+/>
+<br/><Cards.Card
+  icon={<CommandIcon />}
+  title="See which commands are available to players"
+  href="/en/wiki/lania-iv/commands"
+  arrow
+/>
+<br/><Cards.Card
+  icon={<TextIcon />}
+  title="Learn how to format your chat messages"
+  href="/en/wiki/lania-iv/formatting"
+  arrow
+/>
+
+### Game content
+
+<br/><Cards.Card
+  icon={<PickaxeIcon />}
+  title="Quality-of-life features made for the server"
+  href="/en/wiki/lania-iv/gameplay/qol"
+  arrow
+/>
+<br/><Cards.Card
+  icon={<FrameIcon />}
+  title="How to use invisible item frames"
+  href="/en/wiki/lania-iv/gameplay/frames"
+  arrow
+/>
+<br/><Cards.Card
+  icon={<SmileIcon />}
+  title="How to see and send 7TV emotes in chat"
+  href="/en/wiki/lania-iv/gameplay/streamotes"
+  arrow
+/>
+<br/><Cards.Card
+  icon={<AppWindowMacIcon />}
+  title="How to format text on signs"
+  href="/en/wiki/lania-iv/gameplay/signs"
+  arrow
+/>
+<br/><Cards.Card
+  icon={<BoxIcon />}
+  title="How to get mini blocks for building"
+  href="/en/wiki/lania-iv/gameplay/miniblocks"
+  arrow
+/>
+
+<br/>
+
+<Callout type="info">
+If you can't find the topic you're looking for, contact our [support](/en/support).
+</Callout>

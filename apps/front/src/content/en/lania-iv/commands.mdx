@@ -1,8 +1,271 @@
-# Команды
+import { Table } from 'nextra/components'
 
-На этой странице перечислены все команды, доступные игрокам на сервере
+# Commands
 
-# Сервера
+This page lists all commands available to players on the server.
 
-| Команды | Описание |
-| - | :- | -: | :-: |
+## Server
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td>`/hub`</Table.Td>
+      <Table.Td>Takes you to the server lobby.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/ping [player]`</Table.Td>
+      <Table.Td>Shows your ping or another player's ping.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/ar`</Table.Td>
+      <Table.Td>Shows when the server restarts next.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/register {password} {password}`</Table.Td>
+      <Table.Td>Registers you on the server when you join for the first time.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/login {password}`</Table.Td>
+      <Table.Td>Logs you in on the server (required once a week, as long as your location hasn't changed).</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Character
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/togglearmor`</Table.Td>
+      <Table.Td>Toggles whether other players can see your armor.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/sit`</Table.Td>
+      <Table.Td>Makes you sit on the block below you (or stand back up).</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/sit toggle`</Table.Td>
+      <Table.Td>Toggles sitting on a block with right-click.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/lay`</Table.Td>
+      <Table.Td>Makes you lie down on the block below you (or get back up).</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/spin`</Table.Td>
+      <Table.Td>Toggles the spinning animation of your character.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/crawl`</Table.Td>
+      <Table.Td>Toggles crawling.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/bellyflop`</Table.Td>
+      <Table.Td>Drops you flat on the block below you (almost like `/crawl`, but with a slightly different pose and you can't move).</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Skins
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/skins`</Table.Td>
+      <Table.Td>Opens the skin menu, including a skin catalog.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/skin set {player}`</Table.Td>
+      <Table.Td>Sets your skin to the skin of a licensed account by nickname.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/skin url {link}`</Table.Td>
+      <Table.Td>
+        Sets your skin from a link. The link must point to a `.png` file.
+        Learn more in [this article](https://skinsrestorer.net/docs/features/skin-url).
+      </Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/skin clear`</Table.Td>
+      <Table.Td>Resets your skin to the default one (or to your licensed skin).</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/skin update`</Table.Td>
+      <Table.Td>Refreshes your skin. Useful if you changed the skin on your licensed account but it hasn't updated on the server.</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+
+## Chat
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/m {player} {message}`
+      </Table.Td>
+      <Table.Td>Sends a private message to another player.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/r`
+      </Table.Td>
+      <Table.Td>Replies to the last private message.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>
+        `/translateto {source language} {target language} {message}`
+      </Table.Td>
+      <Table.Td>
+        Translates a message into the target language and sends it to chat.
+
+        Example: `/translateto ru en Привет, как дела?` → `Hello, how are you?`
+
+        [Available language codes](https://localizely.com/iso-639-1-list/).
+      </Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/ignore {player}`
+      </Table.Td>
+      <Table.Td>Ignores all messages from a player (run the command again to stop ignoring them).</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/ignorelist`
+      </Table.Td>
+      <Table.Td>Shows the players you are ignoring.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/mail {player} {message}`
+      </Table.Td>
+      <Table.Td>Sends mail to a player who is offline. They will see it when they join the server.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/clearmail {id}`
+      </Table.Td>
+      <Table.Td>Deletes the sent mail with the given id.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/do`
+      </Table.Td>
+      <Table.Td>Styles the message as a roleplay action.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/me`
+      </Table.Td>
+      <Table.Td>Styles the message as a roleplay message.</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Contacting staff
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/report {context} {reason}`</Table.Td>
+      <Table.Td>
+        Reports something to the staff (creates a support ticket).
+        
+        You can specify a player who breaks the rules, or just the server where you ran into a problem.
+
+        *Please describe the reason for your report in as much detail as possible.*
+      </Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Utilities
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/afk`</Table.Td>
+      <Table.Td>Toggles AFK mode (shown as a tag after your name in the player list).</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/ball`</Table.Td>
+      <Table.Td>Asks the magic ball a question and gets a ~~random~~ predetermined answer.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/coin`</Table.Td>
+      <Table.Td>Flips a coin (heads or tails).</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/dice {1-6}`</Table.Td>
+      <Table.Td>Rolls a die (1 to 6).</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/try {message}`</Table.Td>
+      <Table.Td>Sends a message to chat followed by a random success percentage.</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Fun
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/rps {player}`
+      </Table.Td>
+      <Table.Td>Challenges a player to rock-paper-scissors.</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
