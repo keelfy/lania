@@ -2,9 +2,12 @@ import {
   AppWindowMacIcon,
   BoxIcon,
   BugIcon,
+  CookingPotIcon,
+  FlameIcon,
   FrameIcon,
   LightbulbIcon,
   MilestoneIcon,
+  PawPrintIcon,
   PickaxeIcon,
   SmileIcon,
 } from 'lucide-react'
@@ -16,6 +19,30 @@ const meta: MetaRecord = {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <PickaxeIcon size={14} />
         <p>Удобства</p>
+      </div>
+    ),
+  },
+  cauldrons: {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <CookingPotIcon size={14} />
+        <p>Котлы</p>
+      </div>
+    ),
+  },
+  mobs: {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <PawPrintIcon size={14} />
+        <p>Мобы</p>
+      </div>
+    ),
+  },
+  'nether-portals': {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <FlameIcon size={14} />
+        <p>Порталы в Нижний мир</p>
       </div>
     ),
   },
