@@ -19,8 +19,8 @@ type Profile struct {
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`
 	// Verified: the owner proved in game that the licensed account is theirs.
 	Verified bool `json:"verified"`
-	// UsernameChangeAvailableAt is when the owner of an unlicensed profile can change the nickname again,
-	// absent when the owner can now.
+	// UsernameChangeAvailableAt is when the owner can move to an unlicensed nickname again (a change of one, or
+	// leaving the license), absent when the owner can now.
 	UsernameChangeAvailableAt *int64 `json:"usernameChangeAvailableAt,omitempty"`
 	// UsernameChangeCooldownDays is how long the owner of an unlicensed profile waits after a change, absent
 	// when there is no cooldown.

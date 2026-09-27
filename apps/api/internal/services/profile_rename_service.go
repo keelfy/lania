@@ -35,7 +35,9 @@ const (
 type ProfileRenameService interface {
 	// ChangeOwnedUsername renames the profile for its owner. A licensed profile takes only the current name of its
 	// Mojang account. An unlicensed one takes a nickname nobody holds and no Mojang account has, once per cooldown.
-	ChangeOwnedUsername(ctx context.Context, userID, profileID uuid.UUID, username string) (*domain.Profile, error)
+	// unlicensed makes a licensed profile take such a nickname as well, for an owner who does not own the account:
+	// the Mojang UUID is left free for its real owner. A verified licensed profile cannot do it.
+	ChangeOwnedUsername(ctx context.Context, userID, profileID uuid.UUID, username string, unlicensed bool) (*domain.Profile, error)
 	// GetUsernameChangeAvailableAt returns when the owner can change the nickname again, for the profiles still in
 	// the cooldown after the owner's last change. Other profiles are absent.
 	GetUsernameChangeAvailableAt(ctx context.Context, profileIDs uuid.UUIDs) (map[uuid.UUID]time.Time, error)
@@ -76,6 +78,9 @@ type profileRename struct {
 	newMcUUID uuid.UUID
 	source    domain.ProfileUsernameChangeSource
 	changedBy *uuid.UUID
+	// leavesLicense is a licensed profile moving to an unlicensed nickname. The Mojang UUID it leaves is not its
+	// own, so it is not kept as a former UUID: no playtime under it counts, and its owner can take the nickname.
+	leavesLicense bool
 }
 
 // licensed tells whether the profile keeps its UUID, which only a licensed account does.
@@ -83,7 +88,7 @@ func (r *profileRename) licensed() bool {
 	return r.newMcUUID == r.before.MinecraftUUID
 }
 
-func (s *profileRenameService) ChangeOwnedUsername(ctx context.Context, userID, profileID uuid.UUID, username string) (*domain.Profile, error) {
+func (s *profileRenameService) ChangeOwnedUsername(ctx context.Context, userID, profileID uuid.UUID, username string, unlicensed bool) (*domain.Profile, error) {
 	username = strings.TrimSpace(username)
 	if !mojangUsernameRegexp.MatchString(username) {
 		return nil, utils.NewBadRequestError("a nickname is 3 to 16 latin letters, digits or underscores", nil)
@@ -107,8 +112,13 @@ func (s *profileRenameService) ChangeOwnedUsername(ctx context.Context, userID, 
 		return nil, utils.NewInternalServerError("failed to get the mojang uuid of the profile", err)
 	}
 	rename := &profileRename{before: profile, source: domain.ProfileUsernameChangeSourceOwner, changedBy: &userID}
+	licensed := mojangUUIDs[profile.MinecraftUUID] == profile.MinecraftUUID
+	// The owner proved in game the account is theirs, so they cannot say it is not.
+	if licensed && unlicensed && profile.VerifiedAt != nil {
+		return nil, utils.NewConflictError("the licensed account of the profile is verified as the owner's", nil)
+	}
 
-	if mojangUUIDs[profile.MinecraftUUID] == profile.MinecraftUUID {
+	if licensed && !unlicensed {
 		// The name comes from Mojang, in the case Mojang has it; the owner only confirms it.
 		name, err := s.mojangService.LookupUsernameByMojangUUID(ctx, profile.MinecraftUUID)
 		if err != nil {
@@ -132,7 +142,7 @@ func (s *profileRenameService) ChangeOwnedUsername(ctx context.Context, userID, 
 	if mojangUUID != nil {
 		return nil, utils.NewConflictError("the nickname belongs to a licensed Minecraft account", nil)
 	}
-	rename.username, rename.newMcUUID = username, gameUUID
+	rename.username, rename.newMcUUID, rename.leavesLicense = username, gameUUID, licensed
 	return s.rename(ctx, rename)
 }
 
@@ -213,8 +223,10 @@ func (s *profileRenameService) rename(ctx context.Context, rename *profileRename
 			if err := queries.DeleteProfileFormerUUID(ctx, rename.newMcUUID, profileID); err != nil {
 				return utils.NewInternalServerError("failed to take the former uuid back", err)
 			}
-			if err := queries.InsertProfileFormerUUID(ctx, rename.before.MinecraftUUID, profileID); err != nil {
-				return utils.NewInternalServerError("failed to keep the former uuid", err)
+			if !rename.leavesLicense {
+				if err := queries.InsertProfileFormerUUID(ctx, rename.before.MinecraftUUID, profileID); err != nil {
+					return utils.NewInternalServerError("failed to keep the former uuid", err)
+				}
 			}
 			// The lookup row followed the UUID, and the nickname was just checked to have no Mojang account.
 			if err := queries.UpsertProfileMojangUUID(ctx, rename.newMcUUID, nil); err != nil {
@@ -244,7 +256,7 @@ func (s *profileRenameService) rename(ctx context.Context, rename *profileRename
 		return nil, err
 	}
 
-	logger.Infof(ctx, "[PROFILE RENAME] Profile %s renamed from %s (%s) to %s (%s) by %s", profileID, rename.before.MinecraftUsername, rename.before.MinecraftUUID, rename.username, rename.newMcUUID, rename.source)
+	logger.Infof(ctx, "[PROFILE RENAME] Profile %s renamed from %s (%s) to %s (%s) by %s, left the license: %t", profileID, rename.before.MinecraftUsername, rename.before.MinecraftUUID, rename.username, rename.newMcUUID, rename.source, rename.leavesLicense)
 	s.profileResyncService.MoveProfileOnServers(ctx, profileID, rename.before)
 	return renamed, nil
 }

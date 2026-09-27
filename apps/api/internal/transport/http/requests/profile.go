@@ -13,6 +13,8 @@ type SelectCosmeticOption struct {
 
 type ChangeProfileUsername struct {
 	Username string `json:"username"`
+	// Unlicensed moves a licensed profile to an unlicensed nickname: its owner does not own the Minecraft account.
+	Unlicensed bool `json:"unlicensed"`
 }
 
 type SetProfilePassword struct {

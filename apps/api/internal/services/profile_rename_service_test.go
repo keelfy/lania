@@ -205,7 +205,9 @@ func TestChangeOwnedUsername(t *testing.T) {
 		// arrange changes the setup before the call; it returns the profile renamed and the nickname asked for.
 		arrange func(t *testing.T, s *setup) (*domain.Profile, string)
 		mojang  *renameMojang
-		status  int
+		// unlicensed asks a licensed profile to move to an unlicensed nickname.
+		unlicensed bool
+		status     int
 		// check runs after a successful rename.
 		check func(t *testing.T, s *setup, renamed *domain.Profile)
 	}{
@@ -279,6 +281,66 @@ func TestChangeOwnedUsername(t *testing.T) {
 			check: func(t *testing.T, s *setup, _ *domain.Profile) {
 				if len(s.queries.conflicts) != 1 || s.queries.conflicts[0] != s.other.MinecraftUUID {
 					t.Errorf("conflicts = %v, want the holder marked", s.queries.conflicts)
+				}
+			},
+		},
+		{
+			name:       "licensed profile leaves the license for an unlicensed nickname",
+			arrange:    func(_ *testing.T, s *setup) (*domain.Profile, string) { return s.licensed, "pirate" },
+			unlicensed: true,
+			check: func(t *testing.T, s *setup, renamed *domain.Profile) {
+				newUUID := offlineUUID(t, "pirate")
+				if renamed.MinecraftUUID != newUUID || renamed.MinecraftUsername != "pirate" {
+					t.Errorf("renamed to %s (%s), want pirate at its offline uuid", renamed.MinecraftUsername, renamed.MinecraftUUID)
+				}
+				if len(s.queries.formerUUIDs) != 0 {
+					t.Errorf("former uuids = %v, want the mojang uuid left free", s.queries.formerUUIDs)
+				}
+				if lookup, ok := s.queries.mojangUUIDs[newUUID]; !ok || lookup != nil {
+					t.Errorf("mojang lookup of the new uuid = %v, want stored as not found", lookup)
+				}
+				if len(s.queries.changes) != 1 || s.queries.changes[0].OldMinecraftUUID != licensedUUID {
+					t.Errorf("changes = %+v, want one change away from the mojang uuid", s.queries.changes)
+				}
+				holders, _ := s.queries.FindProfileIDsHoldingMinecraftUUID(context.Background(), licensedUUID)
+				if len(holders) != 0 {
+					t.Errorf("holders of the mojang uuid = %v, want none", holders)
+				}
+			},
+		},
+		{
+			name: "verified licensed profile cannot leave the license",
+			arrange: func(_ *testing.T, s *setup) (*domain.Profile, string) {
+				verifiedAt := now.Add(-time.Hour)
+				s.licensed.VerifiedAt = &verifiedAt
+				return s.licensed, "pirate"
+			},
+			unlicensed: true,
+			status:     http.StatusConflict,
+		},
+		{
+			name:       "licensed profile cannot leave the license for a licensed nickname",
+			arrange:    func(_ *testing.T, s *setup) (*domain.Profile, string) { return s.licensed, "Notch" },
+			unlicensed: true,
+			status:     http.StatusConflict,
+		},
+		{
+			name: "leaving the license waits for the cooldown",
+			arrange: func(_ *testing.T, s *setup) (*domain.Profile, string) {
+				last := now.Add(-24 * time.Hour)
+				s.queries.lastOwnerAt = &last
+				return s.licensed, "pirate"
+			},
+			unlicensed: true,
+			status:     http.StatusTooManyRequests,
+		},
+		{
+			name:       "the flag changes nothing for an offline profile",
+			arrange:    func(_ *testing.T, s *setup) (*domain.Profile, string) { return s.offline, "brandnew" },
+			unlicensed: true,
+			check: func(t *testing.T, s *setup, _ *domain.Profile) {
+				if s.queries.formerUUIDs[offlineUUID(t, "freenick")] != s.offline.ID {
+					t.Errorf("former uuids = %v, want the old uuid kept for the profile", s.queries.formerUUIDs)
 				}
 			},
 		},
@@ -365,7 +427,7 @@ func TestChangeOwnedUsername(t *testing.T) {
 				service.mojangService = tt.mojang
 			}
 
-			renamed, err := service.ChangeOwnedUsername(ctx, owner, profile.ID, username)
+			renamed, err := service.ChangeOwnedUsername(ctx, owner, profile.ID, username, tt.unlicensed)
 
 			if tt.status != 0 {
 				if utils.MapCustomErrorToHttpStatus(err) != tt.status {

@@ -2,9 +2,11 @@
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Card,
   CardAction,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -22,7 +24,7 @@ import { changeProfileUsername } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
 import { Profile } from '@/models/profile'
-import { PencilIcon, TriangleAlertIcon } from 'lucide-react'
+import { PencilIcon, TriangleAlertIcon, UnlinkIcon } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React from 'react'
@@ -37,16 +39,24 @@ const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,16}$/
 
 // Changes the nickname of the profile. A licensed profile follows the name of its Minecraft account, which the site
 // also picks up by itself. An unlicensed one becomes a new player in game, so the dialog says what stays behind.
+// The owner of a licensed profile who does not own the account can move it to an unlicensed nickname instead,
+// unless they verified the account as theirs.
 export default function ProfileUsernameCard({ profile }: Props) {
   const t = useTranslations('profiles.username')
   const locale = useLocale()
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
   const [username, setUsername] = React.useState('')
+  // leavingLicense: the dialog moves a licensed profile to an unlicensed nickname.
+  const [leavingLicense, setLeavingLicense] = React.useState(false)
+  const [acknowledged, setAcknowledged] = React.useState(false)
   const [isSaving, startSaving] = React.useTransition()
 
   const licensed = !!profile.mojangUuid && profile.mojangUuid === profile.mcUuid
-  const availableAt = licensed ? undefined : profile.usernameChangeAvailableAt
+  // The dialog follows the Mojang name of a licensed account, unless the owner leaves the license.
+  const followsMojang = licensed && !leavingLicense
+  // Only an unlicensed change waits for the cooldown, leaving the license included.
+  const availableAt = profile.usernameChangeAvailableAt
   const availableDate =
     availableAt &&
     new Date(availableAt).toLocaleDateString(locale, {
@@ -57,10 +67,15 @@ export default function ProfileUsernameCard({ profile }: Props) {
       timeZone: 'UTC',
     })
   const trimmed = username.trim()
-  const valid = USERNAME_PATTERN.test(trimmed) && trimmed !== profile.username
+  const valid =
+    USERNAME_PATTERN.test(trimmed) &&
+    trimmed !== profile.username &&
+    (!leavingLicense || acknowledged)
 
-  const openDialog = () => {
+  const openDialog = (leaveLicense: boolean) => {
     setUsername('')
+    setLeavingLicense(leaveLicense)
+    setAcknowledged(false)
     setOpen(true)
   }
 
@@ -69,7 +84,12 @@ export default function ProfileUsernameCard({ profile }: Props) {
     if (!valid) return
     startSaving(async () => {
       try {
-        await changeProfileUsername(clientApiFetcher, profile.id, trimmed)
+        await changeProfileUsername(
+          clientApiFetcher,
+          profile.id,
+          trimmed,
+          leavingLicense,
+        )
         setOpen(false)
         toast.success(t('success', { username: trimmed }))
         router.refresh()
@@ -84,22 +104,42 @@ export default function ProfileUsernameCard({ profile }: Props) {
       <CardHeader>
         <CardTitle className="text-lg">{t('title')}</CardTitle>
         <CardDescription>
-          {availableDate
-            ? t('availableAt', { date: availableDate })
-            : t(licensed ? 'licensedDescription' : 'description')}
+          {licensed
+            ? t('licensedDescription')
+            : availableDate
+              ? t('availableAt', { date: availableDate })
+              : t('description')}
         </CardDescription>
         <CardAction>
           <Button
             variant="outline"
             size="sm"
-            onClick={openDialog}
-            disabled={!!availableDate}
+            onClick={() => openDialog(false)}
+            disabled={!licensed && !!availableDate}
           >
             <PencilIcon className="size-4" />
             {t('open')}
           </Button>
         </CardAction>
       </CardHeader>
+      {licensed && !profile.verified && (
+        <CardContent className="flex flex-col items-start gap-2">
+          <p className="text-muted-foreground text-sm">
+            {availableDate
+              ? t('leaveLicense.availableAt', { date: availableDate })
+              : t('leaveLicense.description')}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openDialog(true)}
+            disabled={!!availableDate}
+          >
+            <UnlinkIcon className="size-4" />
+            {t('leaveLicense.open')}
+          </Button>
+        </CardContent>
+      )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -107,20 +147,35 @@ export default function ProfileUsernameCard({ profile }: Props) {
               {t('dialogTitle', { username: profile.username })}
             </DialogTitle>
             <DialogDescription>
-              {t(licensed ? 'licensedDialogDescription' : 'dialogDescription')}
+              {t(
+                followsMojang
+                  ? 'licensedDialogDescription'
+                  : 'dialogDescription',
+              )}
             </DialogDescription>
           </DialogHeader>
-          {!licensed && (
+          {!followsMojang && (
             <Alert variant="destructive">
               <TriangleAlertIcon />
               <AlertTitle>{t('warning.title')}</AlertTitle>
               <AlertDescription>
                 <ul className="list-disc space-y-1 pl-4">
+                  {leavingLicense && (
+                    <li>
+                      {t('leaveLicense.released', {
+                        username: profile.username,
+                      })}
+                    </li>
+                  )}
                   <li>{t('warning.progress')}</li>
                   <li>{t('warning.password')}</li>
-                  <li>
-                    {t('warning.reserved', { username: profile.username })}
-                  </li>
+                  {leavingLicense ? (
+                    <li>{t('leaveLicense.playtime')}</li>
+                  ) : (
+                    <li>
+                      {t('warning.reserved', { username: profile.username })}
+                    </li>
+                  )}
                   {!!profile.usernameChangeCooldownDays && (
                     <li>
                       {t('warning.cooldown', {
@@ -145,12 +200,24 @@ export default function ProfileUsernameCard({ profile }: Props) {
               className="font-mono"
             />
             <p className="text-muted-foreground mt-2 text-xs">{t('hint')}</p>
+            {leavingLicense && (
+              <label className="mt-4 flex items-start gap-2 text-sm">
+                <Checkbox
+                  checked={acknowledged}
+                  onCheckedChange={(checked) =>
+                    setAcknowledged(checked === true)
+                  }
+                  className="mt-0.5"
+                />
+                {t('leaveLicense.acknowledge', { username: profile.username })}
+              </label>
+            )}
           </form>
           <DialogFooter>
             <Button
               type="submit"
               form="profile-username-form"
-              variant={licensed ? 'default' : 'destructive'}
+              variant={followsMojang ? 'default' : 'destructive'}
               disabled={!valid || isSaving}
             >
               {t('submit')}
