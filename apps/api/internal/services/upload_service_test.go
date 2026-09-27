@@ -3,6 +3,7 @@ package services
 import (
 	"bytes"
 	"context"
+	"errors"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -18,6 +19,7 @@ type fakeObjectStorage struct {
 	putKey   string
 	putBody  []byte
 	putCalls int
+	objects  map[string][]byte
 }
 
 func (s *fakeObjectStorage) Bucket() string { return s.bucket }
@@ -27,6 +29,14 @@ func (s *fakeObjectStorage) PutObject(_ context.Context, key string, body []byte
 	s.putKey = key
 	s.putBody = body
 	return nil
+}
+
+func (s *fakeObjectStorage) GetObject(_ context.Context, key string) ([]byte, error) {
+	body, ok := s.objects[key]
+	if !ok {
+		return nil, errors.New("NoSuchKey")
+	}
+	return body, nil
 }
 
 func encodePNG(t *testing.T, width, height int) []byte {

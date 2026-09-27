@@ -794,6 +794,11 @@ export function uploadGlythPreview(
   })
 }
 
+// A zip with the ItemsAdder contents folder for every glyth prefix.
+export function getGlythPack(fetcher: ApiFetcher): Promise<Blob> {
+  return fetcher<Blob>('/v1/admin/cosmetics/glyth-pack')
+}
+
 export function getAdminProducts(fetcher: ApiFetcher): Promise<AdminProduct[]> {
   return fetcher('/v1/admin/products')
 }

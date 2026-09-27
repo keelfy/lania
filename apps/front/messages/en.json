@@ -1077,6 +1077,8 @@
       "create": "Create",
       "createColor": "New color",
       "createPrefix": "New prefix",
+      "downloadGlythPack": "Glyth pack",
+      "downloadGlythPackFailed": "Could not build the glyth pack",
       "empty": "Nothing found",
       "edit": "Edit",
       "save": "Save changes",

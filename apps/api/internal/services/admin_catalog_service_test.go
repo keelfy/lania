@@ -21,6 +21,7 @@ type fakeCatalogQueries struct {
 	deleted   []uuid.UUID
 	deleteErr error
 	owners    int
+	prefixes  []*domain.NamePrefix
 }
 
 func (q *fakeCatalogQueries) FindNameColorByID(_ context.Context, id uuid.UUID) (*domain.NameColor, error) {
@@ -44,7 +45,7 @@ func (q *fakeCatalogQueries) FindNameColors(context.Context) ([]*domain.NameColo
 }
 
 func (q *fakeCatalogQueries) FindNamePrefixes(context.Context) ([]*domain.NamePrefix, error) {
-	return nil, nil
+	return q.prefixes, nil
 }
 
 func (q *fakeCatalogQueries) FindAdminProducts(context.Context) ([]*domain.Product, error) {

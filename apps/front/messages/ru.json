@@ -1076,6 +1076,8 @@
       "create": "Создать",
       "createColor": "Новый цвет",
       "createPrefix": "Новый префикс",
+      "downloadGlythPack": "Пак глифов",
+      "downloadGlythPackFailed": "Не удалось собрать пак глифов",
       "empty": "Ничего не найдено",
       "edit": "Редактировать",
       "save": "Сохранить",

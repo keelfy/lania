@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 
@@ -27,15 +28,17 @@ type AdminCatalogHandler interface {
 	UpdateProduct(http.ResponseWriter, *http.Request)
 	DeleteProduct(http.ResponseWriter, *http.Request)
 	CreateEasyDonateProduct(http.ResponseWriter, *http.Request)
+	GetGlythPack(http.ResponseWriter, *http.Request)
 }
 
 type adminCatalogHandler struct {
 	service           services.AdminCatalogService
 	easyDonateService services.EasyDonateService
+	glythPackService  services.GlythPackService
 }
 
-func NewAdminCatalogHandler(service services.AdminCatalogService, easyDonateService services.EasyDonateService) AdminCatalogHandler {
-	return &adminCatalogHandler{service: service, easyDonateService: easyDonateService}
+func NewAdminCatalogHandler(service services.AdminCatalogService, easyDonateService services.EasyDonateService, glythPackService services.GlythPackService) AdminCatalogHandler {
+	return &adminCatalogHandler{service: service, easyDonateService: easyDonateService, glythPackService: glythPackService}
 }
 
 func (h *adminCatalogHandler) GetCosmetics(w http.ResponseWriter, r *http.Request) {
@@ -219,4 +222,18 @@ func (h *adminCatalogHandler) CreateEasyDonateProduct(w http.ResponseWriter, r *
 		return
 	}
 	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentEasyDonateProduct(easyDonateProductID))
+}
+
+// GetGlythPack downloads the ItemsAdder contents folder for the glyth prefixes as a zip.
+func (h *adminCatalogHandler) GetGlythPack(w http.ResponseWriter, r *http.Request) {
+	pack, err := h.glythPackService.BuildGlythPack(r.Context())
+	if err != nil {
+		utils.HttpError(r.Context(), w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", `attachment; filename="glyth.zip"`)
+	w.Header().Set("Content-Length", strconv.Itoa(len(pack)))
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(pack)
 }

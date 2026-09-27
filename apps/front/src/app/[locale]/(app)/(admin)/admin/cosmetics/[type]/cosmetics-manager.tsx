@@ -28,6 +28,7 @@ import {
   createNamePrefix,
   deleteNameColor,
   deleteNamePrefix,
+  getGlythPack,
   updateNameColor,
   updateNamePrefix,
   uploadGlythPreview,
@@ -42,7 +43,7 @@ import {
   CosmeticNames,
 } from '@/models/admin'
 import { CURRENCY_SYMBOLS, Currency } from '@/lib/currency'
-import { PlusIcon, ShoppingBagIcon } from 'lucide-react'
+import { DownloadIcon, PlusIcon, ShoppingBagIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -189,10 +190,13 @@ export default function CosmeticsManager({
       <AdminPageHeader
         title={title}
         actions={
-          <Button onClick={() => startCreate(type)}>
-            <PlusIcon />
-            {t(type === 'color' ? 'createColor' : 'createPrefix')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {type === 'prefix' && <GlythPackButton t={t} />}
+            <Button onClick={() => startCreate(type)}>
+              <PlusIcon />
+              {t(type === 'color' ? 'createColor' : 'createPrefix')}
+            </Button>
+          </div>
         }
       />
 
@@ -377,6 +381,34 @@ function RuNameField({
       />
       <FieldDescription>{t('nameRuHint')}</FieldDescription>
     </Field>
+  )
+}
+
+// Downloads the ItemsAdder contents/glyth folder the API builds from every glyth prefix.
+function GlythPackButton({ t }: { t: ReturnType<typeof useTranslations> }) {
+  const [isPending, startTransition] = React.useTransition()
+
+  function download() {
+    startTransition(async () => {
+      try {
+        const pack = await getGlythPack(clientApiFetcher)
+        const url = URL.createObjectURL(pack)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = 'glyth.zip'
+        link.click()
+        URL.revokeObjectURL(url)
+      } catch (error) {
+        errorToast(t('downloadGlythPackFailed'), error)
+      }
+    })
+  }
+
+  return (
+    <Button variant="outline" onClick={download} disabled={isPending}>
+      <DownloadIcon />
+      {t('downloadGlythPack')}
+    </Button>
   )
 }
 

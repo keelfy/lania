@@ -3,6 +3,7 @@ package clients
 import (
 	"bytes"
 	"context"
+	"io"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -10,11 +11,12 @@ import (
 	"github.com/lania-smp/backend/internal/config"
 )
 
-// ObjectStorage writes image objects to the project's S3 bucket. Reads go through imgproxy, which
-// has its own credentials, so this interface is deliberately write-only.
+// ObjectStorage writes image objects to the project's S3 bucket. Pages read them through imgproxy,
+// which has its own credentials; GetObject is only for server-side exports like the glyth pack.
 type ObjectStorage interface {
 	Bucket() string
 	PutObject(ctx context.Context, key string, body []byte, contentType string) error
+	GetObject(ctx context.Context, key string) ([]byte, error)
 }
 
 type objectStorage struct {
@@ -54,4 +56,16 @@ func (s *objectStorage) PutObject(ctx context.Context, key string, body []byte, 
 		ContentType: aws.String(contentType),
 	})
 	return err
+}
+
+func (s *objectStorage) GetObject(ctx context.Context, key string) ([]byte, error) {
+	out, err := s.client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer out.Body.Close()
+	return io.ReadAll(out.Body)
 }

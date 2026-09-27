@@ -32,10 +32,12 @@ export async function apiFetcher<T>(
     })
     const contentType = response.headers.get('Content-Type')
 
-    let body: object | string | undefined = undefined
+    let body: object | string | Blob | undefined = undefined
 
     if (contentType?.includes('application/json')) {
       body = await response.json()
+    } else if (contentType?.includes('application/zip')) {
+      body = await response.blob()
     } else {
       body = await response.text()
     }

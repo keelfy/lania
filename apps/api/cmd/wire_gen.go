@@ -80,7 +80,14 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	adminGrantHandler := handlers.NewAdminGrantHandler(adminGrantService)
 	adminOrderHandler := handlers.NewAdminOrderHandler(orderService)
 	adminCatalogService := services.NewAdminCatalogService(mainStorage)
-	adminCatalogHandler := handlers.NewAdminCatalogHandler(adminCatalogService, easyDonateService)
+	objectStorage, err := clients.NewObjectStorage(ctx)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	glythPackService := services.NewGlythPackService(mainStorage, objectStorage)
+	adminCatalogHandler := handlers.NewAdminCatalogHandler(adminCatalogService, easyDonateService, glythPackService)
 	seasonHandler := handlers.NewSeasonHandler(seasonService)
 	seasonWorldService := services.NewSeasonWorldService(mainStorage, seasonService)
 	seasonWorldHandler := handlers.NewSeasonWorldHandler(seasonWorldService)
@@ -90,12 +97,6 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	notificationHandler := handlers.NewNotificationHandler(notificationService, announcementService)
 	accountService := services.NewAccountService(mainStorage, oryAPI, profileService, profileCosmeticsService, profileResyncService)
 	accountHandler := handlers.NewAccountHandler(accountService)
-	objectStorage, err := clients.NewObjectStorage(ctx)
-	if err != nil {
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
 	uploadService := services.NewUploadService(objectStorage)
 	uploadHandler := handlers.NewUploadHandler(uploadService)
 	playerSyncService := services.NewPlayerSyncService(mainStorage, seasonService, minecraftService)

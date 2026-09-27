@@ -33,4 +33,5 @@ var ProviderSet = wire.NewSet(
 	NewAccountService,
 	NewEasyDonateService,
 	NewUploadService,
+	NewGlythPackService,
 )
