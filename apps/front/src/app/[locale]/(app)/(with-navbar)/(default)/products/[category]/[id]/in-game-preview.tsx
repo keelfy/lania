@@ -61,14 +61,14 @@ export default function InGamePreview({
     <figure
       aria-label={t('label')}
       className={cn(
-        'font-minecraft relative flex min-h-80 flex-col justify-between gap-6 overflow-hidden rounded-lg p-3 text-white select-none sm:p-4',
+        'font-minecraft relative flex min-h-96 flex-col justify-between gap-6 overflow-hidden rounded-lg p-3 text-white select-none sm:p-4',
         // Daylight sky over a strip of grass and dirt.
         'bg-[linear-gradient(to_bottom,#78a7ff_0%,#b5cfff_78%,#5d9b3a_78%,#5d9b3a_81%,#7a5535_81%)]',
         className,
       )}
       {...props}
     >
-      <div className="mx-auto w-full max-w-64 bg-black/45 p-0.5 text-sm">
+      <div className="mx-auto w-full max-w-80 bg-black/45 p-0.5 text-base sm:text-lg">
         {['Alex', look.username, 'Steve'].map((username, index) => (
           <div
             key={index}
@@ -76,7 +76,7 @@ export default function InGamePreview({
           >
             <PlayerFace
               player={index === 1 ? profile : undefined}
-              className="size-3.5 shrink-0 [image-rendering:pixelated]"
+              className="size-[1em] shrink-0 [image-rendering:pixelated]"
             />
             {index === 1 ? (
               <NameTag {...look} className="min-w-0" />
@@ -88,16 +88,16 @@ export default function InGamePreview({
       </div>
 
       <div className="flex flex-col items-center gap-2">
-        <div className="max-w-full bg-black/30 px-1.5 text-lg">
+        <div className="max-w-full bg-black/30 px-1.5 text-xl sm:text-2xl">
           <NameTag {...look} className="max-w-full" />
         </div>
         <PlayerFace
           player={profile}
-          className="size-16 shadow-[0_10px_0_-4px_rgba(0,0,0,0.25)] [image-rendering:pixelated]"
+          className="size-20 shadow-[0_10px_0_-4px_rgba(0,0,0,0.25)] [image-rendering:pixelated]"
         />
       </div>
 
-      <div className="w-fit max-w-full bg-black/45 px-1 py-0.5 text-sm leading-relaxed">
+      <div className="w-fit max-w-full bg-black/45 px-1.5 py-0.5 text-base leading-relaxed sm:text-xl">
         <div className="flex min-w-0 items-center">
           <NameTag {...look} className="min-w-0" />
           &#58;&nbsp;
