@@ -1,15 +1,19 @@
 import DeerIcon from '@/components/icons/DeerIcon'
 import { getMetadataLocale } from '@/i18n/metadata-locale'
 import { LOCALE_NAMES, LOCALES } from '@/lib/locale'
+import { getWikiSeasons } from '@/lib/wiki-seasons'
 import { HeartIcon } from 'lucide-react'
 import { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
-import { Footer, Layout, Navbar } from 'nextra-theme-docs'
+import type { PageMapItem } from 'nextra'
+import { Footer, Navbar } from 'nextra-theme-docs'
 import 'nextra-theme-docs/style.css'
 import { Button, Head } from 'nextra/components'
 import { getPageMap } from 'nextra/page-map'
 import { footerLegalLinkd, footerSocialLinks } from '../(app)/components/footer'
+import { SeasonSelect } from './components/season-select'
+import { SeasonalLayout } from './components/seasonal-layout'
 
 type Props = {
   params: Promise<{
@@ -35,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // const banner = <Banner storageKey="some-key">Nextra 4.0 is released 🎉</Banner>
-const navbar = (
+const navbar = (children: React.ReactNode) => (
   <Navbar
     logo={
       <>
@@ -55,7 +59,9 @@ const navbar = (
         </p>
       </>
     }
-  />
+  >
+    {children}
+  </Navbar>
 )
 
 const footer = (
@@ -206,6 +212,9 @@ export default async function WikiLayout({
   const pageMap = (await getPageMap(`/${locale}/wiki`)).filter(
     (ele) => !('name' in ele && ele.name === '[locale]'),
   )
+  const seasons = await getWikiSeasons(
+    pageMap.flatMap((item) => ('children' in item ? [item.name] : [])),
+  )
 
   return (
     <html
@@ -221,7 +230,8 @@ export default async function WikiLayout({
         <meta name="description" content={t('wiki.metadata.description')} />
       </Head>
       <body>
-        <Layout
+        <SeasonalLayout
+          seasons={seasons}
           darkMode={false}
           i18n={LOCALES.map((l) => ({
             locale: l.toString(),
@@ -236,15 +246,30 @@ export default async function WikiLayout({
             system: t('common.theme.system'),
           }}
           // banner={banner}
-          navbar={navbar}
+          navbar={navbar(
+            <SeasonSelect
+              seasons={seasons}
+              routes={collectRoutes(pageMap)}
+              label={t('wiki.season.label')}
+              currentTemplate={t.raw('wiki.season.current')}
+            />,
+          )}
           pageMap={pageMap}
           docsRepositoryBase="https://github.com/shuding/nextra/tree/main/docs"
           footer={footer}
           // ... Your additional layout options
         >
           {children}
-        </Layout>
+        </SeasonalLayout>
       </body>
     </html>
   )
+}
+
+// Every page route of the wiki, to tell whether a season has a page.
+function collectRoutes(items: PageMapItem[]): string[] {
+  return items.flatMap((item) => [
+    ...('route' in item ? [item.route] : []),
+    ...('children' in item ? collectRoutes(item.children) : []),
+  ])
 }

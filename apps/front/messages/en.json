@@ -113,7 +113,12 @@
       "description": "Wiki for the Lania Network."
     },
     "description": "Wiki for the Lania Network.",
-    "backToTop": "Back to top"
+    "backToTop": "Back to top",
+    "season": {
+      "label": "Wiki season",
+      "current": "{name} (current)",
+      "archived": "This is the wiki of {name}, a finished season. For up-to-date information see the <link>{current} wiki</link>."
+    }
   },
   "products": {
     "metadata": {

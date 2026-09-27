@@ -112,7 +112,12 @@
       "title": "База знаний - Lania Network",
       "description": "База знаний сервера Lania."
     },
-    "backToTop": "Наверх"
+    "backToTop": "Наверх",
+    "season": {
+      "label": "Сезон вики",
+      "current": "{name} (текущий)",
+      "archived": "Это вики сезона {name}, он уже завершён. Актуальная информация в <link>вики {current}</link>."
+    }
   },
   "products": {
     "metadata": {
