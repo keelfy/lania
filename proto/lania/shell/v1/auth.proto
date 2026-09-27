@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package lania.shell.v1;
+
+// AuthService manages the in-game login of unlicensed players (NavAuth on the proxy).
+service AuthService {
+  // SetPassword replaces the password of a registered unlicensed player and turns off its two-factor login.
+  // It fails with NOT_FOUND when the player never registered in game, and with FAILED_PRECONDITION when the
+  // player logs in with a licensed account and has no password. The player is kicked, so whoever is in game under
+  // the nickname has to log in with the new password.
+  rpc SetPassword(SetPasswordRequest) returns (SetPasswordResponse);
+}
+
+message SetPasswordRequest {
+  string minecraft_uuid = 1;
+  // bcrypt hash of the new password, so the password itself never leaves the API.
+  string password_bcrypt = 2;
+  // Names the player to kick.
+  string minecraft_username = 3;
+}
+
+message SetPasswordResponse {}

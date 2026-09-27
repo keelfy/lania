@@ -62,6 +62,8 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	profileVerificationService := services.NewProfileVerificationService(mainStorage)
 	profileVerificationHandler := handlers.NewProfileVerificationHandler(profileVerificationService)
 	profileRenameHandler := handlers.NewProfileRenameHandler(profileRenameService)
+	profilePasswordService := services.NewProfilePasswordService(mainStorage, accessService, seasonService, minecraftService)
+	profilePasswordHandler := handlers.NewProfilePasswordHandler(profilePasswordService)
 	productHandler := handlers.NewProductHandler(productService)
 	notificationService := services.NewNotificationService(mainStorage)
 	fulfillmentService := services.NewFulfillmentService(accessService, profileCosmeticsService, profileService, notificationService)
@@ -103,7 +105,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	uploadHandler := handlers.NewUploadHandler(uploadService)
 	playerSyncService := services.NewPlayerSyncService(mainStorage, seasonService, minecraftService)
 	roleSyncService := services.NewRoleSyncService(mainStorage, minecraftService)
-	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, profileVerificationHandler, profileRenameHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminOrderHandler, adminCatalogHandler, seasonHandler, seasonWorldHandler, chunkClaimHandler, notificationHandler, accountHandler, uploadHandler, mojangService, playerSyncService, roleSyncService, profileRenameService, oryAPI)
+	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, profileVerificationHandler, profileRenameHandler, profilePasswordHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminOrderHandler, adminCatalogHandler, seasonHandler, seasonWorldHandler, chunkClaimHandler, notificationHandler, accountHandler, uploadHandler, mojangService, playerSyncService, roleSyncService, profileRenameService, oryAPI)
 	return laniaAPI, func() {
 		cleanup2()
 		cleanup()

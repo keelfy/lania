@@ -21,6 +21,7 @@ import {
 import NameColorOptionSelect from '../name-color-option-select'
 import NameGlythOptionSelect from '../name-glyth-option-select'
 import CosmeticsSeasonSelect from './cosmetics-season-select'
+import ProfilePasswordCard from './profile-password-card'
 import ProfileUsernameCard from './profile-username-card'
 
 type Props = {
@@ -53,6 +54,15 @@ export default async function ProfileSettingsPage({
       ? ((await loadProfileInSeason(primaryProfile.id, cosmeticSeason.id)) ??
         primaryProfile)
       : primaryProfile
+  // A licensed profile logs in with its Minecraft account and has no password in game.
+  const licensed =
+    !!primaryProfile.mojangUuid &&
+    primaryProfile.mojangUuid === primaryProfile.mcUuid
+  const passwordSeasons = cosmeticSeasons.filter((season) =>
+    primaryProfile.accesses.some(
+      (access) => access.seasonId === season.id && access.status === 'active',
+    ),
+  )
   const cosmeticOptions = await loadCosmeticOptions(
     selectedProfile.id,
     cosmeticSeason?.id,
@@ -142,6 +152,13 @@ export default async function ProfileSettingsPage({
         </CardContent>
       </Card>
       <ProfileUsernameCard key={primaryProfile.id} profile={primaryProfile} />
+      {!licensed && (
+        <ProfilePasswordCard
+          key={`password-${primaryProfile.id}`}
+          profile={primaryProfile}
+          seasons={passwordSeasons}
+        />
+      )}
     </>
   )
 }

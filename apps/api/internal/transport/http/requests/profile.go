@@ -15,6 +15,11 @@ type ChangeProfileUsername struct {
 	Username string `json:"username"`
 }
 
+type SetProfilePassword struct {
+	SeasonID uuid.UUID `json:"seasonId"`
+	Password string    `json:"password"`
+}
+
 type ConfirmProfileVerification struct {
 	Code string `json:"code"`
 }

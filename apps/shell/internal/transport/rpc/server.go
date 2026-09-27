@@ -22,6 +22,7 @@ func NewServer(
 	playerHandler *PlayerHandler,
 	permissionHandler *PermissionHandler,
 	whitelistHandler *WhitelistHandler,
+	authHandler *AuthHandler,
 ) *grpc.Server {
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -33,6 +34,7 @@ func NewServer(
 	shellv1.RegisterPlayerServiceServer(server, playerHandler)
 	shellv1.RegisterPermissionServiceServer(server, permissionHandler)
 	shellv1.RegisterWhitelistServiceServer(server, whitelistHandler)
+	shellv1.RegisterAuthServiceServer(server, authHandler)
 	healthpb.RegisterHealthServer(server, health.NewServer())
 
 	return server

@@ -7,4 +7,5 @@ var ProviderSet = wire.NewSet(
 	NewPlanStorage,
 	NewFlectoneStorage,
 	NewLuckpermsStorage,
+	NewNavAuthStorage,
 )

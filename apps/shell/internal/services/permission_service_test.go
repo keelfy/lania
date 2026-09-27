@@ -56,7 +56,7 @@ func (c *stubConsole) Execute(_ context.Context, command string) (string, error)
 
 func TestSetPlayerPrefix(t *testing.T) {
 	mcUUID := uuid.MustParse("0f0c2a3e-5a4b-4d4c-9f6e-3b1a2c3d4e5f")
-	clear := "lp user " + mcUUID.String() + " meta clear prefix"
+	clear := "lpv user " + mcUUID.String() + " meta clear prefix"
 
 	tests := []struct {
 		name         string
@@ -71,7 +71,7 @@ func TestSetPlayerPrefix(t *testing.T) {
 			prefix: "<red>[A] ",
 			wantCommands: []string{
 				clear,
-				"lp user " + mcUUID.String() + ` meta addprefix 100 "<red>[A] "`,
+				"lpv user " + mcUUID.String() + ` meta addprefix 100 "<red>[A] "`,
 			},
 		},
 		{name: "empty prefix only clears", wantCommands: []string{clear}},

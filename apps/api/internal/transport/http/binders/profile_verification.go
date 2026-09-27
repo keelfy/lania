@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/transport/http/requests"
 	"github.com/lania-smp/backend/internal/utils"
 )
@@ -20,6 +21,17 @@ func BindChangeProfileUsername(r *http.Request) (*requests.ChangeProfileUsername
 	req := &requests.ChangeProfileUsername{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+	return req, nil
+}
+
+func BindSetProfilePassword(r *http.Request) (*requests.SetProfilePassword, error) {
+	req := &requests.SetProfilePassword{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+	if req.SeasonID == uuid.Nil {
+		return nil, utils.NewBadRequestError("seasonId is required", nil)
 	}
 	return req, nil
 }

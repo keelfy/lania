@@ -8,10 +8,15 @@ import (
 	"github.com/lania-smp/backend/internal/clients"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/utils"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // errSeasonHasNoShell means the season has no shell address, so its server cannot be reached.
 var errSeasonHasNoShell = errors.New("season has no shell address")
+
+// ErrPlayerNotRegistered means the player never registered in game, so there is no password to replace.
+var ErrPlayerNotRegistered = errors.New("player is not registered in game")
 
 // ErrOnlineUnavailable means nobody can tell who is online in the season: it is over or it has no server.
 var ErrOnlineUnavailable = errors.New("online status is unavailable in the season")
@@ -47,6 +52,10 @@ type MinecraftService interface {
 	// GetPlaytimesInSeason returns playtime of every player asked for, zero for one that never played in the season.
 	// A Plan server name counts only that server of the season network; nil counts every server.
 	GetPlaytimesInSeason(ctx context.Context, seasonID uuid.UUID, serverName *string, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.Playtime, error)
+	// SetPasswordInSeason replaces the in-game password of an unlicensed player on the server of the season and
+	// kicks the player, so whoever is in game under the nickname has to log in again. It fails with ErrPlayerNotRegistered when the player never registered there, and with a conflict when the
+	// season has no server or the player logs in with a licensed account.
+	SetPasswordInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, passwordBcrypt string) error
 }
 
 type minecraftService struct {
@@ -259,4 +268,24 @@ func (s *minecraftService) GetPlaytimesInSeason(ctx context.Context, seasonID uu
 		return nil, err
 	}
 	return api.GetPlaytimes(ctx, mcUUIDs, serverName)
+}
+
+func (s *minecraftService) SetPasswordInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, passwordBcrypt string) error {
+	api, err := s.seasonShell(ctx, seasonID)
+	if errors.Is(err, errSeasonHasNoShell) {
+		return utils.NewConflictError("season has no server yet", err)
+	} else if err != nil {
+		return err
+	}
+	err = api.SetPassword(ctx, profile.MinecraftUUID, profile.MinecraftUsername, passwordBcrypt)
+	switch status.Code(err) {
+	case codes.OK:
+		return nil
+	case codes.NotFound:
+		return ErrPlayerNotRegistered
+	case codes.FailedPrecondition:
+		return utils.NewConflictError("the player logs in with a licensed account and has no password", err)
+	default:
+		return utils.NewInternalServerError("failed to set the in-game password", err)
+	}
 }

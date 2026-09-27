@@ -37,6 +37,10 @@ type ShellAPI interface {
 	AddToWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error
 	// RemoveFromWhitelist forbids the player to join. It does nothing for a player that is not whitelisted.
 	RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID, username string) error
+	// SetPassword replaces the in-game password of an unlicensed player, turns off its two-factor login and kicks
+	// the player from the network. It fails with codes.NotFound when the player never registered in game, and with codes.FailedPrecondition
+	// when the player logs in with a licensed account.
+	SetPassword(ctx context.Context, mcUUID uuid.UUID, username, passwordBcrypt string) error
 }
 
 // ShellPool gives the ShellAPI of a season by the address of its shell service.
@@ -54,6 +58,7 @@ type shellAPI struct {
 	player     shellv1.PlayerServiceClient
 	permission shellv1.PermissionServiceClient
 	whitelist  shellv1.WhitelistServiceClient
+	auth       shellv1.AuthServiceClient
 }
 
 // shellCallTimeout keeps pages responsive when the Minecraft host is slow.
@@ -97,6 +102,7 @@ func (p *shellPool) Get(address string) (ShellAPI, error) {
 		player:     shellv1.NewPlayerServiceClient(conn),
 		permission: shellv1.NewPermissionServiceClient(conn),
 		whitelist:  shellv1.NewWhitelistServiceClient(conn),
+		auth:       shellv1.NewAuthServiceClient(conn),
 	}
 	p.conns[address] = conn
 	p.apis[address] = api
@@ -237,6 +243,15 @@ func (api *shellAPI) RemoveFromWhitelist(ctx context.Context, mcUUID uuid.UUID, 
 	_, err := api.whitelist.RemovePlayer(ctx, &shellv1.RemovePlayerRequest{
 		MinecraftUuid:     mcUUID.String(),
 		MinecraftUsername: username,
+	})
+	return err
+}
+
+func (api *shellAPI) SetPassword(ctx context.Context, mcUUID uuid.UUID, username, passwordBcrypt string) error {
+	_, err := api.auth.SetPassword(ctx, &shellv1.SetPasswordRequest{
+		MinecraftUuid:     mcUUID.String(),
+		MinecraftUsername: username,
+		PasswordBcrypt:    passwordBcrypt,
 	})
 	return err
 }

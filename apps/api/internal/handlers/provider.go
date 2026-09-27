@@ -15,6 +15,7 @@ var ProviderSet = wire.NewSet(
 	NewProfileResyncHandler,
 	NewProfileVerificationHandler,
 	NewProfileRenameHandler,
+	NewProfilePasswordHandler,
 	NewPurchaseHandler,
 	NewBasketHandler,
 	NewAdminUserHandler,

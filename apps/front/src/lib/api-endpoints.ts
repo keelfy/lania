@@ -539,6 +539,20 @@ export function changeProfileUsername(
   })
 }
 
+// Gives the unlicensed profile of the signed in owner a new in-game password in the season and turns off its
+// two-factor login. It fails with player_not_registered when the profile never registered on that server.
+export function setProfilePassword(
+  fetcher: ApiFetcher,
+  id: string,
+  seasonId: string,
+  password: string,
+): Promise<void> {
+  return fetcher<void>(`/v1/profiles/${id}/password`, undefined, {
+    method: 'PUT',
+    body: JSON.stringify({ seasonId, password }),
+  })
+}
+
 // The same for admins: any profile and no cooldown.
 export function resyncProfileAsAdmin(
   fetcher: ApiFetcher,

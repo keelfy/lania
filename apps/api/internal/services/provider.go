@@ -23,6 +23,7 @@ var ProviderSet = wire.NewSet(
 	NewProfileResyncService,
 	NewProfileVerificationService,
 	NewProfileRenameService,
+	NewProfilePasswordService,
 	NewPremiumUUIDService,
 	NewProductService,
 	NewFulfillmentService,

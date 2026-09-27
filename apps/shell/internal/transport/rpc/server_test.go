@@ -133,6 +133,7 @@ func newTestEnv(t *testing.T) *testEnv {
 		)),
 		NewPermissionHandler(services.NewPermissionService(luckperms, console)),
 		NewWhitelistHandler(services.NewWhitelistService(console)),
+		NewAuthHandler(services.NewAuthService(nil, console)),
 	)
 
 	listener := bufconn.Listen(1024 * 1024)
@@ -256,8 +257,8 @@ func TestPermissionService(t *testing.T) {
 		t.Fatal(err)
 	}
 	wantCommands := []string{
-		"lp user " + knownUUID.String() + " meta clear prefix",
-		"lp user " + knownUUID.String() + ` meta addprefix 100 "<red>[A]"`,
+		"lpv user " + knownUUID.String() + " meta clear prefix",
+		"lpv user " + knownUUID.String() + ` meta addprefix 100 "<red>[A]"`,
 	}
 	if !slices.Equal(env.console.commands, wantCommands) {
 		t.Errorf("prefix must be written with console commands, got %q want %q", env.console.commands, wantCommands)

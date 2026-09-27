@@ -329,6 +329,27 @@
       "submit": "Change nickname",
       "success": "Your nickname is now {username}",
       "failed": "Failed to change the nickname"
+    },
+    "password": {
+      "title": "Server password",
+      "description": "Set a new password for joining the game if you forgot the old one or someone registered under your nickname before you",
+      "noSeasons": "The password can be changed in a running season the profile has access to",
+      "open": "Change password",
+      "dialogTitle": "New password for {username}",
+      "dialogDescription": "The old password and two-factor login stop working",
+      "cases": {
+        "forgotten": "Forgot the password: set a new one and log in with it",
+        "taken": "Someone registered under your nickname: they are kicked from the server and cannot log in again. Whatever they did in game stays on the account"
+      },
+      "season": "Season",
+      "label": "New password",
+      "hint": "5 to 32 characters without spaces, with at least one lowercase letter and a digit",
+      "submit": "Change password",
+      "success": "Password changed",
+      "successHint": "Join the server and use /login with the new password",
+      "notRegistered": "You have not registered on this server yet",
+      "notRegisteredHint": "Join the server and set a password with /register",
+      "failed": "Could not change the password"
     }
   },
   "profileResync": {

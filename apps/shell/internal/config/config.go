@@ -67,6 +67,12 @@ func GetWhitelistRemoveCommand() string {
 	return command
 }
 
+// GetKickCommand returns the console command template that kicks a player from the network after the in-game
+// password changed. {username} is replaced with the player nickname.
+func GetKickCommand() string {
+	return getEnvOrDefault("KICK_COMMAND", "kick {username} Пароль сменён на сайте, войдите с новым паролем")
+}
+
 /** DATABASE */
 
 func GetDatabaseHost() string {
@@ -117,6 +123,20 @@ func GetPlanServersTableName() string {
 
 func GetFlectonePlayerTableName() string {
 	return getEnvOrDefault("FLECTONE_PLAYER_TABLE_NAME", "player")
+}
+
+// GetNavAuthDatabaseName returns the database (schema) NavAuth keeps its tables in, on the same MySQL server.
+// The shell database user needs SELECT, INSERT and UPDATE on it.
+func GetNavAuthDatabaseName() string {
+	return getEnvOrDefault("NAVAUTH_DATABASE_NAME", "navauth")
+}
+
+func GetNavAuthUsersTableName() string {
+	return getEnvOrDefault("NAVAUTH_USERS_TABLE_NAME", "navauth_users")
+}
+
+func GetNavAuthCredentialsTableName() string {
+	return getEnvOrDefault("NAVAUTH_CREDENTIALS_TABLE_NAME", "navauth_credentials")
 }
 
 func getEnvOrDefault(key string, fallback string) string {

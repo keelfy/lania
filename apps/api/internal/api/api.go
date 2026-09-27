@@ -29,6 +29,7 @@ type laniaAPI struct {
 	profileResyncHandler       handlers.ProfileResyncHandler
 	profileVerificationHandler handlers.ProfileVerificationHandler
 	profileRenameHandler       handlers.ProfileRenameHandler
+	profilePasswordHandler     handlers.ProfilePasswordHandler
 	productHandler             handlers.ProductHandler
 	orderHandler               handlers.OrderHandler
 	acquiringHandler           handlers.AcquiringHandler
@@ -61,6 +62,7 @@ func NewLaniaAPI(
 	profileResyncHandler handlers.ProfileResyncHandler,
 	profileVerificationHandler handlers.ProfileVerificationHandler,
 	profileRenameHandler handlers.ProfileRenameHandler,
+	profilePasswordHandler handlers.ProfilePasswordHandler,
 	productHandler handlers.ProductHandler,
 	orderHandler handlers.OrderHandler,
 	acquiringHandler handlers.AcquiringHandler,
@@ -91,6 +93,7 @@ func NewLaniaAPI(
 		profileResyncHandler:       profileResyncHandler,
 		profileVerificationHandler: profileVerificationHandler,
 		profileRenameHandler:       profileRenameHandler,
+		profilePasswordHandler:     profilePasswordHandler,
 		productHandler:             productHandler,
 		orderHandler:               orderHandler,
 		acquiringHandler:           acquiringHandler,
@@ -207,6 +210,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				r.Post("/verification", api.profileVerificationHandler.StartVerification)
 				r.Post("/verification/confirm", api.profileVerificationHandler.ConfirmVerification)
 				r.Put("/username", api.profileRenameHandler.ChangeUsername)
+				r.Put("/password", api.profilePasswordHandler.SetPassword)
 			})
 		})
 	})

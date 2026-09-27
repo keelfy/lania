@@ -6,4 +6,5 @@ var ProviderSet = wire.NewSet(
 	NewPlayerService,
 	NewPermissionService,
 	NewWhitelistService,
+	NewAuthService,
 )

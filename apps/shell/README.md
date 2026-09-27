@@ -9,6 +9,7 @@ domain-level requests and shell translates them to plugin storage.
 | `PlayerService`     | Plan (playtime), Flectone (online status) |
 | `PermissionService` | LuckPerms (groups, chat prefix). Groups are read from the database. A prefix change is an RCON command (`lp user <uuid> meta clear prefix`, then `meta addprefix`). A role change is written to the database, then the running server reloads it over RCON (`lp sync`) |
 | `WhitelistService`  | Server whitelist, changed with RCON commands (`whitelist add/remove` by default, see `WHITELIST_ADD_COMMAND` and `WHITELIST_REMOVE_COMMAND` for whitelist plugins) |
+| `AuthService`       | NavAuth on the proxy (in-game passwords of unlicensed players). Its tables live in their own database on the same MySQL server (`NAVAUTH_DATABASE_NAME`). The API sends a bcrypt hash; NavAuth reads credentials on every login, so a new password applies on the next login |
 
 Contracts live in `/proto/lania/shell/v1`. After editing them run
 `mise run proto-generate`, which regenerates Go code for both shell and API.
