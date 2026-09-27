@@ -436,16 +436,6 @@ SET role = ?, role_updated_at = NOW(), updated_at = NOW(), updated_by = ?
 WHERE id = ?
 `
 
-const touchProfileRole = `
-UPDATE profiles SET role_updated_at = NOW() WHERE id = ?
-`
-
-// TouchProfileRole marks the role as changed without changing it, so role sync pushes the streamer role too.
-func (q *queries) TouchProfileRole(ctx context.Context, profileID uuid.UUID) error {
-	_, err := q.x.ExecContext(ctx, touchProfileRole, profileID)
-	return err
-}
-
 // SetProfileRole stores the role and marks the moment, so role sync picks the change up.
 func (q *queries) SetProfileRole(ctx context.Context, profileID uuid.UUID, role domain.Role, updatedBy *uuid.UUID) error {
 	_, err := q.x.ExecContext(ctx, setProfileRole, role, updatedBy, profileID)
@@ -454,10 +444,9 @@ func (q *queries) SetProfileRole(ctx context.Context, profileID uuid.UUID, role 
 
 // The cutoff is computed by the database, so it uses the same clock as role_updated_at.
 const findProfileRolesChangedSince = `
-SELECT p.mc_uuid, p.role, s.profile_id IS NOT NULL
-FROM profiles p
-LEFT JOIN streamers s ON s.profile_id = p.id
-WHERE p.role_updated_at >= DATE_SUB(NOW(), INTERVAL ? SECOND)
+SELECT mc_uuid, role
+FROM profiles
+WHERE role_updated_at >= DATE_SUB(NOW(), INTERVAL ? SECOND)
 `
 
 func (q *queries) FindProfileRolesChangedSince(ctx context.Context, since time.Duration) ([]*domain.ProfileRole, error) {
@@ -470,7 +459,7 @@ func (q *queries) FindProfileRolesChangedSince(ctx context.Context, since time.D
 	roles := make([]*domain.ProfileRole, 0)
 	for rows.Next() {
 		var profileRole domain.ProfileRole
-		if err := rows.Scan(&profileRole.MinecraftUUID, &profileRole.Role, &profileRole.IsStreamer); err != nil {
+		if err := rows.Scan(&profileRole.MinecraftUUID, &profileRole.Role); err != nil {
 			return nil, err
 		}
 		roles = append(roles, &profileRole)

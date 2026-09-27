@@ -19,10 +19,8 @@ type stubMinecraftService struct {
 	MinecraftService
 	online uuid.UUIDs
 	roles  map[uuid.UUID]domain.Role
-	// streamers are the streamer groups of the last push.
-	streamers map[uuid.UUID]bool
-	err       error
-	calls     int
+	err    error
+	calls  int
 	// onlineSeason is the season the last online list was asked for.
 	onlineSeason uuid.UUID
 }
@@ -35,11 +33,6 @@ func (s *stubMinecraftService) ListOnlineInSeason(_ context.Context, seasonID uu
 func (s *stubMinecraftService) SetPlayerRoles(_ context.Context, roles map[uuid.UUID]domain.Role) error {
 	s.calls++
 	s.roles = roles
-	return s.err
-}
-
-func (s *stubMinecraftService) SetPlayerStreamers(_ context.Context, streamers map[uuid.UUID]bool) error {
-	s.streamers = streamers
 	return s.err
 }
 

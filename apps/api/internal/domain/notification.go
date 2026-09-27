@@ -18,18 +18,11 @@ const (
 	NotificationTypeProfileMerged NotificationType = "profile-merged"
 	// NotificationTypeAnnouncement is news an admin sends to every user by hand, like new products in the shop.
 	NotificationTypeAnnouncement NotificationType = "announcement"
-	// NotificationTypeStreamerApproved tells the owner that the profile got the streamer role from an application.
-	NotificationTypeStreamerApproved NotificationType = "streamer-approved"
-	// NotificationTypeStreamerRejected tells the owner that an admin turned the streamer application down.
-	NotificationTypeStreamerRejected NotificationType = "streamer-rejected"
-	// NotificationTypeStreamerRevoked tells the owner that an admin took the streamer role away.
-	NotificationTypeStreamerRevoked NotificationType = "streamer-revoked"
 )
 
 func (t NotificationType) IsValid() bool {
 	switch t {
-	case NotificationTypeCosmeticGranted, NotificationTypeCosmeticRevoked, NotificationTypeProfileMerged, NotificationTypeAnnouncement,
-		NotificationTypeStreamerApproved, NotificationTypeStreamerRejected, NotificationTypeStreamerRevoked:
+	case NotificationTypeCosmeticGranted, NotificationTypeCosmeticRevoked, NotificationTypeProfileMerged, NotificationTypeAnnouncement:
 		return true
 	}
 	return false
@@ -83,15 +76,6 @@ type ProfileMergeNotificationPayload struct {
 	ProfileUsername string `json:"profileUsername"`
 	// SourceUsername is the nickname the data was carried over from. The source profile no longer exists.
 	SourceUsername string `json:"sourceUsername"`
-}
-
-// StreamerNotificationPayload is the payload of the streamer notifications.
-type StreamerNotificationPayload struct {
-	ProfileID uuid.UUID `json:"profileId"`
-	// ProfileUsername is copied in so the notification keeps the name it was made with.
-	ProfileUsername string `json:"profileUsername"`
-	// Reason is why the application was rejected. It is empty for the other streamer notifications.
-	Reason string `json:"reason,omitempty"`
 }
 
 // SupportedLocales are the languages of the site. An announcement is written in each of them.

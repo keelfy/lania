@@ -21,20 +21,6 @@ type accountQueries struct {
 	released         []uuid.UUID
 	basketCleared    bool
 	notesDeleted     bool
-	// streamers are the profiles with the streamer role; touched are the profiles whose role was stamped.
-	streamers map[uuid.UUID]bool
-	touched   []uuid.UUID
-}
-
-func (q *accountQueries) DeleteStreamer(_ context.Context, profileID uuid.UUID) (bool, error) {
-	was := q.streamers[profileID]
-	delete(q.streamers, profileID)
-	return was, nil
-}
-
-func (q *accountQueries) TouchProfileRole(_ context.Context, profileID uuid.UUID) error {
-	q.touched = append(q.touched, profileID)
-	return nil
 }
 
 func (q *accountQueries) RevokeProfileCosmetics(_ context.Context, profileID, keepNameColorID uuid.UUID, _ *uuid.UUID) error {
@@ -151,7 +137,6 @@ func TestDeleteAccountReleasesProfilesAndDeletesIdentity(t *testing.T) {
 	staff := &domain.Profile{ID: uuid.New(), Role: domain.RoleModerator}
 	player := &domain.Profile{ID: uuid.New(), Role: domain.RolePlayer}
 	f := newAccountFixture(t, staff, player)
-	f.queries.streamers = map[uuid.UUID]bool{player.ID: true}
 	userID := uuid.New()
 
 	err := f.svc.DeleteAccount(context.Background(), userID, domain.RoleAdmin, f.now.Add(-time.Minute))
@@ -175,9 +160,6 @@ func TestDeleteAccountReleasesProfilesAndDeletesIdentity(t *testing.T) {
 	}
 	if _, ok := f.queries.roles[player.ID]; ok {
 		t.Error("the role of a player was written again, it pushes the role to every server for nothing")
-	}
-	if len(f.queries.streamers) != 0 || len(f.queries.touched) != 1 || f.queries.touched[0] != player.ID {
-		t.Errorf("streamers left %v, touched %v; want the streamer role revoked and pushed", f.queries.streamers, f.queries.touched)
 	}
 	if !f.queries.basketCleared || !f.queries.notesDeleted {
 		t.Error("basket or notifications are left")

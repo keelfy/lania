@@ -28,8 +28,6 @@ var mergeHandledTables = map[string]bool{
 	// Created as profile_merged_uuids, renamed to profile_former_uuids later.
 	"profile_merged_uuids":     true,
 	"profile_username_changes": true,
-	"streamers":                true,
-	"streamer_applications":    true,
 }
 
 var createTablePattern = regexp.MustCompile(`(?is)CREATE TABLE IF NOT EXISTS\s+(\w+)\s*\((.*?)\n\);`)

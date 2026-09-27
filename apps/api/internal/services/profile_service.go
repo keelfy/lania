@@ -45,8 +45,6 @@ type ProfileService interface {
 	GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error)
 	// GetProfileSeasonStats returns the stats of the profile in every season it played in, the newest season first.
 	GetProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) ([]*domain.ProfileSeasonStats, error)
-	// GetStreamerProfileIDs returns which of the profiles have the streamer role.
-	GetStreamerProfileIDs(ctx context.Context, profileIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
 }
 
 type profileService struct {
@@ -356,12 +354,4 @@ func (s *profileService) GetProfileSeasonStats(ctx context.Context, mcUUID uuid.
 		return nil, utils.NewInternalServerError("failed to get profile season stats", err)
 	}
 	return stats, nil
-}
-
-func (s *profileService) GetStreamerProfileIDs(ctx context.Context, profileIDs uuid.UUIDs) (map[uuid.UUID]bool, error) {
-	streamers, err := s.storage.Queries().FindStreamerProfileIDs(ctx, profileIDs)
-	if err != nil {
-		return nil, utils.NewInternalServerError("failed to find streamer profiles", err)
-	}
-	return streamers, nil
 }

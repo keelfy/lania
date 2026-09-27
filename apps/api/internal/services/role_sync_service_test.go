@@ -16,7 +16,7 @@ func TestRoleSyncService_SyncRoles(t *testing.T) {
 	t.Run("pushes changed roles to the servers", func(t *testing.T) {
 		queries := &stubRoleQueries{changed: []*domain.ProfileRole{
 			{MinecraftUUID: admin, Role: domain.RoleAdmin},
-			{MinecraftUUID: player, Role: domain.RolePlayer, IsStreamer: true},
+			{MinecraftUUID: player, Role: domain.RolePlayer},
 		}}
 		minecraft := &stubMinecraftService{}
 		service := &roleSyncService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
@@ -26,9 +26,6 @@ func TestRoleSyncService_SyncRoles(t *testing.T) {
 		}
 		if minecraft.calls != 1 || minecraft.roles[admin] != domain.RoleAdmin || minecraft.roles[player] != domain.RolePlayer {
 			t.Errorf("calls = %d, roles = %v, want both roles in one call", minecraft.calls, minecraft.roles)
-		}
-		if len(minecraft.streamers) != 2 || minecraft.streamers[admin] || !minecraft.streamers[player] {
-			t.Errorf("streamers = %v, want the player in the streamer group and the admin out of it", minecraft.streamers)
 		}
 	})
 

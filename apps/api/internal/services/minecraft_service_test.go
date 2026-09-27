@@ -195,36 +195,6 @@ func TestMinecraftService_RolesGoToEveryActiveServer(t *testing.T) {
 	}
 }
 
-func TestMinecraftService_StreamerGroupLeavesStaffGroups(t *testing.T) {
-	streamer, former := uuid.New(), uuid.New()
-	pool := fakeShellPool{"a:1": {}, "b:1": {}}
-	first, second := season("a:1", true), season("b:1", true)
-	service := NewMinecraftService(&fakeSeasons{seasons: []*domain.Season{first, second}}, pool)
-	ctx := context.Background()
-
-	streamers := map[uuid.UUID]bool{streamer: true, former: false}
-	if err := service.SetPlayerStreamers(ctx, streamers); err != nil {
-		t.Fatal(err)
-	}
-	for _, address := range []string{"a:1", "b:1"} {
-		shell := pool[address]
-		if len(shell.roleGroup) != 1 || shell.roleGroup[0] != domain.StreamerGroup {
-			t.Errorf("%s role groups = %v, want only the streamer group", address, shell.roleGroup)
-		}
-		if shell.roles[streamer] != domain.StreamerGroup || shell.roles[former] != "" || len(shell.roles) != 2 {
-			t.Errorf("%s roles = %v, want the streamer in the group and the former streamer out of it", address, shell.roles)
-		}
-	}
-
-	pool["b:1"].roles = nil
-	if err := service.SetPlayerStreamersInSeason(ctx, first.ID, streamers); err != nil {
-		t.Fatal(err)
-	}
-	if pool["b:1"].roles != nil {
-		t.Error("the shell of another season must not be written")
-	}
-}
-
 func TestMinecraftService_RoleAndPrefixInSeasonUseShellOfSeason(t *testing.T) {
 	admin := uuid.New()
 	pool := fakeShellPool{"a:1": {}, "b:1": {}}

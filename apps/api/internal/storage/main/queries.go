@@ -79,8 +79,6 @@ type Queries interface {
 	SetProfileOwner(ctx context.Context, profileID uuid.UUID, ownerUserID, updatedBy *uuid.UUID) error
 	// SetProfileRole stores the role and marks the moment of the change for FindProfileRolesChangedSince.
 	SetProfileRole(ctx context.Context, profileID uuid.UUID, role domain.Role, updatedBy *uuid.UUID) error
-	// TouchProfileRole marks the role of the profile as changed, so role sync pushes it again.
-	TouchProfileRole(ctx context.Context, profileID uuid.UUID) error
 	// FindProfileRolesChangedSince returns the role of every profile whose role changed within the last since.
 	FindProfileRolesChangedSince(ctx context.Context, since time.Duration) ([]*domain.ProfileRole, error)
 	// FindMinecraftUUIDsByRoles returns the players whose stored role is one of the roles.
@@ -269,29 +267,6 @@ type Queries interface {
 	// MarkNotificationsRead stamps the unread notifications of the user. Empty ids marks all of them.
 	MarkNotificationsRead(ctx context.Context, userID uuid.UUID, ids uuid.UUIDs) error
 	DeleteNotificationsByUserID(ctx context.Context, userID uuid.UUID) error
-
-	// Streamer
-	// FindStreamer returns stdsql.ErrNoRows when the profile is not a streamer.
-	FindStreamer(ctx context.Context, profileID uuid.UUID) (*domain.Streamer, error)
-	// FindStreamers returns every streamer with its profile, the earliest first.
-	FindStreamers(ctx context.Context) ([]*domain.Streamer, error)
-	// FindStreamerProfileIDs returns which of the profiles are streamers.
-	FindStreamerProfileIDs(ctx context.Context, profileIDs uuid.UUIDs) (map[uuid.UUID]bool, error)
-	// SaveStreamer makes the profile a streamer, or replaces the channels and description of a streamer.
-	SaveStreamer(ctx context.Context, arg SaveStreamerParams) error
-	// DeleteStreamer reports whether the profile was a streamer.
-	DeleteStreamer(ctx context.Context, profileID uuid.UUID) (bool, error)
-	InsertStreamerApplication(ctx context.Context, application *domain.StreamerApplication) error
-	// FindLatestStreamerApplication returns stdsql.ErrNoRows when the profile never applied.
-	FindLatestStreamerApplication(ctx context.Context, profileID uuid.UUID) (*domain.StreamerApplication, error)
-	// FindStreamerApplicationByID returns stdsql.ErrNoRows when the application does not exist.
-	FindStreamerApplicationByID(ctx context.Context, applicationID uuid.UUID) (*domain.StreamerApplication, error)
-	// FindStreamerApplications returns a page of applications with the status, each with its profile. Pending ones
-	// come oldest first, as a queue, the reviewed ones newest first.
-	FindStreamerApplications(ctx context.Context, status domain.StreamerApplicationStatus, size, from int) ([]*domain.StreamerApplication, error)
-	CountStreamerApplications(ctx context.Context, status domain.StreamerApplicationStatus) (int64, error)
-	// ReviewStreamerApplication closes a pending application. It reports false when the application is not pending.
-	ReviewStreamerApplication(ctx context.Context, applicationID uuid.UUID, status domain.StreamerApplicationStatus, reason *string, reviewedBy uuid.UUID) (bool, error)
 }
 
 type queryable interface {

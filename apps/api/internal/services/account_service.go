@@ -127,16 +127,6 @@ func (s *accountService) releaseProfile(ctx context.Context, queries sql.Queries
 			return utils.NewInternalServerError("failed to reset profile role", err)
 		}
 	}
-	// The streamer role belongs to the person, not to the nickname.
-	revoked, err := queries.DeleteStreamer(ctx, profile.ID)
-	if err != nil {
-		return utils.NewInternalServerError("failed to revoke streamer role", err)
-	}
-	if revoked {
-		if err := queries.TouchProfileRole(ctx, profile.ID); err != nil {
-			return utils.NewInternalServerError("failed to mark profile role as changed", err)
-		}
-	}
 	if err := queries.SetProfileOwner(ctx, profile.ID, nil, &userID); err != nil {
 		return utils.NewInternalServerError("failed to release profile", err)
 	}
