@@ -522,8 +522,10 @@
         "description": "Время игры, активность и скин игрока {username} на Lania Network."
       },
       "seasons": {
-        "title": "Время по сезонам",
+        "title": "Статистика по сезонам",
         "total": "Всего на серверах",
+        "deaths": "{count, plural, one {<n>#</n> смерть} few {<n>#</n> смерти} many {<n>#</n> смертей} other {<n>#</n> смерти}}",
+        "mobKills": "{count, plural, one {<n>#</n> моб убит} few {<n>#</n> моба убито} many {<n>#</n> мобов убито} other {<n>#</n> моба убито}}",
         "running": "Идёт сейчас",
         "since": "С {date}",
         "empty": "Игрок ещё не проводил время на серверах.",

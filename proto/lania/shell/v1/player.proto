@@ -61,4 +61,8 @@ message Playtime {
   optional int64 first_seen_ms = 2;
   // Unix epoch milliseconds of the last session end. Absent if never played.
   optional int64 last_seen_ms = 3;
+  // Deaths over the sessions counted.
+  int64 deaths = 4;
+  // Mobs killed over the sessions counted.
+  int64 mob_kills = 5;
 }

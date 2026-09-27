@@ -194,9 +194,9 @@ type Queries interface {
 	SumProfilePlaytimesByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error)
 	// FindProfileSeasonStats returns the stats of the profile in every season it played in, the newest season first.
 	FindProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) ([]*domain.ProfileSeasonStats, error)
-	// UpsertProfilePlaytime stores the playtime and moves the last seen date of the profile in the season forward.
-	// A nil lastSeenAt keeps the stored date.
-	UpsertProfilePlaytime(ctx context.Context, mcUUID, seasonID uuid.UUID, playtime int64, lastSeenAt *time.Time) error
+	// UpsertProfileSeasonStats stores playtime, deaths and mob kills and moves the last seen date of the profile in
+	// the season forward. A nil lastSeenAt keeps the stored date.
+	UpsertProfileSeasonStats(ctx context.Context, mcUUID, seasonID uuid.UUID, stats *domain.Playtime, lastSeenAt *time.Time) error
 	// FindProfilesLastSeenInSeason returns when every profile was last seen in the season.
 	// Profiles with no known date are missing from the result.
 	FindProfilesLastSeenInSeason(ctx context.Context, mcUUIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]time.Time, error)

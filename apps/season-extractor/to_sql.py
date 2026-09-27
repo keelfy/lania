@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Convert extractor.py JSON output into SQL INSERT statements for `profiles`
-and `profile_playtimes`.
+and `profile_season_stats`.
 
 Filled columns: mc_uuid, mc_username, first_seen_at, last_seen_at, is_slim,
 role ('player'). All other columns use their DDL defaults.
@@ -10,7 +10,7 @@ MojangService): username -> Mojang UUID -> skin model. When the username is not
 known to Mojang, the model comes from the client's default skin for the
 player's UUID (Steve/Alex/... picked by UUID hash).
 
-profile_playtimes rows come from each player's "world_playtimes". The world
+profile_season_stats rows come from each player's "world_playtimes". The world
 path -> season id mapping is a JSON object passed with --season-map, e.g.
 {"worlds/season1": "<season uuid>", "worlds/season2": "<season uuid>"}. Keys
 must match the world paths in the extractor output exactly. Worlds mapped to
@@ -140,7 +140,7 @@ def build_playtime_inserts(player: dict, season_map: dict[str, str]) -> list[str
         millis_by_season[season_id] = millis_by_season.get(season_id, 0) + millis
 
     return [
-        "INSERT INTO profile_playtimes (mc_uuid, season_id, playtime) VALUES ("
+        "INSERT INTO profile_season_stats (mc_uuid, season_id, playtime) VALUES ("
         f"{sql_string(player['uuid'])}, {sql_string(season_id)}, {millis}) "
         "ON DUPLICATE KEY UPDATE playtime = VALUES(playtime);"
         for season_id, millis in millis_by_season.items()

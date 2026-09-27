@@ -154,7 +154,7 @@ func (s *playerSyncService) addLegacyPlaytimes(ctx context.Context, seasonID uui
 	return nil
 }
 
-// sumPlaytimes adds up playtime of one player under two UUIDs: the first session of both, the last session of both.
+// sumPlaytimes adds up stats of one player under two UUIDs: the first session of both, the last session of both.
 // A nil playtime counts as none.
 func sumPlaytimes(a, b *domain.Playtime) *domain.Playtime {
 	if a == nil {
@@ -163,7 +163,11 @@ func sumPlaytimes(a, b *domain.Playtime) *domain.Playtime {
 	if b == nil {
 		b = &domain.Playtime{}
 	}
-	sum := &domain.Playtime{TotalPlaytime: a.TotalPlaytime + b.TotalPlaytime}
+	sum := &domain.Playtime{
+		TotalPlaytime: a.TotalPlaytime + b.TotalPlaytime,
+		Deaths:        a.Deaths + b.Deaths,
+		MobKills:      a.MobKills + b.MobKills,
+	}
 	sum.FirstSessionStart = pickMillis(a.FirstSessionStart, b.FirstSessionStart, func(x, y int64) int64 { return min(x, y) })
 	sum.LastSessionEnd = pickMillis(a.LastSessionEnd, b.LastSessionEnd, func(x, y int64) int64 { return max(x, y) })
 	return sum
@@ -183,7 +187,7 @@ func pickMillis(a, b *int64, choose func(x, y int64) int64) *int64 {
 
 func syncPlayer(ctx context.Context, queries sql.Queries, seasonID, mcUUID uuid.UUID, playtime *domain.Playtime) error {
 	lastSeenAt := millisToTime(playtime.LastSessionEnd)
-	if err := queries.UpsertProfilePlaytime(ctx, mcUUID, seasonID, playtime.TotalPlaytime, lastSeenAt); err != nil {
+	if err := queries.UpsertProfileSeasonStats(ctx, mcUUID, seasonID, playtime, lastSeenAt); err != nil {
 		return err
 	}
 	// The profile keeps the latest date over every season for the admin panel, the public pages read the season one.

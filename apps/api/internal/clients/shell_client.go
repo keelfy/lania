@@ -201,6 +201,8 @@ func parsePlaytimes(res map[string]*shellv1.Playtime) (map[uuid.UUID]*domain.Pla
 			TotalPlaytime:     playtime.GetTotalMs(),
 			FirstSessionStart: playtime.FirstSeenMs,
 			LastSessionEnd:    playtime.LastSeenMs,
+			Deaths:            playtime.GetDeaths(),
+			MobKills:          playtime.GetMobKills(),
 		}
 	}
 	return playtimes, nil

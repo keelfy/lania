@@ -146,6 +146,8 @@ func PresentProfileStats(stats []*domain.ProfileSeasonStats) *responses.ProfileS
 	res := &responses.ProfileStats{Seasons: make([]*responses.ProfileSeasonStats, len(stats))}
 	for i, seasonStats := range stats {
 		res.TotalPlaytime += seasonStats.Playtime
+		res.TotalDeaths += seasonStats.Deaths
+		res.TotalMobKills += seasonStats.MobKills
 		res.Seasons[i] = &responses.ProfileSeasonStats{
 			SeasonID:   seasonStats.SeasonID,
 			SeasonName: seasonStats.SeasonName,
@@ -154,6 +156,8 @@ func PresentProfileStats(stats []*domain.ProfileSeasonStats) *responses.ProfileS
 			IsActive:   seasonStats.IsActive,
 			IsPrimary:  seasonStats.IsPrimary,
 			Playtime:   seasonStats.Playtime,
+			Deaths:     seasonStats.Deaths,
+			MobKills:   seasonStats.MobKills,
 		}
 	}
 	return res

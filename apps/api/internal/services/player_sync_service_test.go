@@ -17,7 +17,7 @@ type syncQueries struct {
 	profileSeen    *time.Time
 }
 
-func (q *syncQueries) UpsertProfilePlaytime(_ context.Context, _, seasonID uuid.UUID, _ int64, lastSeenAt *time.Time) error {
+func (q *syncQueries) UpsertProfileSeasonStats(_ context.Context, _, seasonID uuid.UUID, _ *domain.Playtime, lastSeenAt *time.Time) error {
 	q.playtimeSeason = seasonID
 	q.playtimeSeen = lastSeenAt
 	return nil
@@ -79,8 +79,8 @@ func TestAddLegacyPlaytimesSumsBothUUIDs(t *testing.T) {
 	offline, mojang := uuid.New(), uuid.New()
 	first, oldEnd, newEnd := int64(100), int64(500), int64(900)
 	minecraft := &playtimeMinecraftService{playtimes: map[uuid.UUID]*domain.Playtime{
-		offline: {TotalPlaytime: 3000, FirstSessionStart: &first, LastSessionEnd: &oldEnd},
-		mojang:  {TotalPlaytime: 2000, LastSessionEnd: &newEnd},
+		offline: {TotalPlaytime: 3000, FirstSessionStart: &first, LastSessionEnd: &oldEnd, Deaths: 4, MobKills: 30},
+		mojang:  {TotalPlaytime: 2000, LastSessionEnd: &newEnd, Deaths: 1, MobKills: 12},
 	}}
 	service := &playerSyncService{
 		storage:          &stubMainStorage{queries: &legacySyncQueries{legacy: map[uuid.UUID]uuid.UUID{offline: mojang}}},
@@ -96,6 +96,9 @@ func TestAddLegacyPlaytimesSumsBothUUIDs(t *testing.T) {
 	got := playtimes[mojang]
 	if len(playtimes) != 1 || got.TotalPlaytime != 5000 || *got.FirstSessionStart != first || *got.LastSessionEnd != newEnd {
 		t.Errorf("playtimes = %v, want 5000 ms under the Mojang UUID from the first offline session to the last new one", playtimes)
+	}
+	if got.Deaths != 5 || got.MobKills != 42 {
+		t.Errorf("deaths = %d, mob kills = %d, want 5 and 42 summed over both UUIDs", got.Deaths, got.MobKills)
 	}
 }
 
@@ -123,4 +126,3 @@ func TestAddLegacyPlaytimesSumsEveryOldUUID(t *testing.T) {
 		t.Errorf("playtimes = %v, want 3500 ms under the current UUID and the other player untouched", playtimes)
 	}
 }
-

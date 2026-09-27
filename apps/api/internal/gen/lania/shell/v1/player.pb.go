@@ -387,7 +387,11 @@ type Playtime struct {
 	// Unix epoch milliseconds of the first session start. Absent if never played.
 	FirstSeenMs *int64 `protobuf:"varint,2,opt,name=first_seen_ms,json=firstSeenMs,proto3,oneof" json:"first_seen_ms,omitempty"`
 	// Unix epoch milliseconds of the last session end. Absent if never played.
-	LastSeenMs    *int64 `protobuf:"varint,3,opt,name=last_seen_ms,json=lastSeenMs,proto3,oneof" json:"last_seen_ms,omitempty"`
+	LastSeenMs *int64 `protobuf:"varint,3,opt,name=last_seen_ms,json=lastSeenMs,proto3,oneof" json:"last_seen_ms,omitempty"`
+	// Deaths over the sessions counted.
+	Deaths int64 `protobuf:"varint,4,opt,name=deaths,proto3" json:"deaths,omitempty"`
+	// Mobs killed over the sessions counted.
+	MobKills      int64 `protobuf:"varint,5,opt,name=mob_kills,json=mobKills,proto3" json:"mob_kills,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -443,6 +447,20 @@ func (x *Playtime) GetLastSeenMs() int64 {
 	return 0
 }
 
+func (x *Playtime) GetDeaths() int64 {
+	if x != nil {
+		return x.Deaths
+	}
+	return 0
+}
+
+func (x *Playtime) GetMobKills() int64 {
+	if x != nil {
+		return x.MobKills
+	}
+	return 0
+}
+
 var File_lania_shell_v1_player_proto protoreflect.FileDescriptor
 
 const file_lania_shell_v1_player_proto_rawDesc = "" +
@@ -474,12 +492,14 @@ const file_lania_shell_v1_player_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2\x18.lania.shell.v1.PlaytimeR\x05value:\x028\x01\"\x1a\n" +
 	"\x18ListOnlinePlayersRequest\"D\n" +
 	"\x19ListOnlinePlayersResponse\x12'\n" +
-	"\x0fminecraft_uuids\x18\x01 \x03(\tR\x0eminecraftUuids\"\x98\x01\n" +
+	"\x0fminecraft_uuids\x18\x01 \x03(\tR\x0eminecraftUuids\"\xcd\x01\n" +
 	"\bPlaytime\x12\x19\n" +
 	"\btotal_ms\x18\x01 \x01(\x03R\atotalMs\x12'\n" +
 	"\rfirst_seen_ms\x18\x02 \x01(\x03H\x00R\vfirstSeenMs\x88\x01\x01\x12%\n" +
 	"\flast_seen_ms\x18\x03 \x01(\x03H\x01R\n" +
-	"lastSeenMs\x88\x01\x01B\x10\n" +
+	"lastSeenMs\x88\x01\x01\x12\x16\n" +
+	"\x06deaths\x18\x04 \x01(\x03R\x06deaths\x12\x1b\n" +
+	"\tmob_kills\x18\x05 \x01(\x03R\bmobKillsB\x10\n" +
 	"\x0e_first_seen_msB\x0f\n" +
 	"\r_last_seen_ms2\xa8\x03\n" +
 	"\rPlayerService\x12b\n" +

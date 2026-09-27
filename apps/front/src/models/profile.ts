@@ -66,11 +66,16 @@ export type ProfileSeasonStats = {
   isActive: boolean
   isPrimary: boolean
   playtime: number
+  // Summed over all servers of the season. Zero for seasons imported without them.
+  deaths: number
+  mobKills: number
 }
 
 export type ProfileStats = {
   // Summed over all seasons, in milliseconds.
   totalPlaytime: number
+  totalDeaths: number
+  totalMobKills: number
   // Only seasons the profile played in, the newest first.
   seasons: ProfileSeasonStats[]
 }

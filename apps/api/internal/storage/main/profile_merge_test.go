@@ -11,6 +11,7 @@ import (
 // mergeHandledTables are the tables MergeProfileData moves, sums or dedupes. profile_merges is the audit
 // ledger itself: it references the target profile on purpose and must never be rewritten by a merge.
 var mergeHandledTables = map[string]bool{
+	// Created as profile_playtimes, renamed to profile_season_stats later.
 	"profile_playtimes":           true,
 	"profile_accesses":            true,
 	"profile_violations":          true,

@@ -32,7 +32,9 @@ SELECT
 	u.uuid,
 	CAST(COALESCE(SUM(s.session_end - s.session_start - s.afk_time), 0) AS SIGNED) AS total_playtime,
 	MIN(s.session_start) AS first_session_start,
-	MAX(s.session_end) AS last_session_end
+	MAX(s.session_end) AS last_session_end,
+	CAST(COALESCE(SUM(s.deaths), 0) AS SIGNED) AS deaths,
+	CAST(COALESCE(SUM(s.mob_kills), 0) AS SIGNED) AS mob_kills
 FROM %[1]s u
 LEFT JOIN %[2]s s ON s.user_id = u.id%[4]s
 WHERE u.uuid IN (%[3]s)
@@ -69,7 +71,9 @@ SELECT
 	u.uuid,
 	CAST(SUM(s.session_end - s.session_start - s.afk_time) AS SIGNED) AS total_playtime,
 	MIN(s.session_start) AS first_session_start,
-	MAX(s.session_end) AS last_session_end
+	MAX(s.session_end) AS last_session_end,
+	CAST(SUM(s.deaths) AS SIGNED) AS deaths,
+	CAST(SUM(s.mob_kills) AS SIGNED) AS mob_kills
 FROM %[1]s u
 JOIN %[2]s s ON s.user_id = u.id
 GROUP BY u.uuid
@@ -90,7 +94,7 @@ func scanPlaytimes(rows *stdsql.Rows, playtimes map[uuid.UUID]*domain.Playtime) 
 	for rows.Next() {
 		var mcUUID uuid.UUID
 		var playtime domain.Playtime
-		if err := rows.Scan(&mcUUID, &playtime.TotalMs, &playtime.FirstSeenMs, &playtime.LastSeenMs); err != nil {
+		if err := rows.Scan(&mcUUID, &playtime.TotalMs, &playtime.FirstSeenMs, &playtime.LastSeenMs, &playtime.Deaths, &playtime.MobKills); err != nil {
 			return nil, err
 		}
 		playtimes[mcUUID] = &playtime

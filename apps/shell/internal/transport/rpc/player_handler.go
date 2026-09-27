@@ -75,6 +75,8 @@ func presentPlaytimes(playtimes map[uuid.UUID]*domain.Playtime) map[string]*shel
 			TotalMs:     playtime.TotalMs,
 			FirstSeenMs: playtime.FirstSeenMs,
 			LastSeenMs:  playtime.LastSeenMs,
+			Deaths:      playtime.Deaths,
+			MobKills:    playtime.MobKills,
 		}
 	}
 	return res

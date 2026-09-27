@@ -7,4 +7,7 @@ type Playtime struct {
 	FirstSeenMs *int64
 	// LastSeenMs is Unix epoch milliseconds of the last session end.
 	LastSeenMs *int64
+	// Deaths and MobKills are summed over the sessions counted.
+	Deaths   int64
+	MobKills int64
 }

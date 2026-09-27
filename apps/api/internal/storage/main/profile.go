@@ -151,7 +151,7 @@ LIMIT ? OFFSET ?
 const profilePlaytimeJoin = `
 LEFT JOIN (
 	SELECT mc_uuid, SUM(playtime) AS total_playtime
-	FROM profile_playtimes
+	FROM profile_season_stats
 	GROUP BY mc_uuid
 ) pt ON pt.mc_uuid = p.mc_uuid
 `
@@ -196,7 +196,7 @@ func getProfileSortDirection(direction string) string {
 
 // Last seen is per season: the list shows the date in the season the visitor looks at.
 const profileSeasonLastSeenJoin = `
-LEFT JOIN profile_playtimes lspt ON lspt.mc_uuid = p.mc_uuid AND lspt.season_id = ?
+LEFT JOIN profile_season_stats lspt ON lspt.mc_uuid = p.mc_uuid AND lspt.season_id = ?
 `
 
 // profileOrderBy returns the join needed by the sort column, the arguments of that join and the ORDER BY expression.
@@ -262,7 +262,7 @@ SELECT
 	p.premium_conflict,
 	IF(p.verified_mc_uuid <=> p.mc_uuid, p.verified_at, NULL),
 	pt.playtime
-FROM profile_playtimes pt
+FROM profile_season_stats pt
 JOIN profiles p ON p.mc_uuid = pt.mc_uuid
 WHERE pt.season_id = ? AND pt.playtime > 0
 ORDER BY pt.playtime DESC, p.id

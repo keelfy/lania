@@ -16,7 +16,7 @@ SELECT
 	season_id,
 	playtime,
 	updated_at
-FROM profile_playtimes
+FROM profile_season_stats
 WHERE mc_uuid IN ('%s')
 `
 
@@ -54,7 +54,7 @@ const sumProfilePlaytimesByMinecraftUUIDs = `
 SELECT
 	mc_uuid,
 	CAST(SUM(playtime) AS SIGNED) AS total_playtime
-FROM profile_playtimes
+FROM profile_season_stats
 WHERE mc_uuid IN ('%s')
 GROUP BY mc_uuid
 `
@@ -91,8 +91,10 @@ SELECT
 	s.end_date,
 	s.is_active,
 	s.is_primary,
-	pt.playtime
-FROM profile_playtimes pt
+	pt.playtime,
+	pt.deaths,
+	pt.mob_kills
+FROM profile_season_stats pt
 JOIN seasons s ON s.id = pt.season_id
 WHERE pt.mc_uuid = ? AND pt.playtime > 0
 ORDER BY s.start_date DESC, s.name ASC
@@ -117,6 +119,8 @@ func (q *queries) FindProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) 
 			&seasonStats.IsActive,
 			&seasonStats.IsPrimary,
 			&seasonStats.Playtime,
+			&seasonStats.Deaths,
+			&seasonStats.MobKills,
 		); err != nil {
 			return nil, err
 		}
@@ -129,30 +133,38 @@ func (q *queries) FindProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) 
 // updated_at goes first because MySQL applies assignments left to right.
 // Columns are qualified, because profiles has updated_at too and the SELECT makes a bare name ambiguous.
 // last_seen_at never moves back, and a NULL date keeps the stored one.
-const upsertProfilePlaytime = `
-INSERT INTO profile_playtimes (mc_uuid, season_id, playtime, updated_at, last_seen_at)
-SELECT mc_uuid, ?, ?, now(), ?
+const upsertProfileSeasonStats = `
+INSERT INTO profile_season_stats (mc_uuid, season_id, playtime, deaths, mob_kills, updated_at, last_seen_at)
+SELECT mc_uuid, ?, ?, ?, ?, now(), ?
 FROM profiles
 WHERE mc_uuid = ?
 ON DUPLICATE KEY UPDATE
-	profile_playtimes.updated_at = IF(profile_playtimes.playtime <> VALUES(playtime), VALUES(updated_at), profile_playtimes.updated_at),
-	profile_playtimes.playtime = VALUES(playtime),
-	profile_playtimes.last_seen_at = GREATEST(
-		COALESCE(profile_playtimes.last_seen_at, VALUES(last_seen_at)),
-		COALESCE(VALUES(last_seen_at), profile_playtimes.last_seen_at)
+	profile_season_stats.updated_at = IF(
+		profile_season_stats.playtime <> VALUES(playtime)
+			OR profile_season_stats.deaths <> VALUES(deaths)
+			OR profile_season_stats.mob_kills <> VALUES(mob_kills),
+		VALUES(updated_at),
+		profile_season_stats.updated_at
+	),
+	profile_season_stats.playtime = VALUES(playtime),
+	profile_season_stats.deaths = VALUES(deaths),
+	profile_season_stats.mob_kills = VALUES(mob_kills),
+	profile_season_stats.last_seen_at = GREATEST(
+		COALESCE(profile_season_stats.last_seen_at, VALUES(last_seen_at)),
+		COALESCE(VALUES(last_seen_at), profile_season_stats.last_seen_at)
 	)
 `
 
-// UpsertProfilePlaytime stores playtime of the profile in the season, in milliseconds,
+// UpsertProfileSeasonStats stores the stats of the profile in the season (playtime in milliseconds)
 // and moves the last seen date of the profile in the season forward.
-func (q *queries) UpsertProfilePlaytime(ctx context.Context, mcUUID, seasonID uuid.UUID, playtime int64, lastSeenAt *time.Time) error {
-	_, err := q.x.ExecContext(ctx, upsertProfilePlaytime, seasonID, playtime, lastSeenAt, mcUUID)
+func (q *queries) UpsertProfileSeasonStats(ctx context.Context, mcUUID, seasonID uuid.UUID, stats *domain.Playtime, lastSeenAt *time.Time) error {
+	_, err := q.x.ExecContext(ctx, upsertProfileSeasonStats, seasonID, stats.TotalPlaytime, stats.Deaths, stats.MobKills, lastSeenAt, mcUUID)
 	return err
 }
 
 const findProfilesLastSeenInSeason = `
 SELECT mc_uuid, last_seen_at
-FROM profile_playtimes
+FROM profile_season_stats
 WHERE season_id = ? AND last_seen_at IS NOT NULL AND mc_uuid IN (%s)
 `
 

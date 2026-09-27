@@ -161,6 +161,8 @@ type ProfileSeasonStats struct {
 	IsPrimary  bool
 	// Playtime is in milliseconds.
 	Playtime int64
+	Deaths   int64
+	MobKills int64
 }
 
 // MojangLookupTarget is a profile whose Mojang UUID has to be looked up by username.

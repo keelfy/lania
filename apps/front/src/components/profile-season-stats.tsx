@@ -40,7 +40,47 @@ function PlaytimeBar({ ratio, colors }: { ratio: number; colors: string[] }) {
   )
 }
 
-// Playtime of a profile in every season it played in.
+// Glyphs are drawn on a pixel grid like the game's own icons. '#' is a filled pixel.
+const SKULL = [
+  ' ###### ',
+  '########',
+  '#  ##  #',
+  '#  ##  #',
+  '########',
+  '###  ###',
+  ' ###### ',
+  ' # ## # ',
+]
+const SWORD = [
+  '     ###',
+  '    ####',
+  '   #### ',
+  '#  ###  ',
+  ' ####   ',
+  '  ##    ',
+  ' ## #   ',
+  '##      ',
+]
+
+function PixelGlyph({ pixels }: { pixels: string[] }) {
+  const path = pixels
+    .flatMap((row, y) =>
+      [...row].map((cell, x) => (cell === '#' ? `M${x} ${y}h1v1h-1z` : '')),
+    )
+    .join('')
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 8 8"
+      shapeRendering="crispEdges"
+      className="size-3 shrink-0 fill-current"
+    >
+      <path d={path} />
+    </svg>
+  )
+}
+
+// Stats of a profile in every season it played in.
 export default async function ProfileSeasonStats({
   profileId,
   colors = [],
@@ -73,6 +113,10 @@ export default async function ProfileSeasonStats({
     const { value, unit } = formatPlaytime(millis)
     return { value, unit: tUnits(unit) }
   }
+
+  const count = (chunks: React.ReactNode) => (
+    <span className="text-foreground font-semibold tabular-nums">{chunks}</span>
+  )
 
   const longest = Math.max(...(stats?.seasons.map((s) => s.playtime) ?? [0]))
   const total = playtimeText(stats?.totalPlaytime ?? 0)
@@ -132,6 +176,25 @@ export default async function ProfileSeasonStats({
                   ratio={longest > 0 ? season.playtime / longest : 0}
                   colors={colors}
                 />
+                {(season.deaths > 0 || season.mobKills > 0) && (
+                  <p className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-1 text-sm">
+                    <span className="flex items-center gap-1.5">
+                      <PixelGlyph pixels={SKULL} />
+                      <span>
+                        {t.rich('deaths', { count: season.deaths, n: count })}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <PixelGlyph pixels={SWORD} />
+                      <span>
+                        {t.rich('mobKills', {
+                          count: season.mobKills,
+                          n: count,
+                        })}
+                      </span>
+                    </span>
+                  </p>
+                )}
               </li>
             )
           })}

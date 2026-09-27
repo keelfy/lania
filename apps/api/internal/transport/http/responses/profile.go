@@ -68,11 +68,15 @@ type ProfileSeasonStats struct {
 	IsPrimary  bool      `json:"isPrimary"`
 	// Playtime is in milliseconds.
 	Playtime int64 `json:"playtime"`
+	Deaths   int64 `json:"deaths"`
+	MobKills int64 `json:"mobKills"`
 }
 
 type ProfileStats struct {
 	// TotalPlaytime is summed over all seasons, in milliseconds.
 	TotalPlaytime int64                 `json:"totalPlaytime"`
+	TotalDeaths   int64                 `json:"totalDeaths"`
+	TotalMobKills int64                 `json:"totalMobKills"`
 	Seasons       []*ProfileSeasonStats `json:"seasons"`
 }
 

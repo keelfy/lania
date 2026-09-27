@@ -14,14 +14,17 @@ func TestPresentProfileStats(t *testing.T) {
 	start := time.UnixMilli(1_700_000_000_000)
 	end := time.UnixMilli(1_710_000_000_000)
 	stats := []*domain.ProfileSeasonStats{
-		{SeasonID: uuid.New(), SeasonName: "Season 2", StartDate: end, IsActive: true, IsPrimary: true, Playtime: 3_600_000},
-		{SeasonID: uuid.New(), SeasonName: "Season 1", StartDate: start, EndDate: &end, Playtime: 1_800_000},
+		{SeasonID: uuid.New(), SeasonName: "Season 2", StartDate: end, IsActive: true, IsPrimary: true, Playtime: 3_600_000, Deaths: 3, MobKills: 40},
+		{SeasonID: uuid.New(), SeasonName: "Season 1", StartDate: start, EndDate: &end, Playtime: 1_800_000, Deaths: 2, MobKills: 10},
 	}
 
 	got := PresentProfileStats(stats)
 
 	if got.TotalPlaytime != 5_400_000 {
 		t.Errorf("total = %d, want 5400000", got.TotalPlaytime)
+	}
+	if got.TotalDeaths != 5 || got.TotalMobKills != 50 {
+		t.Errorf("total deaths = %d, mob kills = %d, want 5 and 50", got.TotalDeaths, got.TotalMobKills)
 	}
 	if len(got.Seasons) != 2 || got.Seasons[0].SeasonName != "Season 2" || got.Seasons[1].SeasonName != "Season 1" {
 		t.Fatalf("seasons = %+v, want the given order", got.Seasons)

@@ -126,7 +126,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	server := NewServer(
 		NewPlayerHandler(services.NewPlayerService(
 			&fakePlanStorage{
-				playtimes: map[uuid.UUID]*domain.Playtime{knownUUID: {TotalMs: 3000, FirstSeenMs: &first, LastSeenMs: &last}},
+				playtimes: map[uuid.UUID]*domain.Playtime{knownUUID: {TotalMs: 3000, FirstSeenMs: &first, LastSeenMs: &last, Deaths: 2, MobKills: 17}},
 				servers:   map[string]map[uuid.UUID]*domain.Playtime{"farms": {knownUUID: {TotalMs: 1000, FirstSeenMs: &first, LastSeenMs: &first}}},
 			},
 			&fakeFlectoneStorage{online: map[uuid.UUID]bool{knownUUID: true}},
@@ -179,7 +179,7 @@ func TestPlayerService(t *testing.T) {
 		t.Fatal(err)
 	}
 	known := playtimes.GetPlaytimes()[knownUUID.String()]
-	if known.GetTotalMs() != 3000 || known.GetFirstSeenMs() != 1000 || known.GetLastSeenMs() != 5000 {
+	if known.GetTotalMs() != 3000 || known.GetFirstSeenMs() != 1000 || known.GetLastSeenMs() != 5000 || known.GetDeaths() != 2 || known.GetMobKills() != 17 {
 		t.Errorf("unexpected known playtime: %v", known)
 	}
 	unknown, ok := playtimes.GetPlaytimes()[unknownUUID.String()]

@@ -41,7 +41,7 @@ func (q *queries) LockProfilesForMerge(ctx context.Context, firstProfileID, seco
 
 const findLiveSyncedSeasonNamesWithPlaytime = `
 SELECT s.name
-FROM profile_playtimes pt
+FROM profile_season_stats pt
 JOIN seasons s ON s.id = pt.season_id
 WHERE pt.mc_uuid = ? AND pt.playtime > 0 AND s.is_active = 1 AND s.shell_address IS NOT NULL
 ORDER BY s.name
@@ -67,27 +67,29 @@ func (q *queries) FindLiveSyncedSeasonNamesWithPlaytime(ctx context.Context, mcU
 	return names, rows.Err()
 }
 
-// Profile playtime: seasons the target does not have move over, seasons both have get summed into the target.
+// Profile season stats: seasons the target does not have move over, seasons both have get summed into the target.
 const moveNonOverlappingPlaytime = `
-UPDATE profile_playtimes
+UPDATE profile_season_stats
 SET mc_uuid = ?
 WHERE mc_uuid = ? AND season_id NOT IN (
-	SELECT season_id FROM (SELECT season_id FROM profile_playtimes WHERE mc_uuid = ?) existing
+	SELECT season_id FROM (SELECT season_id FROM profile_season_stats WHERE mc_uuid = ?) existing
 )
 `
 
 const sumOverlappingPlaytime = `
-UPDATE profile_playtimes tgt
-JOIN profile_playtimes src ON src.season_id = tgt.season_id AND src.mc_uuid = ?
+UPDATE profile_season_stats tgt
+JOIN profile_season_stats src ON src.season_id = tgt.season_id AND src.mc_uuid = ?
 SET
 	tgt.playtime = tgt.playtime + src.playtime,
+	tgt.deaths = tgt.deaths + src.deaths,
+	tgt.mob_kills = tgt.mob_kills + src.mob_kills,
 	tgt.last_seen_at = GREATEST(COALESCE(tgt.last_seen_at, src.last_seen_at), COALESCE(src.last_seen_at, tgt.last_seen_at)),
 	tgt.updated_at = NOW()
 WHERE tgt.mc_uuid = ?
 `
 
 const deleteRemainingPlaytime = `
-DELETE FROM profile_playtimes WHERE mc_uuid = ?
+DELETE FROM profile_season_stats WHERE mc_uuid = ?
 `
 
 // Profile accesses have no unique key, so a season can end up with two non-revoked rows after a plain move.
