@@ -24,12 +24,12 @@ import (
 const (
 	glythPackNamespace = "glyth"
 	// glythPackFirstSymbol is the first private-use code point the font images take, one per glyth.
-	glythPackFirstSymbol rune = 0xE006
-	glythPackScaleRatio       = 9
-	glythPackYPosition        = 8
-	glythPackImageMaxBytes    = 1 << 20
-	glythPackFetchWorkers     = 8
-	glythPackFetchTimeout     = 10 * time.Second
+	glythPackFirstSymbol   rune = 0xE006
+	glythPackScaleRatio         = 9
+	glythPackYPosition          = 8
+	glythPackImageMaxBytes      = 1 << 20
+	glythPackFetchWorkers       = 8
+	glythPackFetchTimeout       = 10 * time.Second
 )
 
 type GlythPackService interface {
@@ -65,20 +65,32 @@ func (s *glythPackService) BuildGlythPack(ctx context.Context) ([]byte, error) {
 		return nil, utils.NewInternalServerError("failed to get name prefixes", err)
 	}
 
-	// Special prefixes are plain text, not ItemsAdder font images, so only :glyth_<slug>: tokens count.
+	// Special prefixes are plain text, not ItemsAdder font images, so only prefixes holding a
+	// :glyth_<slug>: token count. Several prefixes may wrap the same glyth in different tags; the
+	// glyth goes into the pack once, with the first of their images that is set.
 	entries := make([]*glythPackEntry, 0, len(prefixes))
-	owners := map[string]string{}
+	bySlug := map[string]*glythPackEntry{}
 	for _, prefix := range prefixes {
-		match := glythTokenPattern.FindStringSubmatch(prefix.Metadata.Prefix)
-		if match == nil {
+		matches := glythTokenPattern.FindAllStringSubmatch(prefix.Metadata.Prefix, -1)
+		if len(matches) == 0 {
 			continue
 		}
-		slug := match[1]
-		if owner, ok := owners[slug]; ok {
-			return nil, utils.NewConflictError(fmt.Sprintf("glyths %q and %q share the token %s", owner, prefix.Name, prefix.Metadata.Prefix), nil)
+		slug := matches[0][1]
+		for _, match := range matches[1:] {
+			// One preview image can't stand for two font images.
+			if match[1] != slug {
+				return nil, utils.NewConflictError(fmt.Sprintf("prefix %q holds more than one glyth token", prefix.Name), nil)
+			}
 		}
-		owners[slug] = prefix.Name
-		entries = append(entries, &glythPackEntry{name: prefix.Name, slug: slug, image: prefix.Metadata.Image})
+		if entry, ok := bySlug[slug]; ok {
+			if entry.image == "" {
+				entry.name, entry.image = prefix.Name, prefix.Metadata.Image
+			}
+			continue
+		}
+		entry := &glythPackEntry{name: prefix.Name, slug: slug, image: prefix.Metadata.Image}
+		bySlug[slug] = entry
+		entries = append(entries, entry)
 	}
 	if len(entries) == 0 {
 		return nil, utils.NewNotFoundError("no glyth prefixes to export", nil)

@@ -57,6 +57,8 @@ func TestGlythPackService_BuildGlythPack(t *testing.T) {
 	queries := &fakeCatalogQueries{prefixes: []*domain.NamePrefix{
 		glythPrefix("Jokerge", ":glyth_jokerge:", "s3://lania-web/glyth_preview/jokerge-bbbb2222.png"),
 		glythPrefix("Fox", ":glyth_fox:", "s3://lania-web/glyth_preview/fox-aaaa1111.png"),
+		glythPrefix("FoxHover", "<hover:show_text:'Fox'><shadow:yellow>:glyth_fox:<reset>", "s3://lania-web/glyth_preview/missing.png"),
+		glythPrefix("Jokerge Club", "<hover:show_text:'Club'><shadow:yellow>:glyth_jokerge:<reset>", ""),
 		glythPrefix("Admin", "[Admin]", ""),
 		glythPrefix("Arcanemist", ":glyth_arcanemist:", "s3://lania-web/glyth_preview/arcanemist.jpg"),
 	}}
@@ -119,12 +121,10 @@ func TestGlythPackService_BuildGlythPackErrors(t *testing.T) {
 			wantText:   "Fox:",
 		},
 		{
-			name: "duplicate token",
-			prefixes: []*domain.NamePrefix{
-				glythPrefix("Fox", ":glyth_fox:", ""),
-				glythPrefix("Fox2", ":glyth_fox:", ""),
-			},
+			name:       "two glyths in one prefix",
+			prefixes:   []*domain.NamePrefix{glythPrefix("Pair", ":glyth_fox: :glyth_cat:", "")},
 			wantStatus: http.StatusConflict,
+			wantText:   "Pair",
 		},
 	}
 	for _, tt := range tests {

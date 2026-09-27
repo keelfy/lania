@@ -19,7 +19,9 @@ import (
 )
 
 var (
-	glythTokenPattern  = regexp.MustCompile(`^:glyth_([a-z0-9_]+):$`)
+	// Unanchored: in-game prefixes can wrap the token in MiniMessage tags, e.g.
+	// "<hover:show_text:'...'><shadow:yellow>:glyth_necro_yo:<reset>".
+	glythTokenPattern  = regexp.MustCompile(`:glyth_([a-z0-9_]+):`)
 	nonSlugCharPattern = regexp.MustCompile(`[^a-z0-9]+`)
 )
 
@@ -117,8 +119,8 @@ func (s *uploadService) UploadImage(ctx context.Context, cmd *commands.UploadIma
 	}, nil
 }
 
-// glythPreviewSlug derives the readable part of a glyth preview key from the in-game token
-// (":glyth_popcat:" -> "popcat"), matching the convention the glyth-preview-to-S3 migration
+// glythPreviewSlug derives the readable part of a glyth preview key from the glyth token in the
+// in-game prefix (":glyth_popcat:" -> "popcat"), matching the convention the glyth-preview-to-S3 migration
 // established. A token that doesn't match falls back to a slugified cosmetic name.
 func glythPreviewSlug(token, name string) string {
 	if match := glythTokenPattern.FindStringSubmatch(token); match != nil {

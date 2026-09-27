@@ -76,6 +76,11 @@ func TestUploadService_UploadImage(t *testing.T) {
 		wantKey string
 	}{
 		{
+			name:    "glyth key derived from token wrapped in tags",
+			cmd:     commands.UploadImageCommand{Kind: commands.UploadImageKindGlythPreview, Content: encodePNG(t, 32, 32), Token: "<hover:show_text:'Yo'><shadow:yellow>:glyth_necro_yo:<reset>"},
+			wantKey: "glyth_preview/necro_yo-",
+		},
+		{
 			name:    "glyth key derived from token",
 			cmd:     commands.UploadImageCommand{Kind: commands.UploadImageKindGlythPreview, Content: encodePNG(t, 32, 32), Token: ":glyth_popcat:"},
 			wantKey: "glyth_preview/popcat-",
