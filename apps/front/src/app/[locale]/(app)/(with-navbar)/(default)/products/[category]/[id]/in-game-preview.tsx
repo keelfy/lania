@@ -99,15 +99,13 @@ export default function InGamePreview({
 
       <div className="w-fit max-w-full bg-black/45 px-1 py-0.5 text-sm leading-relaxed">
         <div className="flex min-w-0 items-center">
-          &lt;
           <NameTag {...look} className="min-w-0" />
-          &gt;&nbsp;
+          &#58;&nbsp;
           <span className="truncate">{t('message')}</span>
         </div>
         <div className="flex min-w-0 items-center">
-          &lt;
-          <NameTag username="Alex" />
-          &gt;&nbsp;
+          <NameTag username="Alex" className="text-[#AAAAAA]" />
+          &#58;&nbsp;
           <span className="truncate">{t('reply')}</span>
         </div>
       </div>
