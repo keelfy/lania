@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/storage"
@@ -21,24 +20,12 @@ type PremiumUUIDService interface {
 
 type premiumUUIDService struct {
 	storage              storage.MainStorage
-	seasonService        SeasonService
-	accessService        AccessService
-	minecraftService     MinecraftService
 	profileResyncService ProfileResyncService
 }
 
-func NewPremiumUUIDService(
-	storage storage.MainStorage,
-	seasonService SeasonService,
-	accessService AccessService,
-	minecraftService MinecraftService,
-	profileResyncService ProfileResyncService,
-) PremiumUUIDService {
+func NewPremiumUUIDService(storage storage.MainStorage, profileResyncService ProfileResyncService) PremiumUUIDService {
 	return &premiumUUIDService{
 		storage:              storage,
-		seasonService:        seasonService,
-		accessService:        accessService,
-		minecraftService:     minecraftService,
 		profileResyncService: profileResyncService,
 	}
 }
@@ -52,10 +39,6 @@ func (s *premiumUUIDService) RekeyPremiumProfiles(ctx context.Context) (*domain.
 	if err != nil {
 		return nil, utils.NewInternalServerError("failed to count unchecked profiles", err)
 	}
-	seasons, err := s.seasonService.GetSeasons(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	report := &domain.PremiumRekeyReport{Unchecked: unchecked}
 	for _, target := range targets {
@@ -66,7 +49,7 @@ func (s *premiumUUIDService) RekeyPremiumProfiles(ctx context.Context) (*domain.
 			continue
 		}
 
-		if err := s.rekey(ctx, target, seasons); err != nil {
+		if err := s.rekey(ctx, target); err != nil {
 			logger.Errorf(ctx, "[PREMIUM UUID] Failed to rekey profile %s (%s): %v", target.ProfileID, target.MinecraftUsername, err)
 			report.Failed = append(report.Failed, target.MinecraftUsername)
 			continue
@@ -76,13 +59,9 @@ func (s *premiumUUIDService) RekeyPremiumProfiles(ctx context.Context) (*domain.
 	return report, nil
 }
 
-// rekey moves the profile, then fixes what the season servers keep under the old UUID. A server that cannot be
-// written to is only logged: the profile is already moved, and the admin resync writes it again.
-func (s *premiumUUIDService) rekey(ctx context.Context, target *domain.PremiumRekeyTarget, seasons []*domain.Season) error {
-	accesses, err := s.accessService.GetAccessesByMinecraftUUIDs(ctx, uuid.UUIDs{target.MinecraftUUID})
-	if err != nil {
-		return err
-	}
+// rekey moves the profile, then fixes what the season servers keep under the old UUID, best effort: the profile
+// is already moved, and the admin resync writes it again.
+func (s *premiumUUIDService) rekey(ctx context.Context, target *domain.PremiumRekeyTarget) error {
 	moved, err := s.storage.Queries().RekeyProfile(ctx, target.ProfileID, target.MinecraftUUID, target.MojangUUID)
 	if err != nil {
 		return err
@@ -92,29 +71,7 @@ func (s *premiumUUIDService) rekey(ctx context.Context, target *domain.PremiumRe
 	}
 	logger.Infof(ctx, "[PREMIUM UUID] Profile %s (%s) moved from %s to %s", target.ProfileID, target.MinecraftUsername, target.MinecraftUUID, target.MojangUUID)
 
-	accessed := make(map[uuid.UUID]bool, len(accesses[target.MinecraftUUID]))
-	for _, access := range accesses[target.MinecraftUUID] {
-		accessed[access.SeasonID] = true
-	}
-	old := &domain.Profile{MinecraftUUID: target.MinecraftUUID, MinecraftUsername: target.MinecraftUsername}
-	rekeyed := &domain.Profile{MinecraftUUID: target.MojangUUID, MinecraftUsername: target.MinecraftUsername}
-	for _, season := range seasons {
-		if !season.IsActive || season.ShellAddress == nil {
-			continue
-		}
-		if accessed[season.ID] {
-			if err := s.minecraftService.RemoveFromWhitelist(ctx, season.ID, old); err != nil {
-				logger.Errorf(ctx, "[PREMIUM UUID] Failed to remove old uuid of %s from whitelist in season %s: %v", target.MinecraftUsername, season.ID, err)
-			}
-		}
-		// LuckPerms keeps the offline UUID under the name, so its user commands would still find the old one.
-		if err := s.minecraftService.RegisterPlayerInSeason(ctx, season.ID, rekeyed); err != nil {
-			logger.Errorf(ctx, "[PREMIUM UUID] Failed to register %s in season %s: %v", target.MinecraftUsername, season.ID, err)
-		}
-	}
-	// Role, prefix and the whitelist entry of the new UUID; the report is logged by the resync itself.
-	if _, err := s.profileResyncService.ResyncProfile(ctx, target.ProfileID); err != nil {
-		logger.Errorf(ctx, "[PREMIUM UUID] Failed to resync profile %s: %v", target.ProfileID, err)
-	}
+	old := &domain.Profile{ID: target.ProfileID, MinecraftUUID: target.MinecraftUUID, MinecraftUsername: target.MinecraftUsername}
+	s.profileResyncService.MoveProfileOnServers(ctx, target.ProfileID, old)
 	return nil
 }

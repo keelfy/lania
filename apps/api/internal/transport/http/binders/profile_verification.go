@@ -16,6 +16,14 @@ func BindConfirmProfileVerification(r *http.Request) (*requests.ConfirmProfileVe
 	return req, nil
 }
 
+func BindChangeProfileUsername(r *http.Request) (*requests.ChangeProfileUsername, error) {
+	req := &requests.ChangeProfileUsername{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+	return req, nil
+}
+
 func BindVerificationLogin(r *http.Request) (*requests.VerificationLogin, error) {
 	req := &requests.VerificationLogin{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {

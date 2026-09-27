@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lania-smp/backend/internal/config"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/presenter"
@@ -34,6 +35,7 @@ type profileHandler struct {
 	minecraftService services.MinecraftService
 	mojangService    services.MojangService
 	cosmeticsService services.ProfileCosmeticsService
+	renameService    services.ProfileRenameService
 }
 
 func NewProfileHandler(
@@ -43,6 +45,7 @@ func NewProfileHandler(
 	minecraftService services.MinecraftService,
 	mojangService services.MojangService,
 	cosmeticsService services.ProfileCosmeticsService,
+	renameService services.ProfileRenameService,
 ) ProfileHandler {
 	return &profileHandler{
 		profileService:   profileService,
@@ -51,6 +54,7 @@ func NewProfileHandler(
 		minecraftService: minecraftService,
 		mojangService:    mojangService,
 		cosmeticsService: cosmeticsService,
+		renameService:    renameService,
 	}
 }
 
@@ -302,6 +306,11 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 		logger.Errorf(ctx, "[PROFILE COSMETICS] Failed to get profiles cosmetics: %v", err)
 		cosmetics = make(map[uuid.UUID]*domain.ProfileCosmetics)
 	}
+	usernameChangeAvailableAt, err := h.renameService.GetUsernameChangeAvailableAt(ctx, profileIDs)
+	if err != nil {
+		logger.Errorf(ctx, "[PROFILE RENAME] Failed to get when nicknames can be changed: %v", err)
+		usernameChangeAvailableAt = make(map[uuid.UUID]time.Time)
+	}
 
 	res := make([]*responses.Profile, len(profiles))
 	for i, profile := range profiles {
@@ -320,6 +329,11 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 		}
 
 		res[i] = presenter.PresentProfile(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), presenter.PresentProfileCosmetics(cosmetics[profile.ID], utils.GetLocaleFromCtx(ctx)))
+		// The cooldown is only for unlicensed profiles: a licensed one follows its name on Mojang.
+		if nullableMojangUUID == nil || *nullableMojangUUID != profile.MinecraftUUID {
+			res[i].UsernameChangeAvailableAt = profileTimeMillis(usernameChangeAvailableAt, profile.ID)
+			res[i].UsernameChangeCooldownDays = int(config.GetNicknameChangeCooldown() / (24 * time.Hour))
+		}
 	}
 
 	utils.WriteHttpJsonResponse(ctx, w, res)
@@ -443,4 +457,14 @@ func (h *profileHandler) writeProfileDetails(w http.ResponseWriter, r *http.Requ
 
 	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), seasonsPlaytimes[profile.MinecraftUUID], isOnline, isModelSlim, presenter.PresentProfileCosmetics(cosmetics[profile.ID], utils.GetLocaleFromCtx(ctx)), seenAt(lastSeenMap, profile.MinecraftUUID))
 	utils.WriteHttpJsonResponse(ctx, w, res)
+}
+
+// profileTimeMillis returns the time of the profile in milliseconds, nil when the profile has none.
+func profileTimeMillis(times map[uuid.UUID]time.Time, profileID uuid.UUID) *int64 {
+	t, ok := times[profileID]
+	if !ok {
+		return nil
+	}
+	millis := t.UnixMilli()
+	return &millis
 }

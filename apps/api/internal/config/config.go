@@ -105,6 +105,25 @@ func GetRoleSyncWindow() time.Duration {
 	return time.Duration(minutes) * time.Minute
 }
 
+/** NICKNAME CHANGE */
+
+const defaultNicknameChangeCooldownDays = 30
+
+// GetNicknameChangeCooldown returns how long the owner of an unlicensed profile waits between two nickname changes.
+// Zero turns the cooldown off. A licensed account is renamed on Mojang, which has its own limit.
+func GetNicknameChangeCooldown() time.Duration {
+	value := os.Getenv("NICKNAME_CHANGE_COOLDOWN_DAYS")
+	if value == "" {
+		return defaultNicknameChangeCooldownDays * 24 * time.Hour
+	}
+	days, err := strconv.Atoi(value)
+	if err != nil || days < 0 {
+		log.Printf("Error parsing NICKNAME_CHANGE_COOLDOWN_DAYS: %q is not a non-negative number", value)
+		return defaultNicknameChangeCooldownDays * 24 * time.Hour
+	}
+	return time.Duration(days) * 24 * time.Hour
+}
+
 /** REDIS */
 
 func GetRedisURL() string {

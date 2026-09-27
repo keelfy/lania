@@ -28,6 +28,7 @@ type laniaAPI struct {
 	profileCosmeticsHandler    handlers.ProfileCosmeticsHandler
 	profileResyncHandler       handlers.ProfileResyncHandler
 	profileVerificationHandler handlers.ProfileVerificationHandler
+	profileRenameHandler       handlers.ProfileRenameHandler
 	productHandler             handlers.ProductHandler
 	orderHandler               handlers.OrderHandler
 	acquiringHandler           handlers.AcquiringHandler
@@ -47,6 +48,7 @@ type laniaAPI struct {
 	mojangService              services.MojangService
 	playerSyncService          services.PlayerSyncService
 	roleSyncService            services.RoleSyncService
+	profileRenameService       services.ProfileRenameService
 	tokenAuth                  *jwtAuth.JWTAuth
 	oryAPI                     clients.OryAPI
 }
@@ -58,6 +60,7 @@ func NewLaniaAPI(
 	profileCosmeticsHandler handlers.ProfileCosmeticsHandler,
 	profileResyncHandler handlers.ProfileResyncHandler,
 	profileVerificationHandler handlers.ProfileVerificationHandler,
+	profileRenameHandler handlers.ProfileRenameHandler,
 	productHandler handlers.ProductHandler,
 	orderHandler handlers.OrderHandler,
 	acquiringHandler handlers.AcquiringHandler,
@@ -77,6 +80,7 @@ func NewLaniaAPI(
 	mojangService services.MojangService,
 	playerSyncService services.PlayerSyncService,
 	roleSyncService services.RoleSyncService,
+	profileRenameService services.ProfileRenameService,
 	oryAPI clients.OryAPI,
 ) LaniaAPI {
 	return &laniaAPI{
@@ -86,6 +90,7 @@ func NewLaniaAPI(
 		profileCosmeticsHandler:    profileCosmeticsHandler,
 		profileResyncHandler:       profileResyncHandler,
 		profileVerificationHandler: profileVerificationHandler,
+		profileRenameHandler:       profileRenameHandler,
 		productHandler:             productHandler,
 		orderHandler:               orderHandler,
 		acquiringHandler:           acquiringHandler,
@@ -105,6 +110,7 @@ func NewLaniaAPI(
 		mojangService:              mojangService,
 		playerSyncService:          playerSyncService,
 		roleSyncService:            roleSyncService,
+		profileRenameService:       profileRenameService,
 		oryAPI:                     oryAPI,
 		tokenAuth:                  jwtAuth.New("HS256", config.GetJWTSecret(), nil),
 	}
@@ -124,6 +130,9 @@ func (api *laniaAPI) BuildAPI(ctx context.Context) (*chi.Mux, error) {
 
 	// push roles changed in profiles to every season server, profiles are the source of truth for roles
 	go api.roleSyncService.RunRoleSync(ctx)
+
+	// follow licensed accounts renamed on mojang, their uuid stays the same
+	go api.profileRenameService.RunPremiumNameSync(ctx)
 
 	// middlewares
 	r.Use(chiMiddleware.RequestID)
@@ -197,6 +206,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				r.Post("/resync", api.profileResyncHandler.ResyncProfile)
 				r.Post("/verification", api.profileVerificationHandler.StartVerification)
 				r.Post("/verification/confirm", api.profileVerificationHandler.ConfirmVerification)
+				r.Put("/username", api.profileRenameHandler.ChangeUsername)
 			})
 		})
 	})
@@ -331,6 +341,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Get("/merge", api.adminProfileHandler.PreviewMergeProfiles)
 			r.Post("/merge", api.adminProfileHandler.MergeProfiles)
 			r.Get("/merges", api.adminProfileHandler.GetProfileMerges)
+			r.Get("/username-changes", api.adminProfileHandler.GetProfileUsernameChanges)
 
 			r.Get("/grants", api.adminGrantHandler.GetGrants)
 			r.Post("/grants", api.adminGrantHandler.GrantProduct)

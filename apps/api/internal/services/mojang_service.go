@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	mojangBulkLookupURL  = "https://api.minecraftservices.com/minecraft/profile/lookup/bulk/byname"
-	mojangBulkLookupSize = 10 // max names per bulk request
+	mojangBulkLookupURL   = "https://api.minecraftservices.com/minecraft/profile/lookup/bulk/byname"
+	mojangLookupByUUIDURL = "https://api.minecraftservices.com/minecraft/profile/lookup/%s"
+	mojangBulkLookupSize  = 10 // max names per bulk request
 
 	mojangSyncInterval         = 30 * time.Second
 	mojangSyncBatchesPerRun    = 5
@@ -48,6 +49,9 @@ type MojangService interface {
 	// IsPremiumUsername reports whether a Mojang account has the nickname. Answers are cached for an hour, so
 	// typing a nickname does not hit Mojang on every check.
 	IsPremiumUsername(ctx context.Context, username string) (bool, error)
+	// LookupUsernameByMojangUUID returns the current name of the Mojang account, an empty one when the account is
+	// gone. It fails with errMojangRateLimited when Mojang asks to slow down.
+	LookupUsernameByMojangUUID(ctx context.Context, mojangUUID uuid.UUID) (string, error)
 	// RunProfileSync looks up Mojang UUIDs of profiles until ctx is done.
 	RunProfileSync(ctx context.Context)
 }
@@ -248,6 +252,35 @@ func (s *mojangService) lookupUUIDsByUsernames(ctx context.Context, usernames []
 		found[strings.ToLower(profile.Name)] = mojangUUID
 	}
 	return found, nil
+}
+
+func (s *mojangService) LookupUsernameByMojangUUID(ctx context.Context, mojangUUID uuid.UUID) (string, error) {
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(mojangLookupByUUIDURL, mojangUUID), nil)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := mojangHTTPClient.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	switch response.StatusCode {
+	case http.StatusOK:
+	case http.StatusNotFound, http.StatusNoContent:
+		return "", nil
+	case http.StatusTooManyRequests:
+		return "", errMojangRateLimited
+	default:
+		return "", fmt.Errorf("failed to lookup mojang username: %s", response.Status)
+	}
+
+	var profile mojangUUIDResponse
+	if err := json.NewDecoder(response.Body).Decode(&profile); err != nil {
+		return "", err
+	}
+	return profile.Name, nil
 }
 
 type mojangPlayerProfileProperty struct {

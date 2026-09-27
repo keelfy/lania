@@ -24,6 +24,11 @@ type ProfileResyncService interface {
 	// ResyncOwnedProfile is ResyncProfile for the owner of the profile. It fails with a forbidden error for
 	// anybody else, and with a too many requests error while the cooldown of the profile runs.
 	ResyncOwnedProfile(ctx context.Context, profileID, userID uuid.UUID) (*domain.ProfileResync, error)
+	// MoveProfileOnServers makes the season servers follow a profile that got another UUID or nickname. old is the
+	// profile before the move. A UUID the profile left loses its whitelist entry, role and prefix, LuckPerms learns
+	// the current nickname, then the profile is resynced. It runs after the move is stored, so failures are only
+	// logged: the profile is already moved, and a resync writes it again. The report is nil when nothing was tried.
+	MoveProfileOnServers(ctx context.Context, profileID uuid.UUID, old *domain.Profile) *domain.ProfileResync
 }
 
 type profileResyncService struct {
@@ -143,6 +148,48 @@ func (s *profileResyncService) ResyncProfile(ctx context.Context, profileID uuid
 		report.Seasons = append(report.Seasons, result)
 	}
 	return report, nil
+}
+
+func (s *profileResyncService) MoveProfileOnServers(ctx context.Context, profileID uuid.UUID, old *domain.Profile) *domain.ProfileResync {
+	profile, err := s.profileService.GetProfileByID(ctx, profileID)
+	if err != nil {
+		logger.Errorf(ctx, "[PROFILE RESYNC] Failed to get moved profile %s: %v", profileID, err)
+		return nil
+	}
+	seasons, err := s.seasonService.GetSeasons(ctx)
+	if err != nil {
+		logger.Errorf(ctx, "[PROFILE RESYNC] Failed to list seasons to move profile %s: %v", profileID, err)
+		return nil
+	}
+
+	for _, season := range seasons {
+		if !season.IsActive || season.ShellAddress == nil {
+			continue
+		}
+		if old.MinecraftUUID != profile.MinecraftUUID {
+			if err := s.minecraftService.RemoveFromWhitelist(ctx, season.ID, old); err != nil {
+				logger.Errorf(ctx, "[PROFILE RESYNC] Failed to remove old uuid %s of profile %s from the whitelist of season %s: %v", old.MinecraftUUID, profileID, season.ID, err)
+			}
+			if err := s.minecraftService.SetPlayerRolesInSeason(ctx, season.ID, map[uuid.UUID]domain.Role{old.MinecraftUUID: domain.RolePlayer}); err != nil {
+				logger.Errorf(ctx, "[PROFILE RESYNC] Failed to reset the role of old uuid %s of profile %s in season %s: %v", old.MinecraftUUID, profileID, season.ID, err)
+			}
+			if err := s.minecraftService.SetPrefixInSeason(ctx, season.ID, old.MinecraftUUID, ""); err != nil {
+				logger.Errorf(ctx, "[PROFILE RESYNC] Failed to clear the prefix of old uuid %s of profile %s in season %s: %v", old.MinecraftUUID, profileID, season.ID, err)
+			}
+		}
+		// LuckPerms keeps the old UUID under the name, so its user commands would still find the old one.
+		if err := s.minecraftService.RegisterPlayerInSeason(ctx, season.ID, profile); err != nil {
+			logger.Errorf(ctx, "[PROFILE RESYNC] Failed to register %s in season %s: %v", profile.MinecraftUsername, season.ID, err)
+		}
+	}
+
+	// Role, prefix and the whitelist entry of the current UUID; the report is logged by the resync itself.
+	resync, err := s.ResyncProfile(ctx, profileID)
+	if err != nil {
+		logger.Errorf(ctx, "[PROFILE RESYNC] Failed to resync moved profile %s: %v", profileID, err)
+		return nil
+	}
+	return resync
 }
 
 // accessedSeasons returns the seasons the profile has access to.

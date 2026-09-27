@@ -307,6 +307,28 @@
         "advice": "We recommend buying Minecraft: the nickname becomes yours, and you support the game developers. If the nickname changes after the purchase, contact the administration and we will move the profile",
         "buy": "Buy Minecraft"
       }
+    },
+    "username": {
+      "title": "Nickname",
+      "description": "A new nickname is a new player in game: your progress on the server stays with the old nickname",
+      "licensedDescription": "A licensed account changes its nickname on minecraft.net, the site picks the new one up by itself within a day",
+      "availableAt": "You can change the nickname again on {date}",
+      "open": "Change nickname",
+      "dialogTitle": "Change the nickname of {username}",
+      "dialogDescription": "Everything the site keeps moves to the new nickname: role, season access, cosmetics, purchases and playtime",
+      "licensedDialogDescription": "Change the nickname of your account on minecraft.net first, then enter it here to not wait until the site picks it up by itself",
+      "warning": {
+        "title": "The server will see a new player",
+        "progress": "Inventory, builds and advancements stay with the old nickname",
+        "password": "You need to register on the server again and set a password for the new nickname",
+        "reserved": "The nickname {username} stays yours, other players cannot take it",
+        "cooldown": "The next nickname change will be available in {days, plural, one {# day} other {# days}}"
+      },
+      "label": "New nickname",
+      "hint": "3 to 16 characters: latin letters, digits and _",
+      "submit": "Change nickname",
+      "success": "Your nickname is now {username}",
+      "failed": "Failed to change the nickname"
     }
   },
   "profileResync": {
@@ -904,11 +926,19 @@
         "mergedFromTitle": "Merged from",
         "mergedFromDescription": "Profiles whose data was moved into this one. They no longer exist."
       },
+      "usernameChanges": {
+        "title": "Nickname history",
+        "description": "Nickname changes by the owner and new names of the licensed account. Old UUIDs stay with the profile, their playtime keeps adding up",
+        "source": {
+          "owner": "owner",
+          "mojang": "Mojang"
+        }
+      },
       "uuid": "In-game UUID: {uuid}",
       "legacyUuid": "Offline UUID before the licensed account: {uuid}",
       "premiumConflict": {
         "title": "The nickname became someone else's licensed account",
-        "description": "The player can no longer join with this nickname. Ask them to change it and merge the old profile into the new one."
+        "description": "The player can no longer join with this nickname. They can change it in the profile settings on the site, or merge the old profile into the new one."
       },
       "rekey": {
         "button": "Move licensed to Mojang UUID",

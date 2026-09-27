@@ -117,6 +117,23 @@ func PresentProfileMerges(merges []*domain.ProfileMerge) []*responses.ProfileMer
 	return res
 }
 
+func PresentProfileUsernameChanges(changes []*domain.ProfileUsernameChange) []*responses.ProfileUsernameChange {
+	res := make([]*responses.ProfileUsernameChange, len(changes))
+	for i, change := range changes {
+		res[i] = &responses.ProfileUsernameChange{
+			ID:               change.ID,
+			OldUsername:      change.OldUsername,
+			NewUsername:      change.NewUsername,
+			OldMinecraftUUID: change.OldMinecraftUUID,
+			NewMinecraftUUID: change.NewMinecraftUUID,
+			Source:           string(change.Source),
+			ChangedBy:        change.ChangedBy,
+			CreatedAt:        change.CreatedAt.UnixMilli(),
+		}
+	}
+	return res
+}
+
 func PresentAdminGrants(grants []*domain.Grant) []*responses.AdminGrant {
 	res := make([]*responses.AdminGrant, len(grants))
 	for i, grant := range grants {

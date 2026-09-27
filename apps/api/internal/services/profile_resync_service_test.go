@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"slices"
 	"testing"
 	"time"
 
@@ -238,4 +239,87 @@ func TestProfileResyncService_OwnerCooldown(t *testing.T) {
 	if _, err := service.ResyncProfile(ctx, profile.ID); err != nil || minecraft.roles == nil {
 		t.Fatalf("admin resync error = %v, want it to skip the cooldown", err)
 	}
+}
+
+// moveMinecraft records which UUIDs a move touched on the season servers.
+type moveMinecraft struct {
+	*resyncMinecraft
+	removed    uuid.UUIDs
+	reset      uuid.UUIDs
+	cleared    uuid.UUIDs
+	registered uuid.UUIDs
+}
+
+func (m *moveMinecraft) RemoveFromWhitelist(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error {
+	m.removed = append(m.removed, profile.MinecraftUUID)
+	return m.resyncMinecraft.RemoveFromWhitelist(ctx, seasonID, profile)
+}
+
+func (m *moveMinecraft) SetPlayerRolesInSeason(ctx context.Context, seasonID uuid.UUID, roles map[uuid.UUID]domain.Role) error {
+	for mcUUID, role := range roles {
+		if role == domain.RolePlayer {
+			m.reset = append(m.reset, mcUUID)
+		}
+	}
+	return m.resyncMinecraft.SetPlayerRolesInSeason(ctx, seasonID, roles)
+}
+
+func (m *moveMinecraft) SetPrefixInSeason(ctx context.Context, seasonID, mcUUID uuid.UUID, prefix string) error {
+	if prefix == "" {
+		m.cleared = append(m.cleared, mcUUID)
+	}
+	return m.resyncMinecraft.SetPrefixInSeason(ctx, seasonID, mcUUID, prefix)
+}
+
+func (m *moveMinecraft) RegisterPlayerInSeason(_ context.Context, _ uuid.UUID, profile *domain.Profile) error {
+	m.registered = append(m.registered, profile.MinecraftUUID)
+	return nil
+}
+
+func TestMoveProfileOnServers(t *testing.T) {
+	ctx := context.Background()
+	profile := &domain.Profile{ID: uuid.New(), MinecraftUUID: uuid.New(), MinecraftUsername: "newnick", Role: domain.RoleModerator}
+	profiles := &stubProfileService{profiles: map[uuid.UUID]*domain.Profile{profile.ID: profile}}
+	live, inactive := season("a:1", true), season("b:1", false)
+	access := &resyncAccess{accesses: map[uuid.UUID][]*domain.ProfileAccess{
+		profile.MinecraftUUID: {{MinecraftUUID: profile.MinecraftUUID, SeasonID: live.ID}},
+	}}
+	newService := func(minecraft *moveMinecraft) ProfileResyncService {
+		return NewProfileResyncService(profiles, &resyncCosmetics{}, access, &fakeSeasons{seasons: []*domain.Season{live, inactive}}, minecraft)
+	}
+
+	t.Run("clears the old uuid, registers the nickname and resyncs the profile", func(t *testing.T) {
+		old := &domain.Profile{ID: profile.ID, MinecraftUUID: uuid.New(), MinecraftUsername: "oldnick"}
+		minecraft := &moveMinecraft{resyncMinecraft: newResyncMinecraft()}
+
+		report := newService(minecraft).MoveProfileOnServers(ctx, profile.ID, old)
+
+		if report == nil || !report.OK() || len(report.Seasons) != 1 {
+			t.Fatalf("report = %+v, want a resync of the live season", report)
+		}
+		want := uuid.UUIDs{old.MinecraftUUID}
+		if !slices.Equal(minecraft.removed, want) || !slices.Equal(minecraft.reset, want) || !slices.Equal(minecraft.cleared, want) {
+			t.Errorf("removed %v, reset %v, cleared %v; want only the old uuid each time", minecraft.removed, minecraft.reset, minecraft.cleared)
+		}
+		if !slices.Equal(minecraft.registered, uuid.UUIDs{profile.MinecraftUUID}) {
+			t.Errorf("registered = %v, want the current uuid", minecraft.registered)
+		}
+		if minecraft.whitelist[live.ID] != "add" || minecraft.roles[profile.MinecraftUUID] != domain.RoleModerator {
+			t.Errorf("whitelist %v, roles %v; want the current uuid whitelisted with its role", minecraft.whitelist, minecraft.roles)
+		}
+	})
+
+	t.Run("a licensed rename keeps the uuid and only registers the new name", func(t *testing.T) {
+		old := &domain.Profile{ID: profile.ID, MinecraftUUID: profile.MinecraftUUID, MinecraftUsername: "oldnick"}
+		minecraft := &moveMinecraft{resyncMinecraft: newResyncMinecraft()}
+
+		newService(minecraft).MoveProfileOnServers(ctx, profile.ID, old)
+
+		if len(minecraft.removed) != 0 || len(minecraft.reset) != 0 || len(minecraft.cleared) != 0 {
+			t.Errorf("removed %v, reset %v, cleared %v; want nothing cleared", minecraft.removed, minecraft.reset, minecraft.cleared)
+		}
+		if !slices.Equal(minecraft.registered, uuid.UUIDs{profile.MinecraftUUID}) {
+			t.Errorf("registered = %v, want the uuid under the new name", minecraft.registered)
+		}
+	})
 }

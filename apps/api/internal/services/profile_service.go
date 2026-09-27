@@ -304,6 +304,15 @@ func (s *profileService) createProfile(ctx context.Context, queries sql.Queries,
 	if err != nil {
 		return uuid.Nil, err
 	}
+	// A UUID some profile left by a rename or a merge still sums its Plan playtime into that profile, so a new
+	// profile there would count the playtime twice, and the nickname would be taken from the old owner.
+	holders, err := queries.FindProfileIDsHoldingMinecraftUUID(ctx, mcUUID)
+	if err != nil {
+		return uuid.Nil, utils.NewInternalServerError("failed to check the uuid of the nickname", err)
+	}
+	if len(holders) > 0 {
+		return uuid.Nil, utils.NewConflictError("the nickname is reserved by another profile", nil)
+	}
 
 	profileID := uuid.New()
 	err = queries.InsertProfile(ctx, sql.InsertProfileParams{

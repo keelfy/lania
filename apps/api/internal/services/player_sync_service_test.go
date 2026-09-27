@@ -98,3 +98,29 @@ func TestAddLegacyPlaytimesSumsBothUUIDs(t *testing.T) {
 		t.Errorf("playtimes = %v, want 5000 ms under the Mojang UUID from the first offline session to the last new one", playtimes)
 	}
 }
+
+// A profile renamed twice has two old UUIDs, and each of them keeps its own playtime in Plan.
+func TestAddLegacyPlaytimesSumsEveryOldUUID(t *testing.T) {
+	first, second, current, other := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	minecraft := &playtimeMinecraftService{playtimes: map[uuid.UUID]*domain.Playtime{
+		first:   {TotalPlaytime: 1000},
+		second:  {TotalPlaytime: 2000},
+		current: {TotalPlaytime: 500},
+		other:   {TotalPlaytime: 700},
+	}}
+	service := &playerSyncService{
+		storage:          &stubMainStorage{queries: &legacySyncQueries{legacy: map[uuid.UUID]uuid.UUID{first: current, second: current}}},
+		minecraftService: minecraft,
+	}
+	// The first old UUID played since the cursor, and so did a player with no old UUIDs.
+	playtimes := map[uuid.UUID]*domain.Playtime{first: {TotalPlaytime: 1000}, other: {TotalPlaytime: 700}}
+
+	if err := service.addLegacyPlaytimes(context.Background(), uuid.New(), playtimes); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(playtimes) != 2 || playtimes[current].TotalPlaytime != 3500 || playtimes[other].TotalPlaytime != 700 {
+		t.Errorf("playtimes = %v, want 3500 ms under the current UUID and the other player untouched", playtimes)
+	}
+}
+

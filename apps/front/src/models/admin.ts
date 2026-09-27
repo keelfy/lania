@@ -105,6 +105,19 @@ export type ProfileMerge = {
   createdAt: number
 }
 
+// One nickname change of a profile. The UUIDs are equal for a licensed account, Mojang keeps it on a rename.
+export type ProfileUsernameChange = {
+  id: string
+  oldUsername: string
+  newUsername: string
+  oldMcUuid: string
+  newMcUuid: string
+  // owner: changed on the site; mojang: the new name of the licensed account, picked up by the site.
+  source: 'owner' | 'mojang'
+  changedBy?: string
+  createdAt: number
+}
+
 export type GrantType = 'access' | 'name-color' | 'name-prefix'
 
 export type AdminGrant = {

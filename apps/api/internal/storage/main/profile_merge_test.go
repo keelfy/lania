@@ -25,6 +25,9 @@ var mergeHandledTables = map[string]bool{
 	"season_screenshot_authors":   true,
 	"chunk_claims":                true,
 	"profile_verifications":       true,
+	// Created as profile_merged_uuids, renamed to profile_former_uuids later.
+	"profile_merged_uuids":     true,
+	"profile_username_changes": true,
 }
 
 var createTablePattern = regexp.MustCompile(`(?is)CREATE TABLE IF NOT EXISTS\s+(\w+)\s*\((.*?)\n\);`)

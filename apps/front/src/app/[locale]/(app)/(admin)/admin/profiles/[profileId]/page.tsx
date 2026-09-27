@@ -6,6 +6,7 @@ import {
   getAdminGrants,
   getAdminProfile,
   getProfileMerges,
+  getProfileUsernameChanges,
   getSeasons,
   getProducts,
 } from '@/lib/api-endpoints'
@@ -19,6 +20,7 @@ import MergeCard from './merge-card'
 import MergedFromCard from './merged-from-card'
 import OwnerCard from './owner-card'
 import RoleCard from './role-card'
+import UsernameChangesCard from './username-changes-card'
 
 type Props = {
   params: Promise<{
@@ -40,28 +42,33 @@ export default async function AdminProfilePage({ params }: Props) {
   )
   if (!profile) notFound()
 
-  const [grants, seasons, products, catalog, merges] = await Promise.all([
-    getAdminGrants(serverApiFetcher, profileId).catch((error) => {
-      console.error(error)
-      return undefined
-    }),
-    getSeasons(serverApiFetcher).catch((error) => {
-      console.error(error)
-      return []
-    }),
-    getProducts(serverApiFetcher, undefined, locale).catch((error) => {
-      console.error(error)
-      return []
-    }),
-    getAdminCosmetics(serverApiFetcher).catch((error) => {
-      console.error(error)
-      return undefined
-    }),
-    getProfileMerges(serverApiFetcher, profileId).catch((error) => {
-      console.error(error)
-      return []
-    }),
-  ])
+  const [grants, seasons, products, catalog, merges, usernameChanges] =
+    await Promise.all([
+      getAdminGrants(serverApiFetcher, profileId).catch((error) => {
+        console.error(error)
+        return undefined
+      }),
+      getSeasons(serverApiFetcher).catch((error) => {
+        console.error(error)
+        return []
+      }),
+      getProducts(serverApiFetcher, undefined, locale).catch((error) => {
+        console.error(error)
+        return []
+      }),
+      getAdminCosmetics(serverApiFetcher).catch((error) => {
+        console.error(error)
+        return undefined
+      }),
+      getProfileMerges(serverApiFetcher, profileId).catch((error) => {
+        console.error(error)
+        return []
+      }),
+      getProfileUsernameChanges(serverApiFetcher, profileId).catch((error) => {
+        console.error(error)
+        return []
+      }),
+    ])
 
   return (
     <div className="flex flex-col gap-6">
@@ -97,6 +104,9 @@ export default async function AdminProfilePage({ params }: Props) {
       <OwnerCard profileId={profile.id} owner={profile.owner} locale={locale} />
       <RoleCard profileId={profile.id} role={profile.role} />
       <ProfileResyncCard profileId={profile.id} asAdmin />
+      {usernameChanges.length > 0 && (
+        <UsernameChangesCard changes={usernameChanges} locale={locale} />
+      )}
       {merges.length > 0 && <MergedFromCard merges={merges} locale={locale} />}
       <MergeCard
         profileId={profile.id}

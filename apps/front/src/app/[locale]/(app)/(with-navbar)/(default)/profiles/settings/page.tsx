@@ -21,6 +21,7 @@ import {
 import NameColorOptionSelect from '../name-color-option-select'
 import NameGlythOptionSelect from '../name-glyth-option-select'
 import CosmeticsSeasonSelect from './cosmetics-season-select'
+import ProfileUsernameCard from './profile-username-card'
 
 type Props = {
   searchParams: Promise<{
@@ -140,6 +141,7 @@ export default async function ProfileSettingsPage({
           </div>
         </CardContent>
       </Card>
+      <ProfileUsernameCard key={primaryProfile.id} profile={primaryProfile} />
     </>
   )
 }

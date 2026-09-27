@@ -21,6 +21,7 @@ type AdminProfileHandler interface {
 	PreviewMergeProfiles(w http.ResponseWriter, r *http.Request)
 	MergeProfiles(w http.ResponseWriter, r *http.Request)
 	GetProfileMerges(w http.ResponseWriter, r *http.Request)
+	GetProfileUsernameChanges(w http.ResponseWriter, r *http.Request)
 	RekeyPremiumProfiles(w http.ResponseWriter, r *http.Request)
 }
 
@@ -29,6 +30,7 @@ type adminProfileHandler struct {
 	adminProfileService      services.AdminProfileService
 	adminProfileMergeService services.AdminProfileMergeService
 	premiumUUIDService       services.PremiumUUIDService
+	profileRenameService     services.ProfileRenameService
 }
 
 func NewAdminProfileHandler(
@@ -36,12 +38,14 @@ func NewAdminProfileHandler(
 	adminProfileService services.AdminProfileService,
 	adminProfileMergeService services.AdminProfileMergeService,
 	premiumUUIDService services.PremiumUUIDService,
+	profileRenameService services.ProfileRenameService,
 ) AdminProfileHandler {
 	return &adminProfileHandler{
 		profileService:           profileService,
 		adminProfileService:      adminProfileService,
 		adminProfileMergeService: adminProfileMergeService,
 		premiumUUIDService:       premiumUUIDService,
+		profileRenameService:     profileRenameService,
 	}
 }
 
@@ -215,6 +219,25 @@ func (h *adminProfileHandler) GetProfileMerges(w http.ResponseWriter, r *http.Re
 	}
 
 	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileMerges(merges))
+}
+
+// GetProfileUsernameChanges lists every nickname change of the profile in the path, newest first.
+func (h *adminProfileHandler) GetProfileUsernameChanges(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	profileID, err := binders.BindPathVariableAsUUID(r, binders.ProfileIDVariable)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	changes, err := h.profileRenameService.GetUsernameChanges(ctx, profileID)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileUsernameChanges(changes))
 }
 
 // RekeyPremiumProfiles moves profiles of licensed nicknames to their Mojang UUID. It is safe to repeat.

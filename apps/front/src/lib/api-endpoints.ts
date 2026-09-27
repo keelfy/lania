@@ -17,6 +17,7 @@ import {
   SaveProduct,
   PremiumRekeyReport,
   ProfileMerge,
+  ProfileUsernameChange,
   ProfileMergeSummary,
   UploadedImage,
 } from '@/models/admin'
@@ -525,6 +526,19 @@ export function confirmProfileVerification(
   })
 }
 
+// Renames the profile of the signed in owner. A licensed profile takes only the current name of its Minecraft
+// account; an unlicensed one gets a new in-game UUID and waits for the cooldown before the next change.
+export function changeProfileUsername(
+  fetcher: ApiFetcher,
+  id: string,
+  username: string,
+): Promise<void> {
+  return fetcher<void>(`/v1/profiles/${id}/username`, undefined, {
+    method: 'PUT',
+    body: JSON.stringify({ username }),
+  })
+}
+
 // The same for admins: any profile and no cooldown.
 export function resyncProfileAsAdmin(
   fetcher: ApiFetcher,
@@ -568,6 +582,16 @@ export function getProfileMerges(
   id: string,
 ): Promise<ProfileMerge[]> {
   return fetcher<ProfileMerge[]>(`/v1/admin/profiles/${id}/merges`)
+}
+
+// Every nickname change of the profile, newest first.
+export function getProfileUsernameChanges(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<ProfileUsernameChange[]> {
+  return fetcher<ProfileUsernameChange[]>(
+    `/v1/admin/profiles/${id}/username-changes`,
+  )
 }
 
 // Deletes the account of the signed in user and releases the game profiles.

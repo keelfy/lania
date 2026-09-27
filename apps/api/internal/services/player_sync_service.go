@@ -117,8 +117,9 @@ func (s *playerSyncService) syncPlayers(ctx context.Context, seasonID uuid.UUID,
 	return latestMs, nil
 }
 
-// addLegacyPlaytimes sums playtime a rekeyed profile played under its offline UUID into its current UUID.
-// Either UUID may be missing from the changed ones, so both are read again for every such profile.
+// addLegacyPlaytimes sums playtime a profile played under its old UUIDs (the offline one before a premium rekey,
+// the ones it left by a merge or a rename) into its current UUID. Any of these UUIDs may be missing from the changed
+// ones, so all of them are read again for every such profile.
 func (s *playerSyncService) addLegacyPlaytimes(ctx context.Context, seasonID uuid.UUID, playtimes map[uuid.UUID]*domain.Playtime) error {
 	changed := make(uuid.UUIDs, 0, len(playtimes))
 	for mcUUID := range playtimes {
@@ -129,22 +130,32 @@ func (s *playerSyncService) addLegacyPlaytimes(ctx context.Context, seasonID uui
 		return err
 	}
 
-	both := make(uuid.UUIDs, 0, 2*len(legacy))
+	oldUUIDs := make(map[uuid.UUID]uuid.UUIDs)
 	for legacyUUID, mcUUID := range legacy {
-		both = append(both, legacyUUID, mcUUID)
+		oldUUIDs[mcUUID] = append(oldUUIDs[mcUUID], legacyUUID)
 	}
-	fresh, err := s.minecraftService.GetPlaytimesInSeason(ctx, seasonID, nil, both)
+	all := make(uuid.UUIDs, 0, len(legacy)+len(oldUUIDs))
+	for mcUUID, olds := range oldUUIDs {
+		all = append(all, mcUUID)
+		all = append(all, olds...)
+	}
+	fresh, err := s.minecraftService.GetPlaytimesInSeason(ctx, seasonID, nil, all)
 	if err != nil {
 		return err
 	}
-	for legacyUUID, mcUUID := range legacy {
-		delete(playtimes, legacyUUID)
-		playtimes[mcUUID] = sumPlaytimes(fresh[mcUUID], fresh[legacyUUID])
+	for mcUUID, olds := range oldUUIDs {
+		sum := fresh[mcUUID]
+		for _, legacyUUID := range olds {
+			delete(playtimes, legacyUUID)
+			sum = sumPlaytimes(sum, fresh[legacyUUID])
+		}
+		playtimes[mcUUID] = sum
 	}
 	return nil
 }
 
 // sumPlaytimes adds up playtime of one player under two UUIDs: the first session of both, the last session of both.
+// A nil playtime counts as none.
 func sumPlaytimes(a, b *domain.Playtime) *domain.Playtime {
 	if a == nil {
 		a = &domain.Playtime{}

@@ -91,9 +91,28 @@ type Queries interface {
 	// It reports false when the profile is no longer at oldMcUUID.
 	RekeyProfile(ctx context.Context, profileID, oldMcUUID, newMcUUID uuid.UUID) (bool, error)
 	SetProfilePremiumConflict(ctx context.Context, mcUUID uuid.UUID) error
-	// FindLegacyMinecraftUUIDs maps the legacy UUID of every rekeyed profile to its current one, for profiles where
-	// either of the two is among mcUUIDs.
+	// FindLegacyMinecraftUUIDs maps every old UUID of a profile (legacy offline UUID, UUIDs left by a merge or
+	// a rename) to its current one, for profiles where any of these UUIDs is among mcUUIDs.
 	FindLegacyMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]uuid.UUID, error)
+	// RenameProfile gives the profile a new nickname and UUID. It reports false when the profile is no longer at oldMcUUID.
+	RenameProfile(ctx context.Context, profileID, oldMcUUID, newMcUUID uuid.UUID, newUsername string, updatedBy *uuid.UUID) (bool, error)
+	// FindProfileIDsHoldingMinecraftUUID returns every profile that has the UUID now, had it before a premium
+	// rekey, or left it by a merge or a rename.
+	FindProfileIDsHoldingMinecraftUUID(ctx context.Context, mcUUID uuid.UUID) (uuid.UUIDs, error)
+	// InsertProfileFormerUUID keeps a UUID the profile left, so its playtime still counts toward the profile.
+	InsertProfileFormerUUID(ctx context.Context, mcUUID, profileID uuid.UUID) error
+	// DeleteProfileFormerUUID forgets a former UUID of the profile.
+	DeleteProfileFormerUUID(ctx context.Context, mcUUID, profileID uuid.UUID) error
+
+	// Profile Username Change
+	InsertProfileUsernameChange(ctx context.Context, arg InsertProfileUsernameChangeParams) error
+	// FindLastProfileUsernameChangeAt returns when the profile last changed its nickname from the source, nil if never.
+	FindLastProfileUsernameChangeAt(ctx context.Context, profileID uuid.UUID, source domain.ProfileUsernameChangeSource) (*time.Time, error)
+	// FindLastProfileUsernameChangeAtByProfileIDs is FindLastProfileUsernameChangeAt for several profiles; the ones
+	// that never changed are absent.
+	FindLastProfileUsernameChangeAtByProfileIDs(ctx context.Context, profileIDs uuid.UUIDs, source domain.ProfileUsernameChangeSource) (map[uuid.UUID]time.Time, error)
+	// FindProfileUsernameChanges returns every nickname change of the profile, newest first.
+	FindProfileUsernameChanges(ctx context.Context, profileID uuid.UUID) ([]*domain.ProfileUsernameChange, error)
 	// FindProfilesByIDs returns the profiles that exist among ids; a missing id is simply absent from the result.
 	FindProfilesByIDs(ctx context.Context, ids uuid.UUIDs) ([]*domain.Profile, error)
 
@@ -104,6 +123,9 @@ type Queries interface {
 	// FindPremiumRekeyTargets returns profiles whose nickname has a Mojang account while mc_uuid is not that account,
 	// premium conflicts excluded.
 	FindPremiumRekeyTargets(ctx context.Context) ([]*domain.PremiumRekeyTarget, error)
+	// FindPremiumNameCheckTargets returns licensed profiles (keyed to their Mojang UUID) whose name was last
+	// compared with Mojang before checkedBefore, the longest unchecked first. Only id, UUID and username are set.
+	FindPremiumNameCheckTargets(ctx context.Context, checkedBefore time.Time, limit int) ([]*domain.Profile, error)
 	// CountUncheckedMojangProfiles counts profiles whose nickname was never looked up on Mojang.
 	CountUncheckedMojangProfiles(ctx context.Context) (int, error)
 

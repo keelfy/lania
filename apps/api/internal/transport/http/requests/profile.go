@@ -11,6 +11,10 @@ type SelectCosmeticOption struct {
 	OptionID uuid.UUID `json:"optionId"`
 }
 
+type ChangeProfileUsername struct {
+	Username string `json:"username"`
+}
+
 type ConfirmProfileVerification struct {
 	Code string `json:"code"`
 }

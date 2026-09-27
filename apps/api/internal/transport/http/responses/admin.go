@@ -89,6 +89,17 @@ type ProfileMerge struct {
 	CreatedAt           int64     `json:"createdAt"`
 }
 
+type ProfileUsernameChange struct {
+	ID               uuid.UUID  `json:"id"`
+	OldUsername      string     `json:"oldUsername"`
+	NewUsername      string     `json:"newUsername"`
+	OldMinecraftUUID uuid.UUID  `json:"oldMcUuid"`
+	NewMinecraftUUID uuid.UUID  `json:"newMcUuid"`
+	Source           string     `json:"source"`
+	ChangedBy        *uuid.UUID `json:"changedBy,omitempty"`
+	CreatedAt        int64      `json:"createdAt"`
+}
+
 type AdminGrant struct {
 	ID          uuid.UUID  `json:"id"`
 	Type        string     `json:"type"`

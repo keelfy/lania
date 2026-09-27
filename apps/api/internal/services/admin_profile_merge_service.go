@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
-	"github.com/lania-smp/backend/internal/logger"
 	"github.com/lania-smp/backend/internal/storage"
 	sql "github.com/lania-smp/backend/internal/storage/main"
 	"github.com/lania-smp/backend/internal/utils"
@@ -35,23 +34,17 @@ type AdminProfileMergeService interface {
 
 type adminProfileMergeService struct {
 	storage              storage.MainStorage
-	seasonService        SeasonService
-	minecraftService     MinecraftService
 	profileResyncService ProfileResyncService
 	notificationService  NotificationService
 }
 
 func NewAdminProfileMergeService(
 	storage storage.MainStorage,
-	seasonService SeasonService,
-	minecraftService MinecraftService,
 	profileResyncService ProfileResyncService,
 	notificationService NotificationService,
 ) AdminProfileMergeService {
 	return &adminProfileMergeService{
 		storage:              storage,
-		seasonService:        seasonService,
-		minecraftService:     minecraftService,
 		profileResyncService: profileResyncService,
 		notificationService:  notificationService,
 	}
@@ -163,6 +156,16 @@ func (s *adminProfileMergeService) run(ctx context.Context, queries sql.Queries,
 	}
 	summary.Counts = *counts
 
+	// Plan keeps the playtime played under the source's UUIDs, so the player sync goes on summing it into the target.
+	for _, formerUUID := range []*uuid.UUID{&source.MinecraftUUID, source.LegacyMinecraftUUID} {
+		if formerUUID == nil || *formerUUID == target.MinecraftUUID {
+			continue
+		}
+		if err := queries.InsertProfileFormerUUID(ctx, *formerUUID, target.ID); err != nil {
+			return nil, utils.NewInternalServerError("failed to keep the former uuid of the source profile", err)
+		}
+	}
+
 	ownerUserID := target.OwnerUserID
 	if ownerUserID == nil {
 		ownerUserID = source.OwnerUserID
@@ -238,32 +241,7 @@ func (s *adminProfileMergeService) resyncAfterMerge(ctx context.Context, source,
 	if target == nil {
 		return nil
 	}
-
-	seasons, err := s.seasonService.GetSeasons(ctx)
-	if err != nil {
-		logger.Errorf(ctx, "[PROFILE MERGE] Failed to list seasons after merging %s into %s: %v", source.ID, target.ID, err)
-	}
-	for _, season := range seasons {
-		if !season.IsActive || season.ShellAddress == nil {
-			continue
-		}
-		if err := s.minecraftService.RemoveFromWhitelist(ctx, season.ID, source); err != nil {
-			logger.Errorf(ctx, "[PROFILE MERGE] Failed to remove %s from the whitelist of season %s: %v", source.ID, season.ID, err)
-		}
-		if err := s.minecraftService.SetPlayerRolesInSeason(ctx, season.ID, map[uuid.UUID]domain.Role{source.MinecraftUUID: domain.RolePlayer}); err != nil {
-			logger.Errorf(ctx, "[PROFILE MERGE] Failed to reset the role of %s in season %s: %v", source.ID, season.ID, err)
-		}
-		if err := s.minecraftService.SetPrefixInSeason(ctx, season.ID, source.MinecraftUUID, ""); err != nil {
-			logger.Errorf(ctx, "[PROFILE MERGE] Failed to clear the prefix of %s in season %s: %v", source.ID, season.ID, err)
-		}
-	}
-
-	resync, err := s.profileResyncService.ResyncProfile(ctx, target.ID)
-	if err != nil {
-		logger.Errorf(ctx, "[PROFILE MERGE] Failed to resync target profile %s: %v", target.ID, err)
-		return nil
-	}
-	return resync
+	return s.profileResyncService.MoveProfileOnServers(ctx, target.ID, source)
 }
 
 func blockersMessage(blockers []*domain.ProfileMergeBlocker) string {

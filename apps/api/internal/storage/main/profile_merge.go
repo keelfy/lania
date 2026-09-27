@@ -222,6 +222,16 @@ SET payload = JSON_SET(payload, '$.profileId', ?)
 WHERE JSON_UNQUOTE(JSON_EXTRACT(payload, '$.profileId')) = ?
 `
 
+// UUIDs the source left earlier and its nickname history follow it into the target. The source's own UUID is
+// added to the former UUIDs by the merge service, which knows its legacy UUID too.
+const moveProfileFormerUUIDs = `
+UPDATE profile_former_uuids SET profile_id = ? WHERE profile_id = ?
+`
+
+const moveProfileUsernameChanges = `
+UPDATE profile_username_changes SET profile_id = ? WHERE profile_id = ?
+`
+
 // An open verification request of the source is dropped: it proves nothing for the target's UUID.
 const deleteSourceVerification = `
 DELETE FROM profile_verifications WHERE profile_id = ?
@@ -317,6 +327,13 @@ func (q *queries) MergeProfileData(ctx context.Context, sourceProfileID, sourceM
 	}
 
 	if counts.ChunkClaimsMoved, err = execAffected(ctx, x, moveChunkClaims, targetProfileID, sourceProfileID); err != nil {
+		return nil, err
+	}
+
+	if _, err = execAffected(ctx, x, moveProfileFormerUUIDs, targetProfileID, sourceProfileID); err != nil {
+		return nil, err
+	}
+	if _, err = execAffected(ctx, x, moveProfileUsernameChanges, targetProfileID, sourceProfileID); err != nil {
 		return nil, err
 	}
 

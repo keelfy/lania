@@ -26,6 +26,10 @@ export type Profile = {
   mojangUuid?: string
   // The owner proved in game that the licensed account is theirs.
   verified?: boolean
+  // When the owner of an unlicensed profile can change the nickname again; missing when the owner can now.
+  usernameChangeAvailableAt?: number
+  // How many days the owner of an unlicensed profile waits after a change; missing when there is no cooldown.
+  usernameChangeCooldownDays?: number
 }
 
 export type PublicProfile = Profile & {

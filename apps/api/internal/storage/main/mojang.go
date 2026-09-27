@@ -121,3 +121,31 @@ func (q *queries) CountUncheckedMojangProfiles(ctx context.Context) (int, error)
 	err := q.x.QueryRowContext(ctx, countUncheckedMojangProfiles).Scan(&count)
 	return count, err
 }
+
+// A licensed profile is keyed to its Mojang UUID; checked_at is the last time its name was compared with Mojang's.
+const findPremiumNameCheckTargets = `
+SELECT p.id, p.mc_uuid, p.mc_username
+FROM profiles p
+JOIN profile_mojang_uuids m ON m.mc_uuid = p.mc_uuid
+WHERE m.mojang_uuid = p.mc_uuid AND m.checked_at < ?
+ORDER BY m.checked_at
+LIMIT ?
+`
+
+func (q *queries) FindPremiumNameCheckTargets(ctx context.Context, checkedBefore time.Time, limit int) ([]*domain.Profile, error) {
+	rows, err := q.x.QueryContext(ctx, findPremiumNameCheckTargets, checkedBefore, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	profiles := make([]*domain.Profile, 0)
+	for rows.Next() {
+		var profile domain.Profile
+		if err := rows.Scan(&profile.ID, &profile.MinecraftUUID, &profile.MinecraftUsername); err != nil {
+			return nil, err
+		}
+		profiles = append(profiles, &profile)
+	}
+	return profiles, rows.Err()
+}

@@ -551,10 +551,19 @@ func (q *queries) SetProfilePremiumConflict(ctx context.Context, mcUUID uuid.UUI
 	return err
 }
 
+// Old UUIDs of a profile are its offline UUID before a premium rekey and the UUIDs it left by a merge or a rename.
+// Every old UUID of a matched profile is returned, not only the matching one, so the sync can sum all of them.
 const findLegacyMinecraftUUIDs = `
-SELECT legacy_mc_uuid, mc_uuid
-FROM profiles
-WHERE legacy_mc_uuid IS NOT NULL AND (legacy_mc_uuid IN (%[1]s) OR mc_uuid IN (%[1]s))
+WITH old_uuids AS (
+	SELECT legacy_mc_uuid AS old_mc_uuid, mc_uuid FROM profiles WHERE legacy_mc_uuid IS NOT NULL
+	UNION
+	SELECT f.mc_uuid, p.mc_uuid FROM profile_former_uuids f JOIN profiles p ON p.id = f.profile_id
+)
+SELECT old_mc_uuid, mc_uuid
+FROM old_uuids
+WHERE old_mc_uuid <> mc_uuid AND mc_uuid IN (
+	SELECT mc_uuid FROM old_uuids WHERE old_mc_uuid IN (%[1]s) OR mc_uuid IN (%[1]s)
+)
 `
 
 func (q *queries) FindLegacyMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]uuid.UUID, error) {

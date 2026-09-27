@@ -26,6 +26,8 @@ type fakeMergeQueries struct {
 	setRoleCalls       int
 	lastRole           domain.Role
 	notifications      []sql.InsertNotificationParams
+	// formerUUIDs maps a UUID a profile left to that profile.
+	formerUUIDs map[uuid.UUID]uuid.UUID
 }
 
 func (q *fakeMergeQueries) FindProfileByID(_ context.Context, id uuid.UUID) (*domain.Profile, error) {
@@ -47,6 +49,14 @@ func (q *fakeMergeQueries) FindLiveSyncedSeasonNamesWithPlaytime(_ context.Conte
 func (q *fakeMergeQueries) MergeProfileData(_ context.Context, _, _, _, _ uuid.UUID) (*domain.ProfileMergeCounts, error) {
 	q.mergeDataCalls++
 	return &domain.ProfileMergeCounts{PlaytimeMoved: 1}, nil
+}
+
+func (q *fakeMergeQueries) InsertProfileFormerUUID(_ context.Context, mcUUID, profileID uuid.UUID) error {
+	if q.formerUUIDs == nil {
+		q.formerUUIDs = make(map[uuid.UUID]uuid.UUID)
+	}
+	q.formerUUIDs[mcUUID] = profileID
+	return nil
 }
 
 func (q *fakeMergeQueries) UpdateProfileAfterMerge(_ context.Context, _ uuid.UUID, _ *uuid.UUID, _, _ *time.Time, _ uuid.UUID) error {
@@ -95,21 +105,19 @@ func (s *fakeMergeStorage) Queries() sql.Queries {
 	return s.queries
 }
 
-// stubMergeSeasonService reports no seasons, so resyncAfterMerge skips every shell call.
-type stubMergeSeasonService struct {
-	SeasonService
-}
-
-func (s *stubMergeSeasonService) GetSeasons(_ context.Context) ([]*domain.Season, error) {
-	return nil, nil
-}
-
+// stubMergeProfileResyncService records the moves instead of calling the season servers.
 type stubMergeProfileResyncService struct {
 	ProfileResyncService
+	// moved holds the old UUID of every move, by the profile moved.
+	moved map[uuid.UUID]uuid.UUID
 }
 
-func (s *stubMergeProfileResyncService) ResyncProfile(_ context.Context, profileID uuid.UUID) (*domain.ProfileResync, error) {
-	return &domain.ProfileResync{}, nil
+func (s *stubMergeProfileResyncService) MoveProfileOnServers(_ context.Context, profileID uuid.UUID, old *domain.Profile) *domain.ProfileResync {
+	if s.moved == nil {
+		s.moved = make(map[uuid.UUID]uuid.UUID)
+	}
+	s.moved[profileID] = old.MinecraftUUID
+	return &domain.ProfileResync{}
 }
 
 func adminContext(adminID uuid.UUID) context.Context {
@@ -120,8 +128,6 @@ func adminContext(adminID uuid.UUID) context.Context {
 func newTestMergeService(queries *fakeMergeQueries) AdminProfileMergeService {
 	return NewAdminProfileMergeService(
 		&fakeMergeStorage{queries: queries},
-		&stubMergeSeasonService{},
-		nil,
 		&stubMergeProfileResyncService{},
 		NewNotificationService(nil),
 	)
@@ -132,7 +138,8 @@ func TestAdminProfileMergeServiceMergeProfiles(t *testing.T) {
 	owner := uuid.New()
 
 	t.Run("moves data and deletes the source", func(t *testing.T) {
-		source := &domain.Profile{ID: uuid.New(), MinecraftUUID: uuid.New(), MinecraftUsername: "player2", Role: domain.RolePlayer, OwnerUserID: &owner}
+		legacy := uuid.New()
+		source := &domain.Profile{ID: uuid.New(), MinecraftUUID: uuid.New(), LegacyMinecraftUUID: &legacy, MinecraftUsername: "player2", Role: domain.RolePlayer, OwnerUserID: &owner}
 		target := &domain.Profile{ID: uuid.New(), MinecraftUUID: uuid.New(), MinecraftUsername: "player1", Role: domain.RolePlayer}
 
 		queries := &fakeMergeQueries{profiles: map[uuid.UUID]*domain.Profile{source.ID: source, target.ID: target}}
@@ -153,6 +160,9 @@ func TestAdminProfileMergeServiceMergeProfiles(t *testing.T) {
 		}
 		if len(queries.notifications) != 1 {
 			t.Errorf("notified %d times, want 1", len(queries.notifications))
+		}
+		if len(queries.formerUUIDs) != 2 || queries.formerUUIDs[source.MinecraftUUID] != target.ID || queries.formerUUIDs[legacy] != target.ID {
+			t.Errorf("former uuids = %v, want the source uuid and its legacy one kept for the target", queries.formerUUIDs)
 		}
 	})
 
