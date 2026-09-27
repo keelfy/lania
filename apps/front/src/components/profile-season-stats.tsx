@@ -141,12 +141,20 @@ export default async function ProfileSeasonStats({
       ) : stats.seasons.length === 0 ? (
         <p className="text-muted-foreground py-4 text-sm">{t('empty')}</p>
       ) : (
-        <ol className="divide-y">
+        <ol>
           {stats.seasons.map((season) => {
             const playtime = playtimeText(season.playtime)
             const running = season.isActive && season.endDate === undefined
+            // Without counters the playtime bar already closes the entry, a divider under it would double the line.
+            const hasCounters = season.deaths > 0 || season.mobKills > 0
             return (
-              <li key={season.seasonId} className="flex flex-col gap-2 py-3">
+              <li
+                key={season.seasonId}
+                className={cn(
+                  'flex flex-col gap-2 py-3',
+                  hasCounters && 'not-last:border-b',
+                )}
+              >
                 <div className="flex items-baseline justify-between gap-4">
                   <div className="flex min-w-0 flex-col">
                     <div className="flex items-center gap-2">
@@ -176,7 +184,7 @@ export default async function ProfileSeasonStats({
                   ratio={longest > 0 ? season.playtime / longest : 0}
                   colors={colors}
                 />
-                {(season.deaths > 0 || season.mobKills > 0) && (
+                {hasCounters && (
                   <p className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-1 text-sm">
                     <span className="flex items-center gap-1.5">
                       <PixelGlyph pixels={SKULL} />
