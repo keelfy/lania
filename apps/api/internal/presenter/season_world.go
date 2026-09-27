@@ -6,15 +6,12 @@ import (
 )
 
 func PresentSeasonWorld(world *domain.SeasonWorld) *responses.SeasonWorld {
-	dimensions := world.ClaimDimensions
-	if dimensions == nil {
-		dimensions = []string{}
-	}
 	return &responses.SeasonWorld{
 		ID: world.ID, SeasonID: world.SeasonID, Slug: world.Slug, Name: world.Name,
 		PreviewImage: world.PreviewImage, MapURL: world.MapURL,
-		ClaimLimit: world.ClaimLimit, ClaimDimensions: dimensions,
-		PlanServer: world.PlanServer, ClaimMinPlaytimeHours: world.ClaimMinPlaytimeHours, Position: world.Position,
+		ClaimLimit: world.ClaimLimit, ClaimDimensions: nonNilStrings(world.ClaimDimensions),
+		HiddenDimensions: nonNilStrings(world.HiddenDimensions),
+		PlanServer:       world.PlanServer, ClaimMinPlaytimeHours: world.ClaimMinPlaytimeHours, Position: world.Position,
 	}
 }
 
@@ -24,4 +21,11 @@ func PresentSeasonWorlds(worlds []*domain.SeasonWorld) []*responses.SeasonWorld 
 		result[i] = PresentSeasonWorld(world)
 	}
 	return result
+}
+
+func nonNilStrings(values []string) []string {
+	if values == nil {
+		return []string{}
+	}
+	return values
 }

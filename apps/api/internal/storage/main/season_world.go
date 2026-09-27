@@ -11,21 +11,24 @@ import (
 )
 
 const seasonWorldColumns = `
-	id, season_id, slug, name, preview_image, map_url, claim_limit, claim_dimensions, plan_server,
-	claim_min_playtime_hours, position
+	id, season_id, slug, name, preview_image, map_url, claim_limit, claim_dimensions, hidden_dimensions,
+	plan_server, claim_min_playtime_hours, position
 FROM season_worlds`
 
 func scanSeasonWorld(row interface{ Scan(...any) error }) (*domain.SeasonWorld, error) {
 	var world domain.SeasonWorld
-	var dimensions string
+	var dimensions, hidden string
 	err := row.Scan(
 		&world.ID, &world.SeasonID, &world.Slug, &world.Name, &world.PreviewImage,
-		&world.MapURL, &world.ClaimLimit, &dimensions, &world.PlanServer, &world.ClaimMinPlaytimeHours, &world.Position,
+		&world.MapURL, &world.ClaimLimit, &dimensions, &hidden, &world.PlanServer, &world.ClaimMinPlaytimeHours, &world.Position,
 	)
 	if err != nil {
 		return nil, err
 	}
 	if err := json.Unmarshal([]byte(dimensions), &world.ClaimDimensions); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(hidden), &world.HiddenDimensions); err != nil {
 		return nil, err
 	}
 	return &world, nil
@@ -64,12 +67,13 @@ type SaveSeasonWorldParams struct {
 	MapURL                *string
 	ClaimLimit            int
 	ClaimDimensions       []string
+	HiddenDimensions      []string
 	PlanServer            *string
 	ClaimMinPlaytimeHours int
 	Position              int
 }
 
-func claimDimensionsJSON(dimensions []string) (string, error) {
+func dimensionsJSON(dimensions []string) (string, error) {
 	if dimensions == nil {
 		dimensions = []string{}
 	}
@@ -79,19 +83,23 @@ func claimDimensionsJSON(dimensions []string) (string, error) {
 
 const insertSeasonWorld = `
 INSERT INTO season_worlds (
-	id, season_id, slug, name, preview_image, map_url, claim_limit, claim_dimensions, plan_server,
-	claim_min_playtime_hours, position
+	id, season_id, slug, name, preview_image, map_url, claim_limit, claim_dimensions, hidden_dimensions,
+	plan_server, claim_min_playtime_hours, position
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 func (q *queries) CreateSeasonWorld(ctx context.Context, arg SaveSeasonWorldParams) error {
-	dimensions, err := claimDimensionsJSON(arg.ClaimDimensions)
+	dimensions, err := dimensionsJSON(arg.ClaimDimensions)
+	if err != nil {
+		return err
+	}
+	hidden, err := dimensionsJSON(arg.HiddenDimensions)
 	if err != nil {
 		return err
 	}
 	_, err = q.x.ExecContext(ctx, insertSeasonWorld,
-		arg.ID, arg.SeasonID, arg.Slug, arg.Name, arg.PreviewImage, arg.MapURL, arg.ClaimLimit, dimensions,
+		arg.ID, arg.SeasonID, arg.Slug, arg.Name, arg.PreviewImage, arg.MapURL, arg.ClaimLimit, dimensions, hidden,
 		arg.PlanServer, arg.ClaimMinPlaytimeHours, arg.Position,
 	)
 	return err
@@ -99,19 +107,23 @@ func (q *queries) CreateSeasonWorld(ctx context.Context, arg SaveSeasonWorldPara
 
 const updateSeasonWorld = `
 UPDATE season_worlds SET
-	slug = ?, name = ?, preview_image = ?, map_url = ?, claim_limit = ?, claim_dimensions = ?, plan_server = ?,
-	claim_min_playtime_hours = ?, position = ?
+	slug = ?, name = ?, preview_image = ?, map_url = ?, claim_limit = ?, claim_dimensions = ?, hidden_dimensions = ?,
+	plan_server = ?, claim_min_playtime_hours = ?, position = ?
 WHERE id = ?
 `
 
 // UpdateSeasonWorld reports whether a world with the id existed.
 func (q *queries) UpdateSeasonWorld(ctx context.Context, arg SaveSeasonWorldParams) (bool, error) {
-	dimensions, err := claimDimensionsJSON(arg.ClaimDimensions)
+	dimensions, err := dimensionsJSON(arg.ClaimDimensions)
+	if err != nil {
+		return false, err
+	}
+	hidden, err := dimensionsJSON(arg.HiddenDimensions)
 	if err != nil {
 		return false, err
 	}
 	result, err := q.x.ExecContext(ctx, updateSeasonWorld,
-		arg.Slug, arg.Name, arg.PreviewImage, arg.MapURL, arg.ClaimLimit, dimensions, arg.PlanServer,
+		arg.Slug, arg.Name, arg.PreviewImage, arg.MapURL, arg.ClaimLimit, dimensions, hidden, arg.PlanServer,
 		arg.ClaimMinPlaytimeHours, arg.Position, arg.ID,
 	)
 	if err != nil {

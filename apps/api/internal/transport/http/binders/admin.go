@@ -35,6 +35,14 @@ var ScreenshotIDVariable = "screenshotId"
 var CosmeticIDVariable = "cosmeticId"
 var ProductIDVariable = "productId"
 
+func trimmedAll(values []string) []string {
+	trimmed := make([]string, len(values))
+	for i, value := range values {
+		trimmed[i] = strings.TrimSpace(value)
+	}
+	return trimmed
+}
+
 func optionalTrimmed(value *string) *string {
 	if value == nil {
 		return nil
@@ -109,17 +117,14 @@ func BindSaveSeasonWorld(r *http.Request) (*commands.SaveSeasonWorldCommand, err
 	if req.ClaimMinPlaytimeHours != nil {
 		minPlaytimeHours = *req.ClaimMinPlaytimeHours
 	}
-	dimensions := make([]string, len(req.ClaimDimensions))
-	for i, dimension := range req.ClaimDimensions {
-		dimensions[i] = strings.TrimSpace(dimension)
-	}
 	return &commands.SaveSeasonWorldCommand{
 		Slug:                  strings.TrimSpace(req.Slug),
 		Name:                  strings.TrimSpace(req.Name),
 		PreviewImage:          optionalTrimmed(req.PreviewImage),
 		MapURL:                optionalTrimmed(req.MapURL),
 		ClaimLimit:            claimLimit,
-		ClaimDimensions:       dimensions,
+		ClaimDimensions:       trimmedAll(req.ClaimDimensions),
+		HiddenDimensions:      trimmedAll(req.HiddenDimensions),
 		PlanServer:            optionalTrimmed(req.PlanServer),
 		ClaimMinPlaytimeHours: minPlaytimeHours,
 		Position:              req.Position,

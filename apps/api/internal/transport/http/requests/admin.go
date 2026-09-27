@@ -52,9 +52,10 @@ type SaveSeasonWorld struct {
 	PreviewImage *string `json:"previewImage"`
 	MapURL       *string `json:"mapUrl"`
 	// ClaimLimit falls back to domain.DefaultClaimLimit when the request leaves it out.
-	ClaimLimit      *int     `json:"claimLimit"`
-	ClaimDimensions []string `json:"claimDimensions"`
-	PlanServer      *string  `json:"planServer"`
+	ClaimLimit       *int     `json:"claimLimit"`
+	ClaimDimensions  []string `json:"claimDimensions"`
+	HiddenDimensions []string `json:"hiddenDimensions"`
+	PlanServer       *string  `json:"planServer"`
 	// ClaimMinPlaytimeHours falls back to domain.DefaultClaimMinPlaytimeHours when the request leaves it out.
 	ClaimMinPlaytimeHours *int `json:"claimMinPlaytimeHours"`
 	Position              int  `json:"position"`

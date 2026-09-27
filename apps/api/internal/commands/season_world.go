@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"regexp"
+	"slices"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/google/uuid"
@@ -11,8 +12,8 @@ import (
 // worldSlugPattern is the shape of the key in /worlds/<slug>.
 var worldSlugPattern = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 
-// maxClaimDimensions caps the list; a squaremap has three vanilla dimensions and a few custom ones at most.
-const maxClaimDimensions = 16
+// maxDimensions caps a dimension list; a squaremap has three vanilla dimensions and a few custom ones at most.
+const maxDimensions = 16
 
 type SaveSeasonWorldCommand struct {
 	ID                    uuid.UUID
@@ -23,6 +24,7 @@ type SaveSeasonWorldCommand struct {
 	MapURL                *string
 	ClaimLimit            int
 	ClaimDimensions       []string
+	HiddenDimensions      []string
 	PlanServer            *string
 	ClaimMinPlaytimeHours int
 	Position              int
@@ -37,20 +39,32 @@ func (c *SaveSeasonWorldCommand) Validate() error {
 		validation.Field(&c.ClaimLimit, validation.Min(0), validation.Max(100000)),
 		validation.Field(&c.PlanServer, validation.By(validateRuneLength(c.PlanServer, 1, 100))),
 		validation.Field(&c.ClaimMinPlaytimeHours, validation.Min(0), validation.Max(10000)),
-		validation.Field(&c.ClaimDimensions, validation.Length(0, maxClaimDimensions),
+		validation.Field(&c.ClaimDimensions, validation.Length(0, maxDimensions), validation.By(validateDimensions)),
+		validation.Field(&c.HiddenDimensions, validation.Length(0, maxDimensions), validation.By(validateDimensions),
 			validation.By(func(any) error {
-				seen := make(map[string]bool, len(c.ClaimDimensions))
-				for _, dimension := range c.ClaimDimensions {
-					if !dimensionPattern.MatchString(dimension) {
-						return errors.New("must be squaremap world names")
+				for _, dimension := range c.HiddenDimensions {
+					if slices.Contains(c.ClaimDimensions, dimension) {
+						return errors.New("a claim dimension cannot be hidden")
 					}
-					if seen[dimension] {
-						return errors.New("dimension is listed twice")
-					}
-					seen[dimension] = true
 				}
 				return nil
 			}),
 		),
 	)
+}
+
+// validateDimensions checks a list of squaremap world names.
+func validateDimensions(value any) error {
+	dimensions, _ := value.([]string)
+	seen := make(map[string]bool, len(dimensions))
+	for _, dimension := range dimensions {
+		if !dimensionPattern.MatchString(dimension) {
+			return errors.New("must be squaremap world names")
+		}
+		if seen[dimension] {
+			return errors.New("dimension is listed twice")
+		}
+		seen[dimension] = true
+	}
+	return nil
 }

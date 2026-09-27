@@ -18,6 +18,9 @@ func TestSaveSeasonWorldCommand_Validate(t *testing.T) {
 		{name: "map without a scheme", cmd: SaveSeasonWorldCommand{Slug: "survival", Name: "x", MapURL: &badURL}, wantErr: true},
 		{name: "negative limit", cmd: SaveSeasonWorldCommand{Slug: "survival", Name: "x", ClaimLimit: -1}, wantErr: true},
 		{name: "dimension with a path", cmd: SaveSeasonWorldCommand{Slug: "survival", Name: "x", ClaimDimensions: []string{"../x"}}, wantErr: true},
+		{name: "hidden end", cmd: SaveSeasonWorldCommand{Slug: "survival", Name: "x", ClaimDimensions: []string{"minecraft_overworld"}, HiddenDimensions: []string{"minecraft_the_end"}}},
+		{name: "hidden claim dimension", cmd: SaveSeasonWorldCommand{Slug: "survival", Name: "x", ClaimDimensions: []string{"minecraft_overworld"}, HiddenDimensions: []string{"minecraft_overworld"}}, wantErr: true},
+		{name: "hidden dimension twice", cmd: SaveSeasonWorldCommand{Slug: "survival", Name: "x", HiddenDimensions: []string{"minecraft_the_end", "minecraft_the_end"}}, wantErr: true},
 		{name: "dimension twice", cmd: SaveSeasonWorldCommand{Slug: "survival", Name: "x", ClaimDimensions: []string{"minecraft_overworld", "minecraft_overworld"}}, wantErr: true},
 	}
 	for _, tt := range tests {

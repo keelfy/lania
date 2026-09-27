@@ -58,7 +58,8 @@ func saveSeasonWorldParams(id uuid.UUID, cmd *commands.SaveSeasonWorldCommand) s
 	return sql.SaveSeasonWorldParams{
 		ID: id, SeasonID: cmd.SeasonID, Slug: cmd.Slug, Name: cmd.Name, PreviewImage: cmd.PreviewImage,
 		MapURL: cmd.MapURL, ClaimLimit: cmd.ClaimLimit, ClaimDimensions: cmd.ClaimDimensions,
-		PlanServer: cmd.PlanServer, ClaimMinPlaytimeHours: cmd.ClaimMinPlaytimeHours, Position: cmd.Position,
+		HiddenDimensions: cmd.HiddenDimensions,
+		PlanServer:       cmd.PlanServer, ClaimMinPlaytimeHours: cmd.ClaimMinPlaytimeHours, Position: cmd.Position,
 	}
 }
 

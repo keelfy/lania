@@ -14,6 +14,8 @@ type SeasonWorld struct {
 	ClaimLimit int     `json:"claimLimit"`
 	// ClaimDimensions are the squaremap world names where chunks can be claimed; empty for a view-only map.
 	ClaimDimensions []string `json:"claimDimensions"`
+	// HiddenDimensions are the squaremap world names the site does not show on the map.
+	HiddenDimensions []string `json:"hiddenDimensions"`
 	// PlanServer is the Plan name of the world server; missing counts playtime on the whole season network.
 	PlanServer *string `json:"planServer,omitempty"`
 	// ClaimMinPlaytimeHours is the playtime on the world server a profile needs to claim chunks.

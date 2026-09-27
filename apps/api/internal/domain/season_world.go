@@ -27,6 +27,9 @@ type SeasonWorld struct {
 	ClaimLimit int
 	// ClaimDimensions are the squaremap world names where chunks can be claimed; none makes the map view-only.
 	ClaimDimensions []string
+	// HiddenDimensions are the squaremap world names the site does not show on the map; none of them is a claim
+	// dimension.
+	HiddenDimensions []string
 	// PlanServer is the Plan name of the world server, where playtime for claims is counted. Nil counts the
 	// whole season network.
 	PlanServer *string

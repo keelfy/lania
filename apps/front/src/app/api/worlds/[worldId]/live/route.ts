@@ -15,7 +15,8 @@ export async function GET(
   }
   const world = await getWorld(worldId).catch(() => undefined)
   const mapUrl = mapBaseUrl(world?.mapUrl)
-  if (!world || !mapUrl) {
+  // A hidden dimension is off the site, players in it too.
+  if (!world || !mapUrl || world.hiddenDimensions.includes(dimension)) {
     return NextResponse.json({ error: 'no map' }, { status: 404 })
   }
   try {

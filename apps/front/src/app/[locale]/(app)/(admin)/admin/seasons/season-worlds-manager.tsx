@@ -66,6 +66,68 @@ function optionalString(form: FormData, name: string) {
   return value || undefined
 }
 
+const isVanilla = (name: string) =>
+  (VANILLA_DIMENSIONS as readonly string[]).includes(name)
+
+// The checked vanilla dimensions and the ones typed into the input with the name.
+function dimensionList(form: FormData, name: string, checked: string[]) {
+  const others = String(form.get(name) ?? '')
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean)
+  return [
+    ...new Set([
+      ...VANILLA_DIMENSIONS.filter((name) => checked.includes(name)),
+      ...others,
+    ]),
+  ]
+}
+
+// Checkboxes for the vanilla dimensions and a comma-separated input, named `name`, for the rest.
+function DimensionsField({
+  label,
+  hint,
+  name,
+  selected,
+  onToggle,
+}: {
+  label: string
+  hint: string
+  name: string
+  selected: string[]
+  onToggle: (dimension: string, checked: boolean) => void
+}) {
+  const t = useTranslations('admin.seasons.worlds')
+  return (
+    <Field>
+      <FieldLabel>{label}</FieldLabel>
+      <div className="flex flex-wrap gap-x-5 gap-y-2">
+        {VANILLA_DIMENSIONS.map((dimension) => (
+          <label
+            key={dimension}
+            className="flex items-center gap-2 text-sm font-normal"
+          >
+            <Checkbox
+              checked={selected.includes(dimension)}
+              onCheckedChange={(checked) =>
+                onToggle(dimension, checked === true)
+              }
+            />
+            {t(`dimensions.${dimension}`)}
+          </label>
+        ))}
+      </div>
+      <Input
+        name={name}
+        defaultValue={selected.filter((item) => !isVanilla(item)).join(', ')}
+        placeholder={t('otherDimensionsPlaceholder')}
+        aria-label={t('otherDimensionsPlaceholder')}
+      />
+      <FieldDescription>{hint}</FieldDescription>
+    </Field>
+  )
+}
+
 function WorldFormDialog({
   seasonId,
   world,
@@ -86,6 +148,8 @@ function WorldFormDialog({
   const initialDimensions = () =>
     world?.claimDimensions ?? ['minecraft_overworld']
   const [dimensions, setDimensions] = React.useState(initialDimensions)
+  const initialHidden = () => world?.hiddenDimensions ?? []
+  const [hidden, setHidden] = React.useState(initialHidden)
   const [isPending, startTransition] = React.useTransition()
 
   const handleOpenChange = (next: boolean) => {
@@ -93,38 +157,35 @@ function WorldFormDialog({
     if (next) {
       setImage(world?.previewImage ?? '')
       setDimensions(initialDimensions())
+      setHidden(initialHidden())
     }
   }
 
-  const toggleDimension = (name: string, checked: boolean) =>
-    setDimensions((current) =>
-      checked ? [...current, name] : current.filter((item) => item !== name),
-    )
-  const otherDimensions = dimensions.filter(
-    (name) => !(VANILLA_DIMENSIONS as readonly string[]).includes(name),
-  )
+  const toggle = (list: string[], name: string, checked: boolean) =>
+    checked ? [...list, name] : list.filter((item) => item !== name)
+  // A hidden dimension has no claims, so checking one list unchecks the other.
+  const toggleDimension = (name: string, checked: boolean) => {
+    setDimensions((current) => toggle(current, name, checked))
+    if (checked) setHidden((current) => toggle(current, name, false))
+  }
+  const toggleHidden = (name: string, checked: boolean) => {
+    setHidden((current) => toggle(current, name, checked))
+    if (checked) setDimensions((current) => toggle(current, name, false))
+  }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (isPending) return
 
     const form = new FormData(event.currentTarget)
-    const others = String(form.get('otherDimensions') ?? '')
-      .split(',')
-      .map((name) => name.trim())
-      .filter(Boolean)
     const payload: SaveSeasonWorld = {
       slug: String(form.get('slug') ?? '').trim(),
       name: String(form.get('name') ?? '').trim(),
       previewImage: image || undefined,
       mapUrl: optionalString(form, 'mapUrl'),
       claimLimit: Number(form.get('claimLimit') ?? 0),
-      claimDimensions: [
-        ...new Set([
-          ...VANILLA_DIMENSIONS.filter((name) => dimensions.includes(name)),
-          ...others,
-        ]),
-      ],
+      claimDimensions: dimensionList(form, 'otherDimensions', dimensions),
+      hiddenDimensions: dimensionList(form, 'otherHiddenDimensions', hidden),
       planServer: optionalString(form, 'planServer'),
       claimMinPlaytimeHours: Number(form.get('claimMinPlaytimeHours') ?? 0),
       position: Number(form.get('position') ?? 0),
@@ -216,32 +277,20 @@ function WorldFormDialog({
               />
               <FieldDescription>{t('mapUrlHint')}</FieldDescription>
             </Field>
-            <Field>
-              <FieldLabel>{t('fields.claimDimensions')}</FieldLabel>
-              <div className="flex flex-wrap gap-x-5 gap-y-2">
-                {VANILLA_DIMENSIONS.map((name) => (
-                  <label
-                    key={name}
-                    className="flex items-center gap-2 text-sm font-normal"
-                  >
-                    <Checkbox
-                      checked={dimensions.includes(name)}
-                      onCheckedChange={(checked) =>
-                        toggleDimension(name, checked === true)
-                      }
-                    />
-                    {t(`dimensions.${name}`)}
-                  </label>
-                ))}
-              </div>
-              <Input
-                name="otherDimensions"
-                defaultValue={otherDimensions.join(', ')}
-                placeholder={t('otherDimensionsPlaceholder')}
-                aria-label={t('otherDimensionsPlaceholder')}
-              />
-              <FieldDescription>{t('claimDimensionsHint')}</FieldDescription>
-            </Field>
+            <DimensionsField
+              label={t('fields.claimDimensions')}
+              hint={t('claimDimensionsHint')}
+              name="otherDimensions"
+              selected={dimensions}
+              onToggle={toggleDimension}
+            />
+            <DimensionsField
+              label={t('fields.hiddenDimensions')}
+              hint={t('hiddenDimensionsHint')}
+              name="otherHiddenDimensions"
+              selected={hidden}
+              onToggle={toggleHidden}
+            />
             <FieldGroup className="grid gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor={`${idPrefix}-claim-limit`}>

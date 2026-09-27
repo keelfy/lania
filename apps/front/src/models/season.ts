@@ -58,6 +58,8 @@ export type SeasonWorld = {
   claimLimit: number
   // squaremap world names where chunks can be claimed; empty for a view-only map.
   claimDimensions: string[]
+  // squaremap world names the site does not show on the map.
+  hiddenDimensions: string[]
   // Plan name of the world server, where playtime for claims is counted; missing counts the whole network.
   planServer?: string
   // Hours a profile must have played on the world server before it can claim chunks; 0 turns the check off.
@@ -72,6 +74,7 @@ export type SaveSeasonWorld = {
   mapUrl?: string
   claimLimit: number
   claimDimensions: string[]
+  hiddenDimensions: string[]
   planServer?: string
   claimMinPlaytimeHours: number
   position: number

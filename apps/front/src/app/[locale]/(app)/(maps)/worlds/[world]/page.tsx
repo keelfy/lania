@@ -56,7 +56,13 @@ export default async function WorldMapPage({ params }: Props) {
   const { season, world } = found
 
   const [dimensions, session] = await Promise.all([
-    getMapDimensions(mapUrl).catch(() => []),
+    getMapDimensions(mapUrl)
+      .then((dimensions) =>
+        dimensions.filter(
+          (dimension) => !world.hiddenDimensions.includes(dimension.name),
+        ),
+      )
+      .catch(() => []),
     getCurrentSession(),
   ])
 
