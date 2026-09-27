@@ -13,6 +13,7 @@ import { Button, Head } from 'nextra/components'
 import { getPageMap } from 'nextra/page-map'
 import { footerLegalLinkd, footerSocialLinks } from '../(app)/components/footer'
 import { SeasonSelect } from './components/season-select'
+import { SiteNav } from './components/site-nav'
 import { SeasonalLayout } from './components/seasonal-layout'
 
 type Props = {
@@ -39,31 +40,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // const banner = <Banner storageKey="some-key">Nextra 4.0 is released 🎉</Banner>
-const navbar = (children: React.ReactNode) => (
-  <Navbar
-    logo={
-      <>
-        <DeerIcon style={{ width: '2rem', height: '2rem' }} />
-        <p
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            textTransform: 'uppercase',
-            letterSpacing: '0.1rem',
-            marginLeft: '.4em',
-            fontWeight: 800,
-            fontSize: '1rem',
-          }}
-        >
-          Lania
-        </p>
-      </>
-    }
-  >
-    {children}
-  </Navbar>
-)
-
 const footer = (
   <Footer>
     <div
@@ -246,14 +222,24 @@ export default async function WikiLayout({
             system: t('common.theme.system'),
           }}
           // banner={banner}
-          navbar={navbar(
-            <SeasonSelect
-              seasons={seasons}
-              routes={collectRoutes(pageMap)}
-              label={t('wiki.season.label')}
-              currentTemplate={t.raw('wiki.season.current')}
-            />,
-          )}
+          navbar={
+            <Navbar
+              logoLink={false}
+              logo={
+                <SiteNav
+                  locale={locale}
+                  labels={t.raw('navbar.items') as Record<string, string>}
+                />
+              }
+            >
+              <SeasonSelect
+                seasons={seasons}
+                routes={collectRoutes(pageMap)}
+                label={t('wiki.season.label')}
+                currentTemplate={t.raw('wiki.season.current')}
+              />
+            </Navbar>
+          }
           pageMap={pageMap}
           docsRepositoryBase="https://github.com/shuding/nextra/tree/main/docs"
           footer={footer}

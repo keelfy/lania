@@ -1,0 +1,271 @@
+import { Table } from 'nextra/components'
+
+# Команды
+
+На этой странице перечислены все команды, доступные игрокам на сервере
+
+## Сервер
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td>`/hub`</Table.Td>
+      <Table.Td>Переносит вас в лобби сервера</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/ping [игрок]`</Table.Td>
+      <Table.Td>Показывает ваш пинг или пинг другого игрока.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/ar`</Table.Td>
+      <Table.Td>Информация о времени рестарта сервера.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/register {пароль} {пароль}`</Table.Td>
+      <Table.Td>Регистрация на сервере при первом входе.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/login {пароль}`</Table.Td>
+      <Table.Td>Авторизация на сервере (требуется раз в неделю, при условии того, что ваша геолокация не изменилась).</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Игровой персонаж
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/togglearmor`</Table.Td>
+      <Table.Td>Переключает видимость вашей брони для других игроков.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/sit`</Table.Td>
+      <Table.Td>Усаживает вашего игрока на блок под вами (или обратно)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/sit toggle`</Table.Td>
+      <Table.Td>Включает/выключает усаживание вашего игрока на блок по нажатию ПКМ</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/lay`</Table.Td>
+      <Table.Td>Укладывает вашего игрока на блок под вами (или обратно)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/spin`</Table.Td>
+      <Table.Td>Включает/выключает анимацию вращения вашего игрока</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/crawl`</Table.Td>
+      <Table.Td>Переключает игрока в режим ползания (или обратно)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/bellyflop`</Table.Td>
+      <Table.Td>Роняет игрока на блок под вами (почти как `/crawl`, но немного другая поза и невозможность двигаться)</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Скины
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/skins`</Table.Td>
+      <Table.Td>Меню управления вашими скинами. Доступен каталог скинов.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/skin set {игрок}`</Table.Td>
+      <Table.Td>Устанавливает вам скин по никнейму лицензионного аккаунта</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/skin url {ссылка}`</Table.Td>
+      <Table.Td>
+        Устанавливает вам скин по ссылке. Ссылка строго должна указывать на файл с расширением `.png`.
+        Подробнее можно узнать в [этой статье](https://skinsrestorer.net/docs/features/skin-url).
+      </Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/skin clear`</Table.Td>
+      <Table.Td>Сбрасывает ваш скин на стандартный (либо на ваш лицензионный скин)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/skin update`</Table.Td>
+      <Table.Td>Обновляет ваш скин. Полезно, если вы поменяли скин в своем лицензионном аккаунте, но на сервере он не обновился.</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+
+## Общение
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/m {игрок} {сообщение}`
+      </Table.Td>
+      <Table.Td>Отправить личное сообщение другому игроку</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/r`
+      </Table.Td>
+      <Table.Td>Ответить на последнее личное сообщение</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>
+        `/translateto {исходный язык} {целевой язык} {сообщение}`
+      </Table.Td>
+      <Table.Td>
+        Отправить сообщение в чат, предварительно переведя его на целевой язык. 
+
+        Пример: `/translateto ru en Привет, как дела?` → `Hello, how are you?`
+
+        [Доступные языковые коды](https://localizely.com/iso-639-1-list/).
+      </Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/ignore {игрок}`
+      </Table.Td>
+      <Table.Td>Игнорировать все сообщения от игрока (отменить игнорирование можно прописав эту команду снова)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/ignorelist`
+      </Table.Td>
+      <Table.Td>Показать список игроков, которых вы игнорируете</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/mail {игрок} {сообщение}`
+      </Table.Td>
+      <Table.Td>Отправить письмо другому игроку, который не в сети. Получатель увидит это письмо при входе на сервер.</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/clearmail {идентификатор}`
+      </Table.Td>
+      <Table.Td>Удаляет отправленное письмо с указанным идентификатором</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/do`
+      </Table.Td>
+      <Table.Td>Стилизует сообщение под РП-действие</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/me`
+      </Table.Td>
+      <Table.Td>Стилизует сообщение под РП-сообщение</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Связь с администрацией
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/report {контекст} {причина}`</Table.Td>
+      <Table.Td>
+        Сообщить о чем-либо администрации (создать тикет в поддержке). 
+        
+        Вы можете указать конкретного игрока, который нарушает правила или просто сервер, в контексте которого у вас возникла проблема.
+
+        *Очень просим вас максимально детально описать причину обращения в поддержку.*
+      </Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Утилиты
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/afk`</Table.Td>
+      <Table.Td>Переключает вас в режим AFK (статус будет отображаться в виде специального тега после вашего имени в списке игроков)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/ball`</Table.Td>
+      <Table.Td>Задать вопрос магическому шару и получать ~~случайный~~ предопределенный ответ</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/coin`</Table.Td>
+      <Table.Td>Подбросить монетку и получить результат (орёл или решка)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/dice {1-6}`</Table.Td>
+      <Table.Td>Подбросить кубик и получить результат (от 1 до 6)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/try {сообщение}`</Table.Td>
+      <Table.Td>Написать в чат сообщение, после которого будет указано случайное кол-во процентов успеха.</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Развлекательные
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>
+        `/rps {игрок}`
+      </Table.Td>
+      <Table.Td>Предложить игроку сыграть в камень-ножницы-бумага</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>

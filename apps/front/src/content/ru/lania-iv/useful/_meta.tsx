@@ -1,28 +1,28 @@
-import { ALargeSmallIcon, FileIcon, ShieldIcon } from 'lucide-react'
+import { ClockIcon, PackageIcon, UsersIcon } from 'lucide-react'
 import { MetaRecord } from 'nextra'
 
 const meta: MetaRecord = {
-  terminology: {
+  restarts: {
     title: (
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        <ALargeSmallIcon size={14} />
-        <p>Терминология</p>
+        <ClockIcon size={14} />
+        <p>Перезагрузки сервера</p>
       </div>
     ),
   },
-  rules: {
+  modpack: {
     title: (
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        <ShieldIcon size={14} />
-        <p>Игровые правила</p>
+        <PackageIcon size={14} />
+        <p>Модпак от keelfy</p>
       </div>
     ),
   },
-  legal: {
+  staff: {
     title: (
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        <FileIcon size={14} />
-        <p>Правовая информация</p>
+        <UsersIcon size={14} />
+        <p>Команда сервера</p>
       </div>
     ),
   },
