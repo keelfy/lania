@@ -40,7 +40,7 @@ func (h *profileRenameHandler) ChangeUsername(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if _, err := h.profileRenameService.ChangeOwnedUsername(ctx, authUserID, profileID, req.Username); err != nil {
+	if _, err := h.profileRenameService.ChangeOwnedUsername(ctx, authUserID, profileID, req.Username, req.Unlicensed); err != nil {
 		utils.HttpError(ctx, w, err)
 		return
 	}

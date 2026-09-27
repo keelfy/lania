@@ -333,7 +333,15 @@
       "hint": "3 to 16 characters: latin letters, digits and _",
       "submit": "Change nickname",
       "success": "Your nickname is now {username}",
-      "failed": "Failed to change the nickname"
+      "failed": "Failed to change the nickname",
+      "leaveLicense": {
+        "description": "If this is not your licensed account and you cannot join the server, switch to a free unlicensed nickname",
+        "availableAt": "If this is not your licensed account, you can switch to an unlicensed nickname on {date}",
+        "open": "This is not my account",
+        "released": "The nickname {username} goes to the license owner, you cannot take it back",
+        "playtime": "Playtime under the licensed nickname is not carried over",
+        "acknowledge": "I do not own the licensed account {username} and give up this nickname"
+      }
     },
     "password": {
       "title": "Server password",

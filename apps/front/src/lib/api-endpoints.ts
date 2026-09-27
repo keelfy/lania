@@ -528,14 +528,16 @@ export function confirmProfileVerification(
 
 // Renames the profile of the signed in owner. A licensed profile takes only the current name of its Minecraft
 // account; an unlicensed one gets a new in-game UUID and waits for the cooldown before the next change.
+// unlicensed moves a licensed profile to an unlicensed nickname, leaving the account to its real owner.
 export function changeProfileUsername(
   fetcher: ApiFetcher,
   id: string,
   username: string,
+  unlicensed = false,
 ): Promise<void> {
   return fetcher<void>(`/v1/profiles/${id}/username`, undefined, {
     method: 'PUT',
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ username, unlicensed }),
   })
 }
 
