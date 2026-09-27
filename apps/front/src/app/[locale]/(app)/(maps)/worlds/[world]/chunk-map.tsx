@@ -404,8 +404,9 @@ export default function ChunkMap({
           direction: 'right',
           offset: [8, 0],
           // A dark plate like the in-game nameplate, so every name colour reads on it.
+          // w-max: the tooltip pane has no width, so shrink-to-fit clips the plate short of the name.
           className:
-            'rounded-sm! border-none! bg-black/65! px-1.5! py-0.5! text-white! shadow-none! before:hidden',
+            'w-max! rounded-sm! border-none! bg-black/65! px-1.5! py-0.5! text-white! shadow-none! before:hidden',
         })
         .addTo(layers.players)
       current.set(player.uuid, { marker, look })
