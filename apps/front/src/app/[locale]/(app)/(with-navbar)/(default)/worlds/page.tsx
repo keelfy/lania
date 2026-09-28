@@ -1,8 +1,7 @@
 import { getMetadataLocale } from '@/i18n/metadata-locale'
-import pinger from 'minecraft-pinger'
 import { Metadata } from 'next'
-import { unstable_cache } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
+import { pingServer } from './ping-server'
 import ServerCard from './server-card'
 import { ActiveSeasonWorlds, getActiveSeasonWorlds } from '@/lib/worlds'
 
@@ -28,27 +27,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
   }
 }
-
-const pingServer = unstable_cache(
-  async (publicAddress: string): Promise<pinger.Data | undefined> => {
-    let timeoutId: ReturnType<typeof setTimeout> | undefined
-    try {
-      return await Promise.race([
-        pinger.pingPromise(publicAddress, 25565),
-        new Promise<undefined>((_, reject) => {
-          timeoutId = setTimeout(reject, 1000)
-        }),
-      ])
-    } catch (error) {
-      console.error(error)
-      return undefined
-    } finally {
-      clearTimeout(timeoutId)
-    }
-  },
-  ['worlds-server-ping'],
-  { revalidate: 15 },
-)
 
 export default async function WorldPage({ params }: Props) {
   const { locale } = await params

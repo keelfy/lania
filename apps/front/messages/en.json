@@ -1313,5 +1313,100 @@
     "viewOnly": "Claims are off in this world.",
     "viewHint": "Click a chunk to see whose it is. Hold the wheel to move the map, scroll to zoom.",
     "touchViewHint": "Tap a chunk to see whose it is. Drag with a finger to move the map, pinch to zoom."
+  },
+  "welcome": {
+    "metadata": {
+      "title": "What is Lania?",
+      "description": {
+        "paid": "A private vanilla Minecraft {version} server. No license required, season pass is {price}.",
+        "paidNoPrice": "A private vanilla Minecraft {version} server. No license required, entry with a season pass.",
+        "free": "A private vanilla Minecraft {version} server. No license required, free to join after signing up.",
+        "preregistration": "A private vanilla Minecraft {version} server. No license required, free pre-registration for the new season is open."
+      }
+    },
+    "title": "Lania is a private vanilla Minecraft server",
+    "lead": "We play plain Minecraft with no mods and no pay-to-win. The server runs in seasons, {season} is on now.",
+    "facts": {
+      "title": "The server in short",
+      "version": {
+        "label": "Game version",
+        "value": "{value}",
+        "hint": "Join with exactly this client version."
+      },
+      "vanilla": {
+        "label": "Gameplay",
+        "value": "Vanilla survival",
+        "hint": "No mods or new mechanics. Only <qol>small conveniences</qol> that keep the balance."
+      },
+      "license": {
+        "label": "License",
+        "value": "Not required",
+        "hint": "Join from any launcher, buying Minecraft is optional."
+      },
+      "access": {
+        "paid": {
+          "label": "Access",
+          "value": "Pass for {value}",
+          "hint": "Paid once and valid for the whole season."
+        },
+        "paidNoPrice": {
+          "label": "Access",
+          "value": "Season pass",
+          "hint": "Buy the pass on the site once, it is valid for the whole season."
+        },
+        "free": {
+          "label": "Access",
+          "value": "Free",
+          "hint": "Only a sign-up on the site."
+        },
+        "preregistration": {
+          "label": "Access",
+          "value": "Pre-registration",
+          "hint": "The season has not started yet. Signing up is free."
+        }
+      },
+      "shop": {
+        "label": "Shop",
+        "value": "Cosmetics only",
+        "hint": "Nickname colors and prefixes. Nothing that gives an in-game advantage."
+      }
+    },
+    "steps": {
+      "title": "How to join",
+      "access": {
+        "paid": {
+          "title": "Buy a pass on the site",
+          "description": "Sign in, enter your in-game nickname and pay for the pass.",
+          "action": "Get access"
+        },
+        "free": {
+          "title": "Sign up on the site",
+          "description": "Sign in and enter your in-game nickname. Access opens right away.",
+          "action": "Get access"
+        },
+        "preregistration": {
+          "title": "Sign up for the season",
+          "description": "Sign in and enter your in-game nickname. Access opens when the season starts.",
+          "action": "Sign up"
+        }
+      },
+      "launch": {
+        "title": "Launch Minecraft {version}",
+        "description": "Any launcher works. No mods needed to join."
+      },
+      "join": {
+        "title": "Add the server {address}",
+        "description": "Multiplayer, then Add Server. Click the server card above to copy the address.",
+        "titleSoon": "Join when the season starts",
+        "descriptionSoon": "The server address appears here when the season starts."
+      }
+    },
+    "more": {
+      "title": "Still have questions?",
+      "wiki": "Wiki",
+      "rules": "Rules",
+      "telegram": "Telegram",
+      "discord": "Discord"
+    }
   }
 }

@@ -10,12 +10,16 @@ Reads:
   - <world>/playerdata/<uuid>.dat  (NBT: "bukkit.lastKnownName",
                                     "bukkit.firstPlayed", "bukkit.lastPlayed")
   - <world>/stats/<uuid>.json      ("minecraft:play_time" in ticks)
+  - <world>/advancements/<uuid>.json (criterion timestamps): the earliest one
+    is a first join source, as it can predate "bukkit.firstPlayed" (reset
+    playerdata) or exist without it (vanilla worlds)
   - usercache.json (optional, --usercache): UUID -> username fallback for
     players whose .dat has no "bukkit.lastKnownName"
   - .dat file modification time: fallback for last played when the .dat has
     no "bukkit.lastPlayed"
-  - .dat file creation time: fallback for first join when the .dat has no
-    "bukkit.firstPlayed" (skipped if the platform cannot report it)
+  - .dat file creation time: fallback for first join when there is neither
+    "bukkit.firstPlayed" nor an advancement (skipped if the platform cannot
+    report it)
 
 No third-party dependencies; NBT is parsed with a small built-in reader.
 """
@@ -135,6 +139,20 @@ def read_playtime_hours(stats_path: Path) -> float | None:
     return round(ticks / TICKS_PER_SECOND / 3600, 2)
 
 
+def read_first_advancement_millis(advancements_path: Path) -> int | None:
+    """Earliest criterion timestamp in an advancements file, in millis."""
+    if not advancements_path.is_file():
+        return None
+    data = json.loads(advancements_path.read_text(encoding="utf-8"))
+    times = [
+        datetime.strptime(stamp, "%Y-%m-%d %H:%M:%S %z")
+        for progress in data.values()
+        if isinstance(progress, dict)  # skips "DataVersion"
+        for stamp in progress.get("criteria", {}).values()
+    ]
+    return int(min(times).timestamp() * 1000) if times else None
+
+
 def _millis_to_iso(millis: int | None) -> str | None:
     if not millis:
         return None
@@ -176,6 +194,7 @@ def _creation_millis(path: Path) -> float | None:
 def extract_world(world_dir: Path, usercache: dict[str, str] | None = None) -> list[PlayerRecord]:
     playerdata_dir = world_dir / "playerdata"
     stats_dir = world_dir / "stats"
+    advancements_dir = world_dir / "advancements"
     if not playerdata_dir.is_dir():
         raise FileNotFoundError(f"playerdata folder not found: {playerdata_dir}")
 
@@ -186,12 +205,17 @@ def extract_world(world_dir: Path, usercache: dict[str, str] | None = None) -> l
         bukkit = parse_nbt(dat_file.read_bytes()).get("bukkit", {})
         username = bukkit.get("lastKnownName") or usercache.get(uuid.lower(), uuid)
         playtime_hours = read_playtime_hours(stats_dir / f"{uuid}.json")
+        first_joins = [
+            millis
+            for millis in (bukkit.get("firstPlayed"), read_first_advancement_millis(advancements_dir / f"{uuid}.json"))
+            if millis
+        ]
         records.append(
             PlayerRecord(
                 uuid=uuid,
                 username=username,
                 playtime_hours=playtime_hours if playtime_hours is not None else 0.0,
-                first_join=_millis_to_iso(bukkit.get("firstPlayed") or _creation_millis(dat_file)),
+                first_join=_millis_to_iso(min(first_joins) if first_joins else _creation_millis(dat_file)),
                 last_played=_millis_to_iso(bukkit.get("lastPlayed") or dat_file.stat().st_mtime * 1000),
                 world_playtimes=[
                     WorldPlaytime(
@@ -240,27 +264,34 @@ def _latest(group: list[PlayerRecord]) -> PlayerRecord:
     return max(group, key=lambda r: r.last_played or "")
 
 
-def merge_records(records: list[PlayerRecord]) -> list[PlayerRecord]:
+def group_records(records: list[PlayerRecord]) -> list[tuple[PlayerRecord, list[PlayerRecord]]]:
+    """Group records of the same player. Returns (identity, members) pairs; the
+    identity record supplies the uuid and username of the merged player."""
     by_uuid: dict[str, list[PlayerRecord]] = {}
     for record in records:
         by_uuid.setdefault(record.uuid, []).append(record)
     # Same UUID: username comes from the most recently played record.
-    uuid_merged = [_combine(group, _latest(group)) for group in by_uuid.values()]
+    uuid_groups = [(_latest(group), group) for group in by_uuid.values()]
 
-    by_name: dict[str, list[PlayerRecord]] = {}
-    for record in uuid_merged:
-        by_name.setdefault(record.username.lower(), []).append(record)
+    by_name: dict[str, list[tuple[PlayerRecord, list[PlayerRecord]]]] = {}
+    for identity, group in uuid_groups:
+        by_name.setdefault(identity.username.lower(), []).append((identity, group))
 
     result = []
-    for group in by_name.values():
-        if len(group) == 1:
-            result.append(group[0])
+    for name_group in by_name.values():
+        members = [record for _, group in name_group for record in group]
+        if len(name_group) == 1:
+            result.append((name_group[0][0], members))
             continue
         # Same username, different UUIDs: the offline-mode UUID record wins.
-        offline = [r for r in group if r.uuid == offline_uuid(r.username)]
-        identity = _latest(offline) if offline else _latest(group)
-        result.append(_combine(group, identity))
+        identities = [identity for identity, _ in name_group]
+        offline = [r for r in identities if r.uuid == offline_uuid(r.username)]
+        result.append((_latest(offline) if offline else _latest(identities), members))
+    return result
 
+
+def merge_records(records: list[PlayerRecord]) -> list[PlayerRecord]:
+    result = [_combine(members, identity) for identity, members in group_records(records)]
     result.sort(key=lambda r: (r.first_join is None, r.first_join))
     return result
 

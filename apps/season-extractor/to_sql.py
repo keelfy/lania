@@ -16,6 +16,9 @@ path -> season id mapping is a JSON object passed with --season-map, e.g.
 must match the world paths in the extractor output exactly. Worlds mapped to
 the same season are summed. Playtime is stored in milliseconds. The INSERTs
 use ON DUPLICATE KEY UPDATE on (mc_uuid, season_id), so re-running is safe.
+
+deaths and mob_kills come from the optional --stats file (stats.py output for
+the same worlds and usercache files); without it they are not written.
 """
 
 from __future__ import annotations
@@ -126,26 +129,51 @@ def load_season_map(path: Path) -> dict[str, str]:
     return mapping
 
 
-def find_unmapped_worlds(players: list[dict], season_map: dict[str, str]) -> list[str]:
+def find_unmapped_worlds(players: list[dict], stats: dict[str, list[dict]], season_map: dict[str, str]) -> list[str]:
     worlds = {entry["world"] for player in players for entry in player.get("world_playtimes", [])}
+    worlds |= {entry["world"] for world_stats in stats.values() for entry in world_stats}
     return sorted(worlds - season_map.keys())
 
 
-def build_playtime_inserts(player: dict, season_map: dict[str, str]) -> list[str]:
-    """One INSERT per season; worlds mapped to the same season are summed."""
+def load_stats(path: Path) -> dict[str, list[dict]]:
+    """Read stats.py output into a {uuid: world_stats} map."""
+    return {player["uuid"]: player.get("world_stats", []) for player in json.loads(path.read_text(encoding="utf-8"))}
+
+
+def build_season_stats_inserts(player: dict, world_stats: list[dict] | None, season_map: dict[str, str]) -> list[str]:
+    """One INSERT per season with playtime; worlds mapped to the same season are summed.
+    deaths and mob_kills are written only when world_stats is given (None = no --stats)."""
     millis_by_season: dict[str, int] = {}
     for entry in player.get("world_playtimes", []):
         season_id = season_map[entry["world"]]
         millis = round(entry["playtime_hours"] * MILLIS_PER_HOUR)
         millis_by_season[season_id] = millis_by_season.get(season_id, 0) + millis
 
-    return [
-        "INSERT INTO profile_season_stats (mc_uuid, season_id, playtime) VALUES ("
-        f"{sql_string(player['uuid'])}, {sql_string(season_id)}, {millis}) "
-        "ON DUPLICATE KEY UPDATE playtime = VALUES(playtime);"
-        for season_id, millis in millis_by_season.items()
-        if millis > 0
-    ]
+    counts_by_season: dict[str, list[int]] = {}
+    for entry in world_stats or []:
+        counts = counts_by_season.setdefault(season_map[entry["world"]], [0, 0])
+        counts[0] += entry["deaths"]
+        counts[1] += entry["mob_kills"]
+
+    statements = []
+    for season_id, millis in millis_by_season.items():
+        if millis <= 0:
+            continue
+        if world_stats is None:
+            statements.append(
+                "INSERT INTO profile_season_stats (mc_uuid, season_id, playtime) VALUES ("
+                f"{sql_string(player['uuid'])}, {sql_string(season_id)}, {millis}) "
+                "ON DUPLICATE KEY UPDATE playtime = VALUES(playtime);"
+            )
+            continue
+        deaths, mob_kills = counts_by_season.get(season_id, [0, 0])
+        statements.append(
+            "INSERT INTO profile_season_stats (mc_uuid, season_id, playtime, deaths, mob_kills) VALUES ("
+            f"{sql_string(player['uuid'])}, {sql_string(season_id)}, {millis}, {deaths}, {mob_kills}) "
+            "ON DUPLICATE KEY UPDATE playtime = VALUES(playtime), "
+            "deaths = VALUES(deaths), mob_kills = VALUES(mob_kills);"
+        )
+    return statements
 
 
 def main() -> int:
@@ -163,16 +191,23 @@ def main() -> int:
         required=True,
         help="JSON file mapping world path (as in the extractor output) -> season id",
     )
+    parser.add_argument(
+        "--stats",
+        type=Path,
+        default=None,
+        help="JSON file produced by stats.py; fills deaths and mob_kills",
+    )
     args = parser.parse_args()
 
     players = json.loads(args.input.read_text(encoding="utf-8"))
     try:
         season_map = load_season_map(args.season_map)
-    except (OSError, ValueError) as exc:
+        stats = load_stats(args.stats) if args.stats is not None else None
+    except (OSError, ValueError, KeyError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    unmapped = find_unmapped_worlds(players, season_map)
+    unmapped = find_unmapped_worlds(players, stats or {}, season_map)
     if unmapped:
         print("error: worlds missing from --season-map: " + ", ".join(unmapped), file=sys.stderr)
         return 1
@@ -200,7 +235,8 @@ def main() -> int:
             time.sleep(REQUEST_DELAY_SECONDS)
 
         statements.append(build_insert(player, slim))
-        statements.extend(build_playtime_inserts(player, season_map))
+        world_stats = stats.get(player["uuid"], []) if stats is not None else None
+        statements.extend(build_season_stats_inserts(player, world_stats, season_map))
 
     sql = "\n".join(statements) + "\n"
     if args.output is not None:
