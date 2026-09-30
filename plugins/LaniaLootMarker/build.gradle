@@ -1,0 +1,47 @@
+plugins {
+  id 'java'
+}
+
+repositories {
+  maven {
+    name = 'papermc'
+    url = 'https://repo.papermc.io/repository/maven-public/'
+  }
+  exclusiveContent {
+    // JustLootIt 2.23.1 (the first with 26.3 support) is only published on Modrinth.
+    forRepository {
+      maven {
+        name = 'modrinth'
+        url = 'https://api.modrinth.com/maven'
+      }
+    }
+    filter { includeGroup 'maven.modrinth' }
+  }
+  mavenCentral()
+}
+
+dependencies {
+  compileOnly 'io.papermc.paper:paper-api:26.3.build.140-beta'
+  // Must match the JustLootIt jar on the server: JliBridge uses its internals.
+  compileOnly('maven.modrinth:justlootit:2.23.1') { transitive = false }
+}
+
+group = 'net.lania'
+version = '1.0.0'
+
+java {
+  toolchain.languageVersion = JavaLanguageVersion.of(25)
+}
+
+tasks.withType(JavaCompile).configureEach {
+  options.encoding = 'UTF-8'
+  options.release.set(25)
+}
+
+processResources {
+  def version = project.version
+  inputs.property 'version', version
+  filesMatching('plugin.yml') {
+    expand 'version': version
+  }
+}

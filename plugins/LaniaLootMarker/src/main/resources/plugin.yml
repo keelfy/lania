@@ -1,0 +1,6 @@
+name: LaniaLootMarker
+main: net.lania.lootmarker.LaniaLootMarker
+version: ${version}
+api-version: '26.3'
+depend: [JustLootIt]
+description: Sends JustLootIt loot containers to the lania-loot-marker client mod

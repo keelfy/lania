@@ -74,6 +74,14 @@ func TestSetPlayerPrefix(t *testing.T) {
 				"lpv user " + mcUUID.String() + ` meta addprefix 100 "<red>[A] "`,
 			},
 		},
+		{
+			name:   "converts glyth tokens to placeholders",
+			prefix: ":glyth_popcat: <red>:glyth_cat_2: :notglyth: ",
+			wantCommands: []string{
+				clear,
+				"lpv user " + mcUUID.String() + ` meta addprefix 100 "%img_glyth_popcat% <red>%img_glyth_cat_2% :notglyth: "`,
+			},
+		},
 		{name: "empty prefix only clears", wantCommands: []string{clear}},
 		{name: "unreachable server fails", prefix: "[A]", consoleErr: errors.New("connection refused"), wantAnyErr: true, wantCommands: []string{clear}},
 		{name: "disabled rcon fails", prefix: "[A]", consoleErr: clients.ErrConsoleDisabled, wantErr: clients.ErrConsoleDisabled, wantCommands: []string{clear}},

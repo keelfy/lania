@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "lania_loot_marker",
+  "version": "${version}",
+  "name": "Lania Loot Marker",
+  "description": "Marks JustLootIt loot containers on lania.network and asks to sneak before breaking them.",
+  "authors": ["keelfy"],
+  "contact": {
+    "homepage": "https://lania.network"
+  },
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["net.lania.lootmarker.LootMarkerClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

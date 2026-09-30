@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 	"unicode"
@@ -49,6 +50,9 @@ func NewPermissionService(luckpermsStorage storage.LuckpermsStorage, console cli
 	}
 }
 
+// glythTokenPattern matches an ItemsAdder glyth token in a prefix (":glyth_popcat:").
+var glythTokenPattern = regexp.MustCompile(`:(glyth_[a-z0-9_]+):`)
+
 const (
 	groupNodePrefix = "group."
 	// prefixPriority is the LuckPerms weight of prefixes set by the website.
@@ -85,6 +89,9 @@ func (s *permissionService) SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUI
 	if strings.ContainsFunc(prefix, func(r rune) bool { return r == '"' || r == '\\' || unicode.IsControl(r) }) {
 		return fmt.Errorf("%w: %q", ErrInvalidPrefix, prefix)
 	}
+
+	// Chat renders the prefix through PlaceholderAPI, so glyth tokens become ItemsAdder image placeholders.
+	prefix = glythTokenPattern.ReplaceAllString(prefix, "%img_$1%")
 
 	commands := []string{fmt.Sprintf("lpv user %s meta clear prefix", mcUUID)}
 	if prefix != "" {
