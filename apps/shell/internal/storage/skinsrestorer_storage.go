@@ -14,14 +14,13 @@ const (
 	SkinTypePlayer = "PLAYER"
 	SkinTypeURL    = "URL"
 	SkinTypeCustom = "CUSTOM"
-	SkinTypeLegacy = "LEGACY"
 )
 
 // SkinRecord is the skin a player chose with SkinsRestorer.
 type SkinRecord struct {
 	// Type is one of the SkinType constants.
 	Type string
-	// Identifier is the Mojang UUID for PLAYER, the link for URL and the name for CUSTOM and LEGACY.
+	// Identifier is the Mojang UUID for PLAYER, the link for URL and the name for CUSTOM.
 	Identifier string
 	// Variant is CLASSIC or SLIM, nil when SkinsRestorer picked none.
 	Variant *string
@@ -45,16 +44,16 @@ func NewSkinsRestorerStorage(db *stdsql.DB) SkinsRestorerStorage {
 }
 
 // A link skin is stored per variant. A player who chose no variant wears the one SkinsRestorer detected for the
-// link, kept in url_index.
+// link, kept in url_index. A LEGACY skin is left out: SkinsRestorer creates legacy_skins only when it migrates
+// from an old version.
 const findPlayerSkins = `
-SELECT p.uuid, p.skin_type, p.skin_identifier, p.skin_variant, COALESCE(ps.value, us.value, cs.value, ls.value)
+SELECT p.uuid, p.skin_type, p.skin_identifier, p.skin_variant, COALESCE(ps.value, us.value, cs.value)
 FROM %[1]s p
 LEFT JOIN %[2]s ps ON p.skin_type = 'PLAYER' AND ps.uuid = p.skin_identifier
 LEFT JOIN %[3]s ui ON p.skin_type = 'URL' AND ui.url = p.skin_identifier
 LEFT JOIN %[4]s us ON p.skin_type = 'URL' AND us.url = p.skin_identifier AND us.skin_variant = COALESCE(p.skin_variant, ui.skin_variant)
 LEFT JOIN %[5]s cs ON p.skin_type = 'CUSTOM' AND cs.name = p.skin_identifier
-LEFT JOIN %[6]s ls ON p.skin_type = 'LEGACY' AND ls.name = p.skin_identifier
-WHERE p.uuid IN (%[7]s) AND p.skin_identifier IS NOT NULL AND p.skin_type IS NOT NULL
+WHERE p.uuid IN (%[6]s) AND p.skin_identifier IS NOT NULL AND p.skin_type IS NOT NULL
 `
 
 func (s *skinsRestorerStorage) FindPlayerSkins(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*SkinRecord, error) {
@@ -70,7 +69,6 @@ func (s *skinsRestorerStorage) FindPlayerSkins(ctx context.Context, mcUUIDs uuid
 		skinsRestorerTable("url_index"),
 		skinsRestorerTable("url_skins"),
 		skinsRestorerTable("custom_skins"),
-		skinsRestorerTable("legacy_skins"),
 		placeholders,
 	)
 	rows, err := s.db.QueryContext(ctx, query, args...)
