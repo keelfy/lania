@@ -276,6 +276,7 @@
     },
     "nav": {
       "overview": "Overview",
+      "cosmetics": "Cosmetics",
       "settings": "Settings",
       "viewPublic": "Public profile"
     },
@@ -925,7 +926,7 @@
         "cosmeticDialog": {
           "open": "Grant cosmetic",
           "title": "Grant a name color or prefix",
-          "description": "Any color or prefix can be granted, also ones that are not for sale. The player picks it in the profile settings as usual, the game is not changed. It is refused when the profile already has the item.",
+          "description": "Any color or prefix can be granted, also ones that are not for sale. The player picks it on the Cosmetics tab of the profile as usual, the game is not changed. It is refused when the profile already has the item.",
           "type": "Type",
           "types": {
             "name-color": "Name color",

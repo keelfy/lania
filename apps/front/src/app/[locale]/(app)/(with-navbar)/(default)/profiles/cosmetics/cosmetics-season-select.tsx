@@ -10,7 +10,7 @@ type Props = {
   profileId: string
 }
 
-// Picks the season the cosmetics on the settings page are chosen for.
+// Picks the season the cosmetics on the cosmetics page are chosen for.
 export default function CosmeticsSeasonSelect({
   seasons,
   selectedSeasonId,
@@ -22,7 +22,7 @@ export default function CosmeticsSeasonSelect({
       seasons={seasons}
       selectedSeasonId={selectedSeasonId}
       onSelectSeasonId={(seasonId) => {
-        router.push(`/profiles/settings?id=${profileId}&s=${seasonId}`)
+        router.push(`/profiles/cosmetics?id=${profileId}&s=${seasonId}`)
       }}
       className="w-full"
     />

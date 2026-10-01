@@ -73,7 +73,7 @@ function CosmeticItem({
     <li>
       <Link
         href={{
-          pathname: '/profiles/settings',
+          pathname: '/profiles/cosmetics',
           query: {
             id: payload.profileId,
             ...(payload.seasonId ? { s: payload.seasonId } : {}),
