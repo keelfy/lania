@@ -19,7 +19,13 @@ export default function SeeMoreLandingButton({
 
   const scrollToNext = () => {
     const next = document.getElementById(sectionId)
-    if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (next)
+      next.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'instant'
+          : 'smooth',
+        block: 'start',
+      })
     else {
       console.error(`Section with id ${sectionId} not found`)
     }

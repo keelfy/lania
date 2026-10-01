@@ -18,6 +18,7 @@
     "description": "Private server for comfortable game in vanilla Minecraft."
   },
   "landing": {
+    "navigation": "Page sections",
     "customization": {
       "title": "Your character, your style",
       "description": "Mix name colors, glyphs and skins. Try your look right here.",

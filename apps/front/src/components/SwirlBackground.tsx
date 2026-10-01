@@ -40,6 +40,8 @@ export default function SwirlBackground({
   const animationFrameRef = useRef<number | null>(null)
   const noise3DRef = useRef<ReturnType<typeof createNoise3D> | null>(null)
   const drawRef = useRef<() => void>(() => {})
+  const pointerRef = useRef({ x: 0, y: 0, active: false })
+  const reducedMotionRef = useRef(false)
   const [powerSavingMode, setPowerSavingMode] = React.useState<boolean>()
 
   // Constants
@@ -224,8 +226,21 @@ export default function SwirlBackground({
       const y = particleProps[i2]
       const n =
         noise3D(x * xOff, y * yOff, tickRef.current * zOff) * noiseSteps * TAU
-      const vx = lerp(particleProps[i3], cos(n), 0.5)
-      const vy = lerp(particleProps[i4], sin(n), 0.5)
+      const pointer = pointerRef.current
+      const dx = x - pointer.x
+      const dy = y - pointer.y
+      const distance = Math.hypot(dx, dy)
+      const force = pointer.active ? Math.max(0, 1 - distance / 180) * 3 : 0
+      const vx = lerp(
+        particleProps[i3],
+        cos(n) + (dx / Math.max(1, distance)) * force,
+        0.15,
+      )
+      const vy = lerp(
+        particleProps[i4],
+        sin(n) + (dy / Math.max(1, distance)) * force,
+        0.15,
+      )
       let life = particleProps[i5]
       const ttl = particleProps[i6]
       const speed = particleProps[i7]
@@ -310,9 +325,12 @@ export default function SwirlBackground({
     renderGlow()
     renderToScreen()
 
-    animationFrameRef.current = window.requestAnimationFrame(() =>
-      drawRef.current(),
-    )
+    animationFrameRef.current = null
+    if (!reducedMotionRef.current && !document.hidden) {
+      animationFrameRef.current = window.requestAnimationFrame(() =>
+        drawRef.current(),
+      )
+    }
   }, [drawParticles, renderGlow, renderToScreen, backgroundColor])
 
   useEffect(() => {
@@ -328,22 +346,56 @@ export default function SwirlBackground({
   }, [createCanvas, resize, initParticles, draw])
 
   useEffect(() => {
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)')
+    reducedMotionRef.current = motion.matches
     setup()
+    const container = containerRef.current
+    const canvas = canvasRef.current
+
+    const handlePointer = (event: PointerEvent) => {
+      if (
+        motion.matches ||
+        !finePointer.matches ||
+        event.pointerType === 'touch'
+      )
+        return
+      pointerRef.current = { x: event.clientX, y: event.clientY, active: true }
+    }
+    const clearPointer = () => {
+      pointerRef.current.active = false
+    }
+    const syncAnimation = () => {
+      reducedMotionRef.current = motion.matches
+      clearPointer()
+      if (animationFrameRef.current !== null)
+        cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
+      if (!document.hidden) drawRef.current()
+    }
 
     const handleResize = () => {
       resize()
+      if (motion.matches && !document.hidden) drawRef.current()
     }
 
     window.addEventListener('resize', handleResize)
+    window.addEventListener('pointermove', handlePointer, { passive: true })
+    document.documentElement.addEventListener('pointerleave', clearPointer)
+    window.addEventListener('blur', clearPointer)
+    document.addEventListener('visibilitychange', syncAnimation)
+    motion.addEventListener('change', syncAnimation)
 
     return () => {
       window.removeEventListener('resize', handleResize)
+      window.removeEventListener('pointermove', handlePointer)
+      document.documentElement.removeEventListener('pointerleave', clearPointer)
+      window.removeEventListener('blur', clearPointer)
+      document.removeEventListener('visibilitychange', syncAnimation)
+      motion.removeEventListener('change', syncAnimation)
       if (animationFrameRef.current) {
         window.cancelAnimationFrame(animationFrameRef.current)
       }
-      // Store refs in variables to avoid the warning
-      const container = containerRef.current
-      const canvas = canvasRef.current
       if (container && canvas && container.contains(canvas.b)) {
         container.removeChild(canvas.b)
       }

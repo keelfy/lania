@@ -1,3 +1,4 @@
+import styles from './components/landing-motion.module.css'
 import DeerIcon from '@/components/icons/DeerIcon'
 import {
   Accordion,
@@ -349,7 +350,7 @@ export default async function LandingPage({ params }: Props) {
     loadCustomization(serverApiFetcher, locale),
   ])
   return (
-    <div className="w-full">
+    <div className={`w-full ${styles.landing}`}>
       <LandingSidebar />
       <SidebarSection
         id="section-1"

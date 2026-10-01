@@ -11,6 +11,8 @@ const SkinPreview = dynamic(() => import('./customization-skin-preview'), {
   ssr: false,
 })
 
+import styles from './landing-motion.module.css'
+
 const asset = '/images/landing-customization/'
 type ColorOption = { id: string; name: string; colors: string[] }
 type GlyphOption = { id: string; name: string; image: string | null }
@@ -22,6 +24,8 @@ const skins = [
   { name: 'Efe', src: `${asset}efe.png`, slim: true },
 ]
 const choiceClass =
+  styles.choice +
+  ' ' +
   'flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm text-white/80 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300'
 const selectedClass = 'border-teal-300 bg-teal-300/10 text-white'
 
@@ -64,9 +68,9 @@ export default function CustomizationShowcase({
       >
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-2xl"
+          className={`pointer-events-none absolute inset-0 rounded-2xl ${styles.glow}`}
           style={{
-            backgroundImage: `radial-gradient(ellipse at 50% 75%, color-mix(in srgb, ${color.colors[color.colors.length - 1]} 18%, transparent), transparent 65%)`,
+            backgroundColor: `color-mix(in srgb, ${color.colors[color.colors.length - 1]} 18%, transparent)`,
           }}
         />
         <div
@@ -76,11 +80,12 @@ export default function CustomizationShowcase({
         >
           {glyph.image ? (
             <Image
+              key={glyph.id}
               src={glyph.image}
               alt={glyph.name}
               width={26}
               height={26}
-              className="[image-rendering:pixelated]"
+              className={`[image-rendering:pixelated] ${styles.glyph}`}
             />
           ) : null}
           <McUsername
@@ -154,7 +159,7 @@ export default function CustomizationShowcase({
                     alt=""
                     width={24}
                     height={24}
-                    className="[image-rendering:pixelated]"
+                    className={`[image-rendering:pixelated] ${styles.glyph}`}
                   />
                 ) : (
                   t('none')

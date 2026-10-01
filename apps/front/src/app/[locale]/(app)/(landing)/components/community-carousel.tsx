@@ -7,6 +7,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from '@/components/ui/carousel'
 import {
   Dialog,
@@ -15,6 +16,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { useEffect, useState } from 'react'
+import { cn } from '@/lib/utils'
+import styles from './landing-motion.module.css'
 import { Label } from '@/components/ui/label'
 import { useMediaQuery } from '@/lib/use-media-query'
 import Autoplay from 'embla-carousel-autoplay'
@@ -30,29 +34,92 @@ type LandingCommunityCarouselProps = {
     src: string
     alt: string
     name: string
+    authors?: string[]
   }[]
 }
 
 export default function LandingCommunityCarousel({
   gallery,
 }: LandingCommunityCarouselProps) {
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const [api, setApi] = useState<CarouselApi>()
+  const [autoplay] = useState(() =>
+    Autoplay({
+      delay: 5000,
+      playOnInit: false,
+      stopOnMouseEnter: true,
+      stopOnFocusIn: true,
+      stopOnInteraction: false,
+      breakpoints: {
+        '(prefers-reduced-motion: reduce)': { active: false },
+      },
+    }),
+  )
+  useEffect(() => {
+    if (!api) return
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const sync = () => {
+      const root = api.rootNode()
+      if (
+        motion.matches ||
+        document.hidden ||
+        root.matches(':hover') ||
+        root.contains(document.activeElement)
+      )
+        autoplay.stop()
+      else autoplay.play()
+    }
+    sync()
+    api.on('reInit', sync)
+    motion.addEventListener('change', sync)
+    document.addEventListener('visibilitychange', sync)
+    return () => {
+      motion.removeEventListener('change', sync)
+      document.removeEventListener('visibilitychange', sync)
+      autoplay.stop()
+      api.off('reInit', sync)
+    }
+  }, [api, autoplay])
   return (
-    <Carousel opts={{ loop: true }} plugins={[Autoplay({ delay: 3000 })]}>
+    <Carousel
+      setApi={setApi}
+      opts={{ loop: true, duration: reducedMotion ? 0 : 25 }}
+      plugins={[autoplay]}
+    >
       <CarouselContent>
         {gallery.map((item) => (
           <Dialog key={item.alt}>
             <CarouselItem className="lg:basis-1/2">
-              <DialogTrigger className="w-full">
+              <DialogTrigger
+                className={cn(
+                  'w-full overflow-hidden rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300',
+                  styles.galleryTrigger,
+                )}
+              >
                 <AspectRatio ratio={16 / 9} className="relative">
                   <Image
                     src={item.src}
                     alt={item.alt}
                     fill
-                    className="rounded-2xl object-cover"
+                    sizes="(min-width: 1024px) 480px, (min-width: 768px) 90vw, 100vw"
+                    className={cn(
+                      'rounded-2xl object-cover',
+                      styles.galleryImage,
+                    )}
                   />
-                  <div className="bg-accent/50 absolute right-0 bottom-0 m-2 rounded-sm px-2 py-1">
-                    <Label className={`text-sm font-bold ${notoSans.className} antialiased`}>
+                  <div className={styles.galleryCaption}>
+                    <p className="font-medium">{item.alt}</p>
+                    {item.authors?.length ? (
+                      <p className="mt-1 text-sm text-white/75">
+                        {item.authors.join(', ')}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="bg-accent/50 absolute top-0 right-0 m-2 rounded-sm px-2 py-1">
+                    <Label
+                      className={`text-sm font-bold ${notoSans.className} antialiased`}
+                    >
                       {item.name}
                     </Label>
                   </div>
@@ -68,10 +135,13 @@ export default function LandingCommunityCarousel({
                   src={item.src}
                   alt={item.alt}
                   fill
+                  sizes="(min-width: 1024px) 1024px, 100vw"
                   className="rounded-2xl object-cover"
                 />
                 <div className="bg-accent/50 absolute right-0 bottom-0 m-4 rounded-sm px-3 py-1">
-                  <Label className={`text-md font-bold ${notoSans.className} antialiased`}>
+                  <Label
+                    className={`text-md font-bold ${notoSans.className} antialiased`}
+                  >
                     {item.name}
                   </Label>
                 </div>
