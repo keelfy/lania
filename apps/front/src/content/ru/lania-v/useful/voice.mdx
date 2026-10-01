@@ -80,10 +80,6 @@ import { Table } from 'nextra/components'
 
 Аддоны добавляют новые способы общения. Большинство из них появляются как отдельные активации во вкладке «Активация» меню `V` &mdash; назначьте им клавишу или режим, как и обычному голосу.
 
-<Callout type='warning'>
-  Доступ к некоторым аддонам зависит от ваших прав. Если активации нет в меню или команда пишет об отсутствии прав &mdash; эта возможность вам недоступна.
-</Callout>
-
 ### Группы
 
 [pv-addon-groups](https://modrinth.com/plugin/pv-addon-groups) &mdash; голосовые каналы для компании: участников группы слышно на любом расстоянии.
@@ -174,55 +170,11 @@ import { Table } from 'nextra/components'
 
 [pv-addon-sculk](https://modrinth.com/plugin/pv-addon-sculk) &mdash; сенсоры скалка и вардены реагируют на голос. Громкий разговор рядом с сенсором выдаст сигнал красного камня, а в Древнем городе может привлечь вардена. Говорите тише или используйте группы.
 
-### Пластинки
+### Звуковая физика
 
-[pv-addon-discs](https://modrinth.com/plugin/pv-addon-discs) &mdash; запись своей музыки на пластинку. Запись проигрывается из проигрывателя, и её слышат все рядом.
+Клиентский аддон: ставится в папку `mods` и работает только у вас. В модпаке он уже есть.
 
-1. Возьмите в руку любую музыкальную пластинку;
-2. Введите `/disc burn {ссылка} [название]`;
-3. Поставьте пластинку в проигрыватель.
-
-Поддерживаются ссылки на YouTube (в том числе прямые трансляции), SoundCloud, Bandcamp, Vimeo, Twitch и прямые ссылки на аудиофайлы (`.mp3`, `.flac`, `.wav`, `.ogg`, `.m4a` и другие).
-
-<br/>
-<Table>
-  <thead>
-    <Table.Tr>
-      <Table.Th>Команда</Table.Th>
-      <Table.Th>Описание</Table.Th>
-    </Table.Tr>
-  </thead>
-  <tbody>
-    <Table.Tr>
-      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc burn {ссылка} [название]`</Table.Td>
-      <Table.Td>Записать звук по ссылке на пластинку в руке</Table.Td>
-    </Table.Tr>
-    <Table.Tr>
-      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc search {запрос}`</Table.Td>
-      <Table.Td>Найти трек на YouTube</Table.Td>
-    </Table.Tr>
-    <Table.Tr>
-      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc erase`</Table.Td>
-      <Table.Td>Стереть запись и вернуть обычную пластинку</Table.Td>
-    </Table.Tr>
-    <Table.Tr>
-      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc cancel`</Table.Td>
-      <Table.Td>Остановить звук, записанный на козий рог</Table.Td>
-    </Table.Tr>
-  </tbody>
-</Table>
-
-<Callout type='important'>
-  На записи действуют [правила сервера](/wiki/rules): никакой рекламы, оскорблений и громких звуков, мешающих другим игрокам.
-</Callout>
-
-### Клиентские аддоны
-
-Эти аддоны ставятся в папку `mods` и работают только у вас. В модпаке они уже есть.
-
-- [pv-addon-soundphysics](https://modrinth.com/mod/pv-addon-soundphysics) &mdash; голос подчиняется [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered): эхо в пещерах, приглушение за стенами;
-- [pv-addon-replaymod](https://modrinth.com/mod/pv-addon-replaymod) &mdash; голосовой чат записывается в повторы [ReplayMod](https://www.replaymod.com/);
-- [pv-addon-flashback](https://modrinth.com/mod/pv-addon-flashback) &mdash; то же для повторов [Flashback](https://modrinth.com/mod/flashback).
+[pv-addon-soundphysics](https://modrinth.com/mod/pv-addon-soundphysics) &mdash; голос подчиняется [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered): эхо в пещерах, приглушение за стенами.
 
 ## Частые проблемы
 
