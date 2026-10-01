@@ -29,15 +29,9 @@ export const useBasket = () => {
   return React.useContext(BasketContext)
 }
 
-type Props = {
-  initialBasket: BasketItem[]
-}
-
-export const BasketProvider = ({
-  children,
-  initialBasket,
-}: React.PropsWithChildren<Props>) => {
-  const [basket, setBasket] = React.useState<BasketItem[]>(initialBasket)
+// The basket starts empty, ViewerSync fills it in once the server has read it.
+export const BasketProvider = ({ children }: React.PropsWithChildren) => {
+  const [basket, setBasket] = React.useState<BasketItem[]>([])
 
   const addItem = React.useCallback(
     (productId: string, profileId: string, seasonId = '') => {

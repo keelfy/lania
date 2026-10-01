@@ -1,16 +1,21 @@
 import config from '../../../../../public/landing-customization.json'
+import { cacheLife } from 'next/cache'
 import { getProducts } from '@/lib/api-endpoints'
-import type { ApiFetcher } from '@/lib/fetcher'
+import { publicApiFetcher } from '@/lib/public-api'
 import {
   ProductCategory,
   type NameColorProductMetadata,
   type NamePrefixProductMetadata,
 } from '@/models/product'
 
-export async function loadCustomization(fetcher: ApiFetcher, locale: string) {
+// The products are public and the landing page shows no prices, so every visitor shares one cached result.
+// A failed read throws and is not cached, so the caller falls back.
+export async function loadCustomization(locale: string) {
+  'use cache'
+  cacheLife('minutes')
   const [colorProducts, glyphProducts] = await Promise.all([
-    getProducts(fetcher, ProductCategory.NameColor, locale).catch(() => []),
-    getProducts(fetcher, ProductCategory.NamePrefix, locale).catch(() => []),
+    getProducts(publicApiFetcher, ProductCategory.NameColor, locale),
+    getProducts(publicApiFetcher, ProductCategory.NamePrefix, locale),
   ])
   const colors = colorProducts.map((product) => {
     const metadata = product.metadata as NameColorProductMetadata
@@ -41,3 +46,5 @@ export async function loadCustomization(fetcher: ApiFetcher, locale: string) {
     }),
   }
 }
+
+export const noCustomization = { colors: [], glyphs: [] }

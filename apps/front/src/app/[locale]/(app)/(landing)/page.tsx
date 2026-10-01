@@ -7,8 +7,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
-import { getPrimarySeason } from '@/lib/api-endpoints'
-import { serverApiFetcher } from '@/lib/server'
+import { getCachedPrimarySeason } from '@/lib/public-data'
 import {
   HoverCard,
   HoverCardContent,
@@ -32,7 +31,7 @@ import {
 import { RichTagsFunction } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
-import { loadCustomization } from './load-customization'
+import { loadCustomization, noCustomization } from './load-customization'
 import LandingCommunityCarousel from './components/community-carousel'
 import CopyIPButton from './components/copy-ip-button'
 import CustomizationShowcase from './components/customization-showcase'
@@ -346,8 +345,8 @@ export default async function LandingPage({ params }: Props) {
   const { locale } = await params
   const [t, primarySeason, customization] = await Promise.all([
     getTranslations({ locale, namespace: 'landing' }),
-    getPrimarySeason(serverApiFetcher).catch(() => undefined),
-    loadCustomization(serverApiFetcher, locale),
+    getCachedPrimarySeason().catch(() => undefined),
+    loadCustomization(locale).catch(() => noCustomization),
   ])
   return (
     <div className={`w-full ${styles.landing}`}>

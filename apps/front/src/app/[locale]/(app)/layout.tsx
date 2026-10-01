@@ -2,11 +2,7 @@ import CookieConsent from '@/components/blocks/cookie-consent'
 import { BasketProvider } from '@/context/basket'
 import { getMetadataLocale } from '@/i18n/metadata-locale'
 import { routing } from '@/i18n/routing'
-import { getBasket } from '@/lib/api-endpoints'
-import { getCurrentSession } from '@/lib/get-current-session'
-import { serverApiFetcher } from '@/lib/server'
 import AuthStoreProvider from '@/providers/auth-store'
-import ModalStoreProvider from '@/providers/modal'
 import type { Metadata } from 'next'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -18,6 +14,7 @@ import React, { Suspense } from 'react'
 import { Toaster } from 'sonner'
 import './globals.css'
 import './typeset.css'
+import Viewer from './components/viewer'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,6 +30,10 @@ type Props = {
   params: Promise<{
     locale: string
   }>
+}
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -57,11 +58,6 @@ export default async function RootLayout({
   params,
 }: Readonly<React.PropsWithChildren<Props>>) {
   const { locale } = await params
-  const session = await getCurrentSession()
-  const basket = await getBasket(serverApiFetcher).catch((err) => {
-    console.error(err)
-    return []
-  })
 
   if (!hasLocale(routing.locales, locale)) {
     notFound()
@@ -79,14 +75,15 @@ export default async function RootLayout({
           <Suspense>
             <NextIntlClientProvider locale={locale}>
               <NuqsAdapter>
-                <ModalStoreProvider>
-                  <AuthStoreProvider session={session}>
-                    <BasketProvider initialBasket={basket}>
-                      {children}
-                    </BasketProvider>
-                  </AuthStoreProvider>
-                  <Toaster />
-                </ModalStoreProvider>
+                <AuthStoreProvider>
+                  <BasketProvider>
+                    <Suspense>
+                      <Viewer />
+                    </Suspense>
+                    {children}
+                  </BasketProvider>
+                </AuthStoreProvider>
+                <Toaster />
               </NuqsAdapter>
               <CookieConsent variant="small" />
             </NextIntlClientProvider>

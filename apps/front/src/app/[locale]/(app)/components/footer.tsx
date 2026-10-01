@@ -1,3 +1,4 @@
+import { CurrentYear } from '@/components/current-year'
 import DeerIcon from '@/components/icons/DeerIcon'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -92,7 +93,7 @@ export default async function Footer({ locale, className }: Props) {
             <div className="flex items-center gap-2 px-3">
               <DeerIcon className="size-6" />
               <p className="text-md font-mono font-semibold">
-                LANIA.GG © {new Date().getFullYear()}
+                LANIA.GG © <CurrentYear />
               </p>
             </div>
             <div className="flex items-center gap-2">

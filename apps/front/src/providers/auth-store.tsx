@@ -4,7 +4,6 @@ import React from 'react'
 import { useStore } from 'zustand'
 
 import createAuthStore, { AuthStore } from '@/stores/auth-store'
-import { Session } from '@ory/client-fetch'
 
 export type AuthStoreApi = ReturnType<typeof createAuthStore>
 
@@ -12,15 +11,11 @@ export const AuthStoreContext = React.createContext<AuthStoreApi | undefined>(
   undefined,
 )
 
-export type AuthStoreProviderProps = React.PropsWithChildren<{
-  session: Session | undefined
-}>
-
+// The store starts without a session, ViewerSync fills it in once the server has read it.
 export default function AuthStoreProvider({
   children,
-  ...props
-}: AuthStoreProviderProps) {
-  const [store] = React.useState<AuthStoreApi>(() => createAuthStore(props))
+}: React.PropsWithChildren) {
+  const [store] = React.useState<AuthStoreApi>(() => createAuthStore())
 
   return (
     <AuthStoreContext.Provider value={store}>

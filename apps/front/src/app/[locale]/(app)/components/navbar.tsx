@@ -29,7 +29,7 @@ import { getTranslations } from 'next-intl/server'
 import dynamic from 'next/dynamic'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
-import React from 'react'
+import React, { Suspense } from 'react'
 import SignInButton from '../(with-navbar)/components/sign-in-button'
 import LanguageDropdownMenu from './language-dropdown-menu'
 import NavbarHighlighter from './navbar-highlighter'
@@ -87,16 +87,6 @@ export default async function Navbar({
   ...props
 }: React.ComponentProps<'header'> & Props) {
   const t = await getTranslations({ locale: currentLocale })
-  const session = await getCurrentSession()
-  const isSessionActive = session?.active === true
-  const isAdmin = isAdminSession(session)
-  // A profile the owner can verify now; the user menu marks the way to it.
-  const profilesNeedAction = (await getCurrentUserProfiles()).some(
-    awaitsVerification,
-  )
-  const currency =
-    ((await cookies()).get(CURRENCY_COOKIE)?.value as Currency) ??
-    DEFAULT_CURRENCY
 
   return (
     <header
@@ -137,51 +127,89 @@ export default async function Navbar({
                       <p>{t(`navbar.items.${item.labelKey}`)}</p>
                     </div>
                   </NavItemLink>
-                  <NavbarHighlighter href={item.href} />
+                  {/* The active page is only known at request time on routes with dynamic segments. */}
+                  <Suspense fallback={null}>
+                    <NavbarHighlighter href={item.href} />
+                  </Suspense>
                 </NavigationMenuItem>
               ))}
             </NavigationMenuList>
           </NavigationMenu>
         </div>
       </div>
-      <div className="absolute right-4 flex items-center gap-2 lg:right-0">
-        <NotificationsMenu sessionActive={isSessionActive}>
-          <Button variant="ghost" size="icon">
-            <span className="sr-only">{t('notifications.title')}</span>
-            <BellIcon className="size-4" />
+      <Suspense fallback={<NavbarActionsFallback />}>
+        <NavbarActions currentLocale={currentLocale} />
+      </Suspense>
+    </header>
+  )
+}
+
+// The right side of the bar depends on who is signed in and on the currency cookie, so it streams in on its own and the
+// rest of the bar is prerendered.
+async function NavbarActions({ currentLocale }: Props) {
+  const t = await getTranslations({ locale: currentLocale })
+  const session = await getCurrentSession()
+  const isSessionActive = session?.active === true
+  const isAdmin = isAdminSession(session)
+  // A profile the owner can verify now; the user menu marks the way to it.
+  const profilesNeedAction = (await getCurrentUserProfiles()).some(
+    awaitsVerification,
+  )
+  const currency =
+    ((await cookies()).get(CURRENCY_COOKIE)?.value as Currency) ??
+    DEFAULT_CURRENCY
+
+  return (
+    <div className="absolute right-4 flex items-center gap-2 lg:right-0">
+      <NotificationsMenu sessionActive={isSessionActive}>
+        <Button variant="ghost" size="icon">
+          <span className="sr-only">{t('notifications.title')}</span>
+          <BellIcon className="size-4" />
+        </Button>
+      </NotificationsMenu>
+      <ShoppingBasketButton />
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative lg:hidden">
+            <MenuIcon className="size-8" />
+            {profilesNeedAction && <AttentionDot />}
           </Button>
-        </NotificationsMenu>
-        <ShoppingBasketButton />
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative lg:hidden">
-              <MenuIcon className="size-8" />
-              {profilesNeedAction && <AttentionDot />}
-            </Button>
-          </SheetTrigger>
-          <DynamicMenuSheetContent
-            sessionActive={isSessionActive}
+        </SheetTrigger>
+        <DynamicMenuSheetContent
+          sessionActive={isSessionActive}
+          isAdmin={isAdmin}
+          profilesNeedAction={profilesNeedAction}
+          locale={currentLocale as Locale}
+          currency={currency}
+        />
+      </Sheet>
+      <div className="relative hidden items-center gap-6 lg:flex">
+        {isSessionActive ? (
+          <UserDropdownMenu
             isAdmin={isAdmin}
             profilesNeedAction={profilesNeedAction}
-            locale={currentLocale as Locale}
-            currency={currency}
           />
-        </Sheet>
-        <div className="relative hidden items-center gap-6 lg:flex">
-          {isSessionActive ? (
-            <UserDropdownMenu
-              isAdmin={isAdmin}
-              profilesNeedAction={profilesNeedAction}
-            />
-          ) : (
-            <SignInButton />
-          )}
-          <LanguageDropdownMenu
-            currentLocale={currentLocale}
-            className="absolute right-0 translate-x-[calc(100%+1rem)]"
-          />
-        </div>
+        ) : (
+          <SignInButton />
+        )}
+        <LanguageDropdownMenu
+          currentLocale={currentLocale}
+          className="absolute right-0 translate-x-[calc(100%+1rem)]"
+        />
       </div>
-    </header>
+    </div>
+  )
+}
+
+// Keeps the room of the buttons, so the bar does not jump when they arrive.
+function NavbarActionsFallback() {
+  const placeholder = 'bg-muted animate-pulse rounded-md'
+  return (
+    <div className="absolute right-4 flex items-center gap-2 lg:right-0">
+      <div className={cn('size-9', placeholder)} />
+      <div className={cn('size-9', placeholder)} />
+      <div className={cn('size-9 lg:hidden', placeholder)} />
+      <div className={cn('hidden h-9 w-24 lg:block', placeholder)} />
+    </div>
   )
 }

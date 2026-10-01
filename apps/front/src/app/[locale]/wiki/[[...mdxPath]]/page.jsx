@@ -8,7 +8,7 @@ import { Callout } from 'nextra/components'
 import { getPageMap } from 'nextra/page-map'
 import { generateStaticParamsFor, importPage } from 'nextra/pages'
 
-export const generateStaticParams = generateStaticParamsFor('mdxPath')
+export const generateStaticParams = generateStaticParamsFor('mdxPath', 'locale')
 
 const findPage = (mdxPath, locale) =>
   importPage(mdxPath, locale).catch(() => undefined)
