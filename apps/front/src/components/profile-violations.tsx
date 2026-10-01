@@ -22,10 +22,30 @@ export async function loadProfileViolations(
   return { ...res, loadedAt: Date.now() }
 }
 
-const statusColors: Record<ViolationStatus, string> = {
-  active: 'text-destructive',
-  expired: 'text-muted-foreground',
-  removed: 'text-green-600 dark:text-green-500',
+const statusStyles: Record<ViolationStatus, string> = {
+  active: 'bg-destructive/15 text-destructive',
+  expired: 'bg-muted text-muted-foreground',
+  removed: 'bg-green-500/15 text-green-600 dark:text-green-500',
+}
+
+const iconStyles: Record<ViolationStatus, string> = {
+  active: 'bg-destructive/15 text-destructive',
+  expired: 'bg-muted text-muted-foreground',
+  removed: 'bg-muted text-green-600 dark:text-green-500',
+}
+
+const MINUTE = 60_000
+const HOUR = 60 * MINUTE
+const DAY = 24 * HOUR
+
+// The term in its largest whole unit, rounded to the nearest one.
+function termUnit(millis: number): {
+  unit: 'days' | 'hours' | 'minutes'
+  count: number
+} {
+  if (millis >= DAY) return { unit: 'days', count: Math.round(millis / DAY) }
+  if (millis >= HOUR) return { unit: 'hours', count: Math.round(millis / HOUR) }
+  return { unit: 'minutes', count: Math.max(1, Math.round(millis / MINUTE)) }
 }
 
 // The term is cut into blocks, like the playtime bars of the profile.
@@ -56,7 +76,8 @@ type Props = {
   className?: string
 }
 
-// Bans and mutes of a profile, newest first.
+// Bans and mutes of a profile, newest first. The reason leads each row; the kind and the term sit under it, the
+// status and the date on the right.
 export default async function ProfileViolationList({
   violations,
   now,
@@ -76,71 +97,83 @@ export default async function ProfileViolationList({
     <ol className={cn('flex flex-col', className)}>
       {violations.map((violation) => {
         const KindIcon = violation.kind === 'ban' ? BanIcon : MicOffIcon
-        const running =
-          violation.status === 'active' && violation.expiresAt !== null
+        const expiresAt = violation.expiresAt
+        let summary: string
+        if (expiresAt === null) {
+          summary = t('summary.permanent', { kind: violation.kind })
+        } else {
+          const term = termUnit(expiresAt - violation.issuedAt)
+          summary = t('summary.temporary', {
+            kind: violation.kind,
+            duration: t(`durations.${term.unit}`, { count: term.count }),
+          })
+        }
         return (
           <li
             key={`${violation.kind}-${violation.id}`}
-            className="flex gap-3 py-3 not-last:border-b"
+            className="flex gap-3 py-4 not-last:border-b"
           >
-            <KindIcon
+            <span
               className={cn(
-                'mt-0.5 size-4 shrink-0',
-                statusColors[violation.status],
+                'flex size-8 shrink-0 items-center justify-center rounded-md',
+                iconStyles[violation.status],
               )}
-            />
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <div className="flex items-baseline justify-between gap-4">
-                <p className="min-w-0 text-sm">
-                  <span className="font-semibold">
-                    {t(`kinds.${violation.kind}`)}
-                  </span>{' '}
-                  <span className="break-words">
+            >
+              <KindIcon className="size-4" />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <p className="text-sm font-medium break-words">
                     {violation.reason || (
                       <span className="text-muted-foreground">
                         {t('noReason')}
                       </span>
                     )}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {summary},{' '}
+                    {violation.issuedBy
+                      ? t('issuedBy', { name: violation.issuedBy })
+                      : t('issuedByServer')}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span
+                    className={cn(
+                      'rounded-sm px-1.5 py-0.5 text-xs font-medium',
+                      statusStyles[violation.status],
+                    )}
+                  >
+                    {t(`statuses.${violation.status}`)}
                   </span>
-                </p>
-                <span
-                  className={cn(
-                    'shrink-0 text-sm font-semibold',
-                    statusColors[violation.status],
-                  )}
-                >
-                  {t(`statuses.${violation.status}`)}
-                </span>
+                  <time
+                    dateTime={new Date(violation.issuedAt).toISOString()}
+                    className="text-muted-foreground text-xs"
+                  >
+                    {date(violation.issuedAt)}
+                  </time>
+                </div>
               </div>
-              <p className="text-muted-foreground flex flex-wrap gap-x-3 text-xs">
-                <span>
-                  {violation.issuedBy
-                    ? t('issuedBy', { name: violation.issuedBy })
-                    : t('issuedByServer')}
-                </span>
-                <time dateTime={new Date(violation.issuedAt).toISOString()}>
-                  {date(violation.issuedAt)}
-                </time>
-                <span>
-                  {violation.expiresAt === null
-                    ? t('permanent')
-                    : t('until', { date: date(violation.expiresAt) })}
-                </span>
-              </p>
-              {running && (
-                <TermBar
-                  ratio={Math.min(
-                    1,
-                    Math.max(
-                      0,
-                      (now - violation.issuedAt) /
-                        (violation.expiresAt! - violation.issuedAt),
-                    ),
-                  )}
-                />
+              {violation.status === 'active' && expiresAt !== null && (
+                <div className="flex items-center gap-3">
+                  <TermBar
+                    ratio={Math.min(
+                      1,
+                      Math.max(
+                        0,
+                        (now - violation.issuedAt) /
+                          (expiresAt - violation.issuedAt),
+                      ),
+                    )}
+                  />
+                  <span className="text-muted-foreground shrink-0 text-xs">
+                    {t('until', { date: date(expiresAt) })}
+                  </span>
+                </div>
               )}
               {violation.status === 'removed' && (
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground border-l-2 pl-2 text-xs">
                   {violation.removedBy
                     ? t('removedBy', { name: violation.removedBy })
                     : t('removedByServer')}

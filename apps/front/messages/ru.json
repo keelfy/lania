@@ -422,22 +422,26 @@
   "violations": {
     "title": "Нарушения",
     "empty": "Игрок не получал банов и мутов в этом сезоне.",
-    "kinds": {
-      "ban": "Бан",
-      "mute": "Мут"
-    },
     "statuses": {
       "active": "Действует",
       "expired": "Истёк",
       "removed": "Снят"
     },
     "noReason": "Без причины",
-    "issuedBy": "Выдал {name}",
-    "issuedByServer": "Выдан сервером",
-    "permanent": "Навсегда",
-    "until": "До {date}",
+    "issuedBy": "выдал {name}",
+    "issuedByServer": "выдан сервером",
+    "until": "до {date}",
     "removedBy": "Снял {name}",
-    "removedByServer": "Снят сервером"
+    "removedByServer": "Снят сервером",
+    "summary": {
+      "permanent": "{kind, select, ban {Бан} other {Мут}} навсегда",
+      "temporary": "{kind, select, ban {Бан} other {Мут}} на {duration}"
+    },
+    "durations": {
+      "days": "{count, plural, one {# день} few {# дня} other {# дней}}",
+      "hours": "{count, plural, one {# час} few {# часа} other {# часов}}",
+      "minutes": "{count, plural, one {# минуту} few {# минуты} other {# минут}}"
+    }
   },
   "profileResync": {
     "title": "Синхронизация",

@@ -56,3 +56,13 @@ func TestToPunishmentModerators(t *testing.T) {
 		t.Fatalf("expired ban has a remover: %+v", expired)
 	}
 }
+
+func TestToPunishmentDropsLiteBansDefaultReason(t *testing.T) {
+	punishment := toPunishment(&storage.PunishmentRecord{
+		Kind: storage.PunishmentKindBan, Reason: "No reason specified.",
+		RemovedByUUID: moderatorUUID, RemovedByName: "Steve", RemovedReason: "No reason specified.",
+	}, 10)
+	if punishment.Reason != "" || punishment.RemovedReason != "" {
+		t.Fatalf("reasons = %q, %q, want empty", punishment.Reason, punishment.RemovedReason)
+	}
+}

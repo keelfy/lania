@@ -423,22 +423,26 @@
   "violations": {
     "title": "Violations",
     "empty": "The player got no bans or mutes this season.",
-    "kinds": {
-      "ban": "Ban",
-      "mute": "Mute"
-    },
     "statuses": {
       "active": "In force",
       "expired": "Expired",
       "removed": "Lifted"
     },
     "noReason": "No reason given",
-    "issuedBy": "Given by {name}",
-    "issuedByServer": "Given by the server",
-    "permanent": "Permanent",
-    "until": "Until {date}",
+    "issuedBy": "given by {name}",
+    "issuedByServer": "given by the server",
+    "until": "until {date}",
     "removedBy": "Lifted by {name}",
-    "removedByServer": "Lifted by the server"
+    "removedByServer": "Lifted by the server",
+    "summary": {
+      "permanent": "{kind, select, ban {Permanent ban} other {Permanent mute}}",
+      "temporary": "{kind, select, ban {Ban} other {Mute}} for {duration}"
+    },
+    "durations": {
+      "days": "{count, plural, one {# day} other {# days}}",
+      "hours": "{count, plural, one {# hour} other {# hours}}",
+      "minutes": "{count, plural, one {# minute} other {# minutes}}"
+    }
   },
   "profileResync": {
     "title": "Synchronization",

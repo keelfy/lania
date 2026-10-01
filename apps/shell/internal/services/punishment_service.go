@@ -49,16 +49,26 @@ var punishmentKinds = map[string]domain.PunishmentKind{
 	storage.PunishmentKindMute: domain.PunishmentKindMute,
 }
 
+// liteBansNoReason is the text LiteBans stores when the moderator gives no reason.
+const liteBansNoReason = "No reason specified."
+
+func reasonText(reason string) string {
+	if reason == liteBansNoReason {
+		return ""
+	}
+	return reason
+}
+
 func toPunishment(record *storage.PunishmentRecord, nowMs int64) *domain.Punishment {
 	punishment := &domain.Punishment{
 		ID:            record.ID,
 		Kind:          punishmentKinds[record.Kind],
 		MCUUID:        record.MCUUID,
-		Reason:        record.Reason,
+		Reason:        reasonText(record.Reason),
 		IssuedBy:      moderatorName(record.ByUUID, record.ByName),
 		IssuedAtMs:    record.TimeMs,
 		Status:        punishmentStatus(record, nowMs),
-		RemovedReason: record.RemovedReason,
+		RemovedReason: reasonText(record.RemovedReason),
 	}
 	if record.UntilMs > 0 {
 		punishment.ExpiresAtMs = &record.UntilMs
