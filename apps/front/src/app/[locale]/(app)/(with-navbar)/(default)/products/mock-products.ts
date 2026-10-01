@@ -49,7 +49,10 @@ export function getMockProducts(
       createdAt: old,
     },
     ...[
-      { name: 'DeepSpace', colors: ['#4343a8', '#b35cff'] },
+      {
+        name: ru ? 'Сияние далёких галактик' : 'Glow of distant galaxies',
+        colors: ['#4343a8', '#b35cff'],
+      },
       { name: 'Frozen', colors: ['#57bbff', '#d2fff9'] },
       { name: 'Kyoto', colors: ['#ff776e', '#ffcf87'] },
       { name: 'Magic', colors: ['#ef78ff', '#877dff'] },
@@ -69,7 +72,7 @@ export function getMockProducts(
     ),
     ...[
       {
-        name: 'Hexbloom',
+        name: ru ? 'Рюкзак путешественника' : 'Traveler’s backpack',
         image: 'crystal',
       },
       {

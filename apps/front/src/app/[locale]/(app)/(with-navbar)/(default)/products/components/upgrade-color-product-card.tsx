@@ -21,7 +21,7 @@ export default function UpgradeProductCard({ item, ...props }: Props) {
     <ProductCard item={item} {...props}>
       <div className="flex items-center gap-2">
         {Icon && <Icon className="size-6" />}
-        <p className="font-mono text-2xl font-bold">{item.name}</p>
+        <h3 className="text-foreground text-2xl font-semibold">{item.name}</h3>
       </div>
     </ProductCard>
   )

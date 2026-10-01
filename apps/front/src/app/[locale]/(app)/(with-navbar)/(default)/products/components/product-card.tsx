@@ -50,7 +50,7 @@ export default function ProductCard({
       <div className="min-w-0 flex-1 space-y-3">
         {isNew && (
           <Badge
-            className="absolute -top-2 right-2 shadow-sm"
+            className="absolute -top-2 right-2 z-10 shadow-sm"
             variant="secondary"
           >
             <SparklesIcon className="size-3" />

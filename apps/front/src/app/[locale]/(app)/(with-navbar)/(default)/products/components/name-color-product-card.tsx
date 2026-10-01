@@ -1,4 +1,3 @@
-import McUsername from '@/components/ui/mc-username'
 import { NameColorProductMetadata, Product } from '@/models/product'
 import React from 'react'
 import ProductCard from './product-card'
@@ -17,13 +16,13 @@ export default function UsernameColorProductCard({ item, ...props }: Props) {
   return (
     <ProductCard item={item} accent={colors[0]} {...props}>
       {/* Two lines are always reserved so descriptions line up across a row. */}
-      <div className="my-1 flex min-h-[2lh] items-center text-xl leading-tight">
-        <McUsername
-          username={item.name}
-          colors={colors}
+      <div className="flex min-h-[2lh] items-center text-xl leading-tight">
+        <h3
           title={item.name}
-          className="line-clamp-2 font-bold text-balance"
-        />
+          className="text-foreground line-clamp-2 font-semibold text-balance"
+        >
+          {item.name}
+        </h3>
       </div>
       <CatalogNamePreview colors={colors} />
     </ProductCard>
