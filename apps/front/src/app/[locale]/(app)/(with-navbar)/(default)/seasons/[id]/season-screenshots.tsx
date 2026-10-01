@@ -1,12 +1,12 @@
 'use client'
 
+import ScreenshotPreview from '@/components/screenshot-preview'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { communityProfileHref } from '../../community/community-href'
 import { SeasonScreenshot } from '@/models/season'
@@ -28,21 +28,14 @@ export default function SeasonScreenshots({
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {screenshots.map((screenshot) => (
         <Dialog key={screenshot.id}>
-          <DialogTrigger className="w-full">
-            <AspectRatio
-              ratio={16 / 9}
-              className="relative overflow-hidden rounded-md"
-            >
-              <Image
-                src={screenshot.image}
-                alt={screenshot.title ?? ''}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-300 hover:scale-105"
-              />
-            </AspectRatio>
-          </DialogTrigger>
-          <DialogContent className="w-[min(calc(100vw-2rem),160dvh)] gap-0 overflow-hidden border-0 p-0 sm:max-w-4xl">
+          <ScreenshotPreview
+            src={screenshot.image}
+            alt={screenshot.title ?? 'Screenshot'}
+            title={screenshot.title}
+            authors={screenshot.authors.map((author) => author.username)}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+          <DialogContent className="w-[min(calc(100vw-2rem),160dvh)] gap-0 overflow-hidden rounded-2xl border-0 p-0 sm:max-w-4xl">
             <DialogHeader className="sr-only">
               <DialogTitle>{screenshot.title ?? 'Screenshot'}</DialogTitle>
             </DialogHeader>

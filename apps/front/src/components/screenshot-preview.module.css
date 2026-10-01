@@ -1,0 +1,39 @@
+.galleryImage {
+  transition: transform 350ms ease;
+}
+.galleryCaption {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 2.5rem 1rem 1rem;
+  text-align: left;
+  color: white;
+  background: linear-gradient(transparent, rgb(0 0 0 / 80%));
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .galleryCaption {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  .galleryTrigger:hover .galleryImage,
+  .galleryTrigger:focus-visible .galleryImage {
+    transform: scale(1.035);
+  }
+  .galleryTrigger:hover .galleryCaption,
+  .galleryTrigger:focus-visible .galleryCaption {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .galleryImage,
+  .galleryCaption {
+    transition: none;
+  }
+  .galleryTrigger:hover .galleryImage,
+  .galleryTrigger:focus-visible .galleryImage {
+    transform: none;
+  }
+}

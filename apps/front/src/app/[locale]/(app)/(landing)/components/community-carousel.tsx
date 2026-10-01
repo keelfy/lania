@@ -14,11 +14,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { useEffect, useState } from 'react'
-import { cn } from '@/lib/utils'
-import styles from './landing-motion.module.css'
+import ScreenshotPreview from '@/components/screenshot-preview'
 import { Label } from '@/components/ui/label'
 import { useMediaQuery } from '@/lib/use-media-query'
 import Autoplay from 'embla-carousel-autoplay'
@@ -91,40 +89,21 @@ export default function LandingCommunityCarousel({
         {gallery.map((item) => (
           <Dialog key={item.alt}>
             <CarouselItem className="lg:basis-1/2">
-              <DialogTrigger
-                className={cn(
-                  'w-full overflow-hidden rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300',
-                  styles.galleryTrigger,
-                )}
+              <ScreenshotPreview
+                src={item.src}
+                alt={item.alt}
+                title={item.alt}
+                authors={item.authors}
+                sizes="(min-width: 1024px) 480px, (min-width: 768px) 90vw, 100vw"
               >
-                <AspectRatio ratio={16 / 9} className="relative">
-                  <Image
-                    src={item.src}
-                    alt={item.alt}
-                    fill
-                    sizes="(min-width: 1024px) 480px, (min-width: 768px) 90vw, 100vw"
-                    className={cn(
-                      'rounded-2xl object-cover',
-                      styles.galleryImage,
-                    )}
-                  />
-                  <div className={styles.galleryCaption}>
-                    <p className="font-medium">{item.alt}</p>
-                    {item.authors?.length ? (
-                      <p className="mt-1 text-sm text-white/75">
-                        {item.authors.join(', ')}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="bg-accent/50 absolute top-0 right-0 m-2 rounded-sm px-2 py-1">
-                    <Label
-                      className={`text-sm font-bold ${notoSans.className} antialiased`}
-                    >
-                      {item.name}
-                    </Label>
-                  </div>
-                </AspectRatio>
-              </DialogTrigger>
+                <div className="bg-accent/50 absolute top-0 right-0 m-2 rounded-sm px-2 py-1">
+                  <Label
+                    className={`text-sm font-bold ${notoSans.className} antialiased`}
+                  >
+                    {item.name}
+                  </Label>
+                </div>
+              </ScreenshotPreview>
             </CarouselItem>
             <DialogContent className="border-0 p-0 md:max-w-5xl">
               <DialogHeader className="hidden">
