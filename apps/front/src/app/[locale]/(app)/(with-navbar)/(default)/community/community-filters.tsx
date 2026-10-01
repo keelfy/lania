@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { RadioIcon, ShieldIcon } from 'lucide-react'
+import { LoaderCircleIcon, RadioIcon, ShieldIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React from 'react'
@@ -40,32 +40,52 @@ export default function CommunityFilters({
           season,
           ...filters,
         }),
+        { scroll: false },
       )
     })
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-1" aria-busy={isPending}>
       {onlineAvailable && (
         <Button
-          variant={online ? 'default' : 'outline'}
+          variant={online ? 'secondary' : 'ghost'}
+          className={
+            online
+              ? 'ring-primary/25 text-foreground ring-1'
+              : 'text-muted-foreground'
+          }
           aria-pressed={!!online}
           disabled={isPending}
           onClick={() => toggle({ online: !online })}
         >
-          <RadioIcon className="size-4" />
+          <RadioIcon
+            aria-hidden
+            className={online ? 'size-4 text-emerald-500' : 'size-4'}
+          />
           {t('online')}
         </Button>
       )}
       <Button
-        variant={staff ? 'default' : 'outline'}
+        variant={staff ? 'secondary' : 'ghost'}
+        className={
+          staff
+            ? 'ring-primary/25 text-foreground ring-1'
+            : 'text-muted-foreground'
+        }
         aria-pressed={!!staff}
         disabled={isPending}
         onClick={() => toggle({ staff: !staff })}
       >
-        <ShieldIcon className="size-4" />
+        <ShieldIcon aria-hidden className="size-4" />
         {t('staff')}
       </Button>
+      {isPending && (
+        <LoaderCircleIcon
+          aria-hidden
+          className="text-muted-foreground size-4 animate-spin motion-reduce:animate-none"
+        />
+      )}
     </div>
   )
 }

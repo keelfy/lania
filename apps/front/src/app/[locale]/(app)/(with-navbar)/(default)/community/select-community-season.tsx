@@ -51,7 +51,8 @@ export default function SelectCommunitySeason({
       selectedSeasonId={selectedSeasonId}
       onSelectSeasonId={onSelectSeasonId}
       disabled={isPending}
-      className="w-auto min-w-40"
+      aria-busy={isPending}
+      className="w-full min-w-40 sm:w-auto"
     />
   )
 }

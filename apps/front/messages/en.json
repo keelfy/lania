@@ -630,16 +630,19 @@
       "staff": "Staff"
     },
     "stats": {
-      "total": "Players",
+      "total": "Total profiles",
       "online": "Online now",
-      "newLastWeek": "New this week"
+      "newLastWeek": "New profiles this week",
+      "allSeasons": "Across the community",
+      "inSeason": "In {season}",
+      "unavailable": "Unavailable"
     },
     "onlineNow": {
       "title": "Online now",
       "showAll": "Show all"
     },
     "top": {
-      "title": "Top players this season"
+      "title": "Most playtime this season"
     },
     "profile": {
       "metadata": {
@@ -673,7 +676,14 @@
       "lastSeenAtAsc": "Last seen: longest ago",
       "playtimeDesc": "Playtime: most",
       "playtimeAsc": "Playtime: least"
-    }
+    },
+    "players": "Players",
+    "results": "{count, plural, one {# player} other {# players}}",
+    "resetFilters": "Reset filters",
+    "noResultsHint": "Try another username or reset the filters.",
+    "notPlayed": "Has not played this season yet",
+    "searching": "Searching…",
+    "lastSeen": "Last seen {time}"
   },
   "navbar": {
     "title": "Menu",

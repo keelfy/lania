@@ -1,0 +1,42 @@
+.card {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--card);
+  transition: border-color 180ms ease;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(240px circle at var(--light-x, 50%) var(--light-y, 50%), color-mix(in srgb, var(--player-accent) 12%, transparent), transparent 75%);
+  transition: opacity 180ms ease;
+}
+
+.card:focus-visible {
+  border-color: color-mix(in srgb, var(--player-accent) 45%, var(--border));
+}
+
+.card:focus-visible::before {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    border-color: color-mix(in srgb, var(--player-accent) 45%, var(--border));
+  }
+  .card:hover::before {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card::before {
+    transition: none;
+  }
+}

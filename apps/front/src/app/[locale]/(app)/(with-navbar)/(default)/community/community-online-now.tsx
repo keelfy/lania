@@ -34,12 +34,12 @@ export default async function CommunityOnlineNow({ locale, season }: Props) {
   if (!online || online.content.length === 0) return null
 
   return (
-    <section className="flex flex-col gap-3">
+    <section className="bg-card flex min-w-0 flex-col gap-3 rounded-xl border px-4 py-3">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
-        {online.totalElements > online.content.length && (
+        <h2 className="text-base font-semibold">{t('title')}</h2>
+        {online.totalElements > 0 && (
           <Link
-            href={communityHref({ locale, online: true, season })}
+            href={`${communityHref({ locale, online: true, season })}#players`}
             className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
           >
             {t('showAll')}
@@ -52,9 +52,11 @@ export default async function CommunityOnlineNow({ locale, season }: Props) {
             <li key={profile.id} className="shrink-0">
               <Link
                 href={communityProfileHref(locale, profile.username, season)}
-                className="hover:bg-accent flex w-24 flex-col items-center gap-1 rounded-md p-2 transition-colors"
+                aria-label={profile.username}
+                title={profile.username}
+                className="hover:bg-accent focus-visible:ring-ring flex w-24 flex-col items-center gap-2 rounded-lg p-2 transition-colors outline-none focus-visible:ring-2 motion-reduce:transition-none"
               >
-                <PlayerFace player={profile} className="size-10" />
+                <PlayerFace player={profile} className="size-10 rounded-md" />
                 <McUsername
                   username={profile.username}
                   colors={profile.cosmetics.name.colors?.colors}

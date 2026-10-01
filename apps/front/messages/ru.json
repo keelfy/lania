@@ -629,16 +629,19 @@
       "staff": "Администрация"
     },
     "stats": {
-      "total": "Игроков",
+      "total": "Всего профилей",
       "online": "Сейчас онлайн",
-      "newLastWeek": "Новых за неделю"
+      "newLastWeek": "Новых профилей за неделю",
+      "allSeasons": "Во всём сообществе",
+      "inSeason": "В сезоне {season}",
+      "unavailable": "Нет данных"
     },
     "onlineNow": {
       "title": "Сейчас онлайн",
       "showAll": "Показать всех"
     },
     "top": {
-      "title": "Лучшие игроки сезона"
+      "title": "Больше всего играли в сезоне"
     },
     "profile": {
       "metadata": {
@@ -672,7 +675,14 @@
       "lastSeenAtAsc": "Последний вход: давно",
       "playtimeDesc": "Время игры: больше",
       "playtimeAsc": "Время игры: меньше"
-    }
+    },
+    "players": "Игроки",
+    "results": "{count, plural, one {# игрок} few {# игрока} many {# игроков} other {# игрока}}",
+    "resetFilters": "Сбросить фильтры",
+    "noResultsHint": "Попробуйте другой ник или сбросьте фильтры.",
+    "notPlayed": "Ещё не играл в этом сезоне",
+    "searching": "Поиск…",
+    "lastSeen": "Был {time}"
   },
   "navbar": {
     "title": "Меню",

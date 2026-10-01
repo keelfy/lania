@@ -24,6 +24,9 @@ import CommunityPlayerList from './community-player-list'
 import CommunitySearch from './community-search'
 import SelectCommunitySeason from './select-community-season'
 import SelectCommunitySort from './select-profile-sort'
+import Link from 'next/link'
+import { buttonVariants } from '@/components/ui/button'
+import { SearchXIcon } from 'lucide-react'
 
 type Props = {
   params: Promise<{
@@ -171,9 +174,33 @@ export default async function CommunityPage({ params, searchParams }: Props) {
     return { content: [], page: 0, size: 0, totalPages: 0, totalElements: 0 }
   })
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-4xl font-extrabold tracking-tight">{t('title')}</h1>
-      <CommunityStats locale={locale} season={season} />
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-4xl font-extrabold tracking-tight">{t('title')}</h1>
+        {seasons.length > 1 && (
+          <SelectCommunitySeason
+            seasons={[...seasons].sort(
+              (a, b) => Number(b.isPrimary) - Number(a.isPrimary),
+            )}
+            selectedSeasonId={contextSeason?.id}
+            sort={sort}
+            search={search}
+            locale={locale}
+            online={online}
+            staff={staff}
+          />
+        )}
+      </header>
+      <CommunityStats
+        locale={locale}
+        season={season}
+        seasonName={contextSeason?.name}
+        onlineAvailable={onlineAvailable}
+        sort={sort}
+        search={search}
+        staff={staff}
+        online={online}
+      />
       {showSummary && onlineAvailable && (
         <CommunityOnlineNow locale={locale} season={season} />
       )}
@@ -181,27 +208,38 @@ export default async function CommunityPage({ params, searchParams }: Props) {
         <TopPlayers
           locale={locale}
           title={t('top.title')}
+          comparePlaytime
           season={season}
           href={(profile) =>
             communityProfileHref(locale, profile.username, season)
           }
         />
       )}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {seasons.length > 1 && (
-            <SelectCommunitySeason
-              seasons={[...seasons].sort(
-                (a, b) => Number(b.isPrimary) - Number(a.isPrimary),
-              )}
-              selectedSeasonId={contextSeason?.id}
-              sort={sort}
-              search={search}
-              locale={locale}
-              online={online}
-              staff={staff}
-            />
-          )}
+      <section
+        id="players"
+        className="flex scroll-mt-6 flex-col gap-4"
+        aria-labelledby="players-heading"
+      >
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2
+            id="players-heading"
+            className="text-2xl font-bold tracking-tight"
+          >
+            {t('players')}
+          </h2>
+          <p className="text-muted-foreground text-sm" role="status">
+            {t('results', { count: paginatedProfiles.totalElements })}
+          </p>
+        </div>
+        <div className="bg-card flex flex-wrap items-center gap-3 rounded-xl border p-3">
+          <CommunitySearch
+            defaultValue={search}
+            sort={sort}
+            locale={locale}
+            online={online}
+            staff={staff}
+            season={season}
+          />
           <CommunityFilters
             sort={sort}
             search={search}
@@ -211,17 +249,8 @@ export default async function CommunityPage({ params, searchParams }: Props) {
             season={season}
             onlineAvailable={onlineAvailable}
           />
-        </div>
-        <div className="flex w-full items-center gap-2 sm:w-auto">
-          <CommunitySearch
-            defaultValue={search}
-            sort={sort}
-            locale={locale}
-            online={online}
-            staff={staff}
-            season={season}
-          />
           <SelectCommunitySort
+            key={sort}
             defaultValue={sort}
             search={search}
             locale={locale}
@@ -229,19 +258,39 @@ export default async function CommunityPage({ params, searchParams }: Props) {
             staff={staff}
             season={season}
           />
+          {(search || online || staff) && (
+            <Link
+              className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+              href={communityHref({ locale, sort, season })}
+            >
+              {t('resetFilters')}
+            </Link>
+          )}
         </div>
-      </div>
-      {paginatedProfiles.content.length > 0 ? (
-        <CommunityPlayerList
-          profiles={paginatedProfiles.content}
-          locale={locale}
-          season={season}
-        />
-      ) : (
-        <p className="text-muted-foreground py-10 text-center">
-          {t('noResults')}
-        </p>
-      )}
+        {paginatedProfiles.content.length > 0 ? (
+          <CommunityPlayerList
+            profiles={paginatedProfiles.content}
+            locale={locale}
+            season={season}
+          />
+        ) : (
+          <div className="bg-card flex flex-col items-center gap-3 rounded-xl border border-dashed px-4 py-12 text-center">
+            <SearchXIcon className="text-muted-foreground size-7" aria-hidden />
+            <p className="font-medium">{t('noResults')}</p>
+            <p className="text-muted-foreground max-w-sm text-sm">
+              {t('noResultsHint')}
+            </p>
+            {(search || online || staff) && (
+              <Link
+                className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                href={communityHref({ locale, sort, season })}
+              >
+                {t('resetFilters')}
+              </Link>
+            )}
+          </div>
+        )}
+      </section>
       {paginatedProfiles.totalPages > 1 && (
         <Pagination>
           <PaginationContent>

@@ -99,13 +99,18 @@ export default function SelectCommunitySort({
     startSortChange(() => {
       router.push(
         communityHref({ locale, sort: value, search, online, staff, season }),
+        { scroll: false },
       )
     })
   }
 
   return (
     <Select value={sort} onValueChange={onSortChange} disabled={isSortChanging}>
-      <SelectTrigger>
+      <SelectTrigger
+        aria-label={t('placeholder')}
+        aria-busy={isSortChanging}
+        className="w-full sm:w-auto sm:max-w-60"
+      >
         <SelectValue placeholder={t('placeholder')} />
       </SelectTrigger>
       <SelectContent>

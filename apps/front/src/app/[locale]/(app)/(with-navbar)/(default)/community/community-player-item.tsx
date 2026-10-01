@@ -14,7 +14,7 @@ import { communityProfileHref } from './community-href'
 import { cn } from '@/lib/utils'
 import { BanIcon, ClockIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import Link from 'next/link'
+import PlayerProfileLink from '@/components/ui/player-profile-link'
 
 type Props = {
   profile: PublicProfile
@@ -28,6 +28,7 @@ export default function CommunityPlayerItem({
   season,
 }: Props) {
   const t = useTranslations('playerCard')
+  const tCommunity = useTranslations('community')
   const playtime = formatPlaytime(profile.playtime)
   const lastSeen = profile.lastSeenAt
     ? formatTimeAgo(profile.lastSeenAt)
@@ -36,14 +37,16 @@ export default function CommunityPlayerItem({
   // A banned player is kicked from the server, so the ban replaces the online status.
   const banned = profile.isBanned
   return (
-    <Link
+    <PlayerProfileLink
       href={communityProfileHref(locale, profile.username, season)}
-      className="hover:bg-accent/50 hover:border-foreground/20 flex items-center gap-4 rounded-lg border p-4 transition-colors"
+      accent={profile.cosmetics.name.colors?.colors[0]}
+      aria-label={profile.username}
+      className="flex min-w-0 items-start gap-3 rounded-xl border p-4"
     >
       <div className="relative shrink-0">
         <PlayerFace
           player={profile}
-          className={cn('size-12 rounded-sm', banned && 'opacity-60 grayscale')}
+          className={cn('size-12 rounded-lg', banned && 'opacity-60 grayscale')}
         />
         {banned ? (
           <span
@@ -66,70 +69,64 @@ export default function CommunityPlayerItem({
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <div className="flex min-w-0 items-center gap-1.5">
+        <div
+          className="flex min-w-0 items-center gap-1.5"
+          title={profile.username}
+        >
           <NamePrefixes cosmetics={profile.cosmetics.name} />
           <McUsername
             username={profile.username}
             colors={profile.cosmetics.name.colors?.colors}
-            className="truncate text-xl"
+            className="min-w-0 truncate text-lg"
           />
         </div>
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <span className="flex shrink-0 items-center gap-1">
-            <ClockIcon className="size-3.5" />
-            {playtime.value} {t(`playtime.${playtime.unit}`)}
+        <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          <span className="flex items-start gap-1.5">
+            <ClockIcon aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+            {profile.playtime === 0
+              ? tCommunity('notPlayed')
+              : `${playtime.value.toLocaleString(locale)} ${t(`playtime.${playtime.unit}`)}`}
           </span>
-          {banned ? (
-            <>
-              <span aria-hidden className="shrink-0">
-                ·
-              </span>
+        </div>
+        {(banned || hasBeenOnline || profile.role !== 'player') && (
+          <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+            {banned ? (
               <span
-                className="truncate font-medium"
+                className="font-medium"
                 style={{ color: PROFILE_STATUS_COLORS.banned }}
               >
                 {t('statuses.banned')}
               </span>
-            </>
-          ) : (
-            hasBeenOnline && (
-              <>
-                <span aria-hidden className="shrink-0">
-                  ·
-                </span>
-                {profile.isOnline ? (
-                  <span
-                    className="truncate"
-                    style={{ color: PROFILE_STATUS_COLORS.online }}
-                  >
-                    {t('statuses.online')}
-                  </span>
-                ) : (
-                  <span className="truncate" suppressHydrationWarning>
-                    {lastSeen!.unit === 'now'
-                      ? t('timeAgo.now')
-                      : t('timeAgo.ago', {
-                          value: lastSeen!.value,
-                          unit: t(`timeAgo.${lastSeen!.unit}`),
-                        })}
-                  </span>
-                )}
-              </>
-            )
-          )}
-          {profile.role !== 'player' && (
-            <span
-              className="ml-auto shrink-0 rounded-sm border px-1.5 text-xs font-medium"
-              style={{
-                color: PROFILE_ROLE_COLORS[profile.role],
-                borderColor: PROFILE_ROLE_COLORS[profile.role],
-              }}
-            >
-              {t(`roles.${profile.role}`)}
-            </span>
-          )}
-        </div>
+            ) : profile.isOnline ? (
+              <span style={{ color: PROFILE_STATUS_COLORS.online }}>
+                {t('statuses.online')}
+              </span>
+            ) : lastSeen ? (
+              <span suppressHydrationWarning>
+                {lastSeen.unit === 'now'
+                  ? t('timeAgo.now')
+                  : tCommunity('lastSeen', {
+                      time: t('timeAgo.ago', {
+                        value: lastSeen.value,
+                        unit: t(`timeAgo.${lastSeen.unit}`),
+                      }),
+                    })}
+              </span>
+            ) : null}
+            {profile.role !== 'player' && (
+              <span
+                className="shrink-0 rounded-sm border px-1.5 text-xs font-medium"
+                style={{
+                  color: PROFILE_ROLE_COLORS[profile.role],
+                  borderColor: PROFILE_ROLE_COLORS[profile.role],
+                }}
+              >
+                {t(`roles.${profile.role}`)}
+              </span>
+            )}
+          </div>
+        )}
       </div>
-    </Link>
+    </PlayerProfileLink>
   )
 }
