@@ -1,0 +1,232 @@
+import { Callout } from 'nextra/components/callout'
+import { Table } from 'nextra/components'
+
+# Голосовой чат
+
+На сервере работает голосовой чат [Plasmo Voice](https://modrinth.com/mod/plasmo-voice): игроков рядом слышно в объёме, а голос затихает с расстоянием.
+
+<Callout type='info'>
+  Без мода играть можно, но голосовой чат будет недоступен.
+  В [модпаке от keelfy](/wiki/lania-v/useful/modpack) Plasmo Voice и все клиентские аддоны уже установлены.
+</Callout>
+
+## Установка
+
+1. Установите загрузчик модов [Fabric](https://fabricmc.net/use) (или NeoForge);
+2. Скачайте [Plasmo Voice](https://modrinth.com/mod/plasmo-voice) для вашей версии игры;
+3. Поместите мод в папку `mods` в корне вашей игры;
+4. Зайдите на сервер и нажмите `V`: проверьте, что выбраны нужные микрофон и наушники.
+
+Если микрофон не определяется, посмотрите [инструкцию от разработчиков](https://plasmovoice.com/docs/client/microphone-not-available/).
+
+## Управление
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Клавиша</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td>`V`</Table.Td>
+      <Table.Td>Меню голосового чата: устройства, громкость, активации, горячие клавиши</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`Left Alt`</Table.Td>
+      <Table.Td>Говорить, пока клавиша зажата (режим Push to Talk)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`M`</Table.Td>
+      <Table.Td>
+        Выключить/включить микрофон. В модпаке на `M` также открывается карта &mdash;
+        переназначьте одну из клавиш во вкладке «Горячие клавиши» меню `V`.
+      </Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>ПКМ + колесо мыши</Table.Td>
+      <Table.Td>Зажмите ПКМ, глядя на игрока, и прокрутите колесо, чтобы изменить его громкость только для себя</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+Во вкладке «Активация» меню `V` для каждого способа общения выбирается режим: **Push to Talk** (говорить по кнопке) или **Голосовая активация** (микрофон включается, когда вы говорите). Там же меняется дальность обычного голоса.
+
+## Команды
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/vlist`</Table.Td>
+      <Table.Td>Список игроков онлайн, у которых установлен голосовой чат</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/vrc`</Table.Td>
+      <Table.Td>Переподключиться к голосовому чату, если он перестал работать</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Аддоны
+
+Аддоны добавляют новые способы общения. Большинство из них появляются как отдельные активации во вкладке «Активация» меню `V` &mdash; назначьте им клавишу или режим, как и обычному голосу.
+
+<Callout type='warning'>
+  Доступ к некоторым аддонам зависит от ваших прав. Если активации нет в меню или команда пишет об отсутствии прав &mdash; эта возможность вам недоступна.
+</Callout>
+
+### Группы
+
+[pv-addon-groups](https://modrinth.com/plugin/pv-addon-groups) &mdash; голосовые каналы для компании: участников группы слышно на любом расстоянии.
+
+1. Настройте активацию «Группы» в меню `V`;
+2. Создайте группу: `/groups create`;
+3. Пригласите друзей: `/groups invite {игрок}`;
+4. Говорите через активацию группы.
+
+При создании можно задать название и пароль, например: `/groups create name: Шахтёры password: qwerty`. Порядок параметров не важен, оба необязательны. Группа без участников удаляется автоматически, а также при перезагрузке сервера.
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups`</Table.Td>
+      <Table.Td>Список открытых групп, к которым можно присоединиться</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups create [параметры]`</Table.Td>
+      <Table.Td>Создать группу (параметры `name:` и `password:`)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups invite {игрок}`</Table.Td>
+      <Table.Td>Пригласить игрока в группу</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups info`</Table.Td>
+      <Table.Td>Информация о текущей группе</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups leave`</Table.Td>
+      <Table.Td>Покинуть группу</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups set {параметр} {значение}`</Table.Td>
+      <Table.Td>Изменить название или пароль группы (только владелец). `/groups unset {параметр}` &mdash; сбросить</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups transfer {игрок}`</Table.Td>
+      <Table.Td>Передать владение группой другому участнику</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups kick {игрок}`</Table.Td>
+      <Table.Td>Исключить игрока из группы</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups ban {игрок}`</Table.Td>
+      <Table.Td>Запретить игроку вход в группу. `/groups unban {игрок}` &mdash; снять запрет</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups delete`</Table.Td>
+      <Table.Td>Удалить группу</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+### Шёпот
+
+[pv-addon-whisper](https://modrinth.com/plugin/pv-addon-whisper) &mdash; активация «Шёпот»: вас слышно на меньшем расстоянии, чем обычно (по умолчанию &mdash; вдвое ближе). Удобно, чтобы не мешать соседям.
+
+### Приоритет
+
+[pv-addon-priority](https://modrinth.com/plugin/pv-addon-priority) &mdash; активация «Приоритет»: громкий голос, который слышно дальше обычного.
+
+### Трансляция
+
+[pv-addon-broadcast](https://modrinth.com/plugin/pv-addon-broadcast) &mdash; активация «Трансляция»: голос слышат все игроки в выбранной области. Используется для ивентов и объявлений.
+
+Область задаётся командой `/vbc`:
+
+- `/vbc range {радиус}` &mdash; игроки в радиусе;
+- `/vbc world {мир}` &mdash; весь мир;
+- `/vbc server` &mdash; весь сервер;
+- `/vbcp proxy` &mdash; все серверы сети.
+
+### Наблюдатели
+
+[pv-addon-spectator](https://modrinth.com/plugin/pv-addon-spectator) &mdash; игроков в режиме наблюдателя слышат все остальные.
+
+### Скалк
+
+[pv-addon-sculk](https://modrinth.com/plugin/pv-addon-sculk) &mdash; сенсоры скалка и вардены реагируют на голос. Громкий разговор рядом с сенсором выдаст сигнал красного камня, а в Древнем городе может привлечь вардена. Говорите тише или используйте группы.
+
+### Пластинки
+
+[pv-addon-discs](https://modrinth.com/plugin/pv-addon-discs) &mdash; запись своей музыки на пластинку. Запись проигрывается из проигрывателя, и её слышат все рядом.
+
+1. Возьмите в руку любую музыкальную пластинку;
+2. Введите `/disc burn {ссылка} [название]`;
+3. Поставьте пластинку в проигрыватель.
+
+Поддерживаются ссылки на YouTube (в том числе прямые трансляции), SoundCloud, Bandcamp, Vimeo, Twitch и прямые ссылки на аудиофайлы (`.mp3`, `.flac`, `.wav`, `.ogg`, `.m4a` и другие).
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc burn {ссылка} [название]`</Table.Td>
+      <Table.Td>Записать звук по ссылке на пластинку в руке</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc search {запрос}`</Table.Td>
+      <Table.Td>Найти трек на YouTube</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc erase`</Table.Td>
+      <Table.Td>Стереть запись и вернуть обычную пластинку</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc cancel`</Table.Td>
+      <Table.Td>Остановить звук, записанный на козий рог</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+<Callout type='important'>
+  На записи действуют [правила сервера](/wiki/rules): никакой рекламы, оскорблений и громких звуков, мешающих другим игрокам.
+</Callout>
+
+### Клиентские аддоны
+
+Эти аддоны ставятся в папку `mods` и работают только у вас. В модпаке они уже есть.
+
+- [pv-addon-soundphysics](https://modrinth.com/mod/pv-addon-soundphysics) &mdash; голос подчиняется [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered): эхо в пещерах, приглушение за стенами;
+- [pv-addon-replaymod](https://modrinth.com/mod/pv-addon-replaymod) &mdash; голосовой чат записывается в повторы [ReplayMod](https://www.replaymod.com/);
+- [pv-addon-flashback](https://modrinth.com/mod/pv-addon-flashback) &mdash; то же для повторов [Flashback](https://modrinth.com/mod/flashback).
+
+## Частые проблемы
+
+- **Меня не слышат** &mdash; проверьте в меню `V`, что выбран нужный микрофон и он не выключен клавишей `M`. В режиме голосовой активации подберите порог чувствительности;
+- **Голосовой чат отключился** &mdash; введите `/vrc`;
+- **Слишком громкий игрок** &mdash; зажмите ПКМ, глядя на него, и уменьшите громкость колесом мыши;
+- **Игрок нарушает правила в голосовом чате** &mdash; сообщите через `/report`.

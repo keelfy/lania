@@ -1,0 +1,232 @@
+import { Callout } from 'nextra/components/callout'
+import { Table } from 'nextra/components'
+
+# Voice chat
+
+The server runs the [Plasmo Voice](https://modrinth.com/mod/plasmo-voice) voice chat: you hear nearby players in 3D, and voices fade with distance.
+
+<Callout type='info'>
+  You can play without the mod, but voice chat won't be available.
+  [keelfy's modpack](/en/wiki/lania-v/useful/modpack) already includes Plasmo Voice and all client-side add-ons.
+</Callout>
+
+## Installation
+
+1. Install the [Fabric](https://fabricmc.net/use) mod loader (or NeoForge);
+2. Download [Plasmo Voice](https://modrinth.com/mod/plasmo-voice) for your game version;
+3. Put the mod into the `mods` folder in your game directory;
+4. Join the server and press `V`: check that the right microphone and headphones are selected.
+
+If your microphone isn't detected, see the [developers' guide](https://plasmovoice.com/docs/client/microphone-not-available/).
+
+## Controls
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Key</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td>`V`</Table.Td>
+      <Table.Td>Voice chat menu: devices, volume, activations, hotkeys</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`Left Alt`</Table.Td>
+      <Table.Td>Talk while the key is held (Push to Talk mode)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td>`M`</Table.Td>
+      <Table.Td>
+        Mute/unmute the microphone. In the modpack `M` also opens the map &mdash;
+        rebind one of them in the Hotkeys tab of the `V` menu.
+      </Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>RMB + mouse wheel</Table.Td>
+      <Table.Td>Hold RMB while looking at a player and scroll to change their volume for you only</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+In the Activation tab of the `V` menu you pick a mode for each way of talking: **Push to Talk** (talk on a key) or **Voice Activation** (the microphone turns on when you speak). Your normal voice distance is set there too.
+
+## Commands
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/vlist`</Table.Td>
+      <Table.Td>Online players who have voice chat installed</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/vrc`</Table.Td>
+      <Table.Td>Reconnect to voice chat if it stopped working</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+## Add-ons
+
+Add-ons add new ways to talk. Most of them show up as separate activations in the Activation tab of the `V` menu &mdash; give them a key or a mode, like your normal voice.
+
+<Callout type='warning'>
+  Access to some add-ons depends on your permissions. If an activation isn't in the menu or a command says you lack permission, that feature isn't available to you.
+</Callout>
+
+### Groups
+
+[pv-addon-groups](https://modrinth.com/plugin/pv-addon-groups) &mdash; voice channels for your friends: group members hear each other at any distance.
+
+1. Set up the Groups activation in the `V` menu;
+2. Create a group: `/groups create`;
+3. Invite friends: `/groups invite {player}`;
+4. Talk using the group activation.
+
+You can set a name and a password when creating it, for example: `/groups create name: Miners password: qwerty`. Both are optional and their order doesn't matter. A group is deleted automatically when it's empty and when the server restarts.
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups`</Table.Td>
+      <Table.Td>List open groups you can join</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups create [options]`</Table.Td>
+      <Table.Td>Create a group (`name:` and `password:` options)</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups invite {player}`</Table.Td>
+      <Table.Td>Invite a player to the group</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups info`</Table.Td>
+      <Table.Td>Info about your current group</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups leave`</Table.Td>
+      <Table.Td>Leave the group</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups set {option} {value}`</Table.Td>
+      <Table.Td>Change the group name or password (owner only). `/groups unset {option}` resets it</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups transfer {player}`</Table.Td>
+      <Table.Td>Give group ownership to another member</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups kick {player}`</Table.Td>
+      <Table.Td>Kick a player from the group</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups ban {player}`</Table.Td>
+      <Table.Td>Ban a player from the group. `/groups unban {player}` lifts the ban</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/groups delete`</Table.Td>
+      <Table.Td>Delete the group</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+### Whisper
+
+[pv-addon-whisper](https://modrinth.com/plugin/pv-addon-whisper) &mdash; the Whisper activation: you're heard at a shorter distance than usual (half by default). Handy when you don't want to bother your neighbours.
+
+### Priority
+
+[pv-addon-priority](https://modrinth.com/plugin/pv-addon-priority) &mdash; the Priority activation: a loud voice that carries farther than usual.
+
+### Broadcast
+
+[pv-addon-broadcast](https://modrinth.com/plugin/pv-addon-broadcast) &mdash; the Broadcast activation: every player in the chosen area hears you. Used for events and announcements.
+
+Set the area with `/vbc`:
+
+- `/vbc range {radius}` &mdash; players within a radius;
+- `/vbc world {world}` &mdash; the whole world;
+- `/vbc server` &mdash; the whole server;
+- `/vbcp proxy` &mdash; every server in the network.
+
+### Spectators
+
+[pv-addon-spectator](https://modrinth.com/plugin/pv-addon-spectator) &mdash; everyone can hear players in spectator mode.
+
+### Sculk
+
+[pv-addon-sculk](https://modrinth.com/plugin/pv-addon-sculk) &mdash; sculk sensors and wardens react to your voice. Talking loudly next to a sensor emits a redstone signal, and in an Ancient City it can attract the warden. Speak quietly or use groups.
+
+### Music discs
+
+[pv-addon-discs](https://modrinth.com/plugin/pv-addon-discs) &mdash; record your own music onto a disc. It plays from a jukebox, and everyone nearby hears it.
+
+1. Hold any music disc;
+2. Type `/disc burn {link} [name]`;
+3. Put the disc into a jukebox.
+
+Supported links: YouTube (including live streams), SoundCloud, Bandcamp, Vimeo, Twitch and direct links to audio files (`.mp3`, `.flac`, `.wav`, `.ogg`, `.m4a` and more).
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc burn {link} [name]`</Table.Td>
+      <Table.Td>Record audio from a link onto the disc in your hand</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc search {query}`</Table.Td>
+      <Table.Td>Search for a track on YouTube</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc erase`</Table.Td>
+      <Table.Td>Erase the recording and get a normal disc back</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc cancel`</Table.Td>
+      <Table.Td>Stop audio recorded onto a goat horn</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
+<Callout type='important'>
+  Recordings follow the [server rules](/en/wiki/rules): no advertising, insults or loud sounds that disturb other players.
+</Callout>
+
+### Client-side add-ons
+
+These add-ons go into the `mods` folder and only work for you. The modpack already has them.
+
+- [pv-addon-soundphysics](https://modrinth.com/mod/pv-addon-soundphysics) &mdash; voices follow [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered): echo in caves, muffling behind walls;
+- [pv-addon-replaymod](https://modrinth.com/mod/pv-addon-replaymod) &mdash; voice chat is recorded into [ReplayMod](https://www.replaymod.com/) replays;
+- [pv-addon-flashback](https://modrinth.com/mod/pv-addon-flashback) &mdash; the same for [Flashback](https://modrinth.com/mod/flashback) replays.
+
+## Common problems
+
+- **Nobody hears me** &mdash; check in the `V` menu that the right microphone is selected and it isn't muted with `M`. In Voice Activation mode, adjust the sensitivity threshold;
+- **Voice chat disconnected** &mdash; type `/vrc`;
+- **A player is too loud** &mdash; hold RMB while looking at them and lower their volume with the mouse wheel;
+- **A player breaks the rules in voice chat** &mdash; report them with `/report`.
