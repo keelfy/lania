@@ -41,6 +41,16 @@ type ShellAPI interface {
 	// the player from the network. It fails with codes.NotFound when the player never registered in game, and with codes.FailedPrecondition
 	// when the player logs in with a licensed account.
 	SetPassword(ctx context.Context, mcUUID uuid.UUID, username, passwordBcrypt string) error
+	// GetPlayerSkins returns the SkinsRestorer skin of every player that chose one.
+	GetPlayerSkins(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.PlayerSkin, error)
+	// SetPlayerSkin gives the player the skin of a link, or of the licensed account mojangUUID by its nickname, and
+	// waits until the server applies it. An empty variant lets the server guess the model of a link. It fails with
+	// codes.DeadlineExceeded when the server does not apply the skin in time, and with codes.InvalidArgument when
+	// the skin is neither a link nor a nickname.
+	SetPlayerSkin(ctx context.Context, mcUUID uuid.UUID, skin string, variant domain.SkinVariant, mojangUUID *uuid.UUID) (*domain.PlayerSkin, error)
+	// ClearPlayerSkin takes the SkinsRestorer skin off the player. It fails with codes.DeadlineExceeded when the
+	// server does not do it in time.
+	ClearPlayerSkin(ctx context.Context, mcUUID uuid.UUID) error
 }
 
 // ShellPool gives the ShellAPI of a season by the address of its shell service.
@@ -59,10 +69,20 @@ type shellAPI struct {
 	permission shellv1.PermissionServiceClient
 	whitelist  shellv1.WhitelistServiceClient
 	auth       shellv1.AuthServiceClient
+	skin       shellv1.SkinServiceClient
 }
 
 // shellCallTimeout keeps pages responsive when the Minecraft host is slow.
 const shellCallTimeout = 3 * time.Second
+
+// shellApplyTimeout is for calls that wait for the server to apply a change in background. Shell gives up a bit
+// earlier and answers with codes.DeadlineExceeded.
+const shellApplyTimeout = 20 * time.Second
+
+var shellCallTimeouts = map[string]time.Duration{
+	shellv1.SkinService_SetPlayerSkin_FullMethodName:   shellApplyTimeout,
+	shellv1.SkinService_ClearPlayerSkin_FullMethodName: shellApplyTimeout,
+}
 
 func NewShellPool(ctx context.Context) (ShellPool, func(), error) {
 	pool := &shellPool{
@@ -103,6 +123,7 @@ func (p *shellPool) Get(address string) (ShellAPI, error) {
 		permission: shellv1.NewPermissionServiceClient(conn),
 		whitelist:  shellv1.NewWhitelistServiceClient(conn),
 		auth:       shellv1.NewAuthServiceClient(conn),
+		skin:       shellv1.NewSkinServiceClient(conn),
 	}
 	p.conns[address] = conn
 	p.apis[address] = api
@@ -124,7 +145,11 @@ func shellLoggingInterceptor(ctx context.Context, method string, req, reply any,
 }
 
 func shellUnaryInterceptor(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	ctx, cancel := context.WithTimeout(ctx, shellCallTimeout)
+	timeout, ok := shellCallTimeouts[method]
+	if !ok {
+		timeout = shellCallTimeout
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	if token := config.GetShellToken(); token != "" {
@@ -256,4 +281,62 @@ func (api *shellAPI) SetPassword(ctx context.Context, mcUUID uuid.UUID, username
 		PasswordBcrypt:    passwordBcrypt,
 	})
 	return err
+}
+
+func (api *shellAPI) GetPlayerSkins(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.PlayerSkin, error) {
+	res, err := api.skin.GetPlayerSkins(ctx, &shellv1.GetPlayerSkinsRequest{MinecraftUuids: mcUUIDs.Strings()})
+	if err != nil {
+		return nil, err
+	}
+
+	skins := make(map[uuid.UUID]*domain.PlayerSkin, len(res.GetSkins()))
+	for key, skin := range res.GetSkins() {
+		mcUUID, err := uuid.Parse(key)
+		if err != nil {
+			return nil, err
+		}
+		if skins[mcUUID], err = parsePlayerSkin(skin); err != nil {
+			return nil, err
+		}
+	}
+	return skins, nil
+}
+
+var shellSkinVariants = map[domain.SkinVariant]shellv1.SkinVariant{
+	domain.SkinVariantClassic: shellv1.SkinVariant_SKIN_VARIANT_CLASSIC,
+	domain.SkinVariantSlim:    shellv1.SkinVariant_SKIN_VARIANT_SLIM,
+}
+
+func (api *shellAPI) SetPlayerSkin(ctx context.Context, mcUUID uuid.UUID, skin string, variant domain.SkinVariant, mojangUUID *uuid.UUID) (*domain.PlayerSkin, error) {
+	req := &shellv1.SetPlayerSkinRequest{
+		MinecraftUuid: mcUUID.String(),
+		Skin:          skin,
+		Variant:       shellSkinVariants[variant],
+	}
+	if mojangUUID != nil {
+		value := mojangUUID.String()
+		req.MojangUuid = &value
+	}
+	res, err := api.skin.SetPlayerSkin(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return parsePlayerSkin(res.GetSkin())
+}
+
+func (api *shellAPI) ClearPlayerSkin(ctx context.Context, mcUUID uuid.UUID) error {
+	_, err := api.skin.ClearPlayerSkin(ctx, &shellv1.ClearPlayerSkinRequest{MinecraftUuid: mcUUID.String()})
+	return err
+}
+
+func parsePlayerSkin(skin *shellv1.PlayerSkin) (*domain.PlayerSkin, error) {
+	res := &domain.PlayerSkin{TextureURL: skin.GetTextureUrl(), Slim: skin.GetSlim()}
+	if skin.MojangUuid != nil {
+		mojangUUID, err := uuid.Parse(skin.GetMojangUuid())
+		if err != nil {
+			return nil, err
+		}
+		res.MojangUUID = &mojangUUID
+	}
+	return res, nil
 }

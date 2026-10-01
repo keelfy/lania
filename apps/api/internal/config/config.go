@@ -35,6 +35,11 @@ func GetContextTimeoutMs() time.Duration {
 	return time.Duration(value) * time.Millisecond
 }
 
+// GetApiPublicURL returns the origin browsers and game plugins reach the API at, without a trailing slash.
+func GetApiPublicURL() string {
+	return strings.TrimSuffix(os.Getenv("API_PUBLIC_URL"), "/")
+}
+
 /** Ory */
 
 func GetOryUrl() string {

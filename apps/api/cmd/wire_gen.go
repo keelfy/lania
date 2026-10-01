@@ -64,6 +64,14 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	profileRenameHandler := handlers.NewProfileRenameHandler(profileRenameService)
 	profilePasswordService := services.NewProfilePasswordService(mainStorage, accessService, seasonService, minecraftService)
 	profilePasswordHandler := handlers.NewProfilePasswordHandler(profilePasswordService)
+	objectStorage, err := clients.NewObjectStorage(ctx)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	profileSkinService := services.NewProfileSkinService(profileService, accessService, seasonService, minecraftService, mojangService, objectStorage)
+	profileSkinHandler := handlers.NewProfileSkinHandler(profileSkinService, seasonService)
 	productHandler := handlers.NewProductHandler(productService)
 	notificationService := services.NewNotificationService(mainStorage)
 	fulfillmentService := services.NewFulfillmentService(accessService, profileCosmeticsService, profileService, notificationService)
@@ -84,12 +92,6 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	adminGrantHandler := handlers.NewAdminGrantHandler(adminGrantService)
 	adminOrderHandler := handlers.NewAdminOrderHandler(orderService)
 	adminCatalogService := services.NewAdminCatalogService(mainStorage)
-	objectStorage, err := clients.NewObjectStorage(ctx)
-	if err != nil {
-		cleanup2()
-		cleanup()
-		return nil, nil, err
-	}
 	glythPackService := services.NewGlythPackService(mainStorage, objectStorage)
 	adminCatalogHandler := handlers.NewAdminCatalogHandler(adminCatalogService, easyDonateService, glythPackService)
 	seasonHandler := handlers.NewSeasonHandler(seasonService)
@@ -105,7 +107,7 @@ func InitializeAPI(ctx context.Context) (api.LaniaAPI, func(), error) {
 	uploadHandler := handlers.NewUploadHandler(uploadService)
 	playerSyncService := services.NewPlayerSyncService(mainStorage, seasonService, minecraftService)
 	roleSyncService := services.NewRoleSyncService(mainStorage, minecraftService)
-	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, profileVerificationHandler, profileRenameHandler, profilePasswordHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminOrderHandler, adminCatalogHandler, seasonHandler, seasonWorldHandler, chunkClaimHandler, notificationHandler, accountHandler, uploadHandler, mojangService, playerSyncService, roleSyncService, profileRenameService, oryAPI)
+	laniaAPI := api.NewLaniaAPI(statusHandler, accessHandler, profileHandler, profileCosmeticsHandler, profileResyncHandler, profileVerificationHandler, profileRenameHandler, profilePasswordHandler, profileSkinHandler, productHandler, orderHandler, acquiringHandler, purchaseHandler, basketHandler, adminUserHandler, adminProfileHandler, adminGrantHandler, adminOrderHandler, adminCatalogHandler, seasonHandler, seasonWorldHandler, chunkClaimHandler, notificationHandler, accountHandler, uploadHandler, mojangService, playerSyncService, roleSyncService, profileRenameService, oryAPI)
 	return laniaAPI, func() {
 		cleanup2()
 		cleanup()

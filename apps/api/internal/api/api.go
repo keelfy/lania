@@ -30,6 +30,7 @@ type laniaAPI struct {
 	profileVerificationHandler handlers.ProfileVerificationHandler
 	profileRenameHandler       handlers.ProfileRenameHandler
 	profilePasswordHandler     handlers.ProfilePasswordHandler
+	profileSkinHandler         handlers.ProfileSkinHandler
 	productHandler             handlers.ProductHandler
 	orderHandler               handlers.OrderHandler
 	acquiringHandler           handlers.AcquiringHandler
@@ -63,6 +64,7 @@ func NewLaniaAPI(
 	profileVerificationHandler handlers.ProfileVerificationHandler,
 	profileRenameHandler handlers.ProfileRenameHandler,
 	profilePasswordHandler handlers.ProfilePasswordHandler,
+	profileSkinHandler handlers.ProfileSkinHandler,
 	productHandler handlers.ProductHandler,
 	orderHandler handlers.OrderHandler,
 	acquiringHandler handlers.AcquiringHandler,
@@ -94,6 +96,7 @@ func NewLaniaAPI(
 		profileVerificationHandler: profileVerificationHandler,
 		profileRenameHandler:       profileRenameHandler,
 		profilePasswordHandler:     profilePasswordHandler,
+		profileSkinHandler:         profileSkinHandler,
 		productHandler:             productHandler,
 		orderHandler:               orderHandler,
 		acquiringHandler:           acquiringHandler,
@@ -211,9 +214,15 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				r.Post("/verification/confirm", api.profileVerificationHandler.ConfirmVerification)
 				r.Put("/username", api.profileRenameHandler.ChangeUsername)
 				r.Put("/password", api.profilePasswordHandler.SetPassword)
+				r.Post("/skin/file", api.profileSkinHandler.UploadSkin)
+				r.Post("/skin/nickname", api.profileSkinHandler.SetSkinNickname)
+				r.Delete("/skin", api.profileSkinHandler.ClearSkin)
 			})
 		})
 	})
+
+	// downloaded by SkinsRestorer through MineSkin, the name is the start of the sha256 of the file
+	r.Get("/skins/files/{fileId}.png", api.profileSkinHandler.GetSkinFile)
 
 	// called by the proxy plugin, not by browsers
 	r.Route("/internal", func(r chi.Router) {

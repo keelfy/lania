@@ -57,6 +57,8 @@ import {
   ProfileStats,
   ProfileVerification,
   SelectCosmeticOptionReq,
+  SkinChange,
+  SkinVariant,
   UsernameCheck,
 } from '@/models/profile'
 import { ApiFetcher } from './fetcher'
@@ -553,6 +555,51 @@ export function setProfilePassword(
     method: 'PUT',
     body: JSON.stringify({ seasonId, password }),
   })
+}
+
+// Skin changes answer with the status pending when the server did not apply the change in time.
+export function uploadProfileSkin(
+  fetcher: ApiFetcher,
+  id: string,
+  seasonId: string,
+  file: File,
+  variant: SkinVariant,
+): Promise<SkinChange> {
+  const form = new FormData()
+  form.set('file', file)
+  form.set('variant', variant)
+  return fetcher<SkinChange>(
+    `/v1/profiles/${id}/skin/file`,
+    seasonParams(seasonId),
+    { method: 'POST', body: form },
+  )
+}
+
+export function setProfileSkinNickname(
+  fetcher: ApiFetcher,
+  id: string,
+  seasonId: string,
+  nickname: string,
+): Promise<SkinChange> {
+  return fetcher<SkinChange>(
+    `/v1/profiles/${id}/skin/nickname`,
+    seasonParams(seasonId),
+    { method: 'POST', body: JSON.stringify({ nickname }) },
+  )
+}
+
+export function clearProfileSkin(
+  fetcher: ApiFetcher,
+  id: string,
+  seasonId: string,
+): Promise<SkinChange> {
+  return fetcher<SkinChange>(
+    `/v1/profiles/${id}/skin`,
+    seasonParams(seasonId),
+    {
+      method: 'DELETE',
+    },
+  )
 }
 
 // The same for admins: any profile and no cooldown.

@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package lania.shell.v1;
+
+// SkinService reads and changes the skins players choose with SkinsRestorer on the proxy.
+service SkinService {
+  // GetPlayerSkins returns the skin of every player that chose one. A player missing from the response never chose
+  // a skin, so the game shows the skin of its licensed account or the default one.
+  rpc GetPlayerSkins(GetPlayerSkinsRequest) returns (GetPlayerSkinsResponse);
+  // SetPlayerSkin makes the player wear a skin, at once when the player is online. SkinsRestorer applies the skin
+  // in background, so the call waits for it. It fails with DEADLINE_EXCEEDED when the skin is not applied in time:
+  // the skin may still apply later, or SkinsRestorer may have refused it. It fails with INVALID_ARGUMENT when the
+  // skin is neither a link nor a nickname.
+  rpc SetPlayerSkin(SetPlayerSkinRequest) returns (SetPlayerSkinResponse);
+  // ClearPlayerSkin brings back the skin of the licensed account or the default one. Like SetPlayerSkin, it waits
+  // for SkinsRestorer and fails with DEADLINE_EXCEEDED when it takes too long.
+  rpc ClearPlayerSkin(ClearPlayerSkinRequest) returns (ClearPlayerSkinResponse);
+}
+
+enum SkinVariant {
+  SKIN_VARIANT_UNSPECIFIED = 0;
+  SKIN_VARIANT_CLASSIC = 1;
+  SKIN_VARIANT_SLIM = 2;
+}
+
+message PlayerSkin {
+  // https link to the skin texture on textures.minecraft.net. Empty when SkinsRestorer has not fetched the skin of
+  // a licensed account yet, then mojang_uuid names that account.
+  string texture_url = 1;
+  // slim is the model with thin arms (Alex).
+  bool slim = 2;
+  // Mojang UUID of the licensed account whose skin the player wears, when the player chose one by nickname.
+  optional string mojang_uuid = 3;
+}
+
+message GetPlayerSkinsRequest {
+  repeated string minecraft_uuids = 1;
+}
+
+message GetPlayerSkinsResponse {
+  // Keyed by Minecraft UUID. Players that never chose a skin are absent.
+  map<string, PlayerSkin> skins = 1;
+}
+
+message SetPlayerSkinRequest {
+  string minecraft_uuid = 1;
+  // A link to a skin PNG, or the nickname of a licensed account to copy the skin from.
+  string skin = 2;
+  // Model of a skin given by a link. Unspecified lets SkinsRestorer guess. Ignored for a nickname: the licensed
+  // account has its own model.
+  SkinVariant variant = 3;
+  // Mojang UUID of the licensed account a nickname belongs to. Required with a nickname: SkinsRestorer keeps the
+  // account, not the nickname, so the call waits for the player to wear the skin of this account.
+  optional string mojang_uuid = 4;
+}
+
+message SetPlayerSkinResponse {
+  PlayerSkin skin = 1;
+}
+
+message ClearPlayerSkinRequest {
+  string minecraft_uuid = 1;
+}
+
+message ClearPlayerSkinResponse {}

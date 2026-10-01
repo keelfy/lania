@@ -191,6 +191,17 @@ func (h *profileHandler) onlineStatusInSeason(ctx context.Context, seasonID uuid
 	return onlineMap
 }
 
+// skinsInSeason returns the skins players chose in game in the season. Nobody has one when the server cannot be
+// reached, so the site falls back to the licensed skins.
+func (h *profileHandler) skinsInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) map[uuid.UUID]*domain.PlayerSkin {
+	skins, err := h.minecraftService.GetPlayerSkinsInSeason(ctx, seasonID, mcUUIDs)
+	if err != nil {
+		logger.Errorf(ctx, "[SHELL] Failed to get player skins by minecraft uuid: %v", err)
+		return make(map[uuid.UUID]*domain.PlayerSkin)
+	}
+	return skins
+}
+
 // seenAt returns the date of the player in lastSeen, nil when the date is unknown.
 func seenAt(lastSeen map[uuid.UUID]time.Time, mcUUID uuid.UUID) *time.Time {
 	if seen, ok := lastSeen[mcUUID]; ok {
@@ -213,6 +224,7 @@ func (h *profileHandler) presentPublicProfiles(ctx context.Context, profiles []*
 	mcUUIDs := minecraftUUIDsOf(profiles)
 
 	onlineMap := h.onlineStatusInSeason(ctx, seasonID, mcUUIDs)
+	skins := h.skinsInSeason(ctx, seasonID, mcUUIDs)
 
 	lastSeenMap, err := h.profileService.GetProfilesLastSeenInSeason(ctx, mcUUIDs, seasonID)
 	if err != nil {
@@ -244,6 +256,7 @@ func (h *profileHandler) presentPublicProfiles(ctx context.Context, profiles []*
 		}
 
 		res[i] = presenter.PresentPublicProfile(profile, nullableMojangUUID, presenter.PresentProfileCosmetics(cosmetics[profile.ID], utils.GetLocaleFromCtx(ctx)), onlineMap[profile.MinecraftUUID], playtimes[profile.MinecraftUUID], seenAt(lastSeenMap, profile.MinecraftUUID))
+		res[i].Skin = presenter.PresentPlayerSkin(skins[profile.MinecraftUUID])
 	}
 	return res
 }
@@ -306,6 +319,7 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 		logger.Errorf(ctx, "[PROFILE COSMETICS] Failed to get profiles cosmetics: %v", err)
 		cosmetics = make(map[uuid.UUID]*domain.ProfileCosmetics)
 	}
+	skins := h.skinsInSeason(ctx, seasonID, mcUUIDs)
 	usernameChangeAvailableAt, err := h.renameService.GetUsernameChangeAvailableAt(ctx, profileIDs)
 	if err != nil {
 		logger.Errorf(ctx, "[PROFILE RENAME] Failed to get when nicknames can be changed: %v", err)
@@ -329,6 +343,7 @@ func (h *profileHandler) GetUserProfiles(w http.ResponseWriter, r *http.Request)
 		}
 
 		res[i] = presenter.PresentProfile(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), presenter.PresentProfileCosmetics(cosmetics[profile.ID], utils.GetLocaleFromCtx(ctx)))
+		res[i].Skin = presenter.PresentPlayerSkin(skins[profile.MinecraftUUID])
 		// The cooldown is only for unlicensed profiles: a licensed one follows its name on Mojang.
 		if nullableMojangUUID == nil || *nullableMojangUUID != profile.MinecraftUUID {
 			res[i].UsernameChangeAvailableAt = profileTimeMillis(usernameChangeAvailableAt, profile.ID)
@@ -399,6 +414,7 @@ func (h *profileHandler) writeProfileDetails(w http.ResponseWriter, r *http.Requ
 	}
 
 	onlineMap := h.onlineStatusInSeason(ctx, seasonID, mcUUIDs)
+	skins := h.skinsInSeason(ctx, seasonID, mcUUIDs)
 
 	lastSeenMap, err := h.profileService.GetProfilesLastSeenInSeason(ctx, mcUUIDs, seasonID)
 	if err != nil {
@@ -456,6 +472,7 @@ func (h *profileHandler) writeProfileDetails(w http.ResponseWriter, r *http.Requ
 	}
 
 	res := presenter.PresentProfileDetails(profile, nullableMojangUUID, accessStatus, domain.SeasonAccessStatuses(seasons, accesses[profile.MinecraftUUID]), seasonsPlaytimes[profile.MinecraftUUID], isOnline, isModelSlim, presenter.PresentProfileCosmetics(cosmetics[profile.ID], utils.GetLocaleFromCtx(ctx)), seenAt(lastSeenMap, profile.MinecraftUUID))
+	res.Skin = presenter.PresentPlayerSkin(skins[profile.MinecraftUUID])
 	utils.WriteHttpJsonResponse(ctx, w, res)
 }
 

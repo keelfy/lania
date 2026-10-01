@@ -17,6 +17,9 @@ type Profile struct {
 	AccessStatus  string            `json:"accessStatus"`
 	Accesses      []*SeasonAccess   `json:"accesses"`
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`
+	// Skin is the skin the player chose in game in the season, absent when the player wears the skin of the
+	// licensed account or the default one.
+	Skin *PlayerSkin `json:"skin,omitempty"`
 	// Verified: the owner proved in game that the licensed account is theirs.
 	Verified bool `json:"verified"`
 	// UsernameChangeAvailableAt is when the owner can move to an unlicensed nickname again (a change of one, or
@@ -37,6 +40,9 @@ type PublicProfile struct {
 	Playtime      int64             `json:"playtime"`
 	LastSeenAt    *int64            `json:"lastSeenAt,omitempty"`
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`
+	// Skin is the skin the player chose in game in the season, absent when the player wears the skin of the
+	// licensed account or the default one.
+	Skin *PlayerSkin `json:"skin,omitempty"`
 	// Verified: the owner proved in game that the licensed account is theirs.
 	Verified bool `json:"verified"`
 }
@@ -55,8 +61,35 @@ type ProfileDetails struct {
 	Playtime      int64             `json:"playtime"`
 	IsOnline      bool              `json:"isOnline"`
 	MojangUUID    *uuid.UUID        `json:"mojangUuid,omitempty"`
+	// Skin is the skin the player chose in game in the season, absent when the player wears the skin of the
+	// licensed account or the default one.
+	Skin *PlayerSkin `json:"skin,omitempty"`
 	// Verified: the owner proved in game that the licensed account is theirs.
 	Verified bool `json:"verified"`
+}
+
+type PlayerSkin struct {
+	// TextureURL is the https link to the skin texture. It is absent when the server has not fetched the skin of
+	// the licensed account MojangUUID yet.
+	TextureURL string `json:"textureUrl,omitempty"`
+	Slim       bool   `json:"slim"`
+	// MojangUUID is the licensed account the skin was copied from by nickname.
+	MojangUUID *uuid.UUID `json:"mojangUuid,omitempty"`
+}
+
+// SkinChangeStatus tells whether the server applied a skin change.
+type SkinChangeStatus string
+
+const (
+	SkinChangeStatusApplied SkinChangeStatus = "applied"
+	// SkinChangeStatusPending means the server did not apply the change in time. It may still apply it.
+	SkinChangeStatusPending SkinChangeStatus = "pending"
+)
+
+type SkinChange struct {
+	Status SkinChangeStatus `json:"status"`
+	// Skin is the applied skin, absent for a pending change and for a cleared skin.
+	Skin *PlayerSkin `json:"skin,omitempty"`
 }
 
 type ProfileSeasonStats struct {

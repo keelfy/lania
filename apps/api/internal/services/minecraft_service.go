@@ -18,6 +18,10 @@ var errSeasonHasNoShell = errors.New("season has no shell address")
 // ErrPlayerNotRegistered means the player never registered in game, so there is no password to replace.
 var ErrPlayerNotRegistered = errors.New("player is not registered in game")
 
+// ErrSkinPending means the server did not apply the skin in time. It may still apply it a bit later, or it may
+// have refused the skin.
+var ErrSkinPending = errors.New("skin is not applied yet")
+
 // ErrOnlineUnavailable means nobody can tell who is online in the season: it is over or it has no server.
 var ErrOnlineUnavailable = errors.New("online status is unavailable in the season")
 
@@ -56,6 +60,16 @@ type MinecraftService interface {
 	// kicks the player, so whoever is in game under the nickname has to log in again. It fails with ErrPlayerNotRegistered when the player never registered there, and with a conflict when the
 	// season has no server or the player logs in with a licensed account.
 	SetPasswordInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, passwordBcrypt string) error
+	// GetPlayerSkinsInSeason returns the skins players chose in game on the server of the season. Nobody has one
+	// when the season is over or has no server.
+	GetPlayerSkinsInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.PlayerSkin, error)
+	// SetPlayerSkinInSeason gives the player the skin of a link, or of the licensed account mojangUUID by its
+	// nickname, on the server of the season. It fails with ErrSkinPending when the server does not apply it in time,
+	// and with a conflict when the season has no server.
+	SetPlayerSkinInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, skin string, variant domain.SkinVariant, mojangUUID *uuid.UUID) (*domain.PlayerSkin, error)
+	// ClearPlayerSkinInSeason takes the chosen skin off the player on the server of the season. It fails like
+	// SetPlayerSkinInSeason.
+	ClearPlayerSkinInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
 }
 
 type minecraftService struct {
@@ -287,5 +301,61 @@ func (s *minecraftService) SetPasswordInSeason(ctx context.Context, seasonID uui
 		return utils.NewConflictError("the player logs in with a licensed account and has no password", err)
 	default:
 		return utils.NewInternalServerError("failed to set the in-game password", err)
+	}
+}
+
+func (s *minecraftService) GetPlayerSkinsInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) (map[uuid.UUID]*domain.PlayerSkin, error) {
+	if len(mcUUIDs) == 0 {
+		return make(map[uuid.UUID]*domain.PlayerSkin), nil
+	}
+	// A server of a season that is over is usually down, so it is not asked at all.
+	api, err := s.onlineShell(ctx, seasonID)
+	if errors.Is(err, ErrOnlineUnavailable) {
+		return make(map[uuid.UUID]*domain.PlayerSkin), nil
+	} else if err != nil {
+		return nil, err
+	}
+	skins, err := api.GetPlayerSkins(ctx, mcUUIDs)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get player skins", err)
+	}
+	return skins, nil
+}
+
+func (s *minecraftService) SetPlayerSkinInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile, skin string, variant domain.SkinVariant, mojangUUID *uuid.UUID) (*domain.PlayerSkin, error) {
+	api, err := s.seasonShell(ctx, seasonID)
+	if errors.Is(err, errSeasonHasNoShell) {
+		return nil, utils.NewConflictError("season has no server yet", err)
+	} else if err != nil {
+		return nil, err
+	}
+	applied, err := api.SetPlayerSkin(ctx, profile.MinecraftUUID, skin, variant, mojangUUID)
+	if err != nil {
+		return nil, skinError(err)
+	}
+	return applied, nil
+}
+
+func (s *minecraftService) ClearPlayerSkinInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error {
+	api, err := s.seasonShell(ctx, seasonID)
+	if errors.Is(err, errSeasonHasNoShell) {
+		return utils.NewConflictError("season has no server yet", err)
+	} else if err != nil {
+		return err
+	}
+	if err := api.ClearPlayerSkin(ctx, profile.MinecraftUUID); err != nil {
+		return skinError(err)
+	}
+	return nil
+}
+
+func skinError(err error) error {
+	switch status.Code(err) {
+	case codes.DeadlineExceeded:
+		return ErrSkinPending
+	case codes.InvalidArgument:
+		return utils.NewBadRequestError("the server does not accept the skin", err)
+	default:
+		return utils.NewInternalServerError("failed to change the skin", err)
 	}
 }

@@ -363,6 +363,40 @@
       "notRegistered": "You have not registered on this server yet",
       "notRegisteredHint": "Join the server and set a password with /register",
       "failed": "Could not change the password"
+    },
+    "skin": {
+      "title": "Skin",
+      "description": "The skin players see on the server and on the site. If you are in game, it changes at once.",
+      "noAccess": "The skin can be changed in a running season the profile has access to.",
+      "season": "Season: {season}.",
+      "reset": "Reset",
+      "preview": {
+        "current": "Current",
+        "draft": "Preview"
+      },
+      "tabs": {
+        "file": "File",
+        "nickname": "Licensed nickname"
+      },
+      "drop": "Drop a skin file or click to choose one",
+      "fileHint": "PNG 64×64 or 64×32, up to 64 KB",
+      "slim": "Slim arms (Alex)",
+      "upload": "Apply",
+      "saving": "Applying…",
+      "nickname": "Nickname",
+      "nicknameHint": "Copy the skin of a licensed account by its nickname.",
+      "copy": "Copy",
+      "appliesHint": "Applying takes up to 15 seconds. The skin can be changed once a minute.",
+      "applied": "Skin applied",
+      "appliedHint": "If you are on the server, you are already wearing it",
+      "pending": "Skin is being applied",
+      "pendingHint": "The server has not answered yet. Refresh the page in a minute; if the skin did not change, try another file",
+      "errors": {
+        "invalidFile": "The file does not fit",
+        "notLicensed": "No licensed account has this nickname",
+        "cooldown": "The skin was just changed, try again in a minute",
+        "failed": "Failed to change the skin"
+      }
     }
   },
   "profileResync": {

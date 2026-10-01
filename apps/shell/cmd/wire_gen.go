@@ -39,7 +39,10 @@ func InitializeServer(ctx context.Context) (*grpc.Server, func(), error) {
 	navAuthStorage := storage.NewNavAuthStorage(db)
 	authService := services.NewAuthService(navAuthStorage, console)
 	authHandler := rpc.NewAuthHandler(authService)
-	server := rpc.NewServer(playerHandler, permissionHandler, whitelistHandler, authHandler)
+	skinsRestorerStorage := storage.NewSkinsRestorerStorage(db)
+	skinService := services.NewSkinService(skinsRestorerStorage, console)
+	skinHandler := rpc.NewSkinHandler(skinService)
+	server := rpc.NewServer(playerHandler, permissionHandler, whitelistHandler, authHandler, skinHandler)
 	return server, func() {
 		cleanup()
 	}, nil

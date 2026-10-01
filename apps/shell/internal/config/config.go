@@ -73,6 +73,18 @@ func GetKickCommand() string {
 	return getEnvOrDefault("KICK_COMMAND", "kick {username} Пароль сменён на сайте, войдите с новым паролем")
 }
 
+// GetSkinSetCommand returns the console command template that gives a player a skin through SkinsRestorer.
+// {skin} is a link or a nickname, {uuid} the player and {variant} classic, slim or nothing.
+func GetSkinSetCommand() string {
+	return getEnvOrDefault("SKIN_SET_COMMAND", `skin set "{skin}" {uuid} {variant}`)
+}
+
+// GetSkinClearCommand returns the console command template that takes the SkinsRestorer skin off a player.
+// {uuid} is replaced with the player.
+func GetSkinClearCommand() string {
+	return getEnvOrDefault("SKIN_CLEAR_COMMAND", "skin clear {uuid}")
+}
+
 /** DATABASE */
 
 func GetDatabaseHost() string {
@@ -137,6 +149,12 @@ func GetNavAuthUsersTableName() string {
 
 func GetNavAuthCredentialsTableName() string {
 	return getEnvOrDefault("NAVAUTH_CREDENTIALS_TABLE_NAME", "navauth_credentials")
+}
+
+// GetSkinsRestorerTablePrefix returns database.tablePrefix of SkinsRestorer. Its tables share the database with
+// LuckPerms.
+func GetSkinsRestorerTablePrefix() string {
+	return getEnvOrDefault("SKINSRESTORER_TABLE_PREFIX", "sr_")
 }
 
 func getEnvOrDefault(key string, fallback string) string {

@@ -26,11 +26,31 @@ export type Profile = {
   mojangUuid?: string
   // The owner proved in game that the licensed account is theirs.
   verified?: boolean
+  // The skin the player chose in game in the season the profile was loaded for; missing when the player wears
+  // the skin of the licensed account or the default one.
+  skin?: PlayerSkin
   // When the owner of an unlicensed profile can change the nickname again; missing when the owner can now.
   usernameChangeAvailableAt?: number
   // How many days the owner of an unlicensed profile waits after a change; missing when there is no cooldown.
   usernameChangeCooldownDays?: number
 }
+
+// A skin chosen in game with SkinsRestorer.
+export type PlayerSkin = {
+  // Link to the texture; missing when the server has not fetched the skin of the licensed account mojangUuid yet.
+  textureUrl?: string
+  slim: boolean
+  // The licensed account the skin was copied from by nickname.
+  mojangUuid?: string
+}
+
+// "pending" means the server did not apply the change in time; it may still apply it a bit later.
+export type SkinChange = {
+  status: 'applied' | 'pending'
+  skin?: PlayerSkin
+}
+
+export type SkinVariant = 'classic' | 'slim'
 
 export type PublicProfile = Profile & {
   role: ProfileRole

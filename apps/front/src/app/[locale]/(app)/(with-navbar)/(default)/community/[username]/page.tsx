@@ -19,6 +19,7 @@ import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import PublicProfileStatusText from '../public-profile-status-text'
 import CopyUsernameButton from './copy-username-button'
+import { hasOwnFace } from '@/lib/skin'
 import ProfileSkinStage from './profile-skin-stage'
 import SeenAt from './seen-at'
 
@@ -95,8 +96,7 @@ export default async function CommunityProfilePage({
 
       <div className="grid gap-8 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
         <ProfileSkinStage
-          mojangUuid={profile.mojangUuid}
-          isSlimModel={profile.isSlimModel}
+          profile={profile}
           colors={nameColors}
           className="h-[26rem] lg:sticky lg:top-24"
         />
@@ -104,7 +104,7 @@ export default async function CommunityProfilePage({
         <div className="flex max-w-2xl flex-col gap-8">
           <header className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              {profile.mojangUuid && !profile.cosmetics.name.glythPrefix && (
+              {hasOwnFace(profile) && !profile.cosmetics.name.glythPrefix && (
                 <PlayerFace player={profile} className="size-10 rounded-sm" />
               )}
               <NamePrefixes cosmetics={profile.cosmetics.name} size={32} />

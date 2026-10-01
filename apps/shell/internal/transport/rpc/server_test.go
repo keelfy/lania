@@ -134,6 +134,7 @@ func newTestEnv(t *testing.T) *testEnv {
 		NewPermissionHandler(services.NewPermissionService(luckperms, console)),
 		NewWhitelistHandler(services.NewWhitelistService(console)),
 		NewAuthHandler(services.NewAuthService(nil, console)),
+		NewSkinHandler(services.NewSkinService(nil, console)),
 	)
 
 	listener := bufconn.Listen(1024 * 1024)

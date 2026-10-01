@@ -1,12 +1,13 @@
 'use client'
 
+import { capeUrl, skinTexture, STEVE_SKIN_URL } from '@/lib/skin'
 import { initializeViewer } from '@/lib/skin-viewer'
 import { cn } from '@/lib/utils'
+import { ProfileDetails } from '@/models/profile'
 import React from 'react'
 
 type Props = React.ComponentProps<'div'> & {
-  mojangUuid?: string
-  isSlimModel: boolean
+  profile: Pick<ProfileDetails, 'mojangUuid' | 'isSlimModel' | 'skin'>
   // The name colors of the player. They light the stage.
   colors: string[]
 }
@@ -21,32 +22,33 @@ function glow(color: string, percent: number) {
 
 // The skin of the player on a stage lit in the colors of the player name.
 export default function ProfileSkinStage({
-  mojangUuid,
-  isSlimModel,
+  profile,
   colors,
   className,
   ...props
 }: Props) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
+  const skin = skinTexture(profile)
+  const cape = capeUrl(profile)
 
   React.useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const skinUrl = mojangUuid
-      ? `https://crafatar-pub.neodium.fr/skins/${mojangUuid}`
-      : '/images/steve_skin.png'
-    const capeUrl = mojangUuid
-      ? `https://crafatar-pub.neodium.fr/capes/${mojangUuid}`
-      : ''
-    const viewer = initializeViewer(skinUrl, capeUrl, isSlimModel, 'dark', {
-      canvas,
-      width: STAGE_WIDTH,
-      height: STAGE_HEIGHT,
-      transparent: true,
-    })
+    const viewer = initializeViewer(
+      skin?.url ?? STEVE_SKIN_URL,
+      cape,
+      skin?.slim ?? false,
+      'dark',
+      {
+        canvas,
+        width: STAGE_WIDTH,
+        height: STAGE_HEIGHT,
+        transparent: true,
+      },
+    )
     return () => viewer.dispose()
-  }, [mojangUuid, isSlimModel])
+  }, [skin?.url, skin?.slim, cape])
 
   const first = colors[0] ?? 'var(--primary)'
   const last = colors[colors.length - 1] ?? first

@@ -22,6 +22,10 @@ type SetProfilePassword struct {
 	Password string    `json:"password"`
 }
 
+type SetSkinNickname struct {
+	Nickname string `json:"nickname"`
+}
+
 type ConfirmProfileVerification struct {
 	Code string `json:"code"`
 }

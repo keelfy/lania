@@ -16,6 +16,13 @@ import {
   PROFILE_ROLE_COLORS,
   PROFILE_STATUS_COLORS,
 } from '@/lib/profile-colors'
+import {
+  capeUrl,
+  hasOwnFace,
+  SKIN_CHANGED_EVENT,
+  skinTexture,
+  STEVE_SKIN_URL,
+} from '@/lib/skin'
 import { initializeViewer } from '@/lib/skin-viewer'
 import { errorToast } from '@/lib/toasts'
 import { cn } from '@/lib/utils'
@@ -55,6 +62,7 @@ export default function PlayerCard({
   const { TimeAgo } = useTimeAgo()
 
   const [profile, setProfile] = React.useState<ProfileDetails>()
+  const [reloads, setReloads] = React.useState(0)
 
   React.useEffect(() => {
     if (profileId) {
@@ -65,25 +73,30 @@ export default function PlayerCard({
           setProfile(undefined)
         })
     }
-  }, [profileId])
+  }, [profileId, reloads])
 
   React.useEffect(() => {
-    const skinUrl = profile?.mojangUuid
-      ? `https://crafatar-pub.neodium.fr/skins/${profile.mojangUuid}`
-      : '/images/steve_skin.png'
-    const capeUrl = profile?.mojangUuid
-      ? `https://crafatar-pub.neodium.fr/capes/${profile.mojangUuid}`
-      : ''
+    const reload = (event: Event) => {
+      if ((event as CustomEvent<string>).detail === profileId) {
+        setReloads((count) => count + 1)
+      }
+    }
+    window.addEventListener(SKIN_CHANGED_EVENT, reload)
+    return () => window.removeEventListener(SKIN_CHANGED_EVENT, reload)
+  }, [profileId])
 
+  const skin = skinTexture(profile)
+  const cape = capeUrl(profile)
+  React.useEffect(() => {
     if (typeof window !== 'undefined' && profile?.id !== undefined) {
       initializeViewer(
-        skinUrl,
-        capeUrl,
-        profile?.isSlimModel ?? false,
+        skin?.url ?? STEVE_SKIN_URL,
+        cape,
+        skin?.slim ?? false,
         resolvedTheme === 'dark' ? 'dark' : 'light',
       )
     }
-  }, [profile?.id, profile?.mojangUuid, profile?.isSlimModel, resolvedTheme])
+  }, [profile?.id, skin?.url, skin?.slim, cape, resolvedTheme])
 
   const status = React.useMemo(
     () => (profile?.isOnline ? 'online' : 'offline'),
@@ -119,7 +132,7 @@ export default function PlayerCard({
     >
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {profile?.mojangUuid &&
+          {hasOwnFace(profile) &&
             !(nameCosmetics ?? profile.cosmetics.name).glythPrefix && (
               <PlayerFace player={profile} className="size-5" />
             )}

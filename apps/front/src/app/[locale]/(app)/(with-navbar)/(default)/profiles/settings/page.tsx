@@ -22,6 +22,7 @@ import NameColorOptionSelect from '../name-color-option-select'
 import NameGlythOptionSelect from '../name-glyth-option-select'
 import CosmeticsSeasonSelect from './cosmetics-season-select'
 import ProfilePasswordCard from './profile-password-card'
+import ProfileSkinCard from './profile-skin-card'
 import ProfileUsernameCard from './profile-username-card'
 
 type Props = {
@@ -151,6 +152,17 @@ export default async function ProfileSettingsPage({
           </div>
         </CardContent>
       </Card>
+      <ProfileSkinCard
+        key={`skin-${selectedProfile.id}-${cosmeticSeason?.id}`}
+        profile={selectedProfile}
+        seasonId={cosmeticSeason?.id}
+        seasonName={
+          cosmeticSeasons.length > 1 ? cosmeticSeason?.name : undefined
+        }
+        canChange={passwordSeasons.some(
+          (season) => season.id === cosmeticSeason?.id,
+        )}
+      />
       <ProfileUsernameCard key={primaryProfile.id} profile={primaryProfile} />
       {!licensed && (
         <ProfilePasswordCard

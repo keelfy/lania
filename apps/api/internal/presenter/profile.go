@@ -225,3 +225,11 @@ func PresentProfileResync(resync *domain.ProfileResync) *responses.ProfileResync
 	}
 	return &responses.ProfileResync{OK: resync.OK(), Seasons: seasons}
 }
+
+// PresentPlayerSkin returns nil for a player without a chosen skin.
+func PresentPlayerSkin(skin *domain.PlayerSkin) *responses.PlayerSkin {
+	if skin == nil {
+		return nil
+	}
+	return &responses.PlayerSkin{TextureURL: skin.TextureURL, Slim: skin.Slim, MojangUUID: skin.MojangUUID}
+}
