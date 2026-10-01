@@ -23,6 +23,7 @@ type ProfileHandler interface {
 	GetUserProfileDetails(w http.ResponseWriter, r *http.Request)
 	GetProfileDetailsByUsername(w http.ResponseWriter, r *http.Request)
 	GetPublicProfiles(w http.ResponseWriter, r *http.Request)
+	GetPublicProfilesFeed(w http.ResponseWriter, r *http.Request)
 	GetTopPlaytimeProfiles(w http.ResponseWriter, r *http.Request)
 	GetProfilesStats(w http.ResponseWriter, r *http.Request)
 	GetProfileStats(w http.ResponseWriter, r *http.Request)
@@ -88,17 +89,56 @@ func (h *profileHandler) GetPublicProfiles(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	mcUUIDs := minecraftUUIDsOf(profiles)
-	seasonsPlaytimes, err := h.profileService.GetSeasonsPlaytimeByMinecraftUUIDs(ctx, mcUUIDs)
-	if err != nil {
-		logger.Errorf(ctx, "[PROFILE] Failed to sum seasons playtime by minecraft uuid: %v", err)
-		seasonsPlaytimes = make(map[uuid.UUID]int64)
-	}
-
-	res := h.presentPublicProfiles(ctx, profiles, seasonsPlaytimes, seasonID)
+	res := h.presentPublicProfilesWithPlaytime(ctx, profiles, seasonID)
 
 	paginated := presenter.PresentPaginatedResponse(pagination, count, res)
 	utils.WriteHttpJsonResponse(ctx, w, paginated)
+}
+
+const (
+	defaultProfilesPageSize = 24
+	maxProfilesPageSize     = 60
+)
+
+// GetPublicProfilesFeed returns one page of the community list. The cursor is the nextCursor of the previous page,
+// and the sort and filters must stay the same while it is used. The total is only counted without a cursor.
+func (h *profileHandler) GetPublicProfilesFeed(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	limit, err := strconv.Atoi(binders.BindOptionalQueryParamAsString(r, "limit", strconv.Itoa(defaultProfilesPageSize)))
+	if err != nil || limit < 1 {
+		limit = defaultProfilesPageSize
+	}
+	limit = min(limit, maxProfilesPageSize)
+
+	var cursor *domain.ProfileCursor
+	if token := binders.BindOptionalQueryParamAsString(r, "cursor", ""); token != "" {
+		if cursor, err = domain.DecodeProfileCursor(token); err != nil {
+			utils.HttpError(ctx, w, utils.NewBadRequestError("invalid cursor", err))
+			return
+		}
+	}
+
+	seasonID, err := seasonIDFromRequest(r, h.seasonService)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	page, err := h.profileService.GetPublicProfilesPage(ctx, binders.BindProfileFilter(r), binders.BindSort(r), seasonID, cursor, limit)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	res := &responses.ProfileFeed{
+		Content:       h.presentPublicProfilesWithPlaytime(ctx, page.Profiles, seasonID),
+		TotalElements: page.Total,
+	}
+	if page.NextCursor != nil {
+		res.NextCursor = page.NextCursor.Encode()
+	}
+	utils.WriteHttpJsonResponse(ctx, w, res)
 }
 
 func (h *profileHandler) GetTopPlaytimeProfiles(w http.ResponseWriter, r *http.Request) {
@@ -263,6 +303,16 @@ func minecraftUUIDsOf(profiles []*domain.Profile) uuid.UUIDs {
 		mcUUIDs[i] = profile.MinecraftUUID
 	}
 	return mcUUIDs
+}
+
+// presentPublicProfilesWithPlaytime presents the profiles with their playtime summed over every season.
+func (h *profileHandler) presentPublicProfilesWithPlaytime(ctx context.Context, profiles []*domain.Profile, seasonID uuid.UUID) []*responses.PublicProfile {
+	seasonsPlaytimes, err := h.profileService.GetSeasonsPlaytimeByMinecraftUUIDs(ctx, minecraftUUIDsOf(profiles))
+	if err != nil {
+		logger.Errorf(ctx, "[PROFILE] Failed to sum seasons playtime by minecraft uuid: %v", err)
+		seasonsPlaytimes = make(map[uuid.UUID]int64)
+	}
+	return h.presentPublicProfiles(ctx, profiles, seasonsPlaytimes, seasonID)
 }
 
 // presentPublicProfiles adds online status, bans, Mojang UUID and what the profiles wear in the season.

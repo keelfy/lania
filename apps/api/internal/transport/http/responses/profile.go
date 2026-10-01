@@ -244,3 +244,11 @@ type ProfileVerification struct {
 type VerificationLogin struct {
 	Code string `json:"code,omitempty"`
 }
+
+// ProfileFeed is one page of the community list. NextCursor is empty on the last page.
+// TotalElements is only counted for the first page, a request with a cursor gets 0.
+type ProfileFeed struct {
+	Content       []*PublicProfile `json:"content"`
+	NextCursor    string           `json:"nextCursor,omitempty"`
+	TotalElements int64            `json:"totalElements"`
+}

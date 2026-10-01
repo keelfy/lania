@@ -48,6 +48,7 @@ import {
 import { ChunkClaims, ChunkPos } from '@/models/claim'
 import {
   Profile,
+  ProfileFeed,
   PublicProfile,
   ProfileCosmeticOptions,
   ProfileDetails,
@@ -104,6 +105,32 @@ export function getProfiles(
   if (staffOnly) params.set('staff', 'true')
   if (seasonId) params.set('seasonId', seasonId)
   return fetcher<Paginated<PublicProfile>>('/v1/profiles', params)
+}
+
+// One page of the community list. The cursor is the nextCursor of the previous page, and the sort and
+// filters must stay the same while it is used. The total is only counted without a cursor.
+export function getProfilesFeed(
+  fetcher: ApiFetcher,
+  options: {
+    col?: string
+    dir?: string
+    search?: string
+    onlineOnly?: boolean
+    staffOnly?: boolean
+    // The season the cosmetics, the last seen date and the online status are of.
+    seasonId?: string
+    cursor?: string
+  },
+): Promise<ProfileFeed> {
+  const params = new URLSearchParams()
+  if (options.col) params.set('column', options.col)
+  if (options.dir) params.set('direction', options.dir)
+  if (options.search) params.set('search', options.search)
+  if (options.onlineOnly) params.set('online', 'true')
+  if (options.staffOnly) params.set('staff', 'true')
+  if (options.seasonId) params.set('seasonId', options.seasonId)
+  if (options.cursor) params.set('cursor', options.cursor)
+  return fetcher<ProfileFeed>('/v1/profiles/feed', params)
 }
 
 // Playtime of the returned profiles is counted in the season.

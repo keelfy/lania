@@ -24,6 +24,9 @@ type ProfileService interface {
 	// Online players and the last seen sort are those of the season. Sorting by last seen over every season
 	// needs uuid.Nil, and then there is no online filter.
 	GetPublicProfiles(ctx context.Context, filter domain.ProfileFilter, pagination *domain.Pagination, sort *domain.Sort, seasonID uuid.UUID) ([]*domain.Profile, int64, error)
+	// GetPublicProfilesPage lists up to limit profiles after the cursor, or from the start when it is nil.
+	// The total is only counted for the first page.
+	GetPublicProfilesPage(ctx context.Context, filter domain.ProfileFilter, sort *domain.Sort, seasonID uuid.UUID, cursor *domain.ProfileCursor, limit int) (*domain.ProfilePage, error)
 	// GetProfilesStats returns community totals. Online is those on the server of the season, and is left empty
 	// when the season has no running server or the server cannot be reached.
 	GetProfilesStats(ctx context.Context, seasonID uuid.UUID) (*domain.ProfilesStats, error)
@@ -113,6 +116,32 @@ func (s *profileService) GetPublicProfiles(ctx context.Context, filter domain.Pr
 		return nil, 0, utils.NewInternalServerError("failed to count public profiles", err)
 	}
 	return profiles, count, nil
+}
+
+func (s *profileService) GetPublicProfilesPage(ctx context.Context, filter domain.ProfileFilter, sort *domain.Sort, seasonID uuid.UUID, cursor *domain.ProfileCursor, limit int) (*domain.ProfilePage, error) {
+	only, err := s.filterMinecraftUUIDs(ctx, filter, seasonID)
+	if err != nil {
+		return nil, err
+	}
+
+	// One extra profile tells whether another page follows.
+	profiles, cursors, err := s.storage.Queries().FindPublicProfilesPage(ctx, filter.Search, only, sort.Column, sort.Direction, seasonID, cursor, limit+1)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get public profiles page", err)
+	}
+	page := &domain.ProfilePage{Profiles: profiles}
+	if len(profiles) > limit {
+		page.Profiles = profiles[:limit]
+		page.NextCursor = cursors[limit-1]
+	}
+
+	if cursor == nil {
+		page.Total, err = s.storage.Queries().CountPublicProfiles(ctx, filter.Search, only)
+		if err != nil {
+			return nil, utils.NewInternalServerError("failed to count public profiles", err)
+		}
+	}
+	return page, nil
 }
 
 const newProfilesDays = 7

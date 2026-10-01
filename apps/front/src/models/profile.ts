@@ -61,6 +61,13 @@ export type PublicProfile = Profile & {
   isBanned: boolean
 }
 
+// One page of the community list. The cursor is missing on the last page, and the total is only counted without a cursor.
+export type ProfileFeed = {
+  content: PublicProfile[]
+  nextCursor?: string
+  totalElements: number
+}
+
 export type ProfilesStats = {
   total: number
   // Missing when the game server cannot be reached.

@@ -68,6 +68,9 @@ type Queries interface {
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
 	// FindPublicProfiles sorts by last_seen_at in seasonID, or over every season when seasonID is uuid.Nil.
 	FindPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, seasonID uuid.UUID, size, from int) ([]*domain.Profile, error)
+	// FindPublicProfilesPage lists profiles after the cursor, or from the start when it is nil, in the same order
+	// as FindPublicProfiles. The cursors are of the returned profiles, in the same order.
+	FindPublicProfilesPage(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, seasonID uuid.UUID, cursor *domain.ProfileCursor, limit int) ([]*domain.Profile, []*domain.ProfileCursor, error)
 	CountPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs) (int64, error)
 	// CountRecentProfiles returns the number of profiles created within the last days.
 	CountRecentProfiles(ctx context.Context, days int) (int64, error)

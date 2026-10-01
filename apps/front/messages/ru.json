@@ -682,6 +682,8 @@
     "results": "{count, plural, one {# игрок} few {# игрока} many {# игроков} other {# игрока}}",
     "resetFilters": "Сбросить фильтры",
     "noResultsHint": "Попробуйте другой ник или сбросьте фильтры.",
+    "loadMore": "Показать ещё",
+    "loadMoreFailed": "Не удалось загрузить игроков. Попробуйте ещё раз.",
     "notPlayed": "Ещё не играл в этом сезоне",
     "searching": "Поиск…",
     "lastSeen": "Был {time}"

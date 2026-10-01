@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/lania-smp/backend/internal/domain"
 )
 
 func TestProfileOrderBy(t *testing.T) {
@@ -83,5 +84,38 @@ func TestProfileWhereClauseOnly(t *testing.T) {
 	where, args = profileWhereClause("", &uuid.UUIDs{})
 	if where != "WHERE 1 = 0" || len(args) != 0 {
 		t.Errorf("empty only = %q %v, want a clause matching nobody", where, args)
+	}
+}
+
+func TestProfileSortAfter(t *testing.T) {
+	id := uuid.New()
+	value := "42"
+	tests := []struct {
+		name   string
+		col    string
+		dir    string
+		cursor *domain.ProfileCursor
+		want   string
+		nargs  int
+	}{
+		{"username asc", "username", "asc", &domain.ProfileCursor{Value: &value, ID: id},
+			"(p.mc_username > ? OR (p.mc_username = ? AND p.id > ?))", 3},
+		{"playtime desc", "playtime", "desc", &domain.ProfileCursor{Value: &value, ID: id},
+			"(COALESCE(pt.total_playtime, 0) < ? OR (COALESCE(pt.total_playtime, 0) = ? AND p.id > ?))", 3},
+		{"nullable with value", "first_seen_at", "desc", &domain.ProfileCursor{Value: &value, ID: id},
+			"(p.first_seen_at IS NULL OR (p.first_seen_at < ? OR (p.first_seen_at = ? AND p.id > ?)))", 3},
+		{"nullable without value", "first_seen_at", "desc", &domain.ProfileCursor{ID: id},
+			"(p.first_seen_at IS NULL AND p.id > ?)", 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, args := profileSortOf(tt.col, uuid.Nil).after(tt.dir, tt.cursor)
+			if got != tt.want {
+				t.Errorf("after = %q, want %q", got, tt.want)
+			}
+			if len(args) != tt.nargs || args[len(args)-1] != id.String() {
+				t.Errorf("args = %v", args)
+			}
+		})
 	}
 }

@@ -1,15 +1,10 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { useCursorFeed } from '@/lib/use-cursor-feed'
 import { LoaderCircleIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import {
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-  type ReactNode,
-} from 'react'
+import type { ReactNode } from 'react'
 import { loadMoreProducts } from '../load-more-products'
 
 // The first page comes from the server render, the next ones are fetched by cursor when the end of the grid scrolls into view.
@@ -23,49 +18,13 @@ export default function ProductsFeed({
   initialCursor?: string
 }) {
   const t = useTranslations('products')
-  const [pages, setPages] = useState<{ key: string; cards: ReactNode }[]>([])
-  const [cursor, setCursor] = useState(initialCursor)
-  const [failed, setFailed] = useState(false)
-  const [pending, startTransition] = useTransition()
-  const sentinel = useRef<HTMLDivElement>(null)
-
-  const loadMore = () => {
-    if (!cursor || pending) return
-    const requested = cursor
-    startTransition(async () => {
-      try {
-        const page = await loadMoreProducts(category, requested)
-        setPages((current) => [
-          ...current,
-          { key: requested, cards: page.cards },
-        ])
-        setCursor(page.nextCursor)
-        setFailed(false)
-      } catch (error) {
-        console.error(error)
-        setFailed(true)
-      }
-    })
-  }
-  const latestLoadMore = useRef(loadMore)
-  useEffect(() => {
-    latestLoadMore.current = loadMore
-  })
-
-  // A new observer reports the current state right away, so a sentinel that is still in view after a page loaded triggers the next one.
-  useEffect(() => {
-    const node = sentinel.current
-    if (!node || !cursor || pending || failed) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting))
-          latestLoadMore.current()
-      },
-      { rootMargin: '600px 0px' },
-    )
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [cursor, pending, failed])
+  const { pages, cursor, failed, pending, sentinel, loadMore } = useCursorFeed(
+    initialCursor,
+    async (requested) => {
+      const page = await loadMoreProducts(category, requested)
+      return { items: page.cards, nextCursor: page.nextCursor }
+    },
+  )
 
   return (
     <>
@@ -73,7 +32,7 @@ export default function ProductsFeed({
         {initialCards}
         {pages.map((page) => (
           <div key={page.key} className="contents">
-            {page.cards}
+            {page.items}
           </div>
         ))}
       </div>

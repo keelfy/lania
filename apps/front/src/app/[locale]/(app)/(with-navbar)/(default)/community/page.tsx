@@ -1,14 +1,6 @@
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination'
 import TopPlayers from '@/components/top-players'
-import { getProfiles, getSeasons } from '@/lib/api-endpoints'
+import { getProfilesFeed, getSeasons } from '@/lib/api-endpoints'
+import { ProfileFeed } from '@/models/profile'
 import { pickSeason } from '@/lib/seasons'
 import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
@@ -39,94 +31,7 @@ type Props = {
     staff?: string
     // The season the page is shown for, the primary one when missing.
     season?: string
-    page?: string
   }>
-}
-
-function GetPaginationItems({
-  page,
-  totalPages,
-  locale,
-  sort,
-  search,
-  online,
-  staff,
-  season,
-}: {
-  page: number
-  totalPages: number
-  locale: string
-  sort: string
-  search: string
-  online: boolean
-  staff: boolean
-  season?: string
-}) {
-  const items = []
-  const hrefFor = (target: number) =>
-    communityHref({
-      locale,
-      sort,
-      search,
-      online,
-      staff,
-      season,
-      page: target,
-    })
-
-  if (page > 0) {
-    items.push(
-      <PaginationItem key="previous">
-        <PaginationPrevious href={hrefFor(page - 1)} />
-      </PaginationItem>,
-    )
-
-    if (page > 2) {
-      items.push(
-        <PaginationItem key="previous-ellipsis">
-          <PaginationEllipsis />
-        </PaginationItem>,
-      )
-    }
-
-    items.push(
-      <PaginationItem key="previous-page">
-        <PaginationLink href={hrefFor(page - 1)}>{page}</PaginationLink>
-      </PaginationItem>,
-    )
-  }
-
-  items.push(
-    <PaginationItem key="current-page">
-      <PaginationLink href={hrefFor(page)} isActive>
-        {page + 1}
-      </PaginationLink>
-    </PaginationItem>,
-  )
-
-  if (page < totalPages - 1) {
-    items.push(
-      <PaginationItem key="next-page">
-        <PaginationLink href={hrefFor(page + 1)}>{page + 2}</PaginationLink>
-      </PaginationItem>,
-    )
-
-    if (page < totalPages - 2) {
-      items.push(
-        <PaginationItem key="next-ellipsis">
-          <PaginationEllipsis />
-        </PaginationItem>,
-      )
-    }
-
-    items.push(
-      <PaginationItem key="next">
-        <PaginationNext href={hrefFor(page + 1)} />
-      </PaginationItem>,
-    )
-  }
-
-  return <>{items}</>
 }
 
 export default async function CommunityPage({ params, searchParams }: Props) {
@@ -137,7 +42,6 @@ export default async function CommunityPage({ params, searchParams }: Props) {
     online: onlineParam,
     staff: staffParam,
     season: seasonParam,
-    page: pageParam,
   } = await searchParams
   const t = await getTranslations({ locale, namespace: 'community' })
   const sort = sortParam ?? DEFAULT_COMMUNITY_SORT
@@ -153,25 +57,21 @@ export default async function CommunityPage({ params, searchParams }: Props) {
   // Nobody is known to be online in a season without a running server.
   const onlineAvailable = contextSeason?.onlineAvailable ?? true
   const online = onlineParam === 'true' && onlineAvailable
-  const page = Math.max(0, (parseInt(pageParam ?? '') || 1) - 1)
   const [col, dir] = sort.split('.')
-  // The online and staff filters only affect the player list below. Searching and
-  // pagination still hide the summary blocks so they do not get in the way.
-  const showSummary = page === 0 && !search
+  // The online and staff filters only affect the player list below. Searching
+  // still hides the summary blocks so they do not get in the way.
+  const showSummary = !search
 
-  const paginatedProfiles = await getProfiles(
-    serverApiFetcher,
+  const firstPage: ProfileFeed = await getProfilesFeed(serverApiFetcher, {
     col,
     dir,
-    page,
     search,
-    undefined,
-    online,
-    staff,
-    contextSeason?.id,
-  ).catch((err) => {
+    onlineOnly: online,
+    staffOnly: staff,
+    seasonId: contextSeason?.id,
+  }).catch((err) => {
     console.error(err)
-    return { content: [], page: 0, size: 0, totalPages: 0, totalElements: 0 }
+    return { content: [], totalElements: 0 }
   })
   return (
     <div className="flex flex-col gap-6">
@@ -228,7 +128,7 @@ export default async function CommunityPage({ params, searchParams }: Props) {
             {t('players')}
           </h2>
           <p className="text-muted-foreground text-sm" role="status">
-            {t('results', { count: paginatedProfiles.totalElements })}
+            {t('results', { count: firstPage.totalElements })}
           </p>
         </div>
         <div className="bg-card flex flex-wrap items-center gap-3 rounded-xl border p-3">
@@ -267,9 +167,19 @@ export default async function CommunityPage({ params, searchParams }: Props) {
             </Link>
           )}
         </div>
-        {paginatedProfiles.content.length > 0 ? (
+        {firstPage.content.length > 0 ? (
           <CommunityPlayerList
-            profiles={paginatedProfiles.content}
+            // A new list starts from the first page again.
+            key={[sort, search, online, staff, contextSeason?.id].join(':')}
+            profiles={firstPage.content}
+            nextCursor={firstPage.nextCursor}
+            query={{
+              sort,
+              search,
+              online,
+              staff,
+              seasonId: contextSeason?.id,
+            }}
             locale={locale}
             season={season}
           />
@@ -291,22 +201,6 @@ export default async function CommunityPage({ params, searchParams }: Props) {
           </div>
         )}
       </section>
-      {paginatedProfiles.totalPages > 1 && (
-        <Pagination>
-          <PaginationContent>
-            <GetPaginationItems
-              page={page}
-              totalPages={paginatedProfiles.totalPages}
-              locale={locale}
-              sort={sort}
-              search={search}
-              online={online}
-              staff={staff}
-              season={season}
-            />
-          </PaginationContent>
-        </Pagination>
-      )}
     </div>
   )
 }

@@ -683,6 +683,8 @@
     "results": "{count, plural, one {# player} other {# players}}",
     "resetFilters": "Reset filters",
     "noResultsHint": "Try another username or reset the filters.",
+    "loadMore": "Show more",
+    "loadMoreFailed": "Could not load more players. Try again.",
     "notPlayed": "Has not played this season yet",
     "searching": "Searching…",
     "lastSeen": "Last seen {time}"

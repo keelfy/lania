@@ -124,8 +124,7 @@ func (q *queries) CountRecentProfiles(ctx context.Context, days int) (int64, err
 	return count, err
 }
 
-const findPublicProfiles = `
-SELECT 
+const publicProfileColumns = `
 	p.id,
 	p.mc_uuid,
 	p.mc_username,
@@ -140,11 +139,26 @@ SELECT
 	p.legacy_mc_uuid,
 	p.premium_conflict,
 	IF(p.verified_mc_uuid <=> p.mc_uuid, p.verified_at, NULL)
+`
+
+const findPublicProfiles = `
+SELECT ` + publicProfileColumns + `
 FROM profiles p
 %s
 %s
 ORDER BY %s
 LIMIT ? OFFSET ?
+`
+
+// The last column is the value the list is sorted by, as text. It goes into the cursor of the next page.
+const findPublicProfilesPage = `
+SELECT ` + publicProfileColumns + `,
+	CAST(%s AS CHAR)
+FROM profiles p
+%s
+%s
+ORDER BY %s
+LIMIT ?
 `
 
 // Playtime is summed over all seasons. The join is only added when the list is sorted by playtime.
@@ -199,26 +213,67 @@ const profileSeasonLastSeenJoin = `
 LEFT JOIN profile_season_stats lspt ON lspt.mc_uuid = p.mc_uuid AND lspt.season_id = ?
 `
 
-// profileOrderBy returns the join needed by the sort column, the arguments of that join and the ORDER BY expression.
-// Last seen is sorted in seasonID, and by the latest date over every season when seasonID is uuid.Nil.
-// Profiles without a value are always listed last, and id keeps the order stable between pages.
-func profileOrderBy(sortCol, direction string, seasonID uuid.UUID) (join string, joinArgs []any, orderBy string) {
-	dir := getProfileSortDirection(direction)
+// profileSort is what a list of profiles is sorted by.
+type profileSort struct {
+	join     string
+	joinArgs []any
+	// key is the expression of the sorted value.
+	key string
+	// nullable keys are listed last, whatever the direction is.
+	nullable bool
+}
+
+// profileSortOf returns the sort of the column. Last seen is sorted in seasonID, and by the latest date over
+// every season when seasonID is uuid.Nil.
+func profileSortOf(sortCol string, seasonID uuid.UUID) profileSort {
 	switch sortCol {
 	case "username":
-		return "", nil, fmt.Sprintf("p.mc_username %s, p.id", dir)
+		return profileSort{key: "p.mc_username"}
 	case "first_seen_at":
-		return "", nil, fmt.Sprintf("p.first_seen_at IS NULL, p.first_seen_at %s, p.id", dir)
+		return profileSort{key: "p.first_seen_at", nullable: true}
 	case "last_seen_at":
 		if seasonID == uuid.Nil {
-			return "", nil, fmt.Sprintf("p.last_seen_at IS NULL, p.last_seen_at %s, p.id", dir)
+			return profileSort{key: "p.last_seen_at", nullable: true}
 		}
-		return profileSeasonLastSeenJoin, []any{seasonID}, fmt.Sprintf("lspt.last_seen_at IS NULL, lspt.last_seen_at %s, p.id", dir)
+		return profileSort{join: profileSeasonLastSeenJoin, joinArgs: []any{seasonID}, key: "lspt.last_seen_at", nullable: true}
 	case "playtime":
-		return profilePlaytimeJoin, nil, fmt.Sprintf("COALESCE(pt.total_playtime, 0) %s, p.id", dir)
+		return profileSort{join: profilePlaytimeJoin, key: "COALESCE(pt.total_playtime, 0)"}
 	default:
-		return "", nil, fmt.Sprintf("p.created_at %s, p.id", dir)
+		return profileSort{key: "p.created_at"}
 	}
+}
+
+// orderBy lists profiles without a value last, and id keeps the order stable between pages.
+func (s profileSort) orderBy(direction string) string {
+	dir := getProfileSortDirection(direction)
+	if s.nullable {
+		return fmt.Sprintf("%s IS NULL, %s %s, p.id", s.key, s.key, dir)
+	}
+	return fmt.Sprintf("%s %s, p.id", s.key, dir)
+}
+
+// after returns the condition that keeps the profiles listed after the cursor, and its arguments.
+// It is spelled out instead of a row comparison, because id is ascending in every direction.
+func (s profileSort) after(direction string, cursor *domain.ProfileCursor) (string, []any) {
+	if cursor.Value == nil {
+		// Only the profiles without a value are left, and they are ordered by id.
+		return fmt.Sprintf("(%s IS NULL AND p.id > ?)", s.key), []any{cursor.ID.String()}
+	}
+	cmp := ">"
+	if getProfileSortDirection(direction) == "DESC" {
+		cmp = "<"
+	}
+	condition := fmt.Sprintf("(%[1]s %[2]s ? OR (%[1]s = ? AND p.id > ?))", s.key, cmp)
+	if s.nullable {
+		condition = fmt.Sprintf("(%s IS NULL OR %s)", s.key, condition)
+	}
+	return condition, []any{*cursor.Value, *cursor.Value, cursor.ID.String()}
+}
+
+// profileOrderBy returns the join needed by the sort column, the arguments of that join and the ORDER BY expression.
+func profileOrderBy(sortCol, direction string, seasonID uuid.UUID) (join string, joinArgs []any, orderBy string) {
+	sort := profileSortOf(sortCol, seasonID)
+	return sort.join, sort.joinArgs, sort.orderBy(direction)
 }
 
 func (q *queries) FindPublicProfiles(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, seasonID uuid.UUID, size, from int) ([]*domain.Profile, error) {
@@ -243,6 +298,48 @@ func (q *queries) FindPublicProfiles(ctx context.Context, search string, only *u
 		profiles = append(profiles, profile)
 	}
 	return profiles, rows.Err()
+}
+
+// FindPublicProfilesPage returns up to limit profiles listed after the cursor, or from the start when it is nil.
+// The cursors are of the returned profiles, in the same order.
+func (q *queries) FindPublicProfilesPage(ctx context.Context, search string, only *uuid.UUIDs, sortCol, direction string, seasonID uuid.UUID, cursor *domain.ProfileCursor, limit int) ([]*domain.Profile, []*domain.ProfileCursor, error) {
+	sort := profileSortOf(sortCol, seasonID)
+	where, whereArgs := profileWhereClause(search, only)
+	if cursor != nil {
+		after, afterArgs := sort.after(direction, cursor)
+		if where == "" {
+			where = "WHERE " + after
+		} else {
+			where += " AND " + after
+		}
+		whereArgs = append(whereArgs, afterArgs...)
+	}
+	query := fmt.Sprintf(findPublicProfilesPage, sort.key, sort.join, where, sort.orderBy(direction))
+	// The join comes before the WHERE clause in the query.
+	args := append(sort.joinArgs, whereArgs...)
+	args = append(args, limit)
+	rows, err := q.x.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	profiles := make([]*domain.Profile, 0, limit)
+	cursors := make([]*domain.ProfileCursor, 0, limit)
+	for rows.Next() {
+		var value stdsql.NullString
+		profile, err := scanProfileRows(rows, &value)
+		if err != nil {
+			return nil, nil, err
+		}
+		next := &domain.ProfileCursor{ID: profile.ID}
+		if value.Valid {
+			next.Value = &value.String
+		}
+		profiles = append(profiles, profile)
+		cursors = append(cursors, next)
+	}
+	return profiles, cursors, rows.Err()
 }
 
 const findTopProfilePlaytimes = `
