@@ -92,22 +92,27 @@ export default async function ProfileSeasonStats({
   )
 
   const total = playtimeText(stats?.totalPlaytime ?? 0)
+  const longestPlaytime =
+    stats?.seasons.reduce(
+      (longest, season) => Math.max(longest, season.playtime),
+      0,
+    ) ?? 0
   const first = colors[0] ?? 'var(--primary)'
   const last = colors[colors.length - 1] ?? first
   const accent = `linear-gradient(to bottom, ${colors.length > 1 ? colors.join(', ') : `${first}, ${first}`})`
 
+  const barAccent = `linear-gradient(to right, ${colors.length > 1 ? colors.join(', ') : `${first}, ${first}`})`
+
   const renderSeason = (season: SeasonStats) => {
     const playtime = playtimeText(season.playtime)
+    const ratio = longestPlaytime > 0 ? season.playtime / longestPlaytime : 0
     const running = season.isActive && season.endDate === undefined
     const hasCounters = season.deaths > 0 || season.mobKills > 0
 
     return (
       <li
         key={season.seasonId}
-        className={cn(
-          'relative flex flex-col gap-2 rounded-lg px-3 py-4',
-          running && 'pl-4',
-        )}
+        className="relative flex flex-col gap-2 rounded-lg px-4 py-4"
         style={
           running
             ? {
@@ -155,6 +160,20 @@ export default async function ProfileSeasonStats({
             </span>
           </span>
         </div>
+        {longestPlaytime > 0 && (
+          <div
+            aria-hidden
+            className="bg-muted h-1 overflow-hidden rounded-full"
+          >
+            <div
+              className="h-full w-full rounded-full opacity-75"
+              style={{
+                background: barAccent,
+                clipPath: `inset(0 ${(1 - ratio) * 100}% 0 0 round 999px)`,
+              }}
+            />
+          </div>
+        )}
         {hasCounters && (
           <p className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <span className="flex items-center gap-1.5">
@@ -198,6 +217,11 @@ export default async function ProfileSeasonStats({
         <p className="text-muted-foreground py-4 text-sm">{t('empty')}</p>
       ) : (
         <div>
+          {longestPlaytime > 0 && (
+            <p className="text-muted-foreground mb-2 text-sm">
+              {t('comparisonHint')}
+            </p>
+          )}
           <ol className="divide-y">
             {stats.seasons.slice(0, 3).map(renderSeason)}
           </ol>

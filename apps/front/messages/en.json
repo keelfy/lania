@@ -657,7 +657,8 @@
         "loadError": "Could not load the statistics",
         "summary": "<n>{value}</n> {unit} across {count, plural, one {# season} other {# seasons}}",
         "showAll": "All seasons · {count}",
-        "showLess": "Show fewer seasons"
+        "showLess": "Show fewer seasons",
+        "comparisonHint": "Bar length compares playtime with the player's most-played season."
       }
     },
     "sort": {

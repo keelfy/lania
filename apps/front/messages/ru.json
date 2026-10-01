@@ -656,7 +656,8 @@
         "loadError": "Не удалось загрузить статистику",
         "summary": "<n>{value}</n> {unit} за {count, plural, one {# сезон} few {# сезона} many {# сезонов} other {# сезона}}",
         "showAll": "Все сезоны · {count}",
-        "showLess": "Свернуть сезоны"
+        "showLess": "Свернуть сезоны",
+        "comparisonHint": "Самая длинная полоса — сезон с наибольшим временем игры."
       }
     },
     "sort": {
