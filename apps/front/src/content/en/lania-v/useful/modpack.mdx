@@ -4,10 +4,10 @@ import { Table } from 'nextra/components'
 # keelfy's modpack
 
 <Callout type='important'>
-  To install the modpack you need the [ModRinth](https://modrinth.com/app) launcher and a licensed copy of Minecraft.
+  To install the modpack you need the [Modrinth App](https://modrinth.com/app), a Modrinth account, and a licensed copy of Minecraft.
 </Callout>
 
-A modpack by the server's creator &mdash; **keelfy** &mdash; that greatly improves every part of the game, from performance to sound effects. All changes are client-side only (no new content or mechanics).
+A modpack by the server's creator &mdash; **keelfy** &mdash; that greatly improves every part of the game, from performance to sound effects. The focus is on performance, visuals, sound, and convenience. The pack also includes mods for singleplayer worlds and server mechanics, listed below.
 
 ## System requirements
 
@@ -15,110 +15,159 @@ A modpack by the server's creator &mdash; **keelfy** &mdash; that greatly improv
 
 ## Installation
 
-1. Install the [ModRinth launcher](https://modrinth.com/app);
-2. [Download the modpack for the ModRinth launcher](https://czx1jtlf2o.ufs.sh/f/0UHiIrRo6i8c7ZLxRKkBi3Sy1gbhFoGkCTlIQmcY6Eq9OZeH);
-3. Import the modpack into the ModRinth launcher;
+1. Install the [Modrinth App](https://modrinth.com/app) and sign in to your Modrinth account;
+2. Open the [modpack invitation](https://modrinth.com/share/K35KZFDC);
+3. Accept the invitation and install the modpack in the Modrinth App;
 4. Launch the game;
 5. Enable the [resource packs you want](#resource-packs) in the game settings;
 6. Adjust the rest of the settings to your liking;
 7. Read the [common key bindings](#common-key-bindings) and [recommendations](#recommendations);
 8. Have fun 🩶
 
-## Overview of changes
+### Updates
 
-- Better **performance**
-- **Sound**:
-  * Ambient sound effects;
-  * Ambience;
-  * Sound physics;
-  * Footstep sounds;
-  * Interface sounds;
-  * New block sounds;
-- **Graphics**:
-  * Shaders: [Complementary Shaders](https://modrinth.com/shader/complementary-reimagined), [Photon](https://modrinth.com/shader/photon-shader), [Bliss](https://modrinth.com/shader/bliss-shader);
-  * Chunk LODs ([Distant Horizons](https://modrinth.com/mod/distanthorizons)),
-  * New clouds;
-  * Better particles;
-  * New ambient effects;
-  * Better rendering of player skins, capes and animations;
-- **Tools**:
-  * Recipe viewer ([REI](https://modrinth.com/mod/rei));
-  * Shows where mobs can spawn ([Lighty](https://modrinth.com/mod/lighty));
-  * Shows food saturation ([AppleSkin](https://modrinth.com/mod/appleskin));
-  * Map ([Xaero's World Map](https://modrinth.com/mod/xaeros-world-map));
-- **Building**:
-  * [Litematica](https://modrinth.com/mod/litematica);
-  * [Axiom](https://modrinth.com/mod/axiom);
-  * Randomizes the block in your hand from the hotbar ([HotbarShuffler](https://modrinth.com/mod/hotbarshuffler));
-  * [WorldEdit](https://modrinth.com/mod/worldedit);
-- **Controls**:
-  * Interact with blocks through signs and item frames;
-  * Sort items in containers ([ClientSort](https://modrinth.com/mod/clientsort));
-  * Mouse bindings in chests;
-  * Zoom ([Zoomify](https://modrinth.com/mod/zoomify));
-  * Easier text selection in interfaces;
-  * Cinematic elytra controls ([Do a Barrel Roll](https://modrinth.com/mod/do-a-barrel-roll));
-  * Drop the whole stack from your hand with `CTRL+Q`;
-- **Interface**:
-  * Dark theme (optional &mdash; [UniqueDark](https://modrinth.com/resourcepack/unique-dark));
-  * Player heads next to nicknames in chat;
-  * Smooth scrolling in interfaces;
-  * Better statistics menu;
-  * Blurred background behind interfaces;
-  * Tool durability in the interface;
-  * Shulker box contents shown when you hover over them in the inventory;
-  * Better third-person view;
-- **Textures**:
-  * Fixes from VanillaTweaks;
-  * Different textures for each kind of enchanted book;
-- **Social**:
-  * Voice chat ([PlasmoVoice](/en/wiki/lania-v/useful/voice) with all client-side add-ons);
-  * Emotes ([Emotecraft](https://modrinth.com/mod/emotecraft));
-  * Toggle armor visibility on characters;
-  * Harvesting with right-click;
-  * 7TV emotes in chat ([Streamotes](../gameplay/streamotes));
-  * Open double doors with one right-click;
-- **Other**:
-  * Borderless window mode;
-  * Russian translation of the [new advancements](../gameplay/bacap);
-  * Game status in Discord;
+When keelfy publishes a modpack update, Modrinth offers it when you launch the game. Review the changes and accept the update in the app.
+
+## Mods
+
+The main mods are grouped by purpose. The full list, including libraries and dependencies, is available in the in-game mod menu.
+
+### Performance and stability
+
+- [Sodium](https://modrinth.com/mod/sodium), [ImmediatelyFast](https://modrinth.com/mod/immediatelyfast) — faster rendering;
+- [Lithium](https://modrinth.com/mod/lithium), [Concurrent Chunk Management Engine](https://modrinth.com/mod/c2me-fabric), [ScalableLux](https://modrinth.com/mod/scalablelux) — game logic, chunk, and lighting optimizations;
+- [FerriteCore](https://modrinth.com/mod/ferrite-core) — reduced memory usage;
+- [EntityCulling](https://modrinth.com/mod/entityculling), [More Culling](https://modrinth.com/mod/moreculling) — skipping hidden objects and faces when rendering;
+- [AsyncParticles](https://modrinth.com/mod/asyncparticles) — optimized particle processing;
+- [Dynamic FPS](https://modrinth.com/mod/dynamic-fps) — reduced resource usage when the game is idle;
+- [Krypton](https://modrinth.com/mod/krypton), [Packet Fixer](https://modrinth.com/mod/packet-fixer), [Server Pinger Fixer](https://modrinth.com/mod/serverpingerfixer) — network optimizations and fixes;
+- [Debugify](https://modrinth.com/mod/debugify), [Not Enough Crashes](https://modrinth.com/mod/notenoughcrashes) — bug fixes and easier recovery from crashes;
+
+### Sound
+
+- [AmbientSounds](https://modrinth.com/mod/ambientsounds), [AmbientEnvironment](https://modrinth.com/mod/ambient-environment) — ambient sounds and atmosphere;
+- [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered) — sound attenuation, reverberation, and absorption through blocks;
+- [Presence Footsteps](https://modrinth.com/mod/presence-footsteps) — footsteps on different surfaces;
+- [Sounds](https://modrinth.com/mod/sound) — new interface, item, and block sounds;
+- [CoolRain](https://modrinth.com/mod/coolrain) — ambient rain sounds;
+- [Extreme Sound Muffler](https://modrinth.com/mod/extreme_sound_muffler) — selective sound muffling;
+
+### Graphics and animations
+
+- [Iris](https://modrinth.com/mod/iris), [Euphoria Patcher](https://modrinth.com/mod/euphoria-patches) — shader support and the Complementary add-on;
+- [Distant Horizons](https://modrinth.com/mod/distanthorizons) — distant terrain rendering with LODs;
+- [Visuality](https://modrinth.com/mod/visuality), [Particular Reforged](https://modrinth.com/mod/particular-reforged), [Particle Interactions](https://modrinth.com/mod/particle-interactions), [Make Bubbles Pop](https://modrinth.com/mod/make_bubbles_pop) — particles and ambient effects;
+- [Falling Leaves](https://modrinth.com/mod/fallingleaves), [Windy](https://modrinth.com/mod/windy) — falling leaves and wind particles;
+- [Head in the Clouds](https://modrinth.com/mod/head-in-the-clouds) — no rain above cloud level;
+- [Entity Model Features](https://modrinth.com/mod/entity-model-features), [Entity Texture Features](https://modrinth.com/mod/entitytexturefeatures), [Continuity](https://modrinth.com/mod/continuity) — resource-pack support for entity models, entity textures, and connected textures;
+- [3D Skin Layers](https://modrinth.com/mod/3dskinlayers), [Capes](https://modrinth.com/mod/capes) — 3D skin layers and cape support;
+- [Not Enough Animations](https://modrinth.com/mod/not-enough-animations), [Punchy](https://modrinth.com/mod/punchy-fpa) — third-person and first-person animations;
+- [Sodium Shadowy Path Blocks](https://modrinth.com/mod/sodium-shadowy-path-blocks) — lighting for non-full blocks with Sodium;
+
+### Tools and building
+
+- [Just Enough Items](https://modrinth.com/mod/jei), [Just Enough Professions (JEP)](https://modrinth.com/mod/just-enough-professions-jep) — recipe viewing and villager profession workstations;
+- [Jade](https://modrinth.com/mod/jade) — information about the block or entity you are looking at;
+- [Lighty](https://modrinth.com/mod/lighty) — a light overlay for possible mob spawn locations;
+- [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map), [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) — world map, minimap, and waypoints;
+- [Litematica](https://modrinth.com/mod/litematica) — schematics and building assistance;
+- [Axiom](https://modrinth.com/mod/axiom), [WorldEdit](https://modrinth.com/mod/worldedit), [WorldEditCUI](https://modrinth.com/mod/worldedit-cui) — world editing and WorldEdit selection visualization; server access depends on permissions;
+- [Bridging Mod](https://modrinth.com/mod/bridging-mod) — assistance with block placement when bridging;
+- **Lania Loot Marker** — JustLootIt loot-container markers on Lania and protection against accidental breaking;
+
+### Controls and inventory
+
+- [ClientSort](https://modrinth.com/mod/clientsort), [Mouse Tweaks](https://modrinth.com/mod/mouse-tweaks) — item sorting and easier mouse controls in inventories;
+- [ItemLocks](https://modrinth.com/mod/itemlocks) — slot locking to prevent accidental item loss;
+- [ClickThrough Plus](https://modrinth.com/mod/clickthrough+) — opening containers through signs and item frames;
+- [Cut Through](https://modrinth.com/mod/cut-through) — hitting mobs through tall grass;
+- [Zoomify](https://modrinth.com/mod/zoomify) — zoom;
+- [Better Selection](https://modrinth.com/mod/better-selection), [Stendhal](https://modrinth.com/mod/stendhal) — text selection, books, and signs;
+- [Do a Barrel Roll](https://modrinth.com/mod/do-a-barrel-roll) — cinematic elytra controls;
+- [Controlling](https://modrinth.com/mod/controlling) — key binding search in the controls settings;
+- [Ctrl Q](https://modrinth.com/mod/ctrl-q) — dropping a whole stack with `Ctrl+Q`;
+
+### Interface
+
+- [AppleSkin](https://modrinth.com/mod/appleskin), [Better Mount HUD](https://modrinth.com/mod/better-mount-hud), [Status Effect Bars](https://modrinth.com/mod/status-effect-bars) — food saturation, riding HUD, and effect durations;
+- [Shulker Box Tooltip](https://modrinth.com/mod/shulkerboxtooltip), [Durability Tooltip](https://modrinth.com/mod/durability-tooltip), [EnchantmentDescriptions](https://modrinth.com/mod/enchantment-descriptions) — shulker contents, item durability, and enchantment descriptions;
+- [Highlighter](https://modrinth.com/mod/item-highlighter), [Pick Up Notifier](https://modrinth.com/mod/pick-up-notifier) — new item highlighting and pickup notifications;
+- [Legendary Tooltips](https://modrinth.com/mod/legendary-tooltips), [Inventory Particles](https://modrinth.com/mod/inventory-particles) — styled tooltips and inventory particles;
+- [Better Advancements](https://modrinth.com/mod/better-advancements), [Better Statistics Screen](https://modrinth.com/mod/better-stats) — improved advancement and statistics screens;
+- [SmoothGui](https://modrinth.com/mod/smooth-gui), [Blur+](https://modrinth.com/mod/blur-plus), [Immersive Hotbar](https://modrinth.com/mod/immersive-hotbar) — GUI animations, background blur, and hotbar animations;
+- [Centered Crosshair](https://modrinth.com/mod/centered-crosshair), [Locator Heads](https://modrinth.com/mod/locator-heads) — a centered crosshair and player heads on the locator bar;
+- [Sodium Extra](https://modrinth.com/mod/sodium-extra), [Reese's Sodium Options](https://modrinth.com/mod/reeses-sodium-options) — extra graphics settings and a Sodium options menu;
+- [Dark Loading Screen](https://modrinth.com/mod/dark-loading-screen) — a dark loading screen;
+- [Mod Menu](https://modrinth.com/mod/modmenu), [Resourcify](https://modrinth.com/mod/resourcify) — a mod list and an in-game resource-pack and shader browser;
+
+### Social
+
+- [Plasmo Voice](/en/wiki/lania-v/useful/voice), [pv-addon-soundphysics](https://modrinth.com/mod/pv-addon-soundphysics) — voice chat with sound physics support;
+- [Emotecraft](https://modrinth.com/mod/emotecraft) — player emotes;
+- [Streamotes](../gameplay/streamotes) — Twitch, BTTV, FFZ, and 7TV emotes in chat;
+- [Talk Balloons](https://modrinth.com/mod/talk-balloons), [ChatAnimation](https://modrinth.com/mod/chatanimation), [Longer Chat History](https://modrinth.com/mod/longer-chat-history) — speech bubbles, chat animations, and a longer chat history;
+- [Ping Wheel](https://modrinth.com/mod/ping-wheel), [PatPat](https://modrinth.com/mod/patpat) — co-op pings and petting creatures;
+- [CraftPresence](https://modrinth.com/mod/craftpresence) — game status in Discord;
+
+### Other
+
+- [Borderless Fullscreen](https://modrinth.com/mod/borderless-fullscreen) — borderless fullscreen;
+- [Cherished Worlds](https://modrinth.com/mod/cherished-worlds), [FastQuit](https://modrinth.com/mod/fastquit), [Ksyxis](https://modrinth.com/mod/ksyxis) — favorite worlds, faster returns to the menu, and faster singleplayer world loading;
+- [spark](https://modrinth.com/mod/spark) — performance profiling;
+
+### Singleplayer and server mechanics
+
+These mods are also included. Their gameplay mechanics work in singleplayer or when installed on a server; installing the modpack on your client does not add them to Lania.
+
+- [Gardener's Dream](https://modrinth.com/mod/gardeners-dream) — plants in flower pots and decorated pots;
+- [Veinminer](https://modrinth.com/mod/veinminer), [Veinminer Enchantment](https://modrinth.com/mod/veinminer-enchantment) — vein mining and an enchantment to restrict it;
+- [Leaves Be Gone](https://modrinth.com/mod/leaves-be-gone), [Snow Under Trees](https://modrinth.com/mod/snow-under-trees-remastered), [Leaf Me Alone](https://modrinth.com/mod/leaf-me-alone) — fast leaf decay, snow under trees, and riding through leaves;
+- [Right Click Harvest](https://modrinth.com/mod/rightclickharvest), [Double Doors](https://modrinth.com/mod/double-doors) — right-click harvesting and opening double doors together;
+
+## Shaders
+
+Choose a shader pack in the graphics settings through Iris. Only one shader pack is used at a time, and shaders can be disabled entirely.
+
+- [Complementary Reimagined](https://modrinth.com/shader/complementary-reimagined) — preserves the Minecraft style;
+- [Complementary Unbound](https://modrinth.com/shader/complementary-unbound) — more pronounced visual effects;
+- [BSL](https://modrinth.com/shader/bsl-shaders) — bright lighting and rich colors;
+- [Bliss](https://modrinth.com/shader/bliss-shader) — atmospheric lighting and environment settings;
+- [Photon](https://modrinth.com/shader/photon-shader) — a semi-realistic visual style;
+- [MakeUp — Ultra Fast](https://modrinth.com/shader/makeup-ultra-fast-shaders) — adjustable quality and performance;
+- [Euphoria Patches](https://modrinth.com/mod/euphoria-patches) — an add-on for Complementary Reimagined and Unbound; patched versions of both are included.
 
 ## Resource packs
 
-<Callout type='important'>
-  You can ignore warnings that resource packs are incompatible with your game version (resource packs with a red background in the list). All of them work.
-</Callout>
+The following resource packs are included. Choose the ones you prefer in the game settings.
 
-The modpack comes with the following resource packs; enable only the ones you need:
+- [BACAP Language Pack](https://modrinth.com/resourcepack/bacap-language-pack) — translations for the additional advancements;
+- [Unique Dark — Lite](https://modrinth.com/resourcepack/unique-dark) — a dark interface theme; the pack includes the Lite variant;
+- [Vanilla Tweaks](https://vanillatweaks.net) — a collection of vanilla texture tweaks;
+- [Fresh Animations](https://modrinth.com/resourcepack/fresh-animations) — mob animations;
+- [Fresh Animations: Extensions — All Extensions](https://modrinth.com/resourcepack/fresh-animations-extensions) — Fresh Animations add-ons;
+- [Fresh Moves — With Animated Eyes](https://modrinth.com/resourcepack/tras-fresh-player) — player and eye animations;
+- [Just Expressions](https://modrinth.com/resourcepack/just-expressions) — animated player eyes;
+- [xali's Enchanted Books](https://modrinth.com/resourcepack/xalis-enchanted-books) — distinct enchanted book textures;
+- [xali's Enchanted Books - Addon](https://modrinth.com/resourcepack/xalis-enchanted-books-addon) — extra enchanted book textures;
+- [(Bee's) Fancy Crops](https://modrinth.com/resourcepack/fancy-crops) — crop visuals;
+- [Low On Fire](https://modrinth.com/resourcepack/low-on-fire) — a lower fire overlay;
+- [Better Flame Particles](https://modrinth.com/resourcepack/better-flame-particles) — animated flame particles;
+- [Door Tweaks](https://modrinth.com/resourcepack/door-tweaks) — 3D door details;
+- [RAY's 3D Rails](https://modrinth.com/resourcepack/rays-3d-rails) — 3D rail models;
+- [RAY's 3D Ladders](https://modrinth.com/resourcepack/rays-3d-ladders) — 3D ladder models;
+- [Better Boat](https://modrinth.com/resourcepack/better-boat) — boat models;
+- [Borderless Glass](https://modrinth.com/resourcepack/borderless-glass) — borderless glass;
+- [Translations for Sodium](https://modrinth.com/resourcepack/translations-for-sodium) — additional Sodium translations;
+- [Totem Da Capoeira](https://modrinth.com/resourcepack/totem-da-capoeira) — a different Totem of Undying appearance;
+- [Chat Reporting Helper](https://modrinth.com/resourcepack/chat-reporting-helper) — explanations of chat reporting;
 
-- [BACAP Language Pack](https://modrinth.com/resourcepack/bacap-language-pack) - translations of the new advancements into Russian;
-- [BACAP Better RU](https://modrinth.com/resourcepack/bacap-better-ru) - an improved Russian translation of the new advancements;
-- [UniqueDark](https://modrinth.com/resourcepack/unique-dark) - a dark theme for the whole interface;
-- `ClientSort Dark Mode` - a small dark theme add-on for the ClientSort mod;
-- [VanillaTweaks](https://vanillatweaks.net) - texture bug fixes from VanillaTweaks;
-- [Totem Da Capoeira](https://modrinth.com/mod/totem-da-capoeira) - a funny new look for the totem;
-- [FreshAnimations](https://modrinth.com/mod/fresh-animations) - better mob animations;
-- [xali's Enchanted Books](https://modrinth.com/mod/xalis-enchanted-books) - enchanted book textures that depend on the enchantment;
-- [xali's Enchanted Books Addon](https://modrinth.com/mod/xalis-enchanted-books-addon) - extra enchanted book textures;
-- [Fancy Crops](https://modrinth.com/mod/fancy-crops) - better crop textures;
-- [Low On Fire](https://modrinth.com/resourcepack/low-on-fire) - when you're on fire, the flames are shown lower on the screen;
-- [Better Flame Particles](https://modrinth.com/mod/better-flame-particles) - better fire particles;
-- [DoorTweak](https://modrinth.com/resourcepack/door-tweaks) - better-looking doors;
-- [RAY's 3D Rails](https://modrinth.com/resourcepack/rays-3d-rails) & [RAY's 3D Ladders](https://modrinth.com/resourcepack/rays-3d-ladders) - 3D models for ladders and rails;
-- [Better Boat](https://modrinth.com/resourcepack/better-boat) - better-looking boats;
-- [SodiumTranslations](https://modrinth.com/resourcepack/translations-for-sodium) - translations of the new graphics settings;
-- [BetterSnowCoverage](https://modrinth.com/mod/better-snow-coverage) - snow under blocks surrounded by snow. For example, snow under a flower with snow blocks around it;
-- [Borderless Glass](https://modrinth.com/mod/borderless-glass) - borderless glass blocks;
-- `BetterBeds` - beds look better and can connect;
+### Built-in mod resource packs
 
-**I recommend _enabling_ all resource packs except:**
+- `ClientSort Dark Mode` — dark ClientSort sorting buttons;
+- `Continuity` — connected textures and glass pane rendering fixes;
+- `Punchy` — default first-person animations.
 
-- `Totem Da Capoeira` (a matter of taste)
-- `BetterSnowCoverage` (useful for those living in snowy biomes, which is rare)
-- `Borderless Glass` (IMHO it breaks the look of many builds)
-- `High Contrast` (UniqueDark looks better)
-- `Highlight Extended` (overkill)
-- `Programmer Art` (not needed)
+Fresh Animations, Fresh Moves, and Just Expressions use EMF/ETF, which are already installed. Fresh Animations extensions require the base Fresh Animations resource pack.
 
 ## Common key bindings
 
@@ -146,14 +195,6 @@ The modpack comes with the following resource packs; enable only the ones you ne
     <Table.Tr>
       <Table.Td>`M`</Table.Td>
       <Table.Td>World map</Table.Td>
-    </Table.Tr>
-    <Table.Tr>
-      <Table.Td>`J`</Table.Td>
-      <Table.Td>
-        Toggles armor visibility on characters.
-        This only changes how you see armor. If you don't want other players to see your armor,
-        use the dedicated command from the [command list](../commands).
-      </Table.Td>
     </Table.Tr>
     <Table.Tr>
       <Table.Td>`I`</Table.Td>
@@ -200,8 +241,7 @@ If any of the folders from these steps is missing, create it by copying its name
 1. If your PC can't handle the modpack, first try disabling `Distant Horizons` (in the settings menu to the left of the field of view) and shaders.
 2. The modpack has a borderless window mode; enable it in the graphics settings by switching the `Fullscreen` option.
 3. Ores glow with the `Complementary Unbound` shaders — very handy for exploring caves.
-4. If you want the blocks you place to be randomized, check out the [HotbarShuffler](https://modrinth.com/mod/hotbarshuffler) mod included in the modpack.
-5. If your keyboard has no function keys, or you don't like the keys the debug key bindings use, you can change them in the controls settings.
+4. Use [Controlling](https://modrinth.com/mod/controlling) search in the controls settings to find and change mod key bindings.
 
 ### Arachnophobia
 

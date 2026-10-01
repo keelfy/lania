@@ -10,6 +10,8 @@ import {
   PawPrintIcon,
   PickaxeIcon,
   SmileIcon,
+  UsersIcon,
+  MapPinIcon,
 } from 'lucide-react'
 import { MetaRecord } from 'nextra'
 
@@ -20,6 +22,22 @@ const meta: MetaRecord = {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <PickaxeIcon size={14} />
         <p>Quality of life</p>
+      </div>
+    ),
+  },
+  veinminer: {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <PickaxeIcon size={14} />
+        <p>Vein mining</p>
+      </div>
+    ),
+  },
+  adorena: {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <UsersIcon size={14} />
+        <p>Character size</p>
       </div>
     ),
   },
@@ -104,7 +122,23 @@ const meta: MetaRecord = {
       </div>
     ),
   },
-  chat: { type: 'separator', title: 'Chat and emotes' },
+  chat: { type: 'separator', title: 'Social' },
+  patpat: {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <PawPrintIcon size={14} />
+        <p>Petting</p>
+      </div>
+    ),
+  },
+  'ping-wheel': {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <MapPinIcon size={14} />
+        <p>Pings</p>
+      </div>
+    ),
+  },
   streamotes: {
     title: (
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>

@@ -1,5 +1,6 @@
 import {
   ClockIcon,
+  HistoryIcon,
   MicIcon,
   PackageIcon,
   ShirtIcon,
@@ -34,6 +35,14 @@ const meta: MetaRecord = {
     ),
   },
   server: { type: 'separator', title: 'Server information' },
+  coreprotect: {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <HistoryIcon size={14} />
+        <p>Block history</p>
+      </div>
+    ),
+  },
   restarts: {
     title: (
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>

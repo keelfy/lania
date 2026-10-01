@@ -4,10 +4,10 @@ import { Table } from 'nextra/components'
 # Модпак от keelfy
 
 <Callout type='important'>
-  Для установки модпака вам потребуется лаунчер [ModRinth](https://modrinth.com/app) и лицензия Minecraft.
+  Для установки модпака вам потребуется приложение [Modrinth](https://modrinth.com/app), аккаунт Modrinth и лицензия Minecraft.
 </Callout>
 
-Модпак от создателя сервера &mdash; **keelfy**, сильно улучшающий все аспекты игры от оптимизации до звуковых эффектов. Все изменения исключительно клиентские (без нового контента или механик).
+Модпак от создателя сервера &mdash; **keelfy**, сильно улучшающий все аспекты игры от оптимизации до звуковых эффектов. Основной упор — на оптимизацию, графику, звук и удобство игры. В сборке также есть моды для одиночных миров и серверных механик, перечисленные ниже.
 
 ## Системные требования
 
@@ -15,110 +15,159 @@ import { Table } from 'nextra/components'
 
 ## Установка
 
-1. Установите [лаунчер ModRinth](https://modrinth.com/app);
-2. [Скачайте модпак для лаунчера ModRinth](https://czx1jtlf2o.ufs.sh/f/0UHiIrRo6i8c7ZLxRKkBi3Sy1gbhFoGkCTlIQmcY6Eq9OZeH);
-3. Импортируйте модпак в лаунчер ModRinth;
+1. Установите [приложение Modrinth](https://modrinth.com/app) и войдите в аккаунт Modrinth;
+2. Откройте [приглашение в модпак](https://modrinth.com/share/K35KZFDC);
+3. Примите приглашение и установите модпак в приложении Modrinth;
 4. Запустите игру;
 5. Включите [желаемые ресурс-паки](#ресурс-паки) в настройках игры;
 6. Настройте остальные настройки под себя;
 7. Прочитайте [часто используемые сочетания клавиш](#часто-используемые-сочетания-клавиш) и [рекомендации](#рекомендации);
 8. Приятной игры 🩶
 
-## Обобщенный список нововведений
+### Обновления
 
-- Улучшенная **оптимизация**
-- **Звук**: 
-  * Звуковые эффекты окружения;
-  * Эмбиент;
-  * Физика звуков;
-  * Звуки шагов;
-  * Звуки взаимодействия с интерфейсом;
-  * Новые звуки блоков;
-- **Графика**: 
-  * Шейдеры: [Complementary Shaders](https://modrinth.com/shader/complementary-reimagined), [Photon](https://modrinth.com/shader/photon-shader), [Bliss](https://modrinth.com/shader/bliss-shader);
-  * LOD-ы чанков ([Distant Horizons](https://modrinth.com/mod/distanthorizons)),
-  * Новые облака;
-  * Улучшение частиц;
-  * Новые эффекты окружения;
-  * Улучшенная отрисовка скинов, плащей и анимаций игроков;
-- **Инструментарий**:
-  * Просмотр рецептов ([REI](https://modrinth.com/mod/rei));
-  * Отображение возможных мест спавна мобов ([Lighty](https://modrinth.com/mod/lighty));
-  * Отображение насыщения едой ([AppleSkin](https://modrinth.com/mod/appleskin));
-  * Карта ([Xaero's World Map](https://modrinth.com/mod/xaeros-world-map));
-- **Строительство**: 
-  * [Litematica](https://modrinth.com/mod/litematica);
-  * [Axiom](https://modrinth.com/mod/axiom);
-  * Рандомизация блока в руке из хотбара ([HotbarShuffler](https://modrinth.com/mod/hotbarshuffler));
-  * [WorldEdit](https://modrinth.com/mod/worldedit);
-- **Управление**: 
-  * Взаимодействие с блоками сквозь таблички и рамки;
-  * Сортировка предметов в хранилищах ([ClientSort](https://modrinth.com/mod/clientsort));
-  * Бинды для мыши в сундуках;
-  * Приближение ([Zoomify](https://modrinth.com/mod/zoomify));
-  * Упрощенное выделение текста в интерфейсах;
-  * Кинематографичное управление элитрой ([Do a Barrel Roll](https://modrinth.com/mod/do-a-barrel-roll));
-  * Выкидывание всего стака из руки на `CTRL+Q`;
-- **Интерфейс**:
-  * Темная тема (опционально &mdash; [UniqueDark](https://modrinth.com/resourcepack/unique-dark));
-  * Головы игроков около ников в чате;
-  * Плавная прокрутка интерфейсов;
-  * Улучшенное меню статистики;
-  * Размытие заднего плана интерфейсов;
-  * Отображение состояния инструментов в интерфейсе;
-  * Отображение содержимого шалкеров при наведении на них в инвентаре;
-  * Улучшенное третье лицо;
-- **Текстуры**:
-  * Исправления от VanillaTweaks;
-  * Разные текстуры для каждого вида зачарованных книг;
-- **Взаимодействие**:
-  * Голосовой чат ([PlasmoVoice](/wiki/lania-v/useful/voice) со всеми клиентскими аддонами);
-  * Эмоции ([Emotecraft](https://modrinth.com/mod/emotecraft));
-  * Переключение отображения брони на персонажах;
-  * Сбор урожая кнопкой ПКМ;
-  * Смайлики 7TV в чате ([Streamotes](../gameplay/streamotes));
-  * Открытие двойных дверей кнопкой ПКМ;
-- **Дополнительно**: 
-  * Безрамочный режим работы игры;
-  * Русификация [новых достижений](../gameplay/bacap);
-  * Отображение статуса игры в Discord;
+Когда keelfy публикует обновление модпака, Modrinth предлагает его при запуске игры. Просмотрите изменения и подтвердите обновление в приложении.
+
+## Моды
+
+Основные моды сгруппированы по назначению. Полный список, включая библиотеки и зависимости, доступен в меню модов в игре.
+
+### Оптимизация и стабильность
+
+- [Sodium](https://modrinth.com/mod/sodium), [ImmediatelyFast](https://modrinth.com/mod/immediatelyfast) — ускорение отрисовки;
+- [Lithium](https://modrinth.com/mod/lithium), [Concurrent Chunk Management Engine](https://modrinth.com/mod/c2me-fabric), [ScalableLux](https://modrinth.com/mod/scalablelux) — оптимизация игровой логики, чанков и освещения;
+- [FerriteCore](https://modrinth.com/mod/ferrite-core) — снижение расхода памяти;
+- [EntityCulling](https://modrinth.com/mod/entityculling), [More Culling](https://modrinth.com/mod/moreculling) — пропуск отрисовки невидимых объектов и граней;
+- [AsyncParticles](https://modrinth.com/mod/asyncparticles) — оптимизация обработки частиц;
+- [Dynamic FPS](https://modrinth.com/mod/dynamic-fps) — снижение нагрузки, когда игра неактивна;
+- [Krypton](https://modrinth.com/mod/krypton), [Packet Fixer](https://modrinth.com/mod/packet-fixer), [Server Pinger Fixer](https://modrinth.com/mod/serverpingerfixer) — оптимизация сети и исправления сетевых проблем;
+- [Debugify](https://modrinth.com/mod/debugify), [Not Enough Crashes](https://modrinth.com/mod/notenoughcrashes) — исправления ошибок и удобное восстановление после сбоев;
+
+### Звук
+
+- [AmbientSounds](https://modrinth.com/mod/ambientsounds), [AmbientEnvironment](https://modrinth.com/mod/ambient-environment) — звуки окружения и атмосфера;
+- [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered) — затухание звука, эхо и поглощение звука блоками;
+- [Presence Footsteps](https://modrinth.com/mod/presence-footsteps) — звуки шагов на разных поверхностях;
+- [Sounds](https://modrinth.com/mod/sound) — новые звуковые эффекты интерфейса, предметов и блоков;
+- [CoolRain](https://modrinth.com/mod/coolrain) — звуки дождя при взаимодействии с окружением;
+- [Extreme Sound Muffler](https://modrinth.com/mod/extreme_sound_muffler) — выборочное приглушение звуков;
+
+### Графика и анимации
+
+- [Iris](https://modrinth.com/mod/iris), [Euphoria Patcher](https://modrinth.com/mod/euphoria-patches) — поддержка шейдеров и дополнения для Complementary;
+- [Distant Horizons](https://modrinth.com/mod/distanthorizons) — отрисовка дальних чанков через LOD;
+- [Visuality](https://modrinth.com/mod/visuality), [Particular Reforged](https://modrinth.com/mod/particular-reforged), [Particle Interactions](https://modrinth.com/mod/particle-interactions), [Make Bubbles Pop](https://modrinth.com/mod/make_bubbles_pop) — частицы и эффекты окружения;
+- [Falling Leaves](https://modrinth.com/mod/fallingleaves), [Windy](https://modrinth.com/mod/windy) — опадающие листья и частицы ветра;
+- [Head in the Clouds](https://modrinth.com/mod/head-in-the-clouds) — отсутствие дождя выше облаков;
+- [Entity Model Features](https://modrinth.com/mod/entity-model-features), [Entity Texture Features](https://modrinth.com/mod/entitytexturefeatures), [Continuity](https://modrinth.com/mod/continuity) — поддержка моделей, текстур сущностей и соединённых текстур из ресурс-паков;
+- [3D Skin Layers](https://modrinth.com/mod/3dskinlayers), [Capes](https://modrinth.com/mod/capes) — объёмные слои скинов и поддержка плащей;
+- [Not Enough Animations](https://modrinth.com/mod/not-enough-animations), [Punchy](https://modrinth.com/mod/punchy-fpa) — анимации от третьего и первого лица;
+- [Sodium Shadowy Path Blocks](https://modrinth.com/mod/sodium-shadowy-path-blocks) — освещение неполных блоков при использовании Sodium;
+
+### Инструменты и строительство
+
+- [Just Enough Items](https://modrinth.com/mod/jei), [Just Enough Professions (JEP)](https://modrinth.com/mod/just-enough-professions-jep) — просмотр рецептов и рабочих блоков профессий жителей;
+- [Jade](https://modrinth.com/mod/jade) — информация о блоке или существе под прицелом;
+- [Lighty](https://modrinth.com/mod/lighty) — подсветка мест, где могут появляться мобы;
+- [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map), [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) — карта мира, миникарта и путевые точки;
+- [Litematica](https://modrinth.com/mod/litematica) — схематики и помощь при строительстве;
+- [Axiom](https://modrinth.com/mod/axiom), [WorldEdit](https://modrinth.com/mod/worldedit), [WorldEditCUI](https://modrinth.com/mod/worldedit-cui) — редактирование мира и отображение выделений WorldEdit; доступность на сервере зависит от прав;
+- [Bridging Mod](https://modrinth.com/mod/bridging-mod) — помощь в размещении блоков при строительстве мостов;
+- **Lania Loot Marker** — отметки лут-контейнеров JustLootIt на Lania и защита от случайного разрушения;
+
+### Управление и инвентарь
+
+- [ClientSort](https://modrinth.com/mod/clientsort), [Mouse Tweaks](https://modrinth.com/mod/mouse-tweaks) — сортировка предметов и удобное управление мышью в инвентаре;
+- [ItemLocks](https://modrinth.com/mod/itemlocks) — блокировка слотов от случайной потери предметов;
+- [ClickThrough Plus](https://modrinth.com/mod/clickthrough+) — открытие контейнеров сквозь таблички и рамки;
+- [Cut Through](https://modrinth.com/mod/cut-through) — удары по мобам сквозь высокую траву;
+- [Zoomify](https://modrinth.com/mod/zoomify) — приближение;
+- [Better Selection](https://modrinth.com/mod/better-selection), [Stendhal](https://modrinth.com/mod/stendhal) — работа с текстом, книгами и табличками;
+- [Do a Barrel Roll](https://modrinth.com/mod/do-a-barrel-roll) — кинематографичное управление элитрой;
+- [Controlling](https://modrinth.com/mod/controlling) — поиск сочетаний клавиш в настройках управления;
+- [Ctrl Q](https://modrinth.com/mod/ctrl-q) — выбрасывание всего стака через `Ctrl+Q`;
+
+### Интерфейс
+
+- [AppleSkin](https://modrinth.com/mod/appleskin), [Better Mount HUD](https://modrinth.com/mod/better-mount-hud), [Status Effect Bars](https://modrinth.com/mod/status-effect-bars) — насыщение едой, интерфейс верховой езды и длительность эффектов;
+- [Shulker Box Tooltip](https://modrinth.com/mod/shulkerboxtooltip), [Durability Tooltip](https://modrinth.com/mod/durability-tooltip), [EnchantmentDescriptions](https://modrinth.com/mod/enchantment-descriptions) — содержимое шалкеров, прочность предметов и описания зачарований;
+- [Highlighter](https://modrinth.com/mod/item-highlighter), [Pick Up Notifier](https://modrinth.com/mod/pick-up-notifier) — подсветка новых предметов и уведомления о подборе;
+- [Legendary Tooltips](https://modrinth.com/mod/legendary-tooltips), [Inventory Particles](https://modrinth.com/mod/inventory-particles) — оформление подсказок и частицы в инвентаре;
+- [Better Advancements](https://modrinth.com/mod/better-advancements), [Better Statistics Screen](https://modrinth.com/mod/better-stats) — улучшенные экраны достижений и статистики;
+- [SmoothGui](https://modrinth.com/mod/smooth-gui), [Blur+](https://modrinth.com/mod/blur-plus), [Immersive Hotbar](https://modrinth.com/mod/immersive-hotbar) — анимации интерфейса, размытие фона и анимации хотбара;
+- [Centered Crosshair](https://modrinth.com/mod/centered-crosshair), [Locator Heads](https://modrinth.com/mod/locator-heads) — центрированный прицел и головы игроков на полосе локатора;
+- [Sodium Extra](https://modrinth.com/mod/sodium-extra), [Reese's Sodium Options](https://modrinth.com/mod/reeses-sodium-options) — дополнительные настройки графики и меню Sodium;
+- [Dark Loading Screen](https://modrinth.com/mod/dark-loading-screen) — тёмный экран загрузки;
+- [Mod Menu](https://modrinth.com/mod/modmenu), [Resourcify](https://modrinth.com/mod/resourcify) — список модов и встроенный каталог ресурс-паков и шейдеров;
+
+### Общение
+
+- [Plasmo Voice](/wiki/lania-v/useful/voice), [pv-addon-soundphysics](https://modrinth.com/mod/pv-addon-soundphysics) — голосовой чат с поддержкой физики звука;
+- [Emotecraft](https://modrinth.com/mod/emotecraft) — эмоции персонажа;
+- [Streamotes](../gameplay/streamotes) — смайлики Twitch, BTTV, FFZ и 7TV в чате;
+- [Talk Balloons](https://modrinth.com/mod/talk-balloons), [ChatAnimation](https://modrinth.com/mod/chatanimation), [Longer Chat History](https://modrinth.com/mod/longer-chat-history) — сообщения над игроками, анимации чата и расширенная история;
+- [Ping Wheel](https://modrinth.com/mod/ping-wheel), [PatPat](https://modrinth.com/mod/patpat) — метки для совместной игры и возможность погладить существ;
+- [CraftPresence](https://modrinth.com/mod/craftpresence) — отображение статуса игры в Discord;
+
+### Дополнительно
+
+- [Borderless Fullscreen](https://modrinth.com/mod/borderless-fullscreen) — безрамочный полноэкранный режим;
+- [Cherished Worlds](https://modrinth.com/mod/cherished-worlds), [FastQuit](https://modrinth.com/mod/fastquit), [Ksyxis](https://modrinth.com/mod/ksyxis) — избранные миры, быстрый выход в меню и ускорение загрузки одиночного мира;
+- [spark](https://modrinth.com/mod/spark) — профилирование производительности;
+
+### Одиночная игра и серверные механики
+
+Эти моды тоже входят в сборку. Их игровые механики работают в одиночном мире или при установке на сервер; установка сборки у игрока сама по себе не добавляет их на Lania.
+
+- [Gardener's Dream](https://modrinth.com/mod/gardeners-dream) — растения в цветочных и декоративных горшках;
+- [Veinminer](https://modrinth.com/mod/veinminer), [Veinminer Enchantment](https://modrinth.com/mod/veinminer-enchantment) — добыча жил и зачарование для её ограничения;
+- [Leaves Be Gone](https://modrinth.com/mod/leaves-be-gone), [Snow Under Trees](https://modrinth.com/mod/snow-under-trees-remastered), [Leaf Me Alone](https://modrinth.com/mod/leaf-me-alone) — быстрое исчезновение листвы, снег под деревьями и проход ездовых существ через листву;
+- [Right Click Harvest](https://modrinth.com/mod/rightclickharvest), [Double Doors](https://modrinth.com/mod/double-doors) — сбор урожая ПКМ и совместное открытие двойных дверей;
+
+## Шейдеры
+
+Шейдеры выбираются в настройках графики через Iris. Одновременно используется один шейдер-пак; шейдеры можно полностью выключить.
+
+- [Complementary Reimagined](https://modrinth.com/shader/complementary-reimagined) — сохраняет стиль Minecraft;
+- [Complementary Unbound](https://modrinth.com/shader/complementary-unbound) — более выраженные визуальные эффекты;
+- [BSL](https://modrinth.com/shader/bsl-shaders) — яркое освещение и насыщенные цвета;
+- [Bliss](https://modrinth.com/shader/bliss-shader) — атмосферное освещение и настройки окружения;
+- [Photon](https://modrinth.com/shader/photon-shader) — полуреалистичный визуальный стиль;
+- [MakeUp — Ultra Fast](https://modrinth.com/shader/makeup-ultra-fast-shaders) — гибкие настройки качества и производительности;
+- [Euphoria Patches](https://modrinth.com/mod/euphoria-patches) — дополнение для Complementary Reimagined и Unbound; оба варианта с патчами есть в сборке.
 
 ## Ресурс-паки
 
-<Callout type='important'>
-  Вы можете игнорировать предупреждения о несовместимости версии игры с ресурс-паками (ресурс-паки с красным фоном в списке). Все ресурс-паки рабочие.
-</Callout>
+В сборке доступны следующие ресурс-паки. Выбирайте их в настройках игры под свои предпочтения.
 
-В модпаке предустановлены следующие ресурс-паки, вы можете включить только необходимые вам:
+- [BACAP Language Pack](https://modrinth.com/resourcepack/bacap-language-pack) — локализация новых достижений;
+- [Unique Dark — Lite](https://modrinth.com/resourcepack/unique-dark) — тёмная тема интерфейса; в сборке используется вариант Lite;
+- [Vanilla Tweaks](https://vanillatweaks.net) — набор изменений стандартных текстур;
+- [Fresh Animations](https://modrinth.com/resourcepack/fresh-animations) — анимации мобов;
+- [Fresh Animations: Extensions — All Extensions](https://modrinth.com/resourcepack/fresh-animations-extensions) — дополнения к Fresh Animations;
+- [Fresh Moves — With Animated Eyes](https://modrinth.com/resourcepack/tras-fresh-player) — анимации игроков и глаз;
+- [Just Expressions](https://modrinth.com/resourcepack/just-expressions) — анимированные глаза игроков;
+- [xali's Enchanted Books](https://modrinth.com/resourcepack/xalis-enchanted-books) — разные текстуры зачарованных книг;
+- [xali's Enchanted Books - Addon](https://modrinth.com/resourcepack/xalis-enchanted-books-addon) — дополнительные текстуры для зачарованных книг;
+- [(Bee's) Fancy Crops](https://modrinth.com/resourcepack/fancy-crops) — изменённый внешний вид культур;
+- [Low On Fire](https://modrinth.com/resourcepack/low-on-fire) — уменьшенный огонь на экране;
+- [Better Flame Particles](https://modrinth.com/resourcepack/better-flame-particles) — анимированные частицы огня;
+- [Door Tweaks](https://modrinth.com/resourcepack/door-tweaks) — объёмные детали дверей;
+- [RAY's 3D Rails](https://modrinth.com/resourcepack/rays-3d-rails) — объёмные модели рельс;
+- [RAY's 3D Ladders](https://modrinth.com/resourcepack/rays-3d-ladders) — объёмные модели лестниц;
+- [Better Boat](https://modrinth.com/resourcepack/better-boat) — изменённые модели лодок;
+- [Borderless Glass](https://modrinth.com/resourcepack/borderless-glass) — стекло без рамок;
+- [Translations for Sodium](https://modrinth.com/resourcepack/translations-for-sodium) — дополнительные переводы настроек Sodium;
+- [Totem Da Capoeira](https://modrinth.com/resourcepack/totem-da-capoeira) — новый внешний вид тотема бессмертия;
+- [Chat Reporting Helper](https://modrinth.com/resourcepack/chat-reporting-helper) — пояснения к системе жалоб на чат;
 
-- [BACAP Language Pack](https://modrinth.com/resourcepack/bacap-language-pack) - локализация новых достижений на русский язык;
-- [BACAP Better RU](https://modrinth.com/resourcepack/bacap-better-ru) - улучшенная локализация новых достижений на русский язык;
-- [UniqueDark](https://modrinth.com/resourcepack/unique-dark) - тёмная тема для всего интерфейса;
-- `ClientSort Dark Mode` - небольшое дополнение к моду ClientSort для тёмной темы;
-- [VanillaTweaks](https://vanillatweaks.net) - исправления ошибок в текстурах от VanillaTweaks;
-- [Totem Da Capoeira](https://modrinth.com/mod/totem-da-capoeira) - новый забавный внешний вид тотема;
-- [FreshAnimations](https://modrinth.com/mod/fresh-animations) - улучшенные анимации мобов;
-- [xali's Enchanted Books](https://modrinth.com/mod/xalis-enchanted-books) - текстуры зачарованных книг, зависящие от зачарования;
-- [xali's Enchanted Books Addon](https://modrinth.com/mod/xalis-enchanted-books-addon) - дополнительные текстуры зачарованных книг;
-- [Fancy Crops](https://modrinth.com/mod/fancy-crops) - улучшенные текстуры урожая;
-- [Low On Fire](https://modrinth.com/resourcepack/low-on-fire) - если вы горите, то огонь будет отображаться ниже на экране;
-- [Better Flame Particles](https://modrinth.com/mod/better-flame-particles) - улучшенные частицы огня;
-- [DoorTweak](https://modrinth.com/resourcepack/door-tweaks) - улучшенный визуал дверей;
-- [RAY's 3D Rails](https://modrinth.com/resourcepack/rays-3d-rails) & [RAY's 3D Ladders](https://modrinth.com/resourcepack/rays-3d-ladders) - 3D модели для лестниц и рельс;
-- [Better Boat](https://modrinth.com/resourcepack/better-boat) - улучшенный визуал лодки;
-- [SodiumTranslations](https://modrinth.com/resourcepack/translations-for-sodium) - локализация новых настроек графики на русский язык;
-- [BetterSnowCoverage](https://modrinth.com/mod/better-snow-coverage) - снежный покров под блоками, если они окружены снегом. Например, снег под цветком, если вокруг него блоки снега;
-- [Borderless Glass](https://modrinth.com/mod/borderless-glass) - безрамочные стеклянные блоки;
-- `BetterBeds` - кровати выглядят лучше и могут соединяться;
+### Встроенные ресурс-паки модов
 
-**Я рекомендую _включить_ все ресурс-паки, за исключением:**
+- `ClientSort Dark Mode` — тёмные кнопки сортировки ClientSort;
+- `Continuity` — соединённые текстуры и исправление отрисовки стеклянных панелей;
+- `Punchy` — стандартные анимации от первого лица.
 
-- `Totem Da Capoeira` (Вкусовщина)
-- `BetterSnowCoverage` (Полезно для тех, кто живет в зимних биомах, что редкость)
-- `Borderless Glass` (ИМХО ломает внешний вид многих построек)
-- `Контрастный` (UniqueDark выглядит лучше)
-- `Highlight Extended` (Излишество)
-- `Классический` (Не нужен)
+Fresh Animations, Fresh Moves и Just Expressions используют EMF/ETF, которые уже установлены в сборке. Для расширений Fresh Animations нужен основной ресурс-пак Fresh Animations.
 
 ## Часто используемые сочетания клавиш
 
@@ -146,14 +195,6 @@ import { Table } from 'nextra/components'
     <Table.Tr>
       <Table.Td>`M`</Table.Td>
       <Table.Td>Карта игрового мира</Table.Td>
-    </Table.Tr>
-    <Table.Tr>
-      <Table.Td>`J`</Table.Td>
-      <Table.Td>
-        Переключение отображения брони на персонажах. 
-        Важно, что это только то, как вы видите броню, если вы хотите, чтобы другие игроки не видели вашу броню, 
-        то используйте специальную команду из [списка команд](../commands).
-      </Table.Td>
     </Table.Tr>
     <Table.Tr>
       <Table.Td>`I`</Table.Td>
@@ -200,8 +241,7 @@ Distant Horizons на сервере не прогружает мир автом
 1. Если ПК не тянет модпак, то сначала попробуйте выключить `Distant Horizons` (в меню настроек слева от поля зрения) и шейдеры.
 2. В сборке есть Безрамочный режим игры, его можно включить в настройках графики, переключив пункт `Fullscreen`.
 3. В шейдерах `Complementary Unbound` светятся руды - очень удобно копаться в пещерах с этой фичей.
-4. Если вам нужно, чтобы устанавливаемые блоки выбирались случайно, изучите мод [HotbarShuffler](https://modrinth.com/mod/hotbarshuffler), установленный в сборке.
-5. Если у вас на клавиатуре нет функциональных клавиш, либо вас не устраивают кнопки, к которым привязаны сочетания клавиш для дебага, в настройках управления можно изменить эти сочетания клавиш.
+4. Используйте поиск от [Controlling](https://modrinth.com/mod/controlling) в настройках управления, чтобы найти и изменить сочетания клавиш модов.
 
 ### Арахнофобия
 
