@@ -69,25 +69,29 @@ export default function PlayerSkin({ profile, colors, interactive }: Props) {
   const first = colors?.[0] ?? 'var(--primary)'
   const last = colors?.[colors.length - 1] ?? first
   return (
-    <div
-      className={interactive ? 'relative' : 'self-center'}
-      style={
-        interactive
-          ? {
-              backgroundImage: `radial-gradient(ellipse at 50% 60%, color-mix(in srgb, ${first} 16%, transparent), transparent 70%), radial-gradient(ellipse at 50% 40%, color-mix(in srgb, ${last} 8%, transparent), transparent 70%)`,
-            }
-          : undefined
-      }
-    >
+    <div className={interactive ? 'relative' : 'self-center'}>
+      {interactive && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(ellipse at 50% 60%, color-mix(in srgb, ${first} 16%, transparent), transparent 70%), radial-gradient(ellipse at 50% 40%, color-mix(in srgb, ${last} 8%, transparent), transparent 70%)`,
+            maskImage:
+              'linear-gradient(to bottom, transparent, black 18%, black 78%, transparent)',
+            WebkitMaskImage:
+              'linear-gradient(to bottom, transparent, black 18%, black 78%, transparent)',
+          }}
+        />
+      )}
       <canvas
         ref={canvasRef}
         width={300}
         height={interactive ? 300 : 200}
         aria-label={t('label')}
-        className="mx-auto block h-auto w-[300px] max-w-full cursor-grab active:cursor-grabbing"
+        className="relative mx-auto block h-auto w-[300px] max-w-full cursor-grab active:cursor-grabbing"
       />
       {interactive && (
-        <div className="flex items-center justify-between gap-2 pb-2">
+        <div className="relative flex items-center justify-between gap-2 pb-2">
           <p className="text-muted-foreground text-xs">{t('drag')}</p>
           <div className="flex shrink-0 gap-1">
             <Button

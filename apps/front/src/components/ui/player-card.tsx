@@ -171,8 +171,13 @@ export default function PlayerCard({
             }
             interactive={interactiveSkin}
           />
-          <Separator className="mb-4" />
-          <div className="mb-0 flex flex-nowrap items-center gap-2">
+          {!interactiveSkin && <Separator className="mb-4" />}
+          <div
+            className={cn(
+              'mb-0 flex flex-nowrap items-center gap-2',
+              interactiveSkin && 'mt-4',
+            )}
+          >
             <CircleUserRoundIcon className="size-4" />
             <p>
               <span className="text-muted-foreground">{t('status')}:</span>
