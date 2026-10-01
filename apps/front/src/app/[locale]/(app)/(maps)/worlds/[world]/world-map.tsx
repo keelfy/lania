@@ -330,6 +330,7 @@ export default function WorldMap({
                       <NamePrefixes
                         cosmetics={focusedOwner.cosmetics.name}
                         size={16}
+                        gap="0.25rem"
                       />
                       <McUsername
                         username={focusedOwner.username}

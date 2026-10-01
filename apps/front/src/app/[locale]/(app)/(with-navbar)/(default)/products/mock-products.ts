@@ -92,6 +92,7 @@ export function getMockProducts(
         category: ProductCategory.NamePrefix,
         metadata: {
           prefix: `/images/mock-products/${image}.svg`,
+          noSpace: index === 2,
           namePrefixId: `preview-name-prefix-${index}`,
         },
         soldCount: 18 + index * 5,

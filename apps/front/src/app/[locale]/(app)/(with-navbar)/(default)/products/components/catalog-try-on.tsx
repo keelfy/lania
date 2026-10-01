@@ -16,6 +16,7 @@ import McUsername from '@/components/ui/mc-username'
 import ProfileSelect from '@/components/ui/profile-select'
 import { getUserProfiles } from '@/lib/api-endpoints'
 import { clientApiFetcher } from '@/lib/client'
+import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/providers/auth-store'
 import type { Profile } from '@/models/profile'
 
@@ -25,6 +26,7 @@ type CatalogProfile = {
   // What the selected profile wears now, so a glyph can be tried with its name color and the other way round.
   colors?: string[]
   glyphImage?: string
+  glyphNoSpace?: boolean
   loading: boolean
   failed: boolean
 }
@@ -88,9 +90,18 @@ export function CatalogTryOn({
   const profileId = selectedProfile?.id
   const colors = selectedProfile?.cosmetics.name.colors?.colors
   const glyphImage = selectedProfile?.cosmetics.name.glythPrefix?.image
+  const glyphNoSpace = selectedProfile?.cosmetics.name.glythPrefix?.noSpace
   const value = useMemo(
-    () => ({ username, profileId, colors, glyphImage, loading, failed }),
-    [username, profileId, colors, glyphImage, loading, failed],
+    () => ({
+      username,
+      profileId,
+      colors,
+      glyphImage,
+      glyphNoSpace,
+      loading,
+      failed,
+    }),
+    [username, profileId, colors, glyphImage, glyphNoSpace, loading, failed],
   )
 
   return (
@@ -154,10 +165,12 @@ export function CatalogTryOn({
 export function CatalogNamePreview({
   colors,
   prefix,
+  noSpace,
   unoptimized,
 }: {
   colors?: string[]
   prefix?: string
+  noSpace?: boolean
   unoptimized?: boolean
 }) {
   const catalog = useCatalogProfile()
@@ -165,6 +178,7 @@ export function CatalogNamePreview({
   if (!catalog) return null
   // The product is shown with what the profile already wears, the product itself wins.
   const prefixSrc = prefix ?? catalog.glyphImage
+  const prefixNoSpace = prefix ? noSpace : catalog.glyphNoSpace
   const nameColors = colors ?? catalog.colors
 
   return (
@@ -181,7 +195,10 @@ export function CatalogNamePreview({
             width={24}
             height={24}
             unoptimized={unoptimized && prefixSrc === prefix}
-            className="size-6 shrink-0 [image-rendering:pixelated]"
+            className={cn(
+              'size-6 shrink-0 [image-rendering:pixelated]',
+              prefixNoSpace && '-mr-2',
+            )}
           />
         )}
         <McUsername

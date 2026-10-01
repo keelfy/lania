@@ -62,6 +62,8 @@ type CosmeticNotificationPayload struct {
 	Colors []string `json:"colors,omitempty"`
 	// PrefixImage is set for a name prefix only.
 	PrefixImage string `json:"prefixImage,omitempty"`
+	// PrefixNoSpace is set for a name prefix that hugs the name.
+	PrefixNoSpace bool `json:"prefixNoSpace,omitempty"`
 	// SeasonID is empty for a cosmetic that is granted for good.
 	SeasonID *uuid.UUID `json:"seasonId,omitempty"`
 	// SeasonName is copied in next to SeasonID, so the bell menu names the season without asking for it.

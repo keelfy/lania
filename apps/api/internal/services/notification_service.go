@@ -186,6 +186,7 @@ func (s *notificationService) fillCosmetic(ctx context.Context, queries sql.Quer
 		payload.ItemName = namePrefix.Name
 		payload.ItemNames = namePrefix.Names
 		payload.PrefixImage = namePrefix.Metadata.Image
+		payload.PrefixNoSpace = namePrefix.Metadata.NoSpace
 		return nil
 	}
 	return utils.NewBadRequestError("cosmetic notifications cover a name color and a name prefix only", nil)

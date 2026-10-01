@@ -441,6 +441,8 @@ function nameplate(player: MapPlayer) {
     image.src = imgproxyImageLoader({ src: prefix.image, width: 32 })
     image.alt = prefix.name
     image.className = 'size-4 [image-rendering:pixelated]'
+    // The plate is gap-1, which a prefix without a space takes back.
+    if (prefix.noSpace) image.style.marginRight = '-0.25rem'
     plate.append(image)
   }
   const name = textElement(player.name)

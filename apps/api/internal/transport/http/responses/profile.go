@@ -146,10 +146,11 @@ type NameColor struct {
 }
 
 type NamePrefix struct {
-	ID     uuid.UUID `json:"id"`
-	Name   string    `json:"name"`
-	Prefix string    `json:"prefix"`
-	Image  string    `json:"image"`
+	ID      uuid.UUID `json:"id"`
+	Name    string    `json:"name"`
+	Prefix  string    `json:"prefix"`
+	Image   string    `json:"image"`
+	NoSpace bool      `json:"noSpace"`
 }
 
 type ProfileNameCosmetics struct {
@@ -193,6 +194,7 @@ type ProfileNamePrefixOption struct {
 	ProfileID    uuid.UUID  `json:"profileId"`
 	Prefix       string     `json:"prefix"`
 	Image        string     `json:"image"`
+	NoSpace      bool       `json:"noSpace"`
 	ForSeasonID  *uuid.UUID `json:"forSeasonId,omitempty"`
 }
 

@@ -27,19 +27,21 @@ func PresentProfileCosmetics(cosmetics *domain.ProfileCosmetics, locale string) 
 	var glythResponse *responses.NamePrefix
 	if glyth != nil {
 		glythResponse = &responses.NamePrefix{
-			ID:     glyth.ID,
-			Name:   glyth.LocalizedName(locale),
-			Prefix: glyth.Metadata.Prefix,
-			Image:  glyth.Metadata.Image,
+			ID:      glyth.ID,
+			Name:    glyth.LocalizedName(locale),
+			Prefix:  glyth.Metadata.Prefix,
+			Image:   glyth.Metadata.Image,
+			NoSpace: glyth.Metadata.NoSpace,
 		}
 	}
 	var specialResponse *responses.NamePrefix
 	if special != nil {
 		specialResponse = &responses.NamePrefix{
-			ID:     special.ID,
-			Name:   special.LocalizedName(locale),
-			Prefix: special.Metadata.Prefix,
-			Image:  special.Metadata.Image,
+			ID:      special.ID,
+			Name:    special.LocalizedName(locale),
+			Prefix:  special.Metadata.Prefix,
+			Image:   special.Metadata.Image,
+			NoSpace: special.Metadata.NoSpace,
 		}
 	}
 	return &responses.ProfileCosmetics{
@@ -202,6 +204,7 @@ func PresentProfileCosmeticOptions(nameColorOptions []*domain.ProfileNameColorOp
 			Name:         profileNamePrefix.NamePrefix.LocalizedName(locale),
 			Prefix:       profileNamePrefix.NamePrefix.Metadata.Prefix,
 			Image:        profileNamePrefix.NamePrefix.Metadata.Image,
+			NoSpace:      profileNamePrefix.NamePrefix.Metadata.NoSpace,
 			ProfileID:    profileNamePrefix.ProfileID,
 			ForSeasonID:  profileNamePrefix.ForSeasonID,
 		}
@@ -214,6 +217,7 @@ func PresentProfileCosmeticOptions(nameColorOptions []*domain.ProfileNameColorOp
 			Name:         profileNamePrefix.NamePrefix.LocalizedName(locale),
 			Prefix:       profileNamePrefix.NamePrefix.Metadata.Prefix,
 			Image:        profileNamePrefix.NamePrefix.Metadata.Image,
+			NoSpace:      profileNamePrefix.NamePrefix.Metadata.NoSpace,
 			ProfileID:    profileNamePrefix.ProfileID,
 			ForSeasonID:  profileNamePrefix.ForSeasonID,
 		}

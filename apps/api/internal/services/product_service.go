@@ -137,6 +137,7 @@ func (s *productService) hydrateCosmeticMetadata(ctx context.Context, products [
 				return utils.NewInternalServerError("name prefix product references missing cosmetic", nil)
 			}
 			metadata.Prefix = item.Metadata.Image
+			metadata.NoSpace = item.Metadata.NoSpace
 			payload, err := json.Marshal(metadata)
 			if err != nil {
 				return utils.NewInternalServerError("failed to encode name prefix product", err)

@@ -11,6 +11,8 @@ export type NameLook = {
   colors?: string[]
   // Image of the glyph worn before the name.
   prefixImage?: string
+  // The glyph hugs the name, with no space between them.
+  prefixNoSpace?: boolean
 }
 
 // Names the game shows without any cosmetics.
@@ -21,7 +23,13 @@ type NameTagProps = NameLook & {
 }
 
 // A name the way the game draws it: the glyph, then the name, both one line tall.
-function NameTag({ username, colors, prefixImage, className }: NameTagProps) {
+function NameTag({
+  username,
+  colors,
+  prefixImage,
+  prefixNoSpace,
+  className,
+}: NameTagProps) {
   return (
     <span className={cn('inline-flex items-center gap-[0.3em]', className)}>
       {prefixImage && (
@@ -30,7 +38,10 @@ function NameTag({ username, colors, prefixImage, className }: NameTagProps) {
           alt=""
           width={32}
           height={32}
-          className="size-[1.1em] shrink-0 [image-rendering:pixelated]"
+          className={cn(
+            'size-[1.1em] shrink-0 [image-rendering:pixelated]',
+            prefixNoSpace && '-mr-[0.3em]',
+          )}
         />
       )}
       <McUsername

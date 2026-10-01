@@ -17,7 +17,13 @@ import InGamePreview, { NameLook } from './in-game-preview'
 import { useProductProfile } from './product-profile-context'
 
 // What else can be worn with the product: a name color with a glyph, a glyph with a name color.
-type Pairing = { id: string; name: string; colors?: string[]; image?: string }
+type Pairing = {
+  id: string
+  name: string
+  colors?: string[]
+  image?: string
+  noSpace?: boolean
+}
 
 type Props =
   | {
@@ -54,6 +60,7 @@ export default function NameTryOn(props: Props) {
         id: CURRENT,
         name: selectedProfile.cosmetics.name.glythPrefix.name,
         image: selectedProfile.cosmetics.name.glythPrefix.image,
+        noSpace: selectedProfile.cosmetics.name.glythPrefix.noSpace,
       }
     : selectedProfile?.cosmetics.name.colors && {
         id: CURRENT,
@@ -67,6 +74,7 @@ export default function NameTryOn(props: Props) {
           id: product.id,
           name: product.name,
           image: product.metadata.prefix,
+          noSpace: product.metadata.noSpace,
         }))
       : props.pairings.map((product) => ({
           id: product.id,
@@ -89,11 +97,13 @@ export default function NameTryOn(props: Props) {
           username,
           colors: props.item.metadata.colors,
           prefixImage: pairing?.image,
+          prefixNoSpace: pairing?.noSpace,
         }
       : {
           username,
           colors: pairing?.colors,
           prefixImage: props.item.metadata.prefix,
+          prefixNoSpace: props.item.metadata.noSpace,
         }
 
   return (

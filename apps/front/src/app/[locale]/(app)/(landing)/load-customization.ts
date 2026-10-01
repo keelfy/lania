@@ -26,6 +26,7 @@ export async function loadCustomization(fetcher: ApiFetcher, locale: string) {
       id: metadata.namePrefixId,
       name: product.name,
       image: metadata.prefix,
+      noSpace: metadata.noSpace,
     }
   })
 

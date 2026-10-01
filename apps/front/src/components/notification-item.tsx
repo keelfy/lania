@@ -101,6 +101,11 @@ function CosmeticItem({
                 width={18}
                 height={18}
                 className="shrink-0"
+                style={
+                  payload.prefixNoSpace
+                    ? { marginRight: '-0.375rem' }
+                    : undefined
+                }
               />
             )}
             <McUsername

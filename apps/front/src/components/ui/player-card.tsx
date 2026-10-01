@@ -127,7 +127,10 @@ export default function PlayerCard({
             !(nameCosmetics ?? profile.cosmetics.name).glythPrefix && (
               <PlayerFace player={profile} className="size-5" />
             )}
-          <NamePrefixes cosmetics={nameCosmetics ?? profile?.cosmetics.name} />
+          <NamePrefixes
+            cosmetics={nameCosmetics ?? profile?.cosmetics.name}
+            gap="0.5rem"
+          />
           <McUsername
             username={displayName ?? 'Steve'}
             className="text-xl"

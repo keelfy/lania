@@ -109,7 +109,11 @@ export default async function CommunityProfilePage({
               {hasOwnFace(profile) && !profile.cosmetics.name.glythPrefix && (
                 <PlayerFace player={profile} className="size-10 rounded-sm" />
               )}
-              <NamePrefixes cosmetics={profile.cosmetics.name} size={32} />
+              <NamePrefixes
+                cosmetics={profile.cosmetics.name}
+                size={32}
+                gap="0.75rem"
+              />
               <McUsername
                 username={profile.username}
                 colors={nameColors}

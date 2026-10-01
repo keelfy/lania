@@ -142,6 +142,8 @@ export type NamePrefix = {
   name: string
   prefix: string
   image: string
+  // The glyph hugs the name, with no space between them.
+  noSpace: boolean
 }
 
 export type NameCosmetics = {
@@ -171,6 +173,7 @@ export type ProfileNamePrefixOption = {
   profileId: string
   prefix: string
   image: string
+  noSpace: boolean
   forSeasonId?: string // undefined for all seasons
 }
 

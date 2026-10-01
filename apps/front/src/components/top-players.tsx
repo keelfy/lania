@@ -75,6 +75,7 @@ export default async function TopPlayers({
                     <NamePrefixes
                       cosmetics={profile.cosmetics.name}
                       size={16}
+                      gap="0.25rem"
                     />
                     <McUsername
                       username={profile.username}

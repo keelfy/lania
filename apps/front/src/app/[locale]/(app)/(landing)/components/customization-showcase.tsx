@@ -15,7 +15,12 @@ import styles from './landing-motion.module.css'
 
 const asset = '/images/landing-customization/'
 type ColorOption = { id: string; name: string; colors: string[] }
-type GlyphOption = { id: string; name: string; image: string | null }
+type GlyphOption = {
+  id: string
+  name: string
+  image: string | null
+  noSpace?: boolean
+}
 
 const skins = [
   { name: 'Steve', src: '/images/steve_skin.png', slim: false },
@@ -85,7 +90,11 @@ export default function CustomizationShowcase({
               alt={glyph.name}
               width={26}
               height={26}
-              className={`[image-rendering:pixelated] ${styles.glyph}`}
+              className={cn(
+                '[image-rendering:pixelated]',
+                styles.glyph,
+                glyph.noSpace && '-mr-2',
+              )}
             />
           ) : null}
           <McUsername

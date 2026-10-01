@@ -15,7 +15,7 @@ export default function NamePrefixProductCard({
   previewOnly,
   ...props
 }: Props) {
-  const { prefix } = item.metadata as NamePrefixProductMetadata
+  const { prefix, noSpace } = item.metadata as NamePrefixProductMetadata
 
   return (
     <ProductCard
@@ -34,7 +34,11 @@ export default function NamePrefixProductCard({
         </h3>
       </div>
       <GlyphShowcase src={prefix} unoptimized={previewOnly} />
-      <CatalogNamePreview prefix={prefix} unoptimized={previewOnly} />
+      <CatalogNamePreview
+        prefix={prefix}
+        noSpace={noSpace}
+        unoptimized={previewOnly}
+      />
     </ProductCard>
   )
 }

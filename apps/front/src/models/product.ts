@@ -28,5 +28,6 @@ export type NameColorProductMetadata = ProductMetadata & {
 
 export type NamePrefixProductMetadata = ProductMetadata & {
   prefix: string
+  noSpace: boolean
   namePrefixId: string
 }

@@ -26,6 +26,8 @@ export type CosmeticNotificationPayload = {
   // Both are missing from the notifications made before they were added.
   colors?: string[]
   prefixImage?: string
+  // Missing from the notifications made before it was added, which read as spaced.
+  prefixNoSpace?: boolean
   seasonId?: string
   // seasonName is missing from the notifications made before it was added.
   seasonName?: string

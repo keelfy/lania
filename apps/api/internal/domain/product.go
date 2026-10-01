@@ -91,5 +91,6 @@ type NameColorProductMetadata struct {
 
 type NamePrefixProductMetadata struct {
 	Prefix       string    `json:"prefix"`
+	NoSpace      bool      `json:"noSpace"`
 	NamePrefixID uuid.UUID `json:"namePrefixId"`
 }
