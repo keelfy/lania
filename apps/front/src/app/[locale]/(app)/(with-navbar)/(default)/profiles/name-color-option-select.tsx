@@ -76,10 +76,11 @@ export default function NameColorOptionSelect({
   return (
     <>
       <Select
+        disabled={isPending}
         value={optimisticNameColorId}
         onValueChange={handleSelectProfileNameColor}
       >
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full" aria-busy={isPending}>
           <SelectValue placeholder={t('select')} />
         </SelectTrigger>
         <SelectContent>

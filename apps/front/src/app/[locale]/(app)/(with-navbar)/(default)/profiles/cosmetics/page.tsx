@@ -43,7 +43,10 @@ export default async function ProfileCosmeticsPage({
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'profiles' })
   const { seasons, selectedProfile: primaryProfile } = await loadProfilePage(id)
-  if (!primaryProfile) notFound()
+  if (!primaryProfile) {
+    if (!id) return null
+    notFound()
+  }
 
   // Every season keeps its own selection, and only a running season can be changed.
   const cosmeticSeasons = getSelectableSeasons(seasons)

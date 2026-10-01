@@ -15,7 +15,10 @@ type Props = {
 export default async function ProfileSettingsPage({ searchParams }: Props) {
   const { id } = await searchParams
   const { seasons, selectedProfile: profile } = await loadProfilePage(id)
-  if (!profile) notFound()
+  if (!profile) {
+    if (!id) return null
+    notFound()
+  }
 
   // A licensed profile logs in with its Minecraft account and has no password in game.
   const licensed = !!profile.mojangUuid && profile.mojangUuid === profile.mcUuid

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import RichText from '@/components/ui/rich-text'
 import { cn } from '@/lib/utils'
 import { getTranslations } from 'next-intl/server'
 import React from 'react'
@@ -31,8 +30,13 @@ export default async function ProfilesLayout({ children, params }: Props) {
   const hasProfiles = profiles.length > 0
 
   return (
-    <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)] lg:grid-rows-[auto_auto_1fr] lg:gap-x-6">
-      <div className="flex flex-col items-center gap-2 lg:col-start-2 lg:row-start-1 lg:flex-row lg:justify-between">
+    <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[22rem_minmax(0,1fr)] lg:grid-rows-[auto_auto_1fr] lg:gap-x-6">
+      <div
+        className={cn(
+          'flex flex-col items-center gap-2 lg:col-start-2 lg:row-start-1 xl:flex-row xl:justify-between',
+          !hasProfiles && 'lg:col-span-2 lg:col-start-1',
+        )}
+      >
         <h2 className="text-xl font-bold">
           {t('title')}&nbsp;
           <span className="text-muted-foreground text-sm">
@@ -41,16 +45,22 @@ export default async function ProfilesLayout({ children, params }: Props) {
         </h2>
         <ProfileSelectWrapper profiles={profiles} />
       </div>
-      <div className="flex flex-col gap-4 lg:col-start-1 lg:row-span-3 lg:row-start-1">
-        <ProfilePlayerCard profiles={profiles} locale={locale} />
-        <ProfileLicenseCard
-          profiles={profiles}
-          serverAddress={
-            seasons.find((season) => season.isPrimary)?.publicAddress
-          }
-          className="w-full sm:max-w-sm"
-        />
-      </div>
+      {hasProfiles && (
+        <div className="flex flex-col gap-4 lg:col-start-1 lg:row-span-3 lg:row-start-1">
+          <ProfilePlayerCard
+            profiles={profiles}
+            locale={locale}
+            className="sm:max-w-none sm:min-w-0"
+          />
+          <ProfileLicenseCard
+            profiles={profiles}
+            serverAddress={
+              seasons.find((season) => season.isPrimary)?.publicAddress
+            }
+            className="w-full"
+          />
+        </div>
+      )}
       {hasProfiles && (
         <div className="lg:col-start-2 lg:row-start-2">
           <ProfileNav profiles={profiles} />
@@ -59,27 +69,28 @@ export default async function ProfilesLayout({ children, params }: Props) {
       <div
         className={cn(
           'flex flex-col gap-4 lg:col-start-2',
-          hasProfiles ? 'lg:row-start-3' : 'lg:row-span-2 lg:row-start-2',
+          hasProfiles
+            ? 'lg:row-start-3'
+            : 'lg:col-span-2 lg:col-start-1 lg:row-span-2 lg:row-start-2',
         )}
       >
         {hasProfiles ? (
           children
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2">
-            <p className="text-muted-foreground text-center text-base">
-              <RichText>
-                {(tags) =>
-                  t.rich(freeAccess ? 'selectProfileFree' : 'selectProfile', {
-                    ...tags,
-                    obtainAccess: (chunks: React.ReactNode) => (
-                      <Button variant="link" asChild className="h-auto p-0">
-                        <Link href="/obtain-access">{chunks}</Link>
-                      </Button>
-                    ),
-                  })
-                }
-              </RichText>
+          <div className="bg-card flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border p-6 text-center">
+            <h3 className="text-lg font-semibold">{t('empty.title')}</h3>
+            <p className="text-muted-foreground max-w-sm text-sm">
+              {t('empty.description')}
             </p>
+            <Button asChild>
+              <Link href="/obtain-access">
+                {t(
+                  freeAccess
+                    ? 'accessStatus.obtainFree'
+                    : 'accessStatus.obtain',
+                )}
+              </Link>
+            </Button>
           </div>
         )}
       </div>

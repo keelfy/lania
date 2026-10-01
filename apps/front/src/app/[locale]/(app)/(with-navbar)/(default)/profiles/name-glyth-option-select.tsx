@@ -84,10 +84,11 @@ export default function NameGlythOptionSelect({
   return (
     <>
       <Select
+        disabled={isPending}
         value={optimisticNamePrefixId}
         onValueChange={handleSelectProfileNamePrefix}
       >
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full" aria-busy={isPending}>
           <SelectValue placeholder={t('select')} />
         </SelectTrigger>
         <SelectContent>

@@ -16,14 +16,7 @@ import {
   PROFILE_ROLE_COLORS,
   PROFILE_STATUS_COLORS,
 } from '@/lib/profile-colors'
-import {
-  capeUrl,
-  hasOwnFace,
-  SKIN_CHANGED_EVENT,
-  skinTexture,
-  STEVE_SKIN_URL,
-} from '@/lib/skin'
-import { initializeViewer } from '@/lib/skin-viewer'
+import { hasOwnFace, SKIN_CHANGED_EVENT } from '@/lib/skin'
 import { errorToast } from '@/lib/toasts'
 import { cn } from '@/lib/utils'
 import { NameCosmetics, ProfileDetails } from '@/models/profile'
@@ -34,19 +27,20 @@ import {
   CopyIcon,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useTheme } from 'next-themes'
 import { useTimeAgo } from 'next-timeago'
 import React from 'react'
 import McUsername from './mc-username'
 import NamePrefixes from './name-prefixes'
 import PlayerFace from './player-face'
 import VerifiedBadge from './verified-badge'
+import PlayerSkin from './player-skin'
 
 type PlayerCardProps = React.ComponentProps<typeof Card> & {
   profileId: string | undefined
   username?: string
   nameCosmetics?: NameCosmetics
   locale?: string
+  interactiveSkin?: boolean
 }
 
 export default function PlayerCard({
@@ -55,25 +49,34 @@ export default function PlayerCard({
   nameCosmetics,
   locale,
   className,
+  interactiveSkin = false,
   ...props
 }: PlayerCardProps) {
   const t = useTranslations('playerCard')
-  const { resolvedTheme } = useTheme()
   const { TimeAgo } = useTimeAgo()
 
-  const [profile, setProfile] = React.useState<ProfileDetails>()
+  const [loadedProfile, setProfile] = React.useState<ProfileDetails>()
   const [reloads, setReloads] = React.useState(0)
 
+  const profile = loadedProfile?.id === profileId ? loadedProfile : undefined
+
   React.useEffect(() => {
+    let active = true
     if (profileId) {
       getProfileDetails(clientApiFetcher, profileId)
-        .then(setProfile)
+        .then((result) => {
+          if (active) setProfile(result)
+        })
         .catch((error) => {
+          if (!active) return
           errorToast(t('noProfile'), error)
           setProfile(undefined)
         })
     }
-  }, [profileId, reloads])
+    return () => {
+      active = false
+    }
+  }, [profileId, reloads, t])
 
   React.useEffect(() => {
     const reload = (event: Event) => {
@@ -84,19 +87,6 @@ export default function PlayerCard({
     window.addEventListener(SKIN_CHANGED_EVENT, reload)
     return () => window.removeEventListener(SKIN_CHANGED_EVENT, reload)
   }, [profileId])
-
-  const skin = skinTexture(profile)
-  const cape = capeUrl(profile)
-  React.useEffect(() => {
-    if (typeof window !== 'undefined' && profile?.id !== undefined) {
-      initializeViewer(
-        skin?.url ?? STEVE_SKIN_URL,
-        cape,
-        skin?.slim ?? false,
-        resolvedTheme === 'dark' ? 'dark' : 'light',
-      )
-    }
-  }, [profile?.id, skin?.url, skin?.slim, cape, resolvedTheme])
 
   const status = React.useMemo(
     () => (profile?.isOnline ? 'online' : 'offline'),
@@ -109,19 +99,20 @@ export default function PlayerCard({
   )
 
   const displayName = username ?? profile?.username
-  const [copied, setCopied] = React.useState(false)
+  const [copiedUsername, setCopiedUsername] = React.useState<string>()
+  const copied = copiedUsername === displayName && !!displayName
 
   React.useEffect(() => {
-    if (!copied) return
-    const timeout = setTimeout(() => setCopied(false), 2000)
+    if (!copiedUsername) return
+    const timeout = setTimeout(() => setCopiedUsername(undefined), 2000)
     return () => clearTimeout(timeout)
-  }, [copied])
+  }, [copiedUsername])
 
   const copyUsername = () => {
     if (!displayName) return
     navigator.clipboard
       .writeText(displayName)
-      .then(() => setCopied(true))
+      .then(() => setCopiedUsername(displayName))
       .catch((error) => errorToast(t('copyFailed'), error))
   }
 
@@ -152,8 +143,8 @@ export default function PlayerCard({
               size="icon"
               className="size-6"
               onClick={copyUsername}
-              aria-label={t('copyUsername')}
-              title={t('copyUsername')}
+              aria-label={t(copied ? 'copiedUsername' : 'copyUsername')}
+              title={t(copied ? 'copiedUsername' : 'copyUsername')}
             >
               {copied ? (
                 <CheckIcon className="size-4" />
@@ -172,9 +163,13 @@ export default function PlayerCard({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-2">
-          <canvas
-            id="skin_container"
-            className="bg-card h-[200px] max-w-[300px] self-center"
+          <PlayerSkin
+            profile={profile}
+            colors={
+              nameCosmetics?.colors?.colors ??
+              profile?.cosmetics.name.colors?.colors
+            }
+            interactive={interactiveSkin}
           />
           <Separator className="mb-4" />
           <div className="mb-0 flex flex-nowrap items-center gap-2">

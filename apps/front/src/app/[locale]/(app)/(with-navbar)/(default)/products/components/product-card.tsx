@@ -15,6 +15,7 @@ type Props = React.ComponentProps<'div'> & {
   currency: Currency
   previewOnly?: boolean
   accent?: string
+  accentImage?: { src: string; unoptimized?: boolean }
   featured?: boolean
 }
 
@@ -25,6 +26,7 @@ export default function ProductCard({
   currency,
   previewOnly = false,
   accent,
+  accentImage,
   featured = false,
   ...props
 }: React.PropsWithChildren<Props>) {
@@ -38,6 +40,7 @@ export default function ProductCard({
   return (
     <ProductInteraction
       accent={accent}
+      accentImage={accentImage}
       key={item.id}
       className={cn(
         'bg-card group relative flex h-full min-w-44 flex-col justify-between rounded-md border p-4',

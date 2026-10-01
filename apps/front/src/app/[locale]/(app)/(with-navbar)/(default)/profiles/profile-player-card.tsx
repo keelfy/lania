@@ -18,6 +18,7 @@ export default function ProfilePlayerCard({
   const profile = useSelectedProfile(profiles)
   return (
     <PlayerCard
+      interactiveSkin
       profileId={profile?.id}
       username={profile?.username}
       nameCosmetics={profile?.cosmetics.name}

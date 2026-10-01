@@ -64,7 +64,10 @@ export default async function ProfilePage({ searchParams, params }: Props) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'profiles' })
   const { seasons, selectedProfile } = await loadProfilePage(id)
-  if (!selectedProfile) notFound()
+  if (!selectedProfile) {
+    if (!id) return null
+    notFound()
+  }
 
   // The profile lists a status for every running season and every ended season it has access to.
   const accessSeasons = seasons.filter((season) =>

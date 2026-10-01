@@ -2,16 +2,26 @@
 
 import type { CSSProperties, ComponentProps, PointerEvent } from 'react'
 import { cn } from '@/lib/utils'
+import { useImageAccent } from './use-image-accent'
 import styles from './product-interaction.module.css'
 
-type Props = ComponentProps<'div'> & { accent?: string }
+type Props = ComponentProps<'div'> & {
+  accent?: string
+  // The accent is the average color of this image when no accent is given.
+  accentImage?: { src: string; unoptimized?: boolean }
+}
 
 export default function ProductInteraction({
-  accent = '#80cfc3',
+  accent,
+  accentImage,
   className,
   style,
   ...props
 }: Props) {
+  const imageAccent = useImageAccent(
+    accent ? undefined : accentImage?.src,
+    accentImage?.unoptimized,
+  )
   function onPointerMove(event: PointerEvent<HTMLDivElement>) {
     if (
       event.pointerType !== 'mouse' ||
@@ -28,7 +38,12 @@ export default function ProductInteraction({
     <div
       {...props}
       className={cn(styles.card, className)}
-      style={{ ...style, '--product-accent': accent } as CSSProperties}
+      style={
+        {
+          ...style,
+          '--product-accent': accent ?? imageAccent ?? '#80cfc3',
+        } as CSSProperties
+      }
       onPointerMove={onPointerMove}
     />
   )

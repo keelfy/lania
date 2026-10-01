@@ -22,6 +22,9 @@ import type { Profile } from '@/models/profile'
 type CatalogProfile = {
   username: string
   profileId?: string
+  // What the selected profile wears now, so a glyph can be tried with its name color and the other way round.
+  colors?: string[]
+  glyphImage?: string
   loading: boolean
   failed: boolean
 }
@@ -83,9 +86,11 @@ export function CatalogTryOn({
   const failed = current?.failed ?? false
   const username = selectedProfile?.username ?? (typedName.trim() || 'Steve')
   const profileId = selectedProfile?.id
+  const colors = selectedProfile?.cosmetics.name.colors?.colors
+  const glyphImage = selectedProfile?.cosmetics.name.glythPrefix?.image
   const value = useMemo(
-    () => ({ username, profileId, loading, failed }),
-    [username, profileId, loading, failed],
+    () => ({ username, profileId, colors, glyphImage, loading, failed }),
+    [username, profileId, colors, glyphImage, loading, failed],
   )
 
   return (
@@ -156,9 +161,11 @@ export function CatalogNamePreview({
   unoptimized?: boolean
 }) {
   const catalog = useCatalogProfile()
-  const username = catalog?.username
   const t = useTranslations('products.catalogTryOn')
   if (!catalog) return null
+  // The product is shown with what the profile already wears, the product itself wins.
+  const prefixSrc = prefix ?? catalog.glyphImage
+  const nameColors = colors ?? catalog.colors
 
   return (
     <div className="flex flex-col gap-1.5 rounded-md bg-black/20 px-3 py-3">
@@ -167,22 +174,44 @@ export function CatalogNamePreview({
         className="flex min-w-0 items-center gap-2 text-lg"
         data-catalog-name-preview
       >
-        {prefix && (
+        {prefixSrc && (
           <Image
-            src={prefix}
+            src={prefixSrc}
             alt=""
             width={24}
             height={24}
-            unoptimized={unoptimized}
+            unoptimized={unoptimized && prefixSrc === prefix}
             className="size-6 shrink-0 [image-rendering:pixelated]"
           />
         )}
         <McUsername
-          username={username}
-          colors={colors}
+          username={catalog.username}
+          colors={nameColors}
           className="min-w-0 leading-6 break-all"
         />
       </div>
+    </div>
+  )
+}
+
+// The glyph alone and big, since the name preview shows it at text size.
+export function GlyphShowcase({
+  src,
+  unoptimized,
+}: {
+  src: string
+  unoptimized?: boolean
+}) {
+  return (
+    <div className="flex aspect-[2/1] items-center justify-center rounded-md bg-black/20">
+      <Image
+        src={src}
+        alt=""
+        width={128}
+        height={128}
+        unoptimized={unoptimized}
+        className="size-24 [image-rendering:pixelated]"
+      />
     </div>
   )
 }
