@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils'
 import { PublicProfile } from '@/models/profile'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
+import type { CSSProperties } from 'react'
+import styles from './top-players.module.css'
 
 type Props = {
   locale: string
@@ -28,6 +30,8 @@ const PODIUM_COLORS = [
   'text-zinc-400', // silver
   'text-amber-700', // bronze
 ]
+
+const PODIUM_ACCENTS = ['#eab308', '#a1a1aa', '#d97706']
 
 export default async function TopPlayers({
   locale,
@@ -62,6 +66,7 @@ export default async function TopPlayers({
             const playtime = formatPlaytime(profile.playtime)
             const colors = profile.cosmetics.name.colors?.colors
             const accent = colors?.[0] ?? 'var(--primary)'
+            const podiumAccent = PODIUM_ACCENTS[index]
             const ratio =
               longestPlaytime > 0 ? profile.playtime / longestPlaytime : 0
             return (
@@ -71,10 +76,25 @@ export default async function TopPlayers({
               >
                 <PlayerProfileLink
                   href={href(profile)}
-                  accent={accent}
+                  accent={podiumAccent ?? accent}
                   aria-label={profile.username}
-                  className="flex h-full flex-col gap-2 rounded-xl border p-3"
+                  className={cn(
+                    'flex h-full flex-col gap-2 rounded-xl border p-3',
+                    podiumAccent && styles.podium,
+                  )}
+                  style={
+                    podiumAccent
+                      ? ({ '--podium-color': podiumAccent } as CSSProperties)
+                      : undefined
+                  }
                 >
+                  {podiumAccent && (
+                    <span aria-hidden className={styles.particles}>
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  )}
                   <div
                     className="flex min-w-0 items-center gap-2"
                     title={profile.username}
@@ -104,7 +124,10 @@ export default async function TopPlayers({
                     <div className="flex items-center gap-2">
                       <PlayerFace
                         player={profile}
-                        className="size-6 rounded-sm"
+                        className={cn(
+                          'size-6 rounded-sm',
+                          podiumAccent && styles.face,
+                        )}
                       />
                       <span className="text-muted-foreground text-sm tabular-nums">
                         {playtime.value.toLocaleString(locale)}{' '}

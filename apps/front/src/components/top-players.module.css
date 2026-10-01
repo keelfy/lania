@@ -1,0 +1,72 @@
+.podium {
+  border-color: color-mix(in srgb, var(--podium-color) 25%, var(--border));
+  background-image: radial-gradient(
+    ellipse at 100% 0%,
+    color-mix(in srgb, var(--podium-color) 8%, transparent),
+    transparent 70%
+  );
+}
+
+.face {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--podium-color) 22%, transparent);
+}
+
+/* Small square sparks keep the game's pixel character without covering the name. */
+.particles {
+  position: absolute;
+  right: 12px;
+  bottom: 24px;
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+}
+
+.particles > span {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  opacity: 0;
+  background: var(--podium-color);
+  box-shadow: 0 0 6px var(--podium-color);
+}
+
+.particles > span:nth-child(1) {
+  left: 2px;
+  bottom: 3px;
+  --spark-delay: 0ms;
+}
+
+.particles > span:nth-child(2) {
+  left: 14px;
+  bottom: 11px;
+  --spark-delay: 350ms;
+}
+
+.particles > span:nth-child(3) {
+  left: 24px;
+  bottom: 1px;
+  --spark-delay: 700ms;
+}
+
+@keyframes spark {
+  0%, 100% { opacity: 0; transform: translateY(0); }
+  35% { opacity: 0.75; }
+  80% { opacity: 0; transform: translateY(-10px); }
+}
+
+.podium:focus-visible .particles > span {
+  animation: spark 1.8s ease-out var(--spark-delay) infinite;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .podium:hover .particles > span {
+    animation: spark 1.8s ease-out var(--spark-delay) infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .podium:focus-visible .particles > span,
+  .podium:hover .particles > span {
+    animation: none;
+  }
+}
