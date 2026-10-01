@@ -9,6 +9,7 @@ import { getTranslations } from 'next-intl/server'
 
 type Props = React.ComponentProps<'section'> & {
   profileId: string
+  colors?: string[]
   locale: string
 }
 
@@ -55,6 +56,7 @@ function PixelGlyph({ pixels }: { pixels: string[] }) {
 // Stats of a profile in every season it played in.
 export default async function ProfileSeasonStats({
   profileId,
+  colors = [],
   locale,
   className,
   ...props
@@ -90,6 +92,9 @@ export default async function ProfileSeasonStats({
   )
 
   const total = playtimeText(stats?.totalPlaytime ?? 0)
+  const first = colors[0] ?? 'var(--primary)'
+  const last = colors[colors.length - 1] ?? first
+  const accent = `linear-gradient(to bottom, ${colors.length > 1 ? colors.join(', ') : `${first}, ${first}`})`
 
   const renderSeason = (season: SeasonStats) => {
     const playtime = playtimeText(season.playtime)
@@ -100,10 +105,24 @@ export default async function ProfileSeasonStats({
       <li
         key={season.seasonId}
         className={cn(
-          'flex flex-col gap-2 rounded-lg px-3 py-4',
-          running && 'bg-muted/50',
+          'relative flex flex-col gap-2 rounded-lg px-3 py-4',
+          running && 'pl-4',
         )}
+        style={
+          running
+            ? {
+                backgroundImage: `linear-gradient(110deg, color-mix(in srgb, ${first} 9%, transparent), color-mix(in srgb, ${last} 3%, transparent) 65%, transparent)`,
+              }
+            : undefined
+        }
       >
+        {running && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-4 left-0 w-0.5 rounded-full"
+            style={{ background: accent }}
+          />
+        )}
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -111,7 +130,14 @@ export default async function ProfileSeasonStats({
                 {season.seasonName}
               </span>
               {running && (
-                <Badge variant="outline" className="shrink-0">
+                <Badge
+                  variant="outline"
+                  className="shrink-0"
+                  style={{
+                    borderColor: `color-mix(in srgb, ${first} 30%, transparent)`,
+                    backgroundColor: `color-mix(in srgb, ${first} 10%, transparent)`,
+                  }}
+                >
                   {t('running')}
                 </Badge>
               )}

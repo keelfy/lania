@@ -155,7 +155,11 @@ export default async function CommunityProfilePage({
             </dl>
           </header>
 
-          <ProfileSeasonStats profileId={profile.id} locale={locale} />
+          <ProfileSeasonStats
+            profileId={profile.id}
+            colors={nameColors}
+            locale={locale}
+          />
 
           <Suspense fallback={null}>
             <ViolationsSection
