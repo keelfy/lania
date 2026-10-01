@@ -13,6 +13,8 @@ import (
 type PunishmentService interface {
 	// GetPlayerPunishments returns the bans and mutes of the players, newest first.
 	GetPlayerPunishments(ctx context.Context, mcUUIDs uuid.UUIDs) ([]*domain.Punishment, error)
+	// GetBannedPlayers returns the players with a ban in force now, each once.
+	GetBannedPlayers(ctx context.Context, mcUUIDs uuid.UUIDs) (uuid.UUIDs, error)
 }
 
 type punishmentService struct {
@@ -36,6 +38,10 @@ func (s *punishmentService) GetPlayerPunishments(ctx context.Context, mcUUIDs uu
 		punishments = append(punishments, toPunishment(record, nowMs))
 	}
 	return punishments, nil
+}
+
+func (s *punishmentService) GetBannedPlayers(ctx context.Context, mcUUIDs uuid.UUIDs) (uuid.UUIDs, error) {
+	return s.liteBansStorage.FindBannedPlayers(ctx, mcUUIDs, s.now().UnixMilli())
 }
 
 var punishmentKinds = map[string]domain.PunishmentKind{

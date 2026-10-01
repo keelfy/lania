@@ -225,6 +225,19 @@ func (h *profileHandler) onlineStatusInSeason(ctx context.Context, seasonID uuid
 	return onlineMap
 }
 
+// bannedInSeason tells who has a ban in force on the server of the season. Nobody is banned when the season has
+// no running server or the server cannot be reached.
+func (h *profileHandler) bannedInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) map[uuid.UUID]bool {
+	banned, err := h.profileService.GetBannedProfilesInSeason(ctx, mcUUIDs, seasonID)
+	if err != nil {
+		if !errors.Is(err, services.ErrOnlineUnavailable) {
+			logger.Errorf(ctx, "[SHELL] Failed to get banned players: %v", err)
+		}
+		return make(map[uuid.UUID]bool)
+	}
+	return banned
+}
+
 // skinsInSeason returns the skins players chose in game in the season. Nobody has one when the server cannot be
 // reached, so the site falls back to the licensed skins.
 func (h *profileHandler) skinsInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) map[uuid.UUID]*domain.PlayerSkin {
@@ -252,13 +265,14 @@ func minecraftUUIDsOf(profiles []*domain.Profile) uuid.UUIDs {
 	return mcUUIDs
 }
 
-// presentPublicProfiles adds online status, Mojang UUID and what the profiles wear in the season.
+// presentPublicProfiles adds online status, bans, Mojang UUID and what the profiles wear in the season.
 // Playtimes are in milliseconds.
 func (h *profileHandler) presentPublicProfiles(ctx context.Context, profiles []*domain.Profile, playtimes map[uuid.UUID]int64, seasonID uuid.UUID) []*responses.PublicProfile {
 	mcUUIDs := minecraftUUIDsOf(profiles)
 
 	onlineMap := h.onlineStatusInSeason(ctx, seasonID, mcUUIDs)
 	skins := h.skinsInSeason(ctx, seasonID, mcUUIDs)
+	banned := h.bannedInSeason(ctx, seasonID, mcUUIDs)
 
 	lastSeenMap, err := h.profileService.GetProfilesLastSeenInSeason(ctx, mcUUIDs, seasonID)
 	if err != nil {
@@ -291,6 +305,7 @@ func (h *profileHandler) presentPublicProfiles(ctx context.Context, profiles []*
 
 		res[i] = presenter.PresentPublicProfile(profile, nullableMojangUUID, presenter.PresentProfileCosmetics(cosmetics[profile.ID], utils.GetLocaleFromCtx(ctx)), onlineMap[profile.MinecraftUUID], playtimes[profile.MinecraftUUID], seenAt(lastSeenMap, profile.MinecraftUUID))
 		res[i].Skin = presenter.PresentPlayerSkin(skins[profile.MinecraftUUID])
+		res[i].IsBanned = banned[profile.MinecraftUUID]
 	}
 	return res
 }

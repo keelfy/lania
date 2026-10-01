@@ -45,6 +45,8 @@ type PublicProfile struct {
 	Skin *PlayerSkin `json:"skin,omitempty"`
 	// Verified: the owner proved in game that the licensed account is theirs.
 	Verified bool `json:"verified"`
+	// IsBanned: the player has a ban in force on the server of the season. False when the server is not asked.
+	IsBanned bool `json:"isBanned"`
 }
 
 type ProfileDetails struct {

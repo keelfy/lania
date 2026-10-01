@@ -57,6 +57,8 @@ export type PublicProfile = Profile & {
   isOnline: boolean
   playtime: number
   lastSeenAt?: number
+  // A ban is in force on the server of the season.
+  isBanned: boolean
 }
 
 export type ProfilesStats = {

@@ -43,6 +43,9 @@ type LiteBansStorage interface {
 	// FindPunishments returns the bans and mutes of the players, newest first, at most punishmentsPerKind of each
 	// kind. Bans by IP alone have no uuid and are left out.
 	FindPunishments(ctx context.Context, mcUUIDs uuid.UUIDs) ([]*PunishmentRecord, error)
+	// FindBannedPlayers returns the players with a ban in force at nowMs, each once. A ban is in force while it is
+	// active, has not run out and has no remover.
+	FindBannedPlayers(ctx context.Context, mcUUIDs uuid.UUIDs, nowMs int64) (uuid.UUIDs, error)
 }
 
 type liteBansStorage struct {
@@ -99,6 +102,39 @@ func (s *liteBansStorage) FindPunishments(ctx context.Context, mcUUIDs uuid.UUID
 		records = append(records, record)
 	}
 	return records, rows.Err()
+}
+
+const findBannedPlayers = `
+SELECT DISTINCT uuid
+FROM %s
+WHERE uuid IN (%s)
+	AND active <> 0
+	AND (until <= 0 OR until > ?)
+	AND COALESCE(removed_by_uuid, '') = ''
+	AND COALESCE(removed_by_name, '') = ''`
+
+func (s *liteBansStorage) FindBannedPlayers(ctx context.Context, mcUUIDs uuid.UUIDs, nowMs int64) (uuid.UUIDs, error) {
+	if len(mcUUIDs) == 0 {
+		return nil, nil
+	}
+
+	placeholders, uuids := uuidArgs(mcUUIDs)
+	query := fmt.Sprintf(findBannedPlayers, liteBansTable(PunishmentKindBan), placeholders)
+	rows, err := s.db.QueryContext(ctx, query, append(uuids, nowMs)...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var banned uuid.UUIDs
+	for rows.Next() {
+		var mcUUID uuid.UUID
+		if err := rows.Scan(&mcUUID); err != nil {
+			return nil, err
+		}
+		banned = append(banned, mcUUID)
+	}
+	return banned, rows.Err()
 }
 
 func liteBansTable(name string) string {

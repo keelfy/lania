@@ -51,6 +51,9 @@ type ProfileService interface {
 	// those given under its old UUIDs, newest first. It fails with ErrOnlineUnavailable when the season is over
 	// or has no server.
 	GetProfilePunishmentsInSeason(ctx context.Context, profile *domain.Profile, seasonID uuid.UUID) ([]*domain.Punishment, error)
+	// GetBannedProfilesInSeason tells which of the current UUIDs have a ban in force on the server of the season,
+	// also a ban given under an old UUID. It fails like GetProfilePunishmentsInSeason.
+	GetBannedProfilesInSeason(ctx context.Context, mcUUIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]bool, error)
 }
 
 type profileService struct {
@@ -387,4 +390,28 @@ func (s *profileService) GetProfilePunishmentsInSeason(ctx context.Context, prof
 	}
 
 	return s.minecraftService.GetPlayerPunishmentsInSeason(ctx, seasonID, mcUUIDs)
+}
+
+func (s *profileService) GetBannedProfilesInSeason(ctx context.Context, mcUUIDs uuid.UUIDs, seasonID uuid.UUID) (map[uuid.UUID]bool, error) {
+	legacy, err := s.storage.Queries().FindLegacyMinecraftUUIDs(ctx, mcUUIDs)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to find legacy minecraft uuids", err)
+	}
+	asked := append(uuid.UUIDs{}, mcUUIDs...)
+	for legacyUUID := range legacy {
+		asked = append(asked, legacyUUID)
+	}
+
+	banned, err := s.minecraftService.GetBannedPlayersInSeason(ctx, seasonID, asked)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[uuid.UUID]bool, len(banned))
+	for _, mcUUID := range banned {
+		if current, ok := legacy[mcUUID]; ok {
+			mcUUID = current
+		}
+		res[mcUUID] = true
+	}
+	return res, nil
 }

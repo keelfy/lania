@@ -343,6 +343,95 @@ func (x *GetPlayerPunishmentsResponse) GetPunishments() []*Punishment {
 	return nil
 }
 
+type GetBannedPlayersRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	MinecraftUuids []string               `protobuf:"bytes,1,rep,name=minecraft_uuids,json=minecraftUuids,proto3" json:"minecraft_uuids,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GetBannedPlayersRequest) Reset() {
+	*x = GetBannedPlayersRequest{}
+	mi := &file_lania_shell_v1_punishment_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBannedPlayersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBannedPlayersRequest) ProtoMessage() {}
+
+func (x *GetBannedPlayersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_lania_shell_v1_punishment_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBannedPlayersRequest.ProtoReflect.Descriptor instead.
+func (*GetBannedPlayersRequest) Descriptor() ([]byte, []int) {
+	return file_lania_shell_v1_punishment_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetBannedPlayersRequest) GetMinecraftUuids() []string {
+	if x != nil {
+		return x.MinecraftUuids
+	}
+	return nil
+}
+
+type GetBannedPlayersResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The requested players with a ban in force, each once.
+	MinecraftUuids []string `protobuf:"bytes,1,rep,name=minecraft_uuids,json=minecraftUuids,proto3" json:"minecraft_uuids,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GetBannedPlayersResponse) Reset() {
+	*x = GetBannedPlayersResponse{}
+	mi := &file_lania_shell_v1_punishment_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBannedPlayersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBannedPlayersResponse) ProtoMessage() {}
+
+func (x *GetBannedPlayersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_lania_shell_v1_punishment_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBannedPlayersResponse.ProtoReflect.Descriptor instead.
+func (*GetBannedPlayersResponse) Descriptor() ([]byte, []int) {
+	return file_lania_shell_v1_punishment_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetBannedPlayersResponse) GetMinecraftUuids() []string {
+	if x != nil {
+		return x.MinecraftUuids
+	}
+	return nil
+}
+
 var File_lania_shell_v1_punishment_proto protoreflect.FileDescriptor
 
 const file_lania_shell_v1_punishment_proto_rawDesc = "" +
@@ -372,7 +461,11 @@ const file_lania_shell_v1_punishment_proto_rawDesc = "" +
 	"\x1bGetPlayerPunishmentsRequest\x12'\n" +
 	"\x0fminecraft_uuids\x18\x01 \x03(\tR\x0eminecraftUuids\"\\\n" +
 	"\x1cGetPlayerPunishmentsResponse\x12<\n" +
-	"\vpunishments\x18\x01 \x03(\v2\x1a.lania.shell.v1.PunishmentR\vpunishments*d\n" +
+	"\vpunishments\x18\x01 \x03(\v2\x1a.lania.shell.v1.PunishmentR\vpunishments\"B\n" +
+	"\x17GetBannedPlayersRequest\x12'\n" +
+	"\x0fminecraft_uuids\x18\x01 \x03(\tR\x0eminecraftUuids\"C\n" +
+	"\x18GetBannedPlayersResponse\x12'\n" +
+	"\x0fminecraft_uuids\x18\x01 \x03(\tR\x0eminecraftUuids*d\n" +
 	"\x0ePunishmentKind\x12\x1f\n" +
 	"\x1bPUNISHMENT_KIND_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13PUNISHMENT_KIND_BAN\x10\x01\x12\x18\n" +
@@ -381,9 +474,10 @@ const file_lania_shell_v1_punishment_proto_rawDesc = "" +
 	"\x1dPUNISHMENT_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18PUNISHMENT_STATUS_ACTIVE\x10\x01\x12\x1d\n" +
 	"\x19PUNISHMENT_STATUS_EXPIRED\x10\x02\x12\x1d\n" +
-	"\x19PUNISHMENT_STATUS_REMOVED\x10\x032\x86\x01\n" +
+	"\x19PUNISHMENT_STATUS_REMOVED\x10\x032\xed\x01\n" +
 	"\x11PunishmentService\x12q\n" +
-	"\x14GetPlayerPunishments\x12+.lania.shell.v1.GetPlayerPunishmentsRequest\x1a,.lania.shell.v1.GetPlayerPunishmentsResponseB\xbf\x01\n" +
+	"\x14GetPlayerPunishments\x12+.lania.shell.v1.GetPlayerPunishmentsRequest\x1a,.lania.shell.v1.GetPlayerPunishmentsResponse\x12e\n" +
+	"\x10GetBannedPlayers\x12'.lania.shell.v1.GetBannedPlayersRequest\x1a(.lania.shell.v1.GetBannedPlayersResponseB\xbf\x01\n" +
 	"\x12com.lania.shell.v1B\x0fPunishmentProtoP\x01Z>github.com/lania-smp/shell/internal/gen/lania/shell/v1;shellv1\xa2\x02\x03LSX\xaa\x02\x0eLania.Shell.V1\xca\x02\x0eLania\\Shell\\V1\xe2\x02\x1aLania\\Shell\\V1\\GPBMetadata\xea\x02\x10Lania::Shell::V1b\x06proto3"
 
 var (
@@ -399,22 +493,26 @@ func file_lania_shell_v1_punishment_proto_rawDescGZIP() []byte {
 }
 
 var file_lania_shell_v1_punishment_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_lania_shell_v1_punishment_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_lania_shell_v1_punishment_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_lania_shell_v1_punishment_proto_goTypes = []any{
 	(PunishmentKind)(0),                  // 0: lania.shell.v1.PunishmentKind
 	(PunishmentStatus)(0),                // 1: lania.shell.v1.PunishmentStatus
 	(*Punishment)(nil),                   // 2: lania.shell.v1.Punishment
 	(*GetPlayerPunishmentsRequest)(nil),  // 3: lania.shell.v1.GetPlayerPunishmentsRequest
 	(*GetPlayerPunishmentsResponse)(nil), // 4: lania.shell.v1.GetPlayerPunishmentsResponse
+	(*GetBannedPlayersRequest)(nil),      // 5: lania.shell.v1.GetBannedPlayersRequest
+	(*GetBannedPlayersResponse)(nil),     // 6: lania.shell.v1.GetBannedPlayersResponse
 }
 var file_lania_shell_v1_punishment_proto_depIdxs = []int32{
 	0, // 0: lania.shell.v1.Punishment.kind:type_name -> lania.shell.v1.PunishmentKind
 	1, // 1: lania.shell.v1.Punishment.status:type_name -> lania.shell.v1.PunishmentStatus
 	2, // 2: lania.shell.v1.GetPlayerPunishmentsResponse.punishments:type_name -> lania.shell.v1.Punishment
 	3, // 3: lania.shell.v1.PunishmentService.GetPlayerPunishments:input_type -> lania.shell.v1.GetPlayerPunishmentsRequest
-	4, // 4: lania.shell.v1.PunishmentService.GetPlayerPunishments:output_type -> lania.shell.v1.GetPlayerPunishmentsResponse
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
+	5, // 4: lania.shell.v1.PunishmentService.GetBannedPlayers:input_type -> lania.shell.v1.GetBannedPlayersRequest
+	4, // 5: lania.shell.v1.PunishmentService.GetPlayerPunishments:output_type -> lania.shell.v1.GetPlayerPunishmentsResponse
+	6, // 6: lania.shell.v1.PunishmentService.GetBannedPlayers:output_type -> lania.shell.v1.GetBannedPlayersResponse
+	5, // [5:7] is the sub-list for method output_type
+	3, // [3:5] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
 	3, // [3:3] is the sub-list for extension extendee
 	0, // [0:3] is the sub-list for field type_name
@@ -432,7 +530,7 @@ func file_lania_shell_v1_punishment_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_lania_shell_v1_punishment_proto_rawDesc), len(file_lania_shell_v1_punishment_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

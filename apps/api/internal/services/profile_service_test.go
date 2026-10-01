@@ -336,3 +336,27 @@ func TestGetProfilePunishmentsInSeason(t *testing.T) {
 		}
 	})
 }
+
+type stubBanMinecraftService struct {
+	MinecraftService
+	banned uuid.UUIDs
+}
+
+func (s *stubBanMinecraftService) GetBannedPlayersInSeason(context.Context, uuid.UUID, uuid.UUIDs) (uuid.UUIDs, error) {
+	return s.banned, nil
+}
+
+func TestGetBannedProfilesInSeason(t *testing.T) {
+	bannedNow, bannedBefore, clean, legacy := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	queries := &stubLegacyQueries{legacy: map[uuid.UUID]uuid.UUID{legacy: bannedBefore}}
+	minecraft := &stubBanMinecraftService{banned: uuid.UUIDs{bannedNow, legacy}}
+	service := &profileService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
+
+	got, err := service.GetBannedProfilesInSeason(context.Background(), uuid.UUIDs{bannedNow, bannedBefore, clean}, uuid.New())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || !got[bannedNow] || !got[bannedBefore] || got[clean] {
+		t.Errorf("banned = %v, want the current UUID and the one banned under its old UUID", got)
+	}
+}

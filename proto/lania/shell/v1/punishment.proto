@@ -7,6 +7,8 @@ service PunishmentService {
   // GetPlayerPunishments returns the bans and mutes of the players, newest first, at most 50 of each kind. A ban by
   // IP alone has no player, so it is never returned.
   rpc GetPlayerPunishments(GetPlayerPunishmentsRequest) returns (GetPlayerPunishmentsResponse);
+  // GetBannedPlayers tells which of the players have a ban in force now.
+  rpc GetBannedPlayers(GetBannedPlayersRequest) returns (GetBannedPlayersResponse);
 }
 
 enum PunishmentKind {
@@ -51,4 +53,13 @@ message GetPlayerPunishmentsRequest {
 
 message GetPlayerPunishmentsResponse {
   repeated Punishment punishments = 1;
+}
+
+message GetBannedPlayersRequest {
+  repeated string minecraft_uuids = 1;
+}
+
+message GetBannedPlayersResponse {
+  // The requested players with a ban in force, each once.
+  repeated string minecraft_uuids = 1;
 }

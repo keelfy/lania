@@ -54,6 +54,8 @@ type ShellAPI interface {
 	ClearPlayerSkin(ctx context.Context, mcUUID uuid.UUID) error
 	// GetPlayerPunishments returns the LiteBans bans and mutes of the players, newest first.
 	GetPlayerPunishments(ctx context.Context, mcUUIDs uuid.UUIDs) ([]*domain.Punishment, error)
+	// GetBannedPlayers returns the players with a LiteBans ban in force now.
+	GetBannedPlayers(ctx context.Context, mcUUIDs uuid.UUIDs) (uuid.UUIDs, error)
 }
 
 // ShellPool gives the ShellAPI of a season by the address of its shell service.
@@ -392,6 +394,21 @@ func (api *shellAPI) GetPlayerPunishments(ctx context.Context, mcUUIDs uuid.UUID
 		})
 	}
 	return punishments, nil
+}
+
+func (api *shellAPI) GetBannedPlayers(ctx context.Context, mcUUIDs uuid.UUIDs) (uuid.UUIDs, error) {
+	res, err := api.punishment.GetBannedPlayers(ctx, &shellv1.GetBannedPlayersRequest{MinecraftUuids: mcUUIDs.Strings()})
+	if err != nil {
+		return nil, err
+	}
+
+	banned := make(uuid.UUIDs, len(res.GetMinecraftUuids()))
+	for i, value := range res.GetMinecraftUuids() {
+		if banned[i], err = uuid.Parse(value); err != nil {
+			return nil, err
+		}
+	}
+	return banned, nil
 }
 
 func millisToTime(ms *int64) *time.Time {

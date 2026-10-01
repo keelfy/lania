@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	PunishmentService_GetPlayerPunishments_FullMethodName = "/lania.shell.v1.PunishmentService/GetPlayerPunishments"
+	PunishmentService_GetBannedPlayers_FullMethodName     = "/lania.shell.v1.PunishmentService/GetBannedPlayers"
 )
 
 // PunishmentServiceClient is the client API for PunishmentService service.
@@ -31,6 +32,8 @@ type PunishmentServiceClient interface {
 	// GetPlayerPunishments returns the bans and mutes of the players, newest first, at most 50 of each kind. A ban by
 	// IP alone has no player, so it is never returned.
 	GetPlayerPunishments(ctx context.Context, in *GetPlayerPunishmentsRequest, opts ...grpc.CallOption) (*GetPlayerPunishmentsResponse, error)
+	// GetBannedPlayers tells which of the players have a ban in force now.
+	GetBannedPlayers(ctx context.Context, in *GetBannedPlayersRequest, opts ...grpc.CallOption) (*GetBannedPlayersResponse, error)
 }
 
 type punishmentServiceClient struct {
@@ -51,6 +54,16 @@ func (c *punishmentServiceClient) GetPlayerPunishments(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *punishmentServiceClient) GetBannedPlayers(ctx context.Context, in *GetBannedPlayersRequest, opts ...grpc.CallOption) (*GetBannedPlayersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetBannedPlayersResponse)
+	err := c.cc.Invoke(ctx, PunishmentService_GetBannedPlayers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PunishmentServiceServer is the server API for PunishmentService service.
 // All implementations must embed UnimplementedPunishmentServiceServer
 // for forward compatibility.
@@ -60,6 +73,8 @@ type PunishmentServiceServer interface {
 	// GetPlayerPunishments returns the bans and mutes of the players, newest first, at most 50 of each kind. A ban by
 	// IP alone has no player, so it is never returned.
 	GetPlayerPunishments(context.Context, *GetPlayerPunishmentsRequest) (*GetPlayerPunishmentsResponse, error)
+	// GetBannedPlayers tells which of the players have a ban in force now.
+	GetBannedPlayers(context.Context, *GetBannedPlayersRequest) (*GetBannedPlayersResponse, error)
 	mustEmbedUnimplementedPunishmentServiceServer()
 }
 
@@ -72,6 +87,9 @@ type UnimplementedPunishmentServiceServer struct{}
 
 func (UnimplementedPunishmentServiceServer) GetPlayerPunishments(context.Context, *GetPlayerPunishmentsRequest) (*GetPlayerPunishmentsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPlayerPunishments not implemented")
+}
+func (UnimplementedPunishmentServiceServer) GetBannedPlayers(context.Context, *GetBannedPlayersRequest) (*GetBannedPlayersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetBannedPlayers not implemented")
 }
 func (UnimplementedPunishmentServiceServer) mustEmbedUnimplementedPunishmentServiceServer() {}
 func (UnimplementedPunishmentServiceServer) testEmbeddedByValue()                           {}
@@ -112,6 +130,24 @@ func _PunishmentService_GetPlayerPunishments_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PunishmentService_GetBannedPlayers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBannedPlayersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PunishmentServiceServer).GetBannedPlayers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PunishmentService_GetBannedPlayers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PunishmentServiceServer).GetBannedPlayers(ctx, req.(*GetBannedPlayersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PunishmentService_ServiceDesc is the grpc.ServiceDesc for PunishmentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -122,6 +158,10 @@ var PunishmentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPlayerPunishments",
 			Handler:    _PunishmentService_GetPlayerPunishments_Handler,
+		},
+		{
+			MethodName: "GetBannedPlayers",
+			Handler:    _PunishmentService_GetBannedPlayers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -73,6 +73,9 @@ type MinecraftService interface {
 	// GetPlayerPunishmentsInSeason returns the bans and mutes the players got on the server of the season, newest
 	// first. It fails with ErrOnlineUnavailable when the season is over or has no server.
 	GetPlayerPunishmentsInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) ([]*domain.Punishment, error)
+	// GetBannedPlayersInSeason returns the players with a ban in force on the server of the season. It fails with
+	// ErrOnlineUnavailable when the season is over or has no server.
+	GetBannedPlayersInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) (uuid.UUIDs, error)
 }
 
 type minecraftService struct {
@@ -374,4 +377,16 @@ func (s *minecraftService) GetPlayerPunishmentsInSeason(ctx context.Context, sea
 		return nil, utils.NewInternalServerError("failed to get player punishments", err)
 	}
 	return punishments, nil
+}
+
+func (s *minecraftService) GetBannedPlayersInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) (uuid.UUIDs, error) {
+	api, err := s.onlineShell(ctx, seasonID)
+	if err != nil {
+		return nil, err
+	}
+	banned, err := api.GetBannedPlayers(ctx, mcUUIDs)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get banned players", err)
+	}
+	return banned, nil
 }

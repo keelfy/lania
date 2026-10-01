@@ -35,6 +35,19 @@ func (h *PunishmentHandler) GetPlayerPunishments(ctx context.Context, req *shell
 	return res, nil
 }
 
+func (h *PunishmentHandler) GetBannedPlayers(ctx context.Context, req *shellv1.GetBannedPlayersRequest) (*shellv1.GetBannedPlayersResponse, error) {
+	mcUUIDs, err := parseUUIDs(req.GetMinecraftUuids())
+	if err != nil {
+		return nil, err
+	}
+
+	banned, err := h.punishmentService.GetBannedPlayers(ctx, mcUUIDs)
+	if err != nil {
+		return nil, internalError(err)
+	}
+	return &shellv1.GetBannedPlayersResponse{MinecraftUuids: banned.Strings()}, nil
+}
+
 var punishmentKinds = map[domain.PunishmentKind]shellv1.PunishmentKind{
 	domain.PunishmentKindBan:  shellv1.PunishmentKind_PUNISHMENT_KIND_BAN,
 	domain.PunishmentKindMute: shellv1.PunishmentKind_PUNISHMENT_KIND_MUTE,
