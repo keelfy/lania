@@ -1,0 +1,13 @@
+.confirmed {
+  display: inline-flex;
+  animation: confirm 180ms ease-out;
+}
+
+@keyframes confirm {
+  from { transform: scale(0.7); opacity: 0.5; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirmed { animation: none; }
+}

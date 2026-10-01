@@ -7,6 +7,8 @@ import { Currency } from '@/lib/currency'
 type Props = React.ComponentProps<'div'> & {
   item: Product<UpgradeProductMetadata>
   currency: Currency
+  previewOnly?: boolean
+  featured?: boolean
 }
 
 const ICONS = {

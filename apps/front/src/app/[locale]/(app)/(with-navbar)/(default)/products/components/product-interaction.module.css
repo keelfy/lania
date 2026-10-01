@@ -1,0 +1,27 @@
+.card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 180ms ease, border-color 180ms ease;
+}
+
+.card:focus-within::after {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--product-accent) 65%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover::after {
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--product-accent) 45%, transparent);
+    background: radial-gradient(240px circle at var(--light-x, 50%) var(--light-y, 30%), color-mix(in srgb, var(--product-accent) 8%, transparent), transparent 75%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card::after { transition: none; }
+}

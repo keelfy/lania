@@ -8,10 +8,14 @@ import { ArrowUpRightIcon, SparklesIcon } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
 import { useTranslations } from 'next-intl'
 import React from 'react'
+import ProductInteraction from './product-interaction'
 
 type Props = React.ComponentProps<'div'> & {
   item: Product<ProductMetadata>
   currency: Currency
+  previewOnly?: boolean
+  accent?: string
+  featured?: boolean
 }
 
 export default function ProductCard({
@@ -19,6 +23,9 @@ export default function ProductCard({
   children,
   className,
   currency,
+  previewOnly = false,
+  accent,
+  featured = false,
   ...props
 }: React.PropsWithChildren<Props>) {
   const t = useTranslations('products.card')
@@ -29,45 +36,69 @@ export default function ProductCard({
     new Date(item.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 7)
 
   return (
-    <div
+    <ProductInteraction
+      accent={accent}
       key={item.id}
       className={cn(
         'bg-card group relative flex h-full min-w-44 flex-col justify-between rounded-md border p-4',
+        featured &&
+          'border-primary/25 bg-primary/5 md:flex-row md:items-center md:gap-6 md:p-6',
         className,
       )}
       {...props}
     >
-      <div className="space-y-3">
+      <div className="min-w-0 flex-1 space-y-3">
         {isNew && (
           <Badge
-            className="absolute -top-2 -right-2 shadow-sm transition-transform group-hover:-translate-x-1 group-hover:scale-105"
+            className="absolute -top-2 right-2 shadow-sm"
             variant="secondary"
           >
-            <SparklesIcon className="size-3 animate-pulse" />
+            <SparklesIcon className="size-3" />
             {t('new')}
           </Badge>
         )}
         {children}
         <p className="text-muted-foreground text-sm">{item.description}</p>
       </div>
-      <div className="mt-3 space-y-3">
+      <div
+        className={cn(
+          'mt-3 space-y-3',
+          featured && 'md:mt-0 md:w-52 md:shrink-0',
+        )}
+      >
         <p className="text-xl font-bold">
           {item.price} {CURRENCY_SYMBOLS[currency]}
         </p>
         <div className="flex items-center justify-between gap-2">
-          <Button variant="secondary" size="default" className="flex-1" asChild>
-            <Link href={`/products/${item.category}/${item.id}`}>
-              {t('open')}
-              <ArrowUpRightIcon className="size-4" />
-            </Link>
+          <Button
+            variant="secondary"
+            size="icon"
+            title={t('open')}
+            aria-label={`${t('open')}: ${item.name}`}
+            disabled={previewOnly}
+            asChild={!previewOnly}
+          >
+            {previewOnly ? (
+              <>
+                <span className="sr-only">{t('open')}</span>
+                <ArrowUpRightIcon className="size-4" />
+              </>
+            ) : (
+              <Link href={`/products/${item.category}/${item.id}`}>
+                <span className="sr-only">{t('open')}</span>
+                <ArrowUpRightIcon className="size-4" />
+              </Link>
+            )}
           </Button>
           <AddToBasketButton
             productId={item.id}
             profileId={undefined}
-            showText={false}
+            showText
+            className="order-first min-w-0 flex-1"
+            disabled={previewOnly}
           />
         </div>
       </div>
-    </div>
+    </ProductInteraction>
   )
 }

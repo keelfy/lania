@@ -12,6 +12,8 @@ import { useTranslations } from 'next-intl'
 import { usePathname, useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
+import styles from './purchase-feedback.module.css'
+import { useCatalogProfile } from './catalog-try-on'
 
 type Props = React.ComponentProps<typeof Button> & {
   productId: string
@@ -26,6 +28,10 @@ export default function AddToBasketButton({
   disabled,
   ...props
 }: Props) {
+  const catalog = useCatalogProfile()
+  const recipientId = profileId ?? catalog?.profileId
+  const recipientUnavailable =
+    profileId === undefined && !!catalog && (catalog.loading || catalog.failed)
   const [isProfilesLoading, startProfilesTransition] = React.useTransition()
   const [isAddingToBasket, startAddingToBasket] = React.useTransition()
 
@@ -50,26 +56,18 @@ export default function AddToBasketButton({
         }
       })
     },
-    [addItem, removeItem, refresh, startAddingToBasket],
+    [addItem, removeItem, refresh, startAddingToBasket, t],
   )
 
-  const notInBasket = React.useMemo(
-    () =>
-      !items.some(
-        (item) =>
-          item.productId === productId &&
-          (profileId ? item.profileId === profileId : true),
-      ),
-    [items, productId, profileId],
+  const notInBasket = !items.some(
+    (item) =>
+      item.productId === productId &&
+      (recipientId ? item.profileId === recipientId : true),
   )
-
-  const Icon = React.useMemo(
-    () => (notInBasket ? ShoppingCartIcon : CheckIcon),
-    [notInBasket],
-  )
+  const pending = isProfilesLoading || isAddingToBasket
 
   const onClick = () => {
-    if (!notInBasket) {
+    if (!notInBasket || recipientUnavailable) {
       return
     }
 
@@ -79,9 +77,9 @@ export default function AddToBasketButton({
     }
 
     startProfilesTransition(async () => {
-      let profileIdToUse = profileId
+      let profileIdToUse = recipientId
 
-      if (!profileIdToUse && session?.active == true) {
+      if (!profileIdToUse && !catalog && session?.active == true) {
         await getUserProfiles(clientApiFetcher)
           .then((profiles) => {
             if (profiles.length > 0) {
@@ -105,13 +103,30 @@ export default function AddToBasketButton({
   }
 
   return (
-    <Button onClick={onClick} disabled={!notInBasket || disabled} {...props}>
-      {isProfilesLoading || isAddingToBasket ? (
-        <Loader2Icon className="size-4 animate-spin" />
+    <Button
+      {...props}
+      onClick={onClick}
+      aria-busy={pending}
+      title={notInBasket ? t('buy') : t('inTheBasket')}
+      disabled={recipientUnavailable || pending || !notInBasket || disabled}
+    >
+      {pending ? (
+        <Loader2Icon
+          aria-hidden="true"
+          className="size-4 animate-spin motion-reduce:animate-none"
+        />
+      ) : notInBasket ? (
+        <ShoppingCartIcon aria-hidden="true" className="size-4" />
       ) : (
-        <Icon className="size-4" />
+        <span className={styles.confirmed}>
+          <CheckIcon aria-hidden="true" className="size-4" />
+        </span>
       )}
-      <span className={cn(!showText && 'sr-only')}>
+      <span
+        aria-live="polite"
+        aria-atomic="true"
+        className={cn(!showText && 'sr-only')}
+      >
         {notInBasket ? t('buy') : t('inTheBasket')}
       </span>
     </Button>

@@ -196,6 +196,17 @@
         "message": "Hi all! How do you like my name?",
         "reply": "Looks great"
       }
+    },
+    "catalogTryOn": {
+      "title": "Try it on your name",
+      "hint": "The colors and glyphs below show how your name will look.",
+      "username": "Your name",
+      "preview": "Your name with this look",
+      "profileTitle": "Choose your game profile",
+      "profileHint": "Preview the selected profile’s name. Products will be added to the basket for this profile.",
+      "profile": "Game profile",
+      "loading": "Loading profiles…",
+      "profilesError": "Could not load profiles. Reload the page to choose who receives the product."
     }
   },
   "seasonSelect": {
@@ -227,7 +238,8 @@
       "season": "Season",
       "quantity": "1 pc.",
       "purchased": "Already in stock for this profile"
-    }
+    },
+    "itemsCount": "Items in basket: {count}"
   },
   "currencies": {
     "names": {
