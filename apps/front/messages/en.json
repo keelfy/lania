@@ -650,11 +650,14 @@
         "title": "Stats by season",
         "total": "Total across servers",
         "deaths": "{count, plural, one {<n>#</n> death} other {<n>#</n> deaths}}",
-        "mobKills": "{count, plural, one {<n>#</n> mob killed} other {<n>#</n> mobs killed}}",
-        "running": "Running now",
+        "mobKills": "{count, plural, one {<n>#</n> mob} other {<n>#</n> mobs}}",
+        "running": "Current",
         "since": "Since {date}",
         "empty": "This player has not spent time on the servers yet.",
-        "loadError": "Could not load the statistics"
+        "loadError": "Could not load the statistics",
+        "summary": "<n>{value}</n> {unit} across {count, plural, one {# season} other {# seasons}}",
+        "showAll": "All seasons · {count}",
+        "showLess": "Show fewer seasons"
       }
     },
     "sort": {

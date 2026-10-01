@@ -3,41 +3,13 @@ import { getProfileStats } from '@/lib/api-endpoints'
 import { formatPlaytime } from '@/lib/playtime'
 import { serverApiFetcher } from '@/lib/server'
 import { cn } from '@/lib/utils'
+import type { ProfileSeasonStats as SeasonStats } from '@/models/profile'
+import { ChevronDownIcon } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 
 type Props = React.ComponentProps<'section'> & {
   profileId: string
-  // The name colors of the profile. The playtime bars are drawn in them.
-  colors?: string[]
   locale: string
-}
-
-// The bar is cut into blocks, like the experience bar in the game.
-const BLOCKS_MASK =
-  'repeating-linear-gradient(to right, #000 0 6px, transparent 6px 8px)'
-
-// The gradient spans the whole track, so the same color always means the same place on the bar.
-// A bar only shows the left part of it.
-function PlaytimeBar({ ratio, colors }: { ratio: number; colors: string[] }) {
-  const fill =
-    colors.length > 1
-      ? `linear-gradient(to right, ${colors.join(', ')})`
-      : (colors[0] ?? 'var(--primary)')
-  return (
-    <div
-      aria-hidden
-      className="bg-muted h-3 w-full"
-      style={{ maskImage: BLOCKS_MASK, WebkitMaskImage: BLOCKS_MASK }}
-    >
-      <div
-        className="h-full"
-        style={{
-          background: fill,
-          clipPath: `inset(0 ${(1 - ratio) * 100}% 0 0)`,
-        }}
-      />
-    </div>
-  )
 }
 
 // Glyphs are drawn on a pixel grid like the game's own icons. '#' is a filled pixel.
@@ -73,7 +45,7 @@ function PixelGlyph({ pixels }: { pixels: string[] }) {
       aria-hidden
       viewBox="0 0 8 8"
       shapeRendering="crispEdges"
-      className="size-3 shrink-0 fill-current"
+      className="size-3.5 shrink-0 fill-current"
     >
       <path d={path} />
     </svg>
@@ -83,7 +55,6 @@ function PixelGlyph({ pixels }: { pixels: string[] }) {
 // Stats of a profile in every season it played in.
 export default async function ProfileSeasonStats({
   profileId,
-  colors = [],
   locale,
   className,
   ...props
@@ -118,20 +89,79 @@ export default async function ProfileSeasonStats({
     <span className="text-foreground font-semibold tabular-nums">{chunks}</span>
   )
 
-  const longest = Math.max(...(stats?.seasons.map((s) => s.playtime) ?? [0]))
   const total = playtimeText(stats?.totalPlaytime ?? 0)
 
+  const renderSeason = (season: SeasonStats) => {
+    const playtime = playtimeText(season.playtime)
+    const running = season.isActive && season.endDate === undefined
+    const hasCounters = season.deaths > 0 || season.mobKills > 0
+
+    return (
+      <li
+        key={season.seasonId}
+        className={cn(
+          'flex flex-col gap-2 rounded-lg px-3 py-4',
+          running && 'bg-muted/50',
+        )}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold break-words">
+                {season.seasonName}
+              </span>
+              {running && (
+                <Badge variant="outline" className="shrink-0">
+                  {t('running')}
+                </Badge>
+              )}
+            </div>
+            <span className="text-muted-foreground text-sm">
+              {season.endDate === undefined
+                ? t('since', { date: month(season.startDate) })
+                : `${month(season.startDate)} — ${month(season.endDate)}`}
+            </span>
+          </div>
+          <span className="shrink-0 text-lg font-semibold tabular-nums">
+            {playtime.value.toLocaleString(locale)}
+            <span className="text-muted-foreground ml-1 text-sm font-normal">
+              {playtime.unit}
+            </span>
+          </span>
+        </div>
+        {hasCounters && (
+          <p className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <span className="flex items-center gap-1.5">
+              <PixelGlyph pixels={SKULL} />
+              <span>
+                {t.rich('deaths', { count: season.deaths, n: count })}
+              </span>
+            </span>
+            <span aria-hidden>·</span>
+            <span className="flex items-center gap-1.5">
+              <PixelGlyph pixels={SWORD} />
+              <span>
+                {t.rich('mobKills', { count: season.mobKills, n: count })}
+              </span>
+            </span>
+          </p>
+        )}
+      </li>
+    )
+  }
+
   return (
-    <section className={cn('flex flex-col gap-2', className)} {...props}>
-      <div className="flex items-baseline justify-between gap-4">
+    <section className={cn('flex flex-col gap-4', className)} {...props}>
+      <div className="flex flex-col gap-1">
         <h2 className="text-xl font-bold tracking-tight">{t('title')}</h2>
         {stats && stats.seasons.length > 0 && (
           <p className="text-muted-foreground text-sm">
-            {t('total')}&nbsp;
-            <span className="text-foreground font-semibold tabular-nums">
-              {total.value}
-            </span>
-            &nbsp;{total.unit}
+            {t.rich('summary', {
+              value: total.value,
+              unit: total.unit,
+              count: stats.seasons.length,
+              n: count,
+            })}
           </p>
         )}
       </div>
@@ -141,72 +171,27 @@ export default async function ProfileSeasonStats({
       ) : stats.seasons.length === 0 ? (
         <p className="text-muted-foreground py-4 text-sm">{t('empty')}</p>
       ) : (
-        <ol>
-          {stats.seasons.map((season) => {
-            const playtime = playtimeText(season.playtime)
-            const running = season.isActive && season.endDate === undefined
-            // Without counters the playtime bar already closes the entry, a divider under it would double the line.
-            const hasCounters = season.deaths > 0 || season.mobKills > 0
-            return (
-              <li
-                key={season.seasonId}
-                className={cn(
-                  'flex flex-col gap-2 py-3',
-                  hasCounters && 'not-last:border-b',
-                )}
-              >
-                <div className="flex items-baseline justify-between gap-4">
-                  <div className="flex min-w-0 flex-col">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate font-semibold">
-                        {season.seasonName}
-                      </span>
-                      {running && (
-                        <Badge variant="outline" className="shrink-0">
-                          {t('running')}
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="text-muted-foreground text-xs">
-                      {season.endDate === undefined
-                        ? t('since', { date: month(season.startDate) })
-                        : `${month(season.startDate)} — ${month(season.endDate)}`}
-                    </span>
-                  </div>
-                  <span className="shrink-0 text-lg font-semibold tabular-nums">
-                    {playtime.value}
-                    <span className="text-muted-foreground ml-1 text-sm font-normal">
-                      {playtime.unit}
-                    </span>
-                  </span>
-                </div>
-                <PlaytimeBar
-                  ratio={longest > 0 ? season.playtime / longest : 0}
-                  colors={colors}
-                />
-                {hasCounters && (
-                  <p className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-1 text-sm">
-                    <span className="flex items-center gap-1.5">
-                      <PixelGlyph pixels={SKULL} />
-                      <span>
-                        {t.rich('deaths', { count: season.deaths, n: count })}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <PixelGlyph pixels={SWORD} />
-                      <span>
-                        {t.rich('mobKills', {
-                          count: season.mobKills,
-                          n: count,
-                        })}
-                      </span>
-                    </span>
-                  </p>
-                )}
-              </li>
-            )
-          })}
-        </ol>
+        <div>
+          <ol className="divide-y">
+            {stats.seasons.slice(0, 3).map(renderSeason)}
+          </ol>
+          {stats.seasons.length > 3 && (
+            <details className="group border-t">
+              <summary className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex cursor-pointer list-none items-center justify-between gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+                <span className="group-open:hidden">
+                  {t('showAll', { count: stats.seasons.length })}
+                </span>
+                <span className="hidden group-open:inline">
+                  {t('showLess')}
+                </span>
+                <ChevronDownIcon className="size-4 shrink-0 transition-transform group-open:rotate-180 motion-reduce:transition-none" />
+              </summary>
+              <ol start={4} className="divide-y">
+                {stats.seasons.slice(3).map(renderSeason)}
+              </ol>
+            </details>
+          )}
+        </div>
       )}
     </section>
   )
