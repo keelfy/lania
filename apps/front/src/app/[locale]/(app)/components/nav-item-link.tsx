@@ -24,7 +24,7 @@ export function NavbarNavigation({ children }: React.PropsWithChildren) {
     <NavigationContext.Provider
       value={{
         pathname,
-        highlightedHref: focusedHref ?? hoveredHref,
+        highlightedHref: hoveredHref ?? focusedHref,
         setHoveredHref,
         setFocusedHref,
       }}
@@ -70,7 +70,10 @@ export default function NavItemLink({
           if (!disabled && event.pointerType !== 'touch')
             navigation.setHoveredHref(routeHref)
         }}
-        onFocus={() => navigation.setFocusedHref(routeHref)}
+        onFocus={() => {
+          navigation.setHoveredHref(null)
+          navigation.setFocusedHref(routeHref)
+        }}
         onBlur={() => navigation.setFocusedHref(null)}
         onClick={(event) => {
           if (disabled) event.preventDefault()
