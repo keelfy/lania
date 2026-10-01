@@ -23,6 +23,7 @@ export type UpgradeProductMetadata = ProductMetadata & {
 
 export type NameColorProductMetadata = ProductMetadata & {
   colors: string[]
+  nameColorId: string
 }
 
 export type NamePrefixProductMetadata = ProductMetadata & {

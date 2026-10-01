@@ -31,8 +31,10 @@ import {
 import { RichTagsFunction } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
+import { loadCustomization } from './load-customization'
 import LandingCommunityCarousel from './components/community-carousel'
 import CopyIPButton from './components/copy-ip-button'
+import CustomizationShowcase from './components/customization-showcase'
 import LandingSidebar from './components/landing-sidebar'
 import LiquidGlassCard from './components/liquid-glass-card'
 import SeeMoreLandingButton from './components/see-more-landing-button'
@@ -341,9 +343,10 @@ type Props = {
 
 export default async function LandingPage({ params }: Props) {
   const { locale } = await params
-  const [t, primarySeason] = await Promise.all([
+  const [t, primarySeason, customization] = await Promise.all([
     getTranslations({ locale, namespace: 'landing' }),
     getPrimarySeason(serverApiFetcher).catch(() => undefined),
+    loadCustomization(serverApiFetcher, locale),
   ])
   return (
     <div className="w-full">
@@ -425,11 +428,28 @@ export default async function LandingPage({ params }: Props) {
           </p>
         </div>
         <SeeMoreLandingButton
-          sectionId="section-3"
+          sectionId="section-customization"
           className="bottom-10 hidden sm:flex"
         >
-          {t('section2.seeMore')}
+          {t('customization.seeMore')}
         </SeeMoreLandingButton>
+      </SidebarSection>
+
+      <SidebarSection
+        id="section-customization"
+        className="flex min-h-svh w-full snap-start items-center justify-center px-6 py-24"
+      >
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 rounded-2xl p-0 backdrop-blur-xs sm:p-6">
+          <div className="flex max-w-xl flex-col gap-3">
+            <h2 className="text-3xl font-bold text-white sm:text-4xl">
+              {t('customization.title')}
+            </h2>
+            <p className="text-lg leading-relaxed text-white/75">
+              {t('customization.description')}
+            </p>
+          </div>
+          <CustomizationShowcase {...customization} />
+        </div>
       </SidebarSection>
 
       <SidebarSection

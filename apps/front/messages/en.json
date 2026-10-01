@@ -18,6 +18,21 @@
     "description": "Private server for comfortable game in vanilla Minecraft."
   },
   "landing": {
+    "customization": {
+      "title": "Your character, your style",
+      "description": "Mix name colors, glyphs and skins. Try your look right here.",
+      "seeMore": "Try your style",
+      "color": "Name color",
+      "glyph": "Glyph before your name",
+      "skin": "Skin",
+      "classic": "White",
+      "none": "No glyph",
+      "preview": "Character wearing the {skin} skin",
+      "rotate": "Drag the character to rotate",
+      "fallback": "3D preview is unavailable in this browser. Try enabling WebGL.",
+      "ownSkin": "Upload your own skin through the website. It appears both in game and on your profile.",
+      "demo": "This is a preview. Your choices here do not change your game profile. Name colors and glyphs are available in the store."
+    },
     "description": "The best place for your expression in <b>Minecraft</b>.",
     "version": "Game version: <b>26.3</b>",
     "copyIP": "Copy IP address",
