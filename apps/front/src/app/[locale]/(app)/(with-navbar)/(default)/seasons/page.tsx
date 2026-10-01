@@ -1,8 +1,7 @@
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { getSeasons } from '@/lib/api-endpoints'
-import { serverApiFetcher } from '@/lib/server'
+import { getCachedSeasons } from '@/lib/public-data'
 import { formatSeasonDuration } from '@/lib/seasons'
 import { Season } from '@/models/season'
 import { CalendarIcon, ClockIcon } from 'lucide-react'
@@ -24,9 +23,7 @@ export default async function SeasonsPage({ params }: Props) {
   const t = await getTranslations({ locale, namespace: 'seasons' })
 
   // A season without a preview is not part of the public list.
-  const seasons = (
-    await getSeasons(serverApiFetcher).catch(() => [] as Season[])
-  ).filter(
+  const seasons = (await getCachedSeasons().catch(() => [] as Season[])).filter(
     (season): season is Season & { previewImage: string } =>
       !!season.previewImage,
   )

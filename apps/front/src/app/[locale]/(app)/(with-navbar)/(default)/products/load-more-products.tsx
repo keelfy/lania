@@ -1,8 +1,7 @@
 'use server'
 
-import { getProductCatalog } from '@/lib/api-endpoints'
 import { Currency, CURRENCY_COOKIE, DEFAULT_CURRENCY } from '@/lib/currency'
-import { serverApiFetcher } from '@/lib/server'
+import { getCachedProductCatalog } from '@/lib/public-data'
 import { getLocale } from 'next-intl/server'
 import { cookies } from 'next/headers'
 import type { ReactNode } from 'react'
@@ -16,8 +15,7 @@ export async function loadMoreProducts(
   const currency =
     ((await cookies()).get(CURRENCY_COOKIE)?.value as Currency) ??
     DEFAULT_CURRENCY
-  const page = await getProductCatalog(
-    serverApiFetcher,
+  const page = await getCachedProductCatalog(
     category === 'all' ? undefined : category,
     cursor,
     await getLocale(),

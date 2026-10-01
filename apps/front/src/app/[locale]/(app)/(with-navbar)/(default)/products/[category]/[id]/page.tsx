@@ -6,14 +6,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { getProduct, getProducts } from '@/lib/api-endpoints'
 import {
   Currency,
   CURRENCY_COOKIE,
   CURRENCY_SYMBOLS,
   DEFAULT_CURRENCY,
 } from '@/lib/currency'
-import { serverApiFetcher } from '@/lib/server'
+import { getCachedProduct, getCachedProducts } from '@/lib/public-data'
 import {
   NameColorProductMetadata,
   NamePrefixProductMetadata,
@@ -65,12 +64,17 @@ function listProducts(
   currency: Currency,
 ) {
   if (!category) return Promise.resolve([])
-  return getProducts(serverApiFetcher, category, locale, currency).catch(
-    (err) => {
-      console.error(err)
-      return []
-    },
-  )
+  return getCachedProducts(category, locale, currency).catch((err) => {
+    console.error(err)
+    return []
+  })
+}
+
+// One product is prerendered, the other ones are rendered on their first visit. Cache Components need at least one.
+export async function generateStaticParams() {
+  const [product] = await getCachedProducts(undefined, 'en', DEFAULT_CURRENCY)
+  if (!product) throw new Error('No product to prerender')
+  return [{ category: product.category, id: product.id }]
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -80,12 +84,7 @@ export default async function ProductPage({ params }: Props) {
     ((await cookies()).get(CURRENCY_COOKIE)?.value as Currency) ??
     DEFAULT_CURRENCY
 
-  const item = await getProduct<ProductMetadata>(
-    serverApiFetcher,
-    id,
-    locale,
-    currency,
-  ).catch((err) => {
+  const item = await getCachedProduct(id, locale, currency).catch((err) => {
     console.error(err)
     return undefined
   })

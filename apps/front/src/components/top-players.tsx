@@ -2,9 +2,8 @@ import McUsername from '@/components/ui/mc-username'
 import NamePrefixes from '@/components/ui/name-prefixes'
 import PlayerFace from '@/components/ui/player-face'
 import PlayerProfileLink from '@/components/ui/player-profile-link'
-import { getTopPlaytimeProfiles } from '@/lib/api-endpoints'
 import { formatPlaytime } from '@/lib/playtime'
-import { serverApiFetcher } from '@/lib/server'
+import { getCachedTopPlaytimeProfiles } from '@/lib/public-data'
 import { cn } from '@/lib/utils'
 import { PublicProfile } from '@/models/profile'
 import { getTranslations } from 'next-intl/server'
@@ -37,14 +36,12 @@ export default async function TopPlayers({
     locale,
     namespace: 'playerCard.playtime',
   })
-  const profiles = await getTopPlaytimeProfiles(
-    serverApiFetcher,
-    undefined,
-    season,
-  ).catch((err) => {
-    console.error(err)
-    return []
-  })
+  const profiles = await getCachedTopPlaytimeProfiles(locale, season).catch(
+    (err) => {
+      console.error(err)
+      return []
+    },
+  )
   if (profiles.length === 0) return null
 
   const longestPlaytime = Math.max(

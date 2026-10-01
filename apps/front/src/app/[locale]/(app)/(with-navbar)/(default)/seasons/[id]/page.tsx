@@ -9,8 +9,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
-import { getSeasons, getSeasonScreenshots } from '@/lib/api-endpoints'
-import { serverApiFetcher } from '@/lib/server'
+import { getCachedSeasons, getCachedSeasonScreenshots } from '@/lib/public-data'
 import { formatSeasonDuration } from '@/lib/seasons'
 import { CalendarIcon, ClockIcon, DownloadIcon } from 'lucide-react'
 import { Metadata } from 'next'
@@ -24,9 +23,17 @@ type Props = {
   params: Promise<{ locale: string; id: string }>
 }
 
+// The seasons that exist at build time are prerendered, a season added later is rendered on its first visit.
+export async function generateStaticParams() {
+  const seasons = await getCachedSeasons()
+  return seasons
+    .filter((season) => season.previewImage)
+    .map((season) => ({ id: season.id }))
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
-  const seasons = await getSeasons(serverApiFetcher).catch(() => [])
+  const seasons = await getCachedSeasons().catch(() => [])
   const season = seasons.find((season) => season.id === id)
   if (!season) return {}
 
@@ -46,8 +53,8 @@ export default async function SeasonPage({ params }: Props) {
   const t = await getTranslations({ locale, namespace: 'seasons' })
 
   const [seasons, screenshots] = await Promise.all([
-    getSeasons(serverApiFetcher).catch(() => []),
-    getSeasonScreenshots(serverApiFetcher, id).catch(() => []),
+    getCachedSeasons().catch(() => []),
+    getCachedSeasonScreenshots(id, locale).catch(() => []),
   ])
   const season = seasons.find((season) => season.id === id)
   if (!season || !season.previewImage) notFound()

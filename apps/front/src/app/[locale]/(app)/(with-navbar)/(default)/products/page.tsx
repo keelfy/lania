@@ -1,8 +1,7 @@
 import { getMetadataLocale } from '@/i18n/metadata-locale'
 import CurrencySelect from '@/components/ui/currency-select'
-import { getProductCatalog } from '@/lib/api-endpoints'
 import { Currency, CURRENCY_COOKIE, DEFAULT_CURRENCY } from '@/lib/currency'
-import { serverApiFetcher } from '@/lib/server'
+import { getCachedProductCatalog } from '@/lib/public-data'
 import {
   Product,
   ProductCatalog,
@@ -71,8 +70,7 @@ export default async function ShopPage({ searchParams, params }: Props) {
         ),
         counts: countByCategory(allMockProducts),
       }
-    : await getProductCatalog(
-        serverApiFetcher,
+    : await getCachedProductCatalog(
         category === 'all' ? undefined : category,
         undefined,
         locale,
