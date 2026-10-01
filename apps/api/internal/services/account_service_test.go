@@ -11,6 +11,7 @@ import (
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/storage"
 	sql "github.com/lania-smp/backend/internal/storage/main"
+	"github.com/lania-smp/backend/internal/utils"
 )
 
 type accountQueries struct {
@@ -69,6 +70,15 @@ type accountProfiles struct {
 
 func (p *accountProfiles) GetProfilesByOwnerUserID(context.Context, uuid.UUID) ([]*domain.Profile, error) {
 	return p.profiles, nil
+}
+
+func (p *accountProfiles) GetProfileByID(_ context.Context, profileID uuid.UUID) (*domain.Profile, error) {
+	for _, profile := range p.profiles {
+		if profile.ID == profileID {
+			return profile, nil
+		}
+	}
+	return nil, utils.NewNotFoundError("profile not found", nil)
 }
 
 type accountCosmetics struct {
@@ -211,5 +221,58 @@ func TestDeleteAccountTreatsMissingIdentityAsDeleted(t *testing.T) {
 
 	if err := f.svc.DeleteAccount(context.Background(), uuid.New(), domain.RolePlayer, f.now); err != nil {
 		t.Fatalf("got %v, want a repeated request to succeed", err)
+	}
+}
+
+func TestReleaseOwnedProfile(t *testing.T) {
+	userID := uuid.New()
+	staff := &domain.Profile{ID: uuid.New(), Role: domain.RoleModerator, OwnerUserID: &userID}
+	f := newAccountFixture(t, staff)
+
+	if err := f.svc.ReleaseOwnedProfile(context.Background(), userID, staff.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(f.queries.released) != 1 || len(f.queries.revokedCosmetics) != 1 || len(f.cosmetics.prunedProfiles) != 1 {
+		t.Errorf("released %v, revoked %v, pruned %v, want the profile once each",
+			f.queries.released, f.queries.revokedCosmetics, f.cosmetics.prunedProfiles)
+	}
+	if role := f.queries.roles[staff.ID]; role != domain.RolePlayer {
+		t.Errorf("role is %q, want player", role)
+	}
+	if f.queries.basketCleared || f.queries.notesDeleted || len(f.ory.deleted) != 0 {
+		t.Error("a release touched the account")
+	}
+	select {
+	case <-f.resync.done:
+	case <-time.After(time.Second):
+		t.Fatal("the released profile was not resynced")
+	}
+}
+
+func TestReleaseOwnedProfileRefusesOthers(t *testing.T) {
+	ownerID := uuid.New()
+	owned := &domain.Profile{ID: uuid.New(), Role: domain.RolePlayer, OwnerUserID: &ownerID}
+	free := &domain.Profile{ID: uuid.New(), Role: domain.RolePlayer}
+
+	for name, tt := range map[string]struct {
+		profileID uuid.UUID
+		status    int
+	}{
+		"profile of another user": {owned.ID, http.StatusForbidden},
+		"profile without owner":   {free.ID, http.StatusForbidden},
+		"unknown profile":         {uuid.New(), http.StatusNotFound},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newAccountFixture(t, owned, free)
+
+			err := f.svc.ReleaseOwnedProfile(context.Background(), uuid.New(), tt.profileID)
+			if statusOf(err) != tt.status {
+				t.Fatalf("got %v, want status %d", err, tt.status)
+			}
+			if len(f.queries.released) != 0 {
+				t.Error("a profile was released after a refusal")
+			}
+		})
 	}
 }

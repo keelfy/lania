@@ -77,6 +77,10 @@ type Queries interface {
 	ClaimProfile(ctx context.Context, profileID, ownerUserID uuid.UUID, updatedBy uuid.UUID) (bool, error)
 	// SetProfileOwner replaces the owner of the profile whoever it is. A nil ownerUserID releases the profile.
 	SetProfileOwner(ctx context.Context, profileID uuid.UUID, ownerUserID, updatedBy *uuid.UUID) error
+	// InsertProfileAcquisition records that the user added the profile: created it or claimed it with no owner.
+	InsertProfileAcquisition(ctx context.Context, userID, profileID uuid.UUID) error
+	// CountRecentProfileAcquisitions counts the profiles the user added within the last days.
+	CountRecentProfileAcquisitions(ctx context.Context, userID uuid.UUID, days int) (int, error)
 	// SetProfileRole stores the role and marks the moment of the change for FindProfileRolesChangedSince.
 	SetProfileRole(ctx context.Context, profileID uuid.UUID, role domain.Role, updatedBy *uuid.UUID) error
 	// FindProfileRolesChangedSince returns the role of every profile whose role changed within the last since.

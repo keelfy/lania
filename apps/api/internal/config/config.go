@@ -215,6 +215,27 @@ func GetMaxProfilesPerUser() int {
 	return value
 }
 
+const (
+	defaultMaxNewProfilesPerPeriod = 3
+	// NewProfilesPeriodDays is the rolling window of the limit on new profiles.
+	NewProfilesPeriodDays = 30
+)
+
+// GetMaxNewProfilesPerPeriod returns how many profiles a user can create or claim within NewProfilesPeriodDays.
+// Zero turns the limit off.
+func GetMaxNewProfilesPerPeriod() int {
+	value := os.Getenv("MAX_NEW_PROFILES_PER_MONTH")
+	if value == "" {
+		return defaultMaxNewProfilesPerPeriod
+	}
+	limit, err := strconv.Atoi(value)
+	if err != nil || limit < 0 {
+		log.Printf("Error parsing MAX_NEW_PROFILES_PER_MONTH: %q is not a non-negative number", value)
+		return defaultMaxNewProfilesPerPeriod
+	}
+	return limit
+}
+
 func GetDefaultNameColorID() uuid.UUID {
 	return uuid.MustParse(os.Getenv("DEFAULT_NAME_COLOR_ID"))
 }

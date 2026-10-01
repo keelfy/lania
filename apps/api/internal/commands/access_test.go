@@ -25,3 +25,24 @@ func TestExceedsProfileLimit(t *testing.T) {
 		}
 	}
 }
+
+func TestExceedsNewProfileLimit(t *testing.T) {
+	tests := []struct {
+		role     domain.Role
+		recent   int
+		limit    int
+		expected bool
+	}{
+		{domain.RolePlayer, 2, 3, false},
+		{domain.RolePlayer, 3, 3, true},
+		{domain.RolePlayer, 10, 0, false},
+		{domain.RoleModerator, 3, 3, true},
+		{domain.RoleAdmin, 10, 3, false},
+	}
+	for _, tt := range tests {
+		cmd := &ObtainAccessByUsernamesCommand{OwnerRole: tt.role}
+		if got := cmd.ExceedsNewProfileLimit(tt.recent, tt.limit); got != tt.expected {
+			t.Errorf("role %q with %d recent profiles and limit %d: expected %v, got %v", tt.role, tt.recent, tt.limit, tt.expected, got)
+		}
+	}
+}

@@ -54,6 +54,9 @@ type Props = {
   }>
 }
 
+// The API answers with this message when the account added too many profiles within the period.
+const NEW_PROFILE_LIMIT = 'new_profile_limit'
+
 const lastSteps = {
   preregistration: 'steps.step3Pre',
   free: 'steps.step3Free',
@@ -167,6 +170,15 @@ export default function ObtainAccessPage({ params }: Props) {
         router.push(`/${locale}/basket`)
       } catch (error) {
         console.error(error)
+        if (
+          error instanceof Error &&
+          error.message.trim() === NEW_PROFILE_LIMIT
+        ) {
+          toast.error(t('newProfileLimit'), {
+            description: t('newProfileLimitHint'),
+          })
+          return
+        }
         errorToast(t('error'), error)
       }
     })

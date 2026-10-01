@@ -398,6 +398,23 @@
         "cooldown": "The skin was just changed, try again in a minute",
         "failed": "Failed to change the skin"
       }
+    },
+    "release": {
+      "title": "Release the profile",
+      "description": "The profile stops being yours, and any player can take the nickname",
+      "consequences": {
+        "cosmetics": "Bought nickname colors and prefixes are lost",
+        "roles": "The role of the profile becomes Player",
+        "stays": "Season passes and stats stay with the profile and go to its next owner",
+        "limit": "A released profile still counts toward the limit of new profiles within 30 days"
+      },
+      "button": "Release",
+      "confirmTitle": "Release {username}?",
+      "confirmDescription": "This cannot be undone. Type the nickname {username} to confirm",
+      "cancel": "Cancel",
+      "confirm": "Release the profile",
+      "success": "Profile {username} is released",
+      "error": "Failed to release the profile"
     }
   },
   "profileResync": {
@@ -696,7 +713,9 @@
       "premium": {
         "required": "Confirm that the account is yours or choose another nickname"
       }
-    }
+    },
+    "newProfileLimit": "Too many new profiles",
+    "newProfileLimitHint": "An account can add only a limited number of profiles within 30 days, try again later"
   },
   "seasons": {
     "title": "Seasons",

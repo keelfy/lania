@@ -234,6 +234,11 @@ const moveProfileUsernameChanges = `
 UPDATE profile_username_changes SET profile_id = ? WHERE profile_id = ?
 `
 
+// An acquisition keeps counting in the limit of the user who made it, whatever profile it points to.
+const moveProfileAcquisitions = `
+UPDATE profile_acquisitions SET profile_id = ? WHERE profile_id = ?
+`
+
 // An open verification request of the source is dropped: it proves nothing for the target's UUID.
 const deleteSourceVerification = `
 DELETE FROM profile_verifications WHERE profile_id = ?
@@ -336,6 +341,9 @@ func (q *queries) MergeProfileData(ctx context.Context, sourceProfileID, sourceM
 		return nil, err
 	}
 	if _, err = execAffected(ctx, x, moveProfileUsernameChanges, targetProfileID, sourceProfileID); err != nil {
+		return nil, err
+	}
+	if _, err = execAffected(ctx, x, moveProfileAcquisitions, targetProfileID, sourceProfileID); err != nil {
 		return nil, err
 	}
 

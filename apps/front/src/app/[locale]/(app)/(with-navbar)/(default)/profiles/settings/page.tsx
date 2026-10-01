@@ -2,6 +2,7 @@ import { getSelectableSeasons } from '@/lib/seasons'
 import { notFound } from 'next/navigation'
 import { loadProfilePage } from '../load-profile-page'
 import ProfilePasswordCard from './profile-password-card'
+import ProfileReleaseCard from './profile-release-card'
 import ProfileUsernameCard from './profile-username-card'
 
 type Props = {
@@ -34,6 +35,7 @@ export default async function ProfileSettingsPage({ searchParams }: Props) {
           seasons={passwordSeasons}
         />
       )}
+      <ProfileReleaseCard key={`release-${profile.id}`} profile={profile} />
     </>
   )
 }

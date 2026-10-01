@@ -378,6 +378,25 @@ func (q *queries) SetProfileOwner(ctx context.Context, profileID uuid.UUID, owne
 	return err
 }
 
+const insertProfileAcquisition = `
+INSERT INTO profile_acquisitions (user_id, profile_id) VALUES (?, ?)
+`
+
+func (q *queries) InsertProfileAcquisition(ctx context.Context, userID, profileID uuid.UUID) error {
+	_, err := q.x.ExecContext(ctx, insertProfileAcquisition, userID, profileID)
+	return err
+}
+
+const countRecentProfileAcquisitions = `
+SELECT COUNT(id) FROM profile_acquisitions WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+`
+
+func (q *queries) CountRecentProfileAcquisitions(ctx context.Context, userID uuid.UUID, days int) (int, error) {
+	var count int
+	err := q.x.QueryRowContext(ctx, countRecentProfileAcquisitions, userID, days).Scan(&count)
+	return count, err
+}
+
 const findProfileByID = `
 SELECT 
 	p.id,

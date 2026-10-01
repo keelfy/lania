@@ -217,6 +217,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 				r.Post("/skin/file", api.profileSkinHandler.UploadSkin)
 				r.Post("/skin/nickname", api.profileSkinHandler.SetSkinNickname)
 				r.Delete("/skin", api.profileSkinHandler.ClearSkin)
+				r.Delete("/owner", api.accountHandler.ReleaseProfile)
 			})
 		})
 	})

@@ -29,6 +29,9 @@ type AccountService interface {
 	// Access to seasons, stats and orders stay. The basket and the notifications of the user are deleted.
 	// The owner of the site cannot delete the account. A failed request can be repeated.
 	DeleteAccount(ctx context.Context, userID uuid.UUID, siteRole domain.Role, authenticatedAt time.Time) error
+	// ReleaseOwnedProfile releases one profile of the user the same way DeleteAccount does. The profile still counts
+	// in the user's limit on new profiles, so a release does not let the user take more profiles in a month.
+	ReleaseOwnedProfile(ctx context.Context, userID, profileID uuid.UUID) error
 }
 
 type accountService struct {
@@ -106,6 +109,33 @@ func (s *accountService) DeleteAccount(ctx context.Context, userID uuid.UUID, si
 	if err != nil && !errors.Is(err, clients.ErrIdentityNotFound) {
 		return utils.NewInternalServerError("profiles are released, but the account was not deleted, repeat the request to retry", err)
 	}
+	return nil
+}
+
+func (s *accountService) ReleaseOwnedProfile(ctx context.Context, userID, profileID uuid.UUID) error {
+	profile, err := s.profileService.GetProfileByID(ctx, profileID)
+	if err != nil {
+		return err
+	}
+	if profile.OwnerUserID == nil || *profile.OwnerUserID != userID {
+		return utils.NewForbiddenError("only owner can release the profile", nil)
+	}
+
+	err = s.storage.BeginTx(ctx, func(queries sql.Queries) error {
+		return s.releaseProfile(ctx, queries, profile, userID)
+	})
+	if err != nil {
+		return err
+	}
+
+	// Every season server is called, which can be slow, so the request does not wait for it.
+	resyncCtx := context.WithoutCancel(ctx)
+	go func() {
+		// The service logs every part that failed.
+		if _, err := s.profileResyncService.ResyncProfile(resyncCtx, profile.ID); err != nil {
+			logger.Warnf(resyncCtx, "failed to resync profile %s released by its owner: %v", profile.ID, err)
+		}
+	}()
 	return nil
 }
 

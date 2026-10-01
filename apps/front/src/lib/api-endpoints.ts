@@ -557,6 +557,14 @@ export function setProfilePassword(
   })
 }
 
+// Releases the profile of the signed in owner: cosmetics are revoked, the role becomes player and anybody can take
+// the nickname.
+export function releaseProfile(fetcher: ApiFetcher, id: string): Promise<void> {
+  return fetcher<void>(`/v1/profiles/${id}/owner`, undefined, {
+    method: 'DELETE',
+  })
+}
+
 // Skin changes answer with the status pending when the server did not apply the change in time.
 export function uploadProfileSkin(
   fetcher: ApiFetcher,

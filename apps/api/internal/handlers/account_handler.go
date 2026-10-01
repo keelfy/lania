@@ -6,11 +6,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/lania-smp/backend/internal/domain"
 	"github.com/lania-smp/backend/internal/services"
+	"github.com/lania-smp/backend/internal/transport/http/binders"
 	"github.com/lania-smp/backend/internal/utils"
 )
 
 type AccountHandler interface {
 	DeleteAccount(w http.ResponseWriter, r *http.Request)
+	// ReleaseProfile releases a game profile of the signed in user, so anybody can claim it.
+	ReleaseProfile(w http.ResponseWriter, r *http.Request)
 }
 
 type accountHandler struct {
@@ -41,6 +44,27 @@ func (h *accountHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 
 	siteRole := domain.RoleFromMetadata(session.Identity.MetadataPublic)
 	if err := h.accountService.DeleteAccount(ctx, userID, siteRole, authenticatedAt); err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *accountHandler) ReleaseProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	authUserID, err := utils.GetUserIDFromCtx(ctx)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	profileID, err := binders.BindPathVariableAsUUID(r, binders.ProfileIDVariable)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	if err := h.accountService.ReleaseOwnedProfile(ctx, authUserID, profileID); err != nil {
 		utils.HttpError(ctx, w, err)
 		return
 	}

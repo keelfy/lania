@@ -22,6 +22,12 @@ func (c *ObtainAccessByUsernamesCommand) ExceedsProfileLimit(profileCount, limit
 	return !c.OwnerRole.IsAdmin() && profileCount >= limit
 }
 
+// ExceedsNewProfileLimit tells whether one more new profile after recentCount recent ones breaks the limit per
+// period. A zero limit is no limit, and admins have none either.
+func (c *ObtainAccessByUsernamesCommand) ExceedsNewProfileLimit(recentCount, limit int) bool {
+	return !c.OwnerRole.IsAdmin() && limit > 0 && recentCount >= limit
+}
+
 func (c *ObtainAccessByUsernamesCommand) Validate() error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.SeasonID, validation.Required, is.UUID),

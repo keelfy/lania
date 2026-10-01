@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -56,7 +57,30 @@ func NewAccessHandler(
 	}
 }
 
-var maxProfilesPerUser = config.GetMaxProfilesPerUser()
+var (
+	maxProfilesPerUser      = config.GetMaxProfilesPerUser()
+	maxNewProfilesPerPeriod = config.GetMaxNewProfilesPerPeriod()
+)
+
+// ErrNewProfileLimitMessage is the API message for a user who added too many profiles within the period, so the
+// site can explain the limit.
+const ErrNewProfileLimitMessage = "new_profile_limit"
+
+// checkNewProfileLimits fails when the user cannot add one more profile: too many profiles at once, or too many
+// created or claimed within the period, which a release does not give back.
+func (h *accessHandler) checkNewProfileLimits(ctx context.Context, cmd *commands.ObtainAccessByUsernamesCommand, profileCount int) error {
+	if cmd.ExceedsProfileLimit(profileCount, maxProfilesPerUser) {
+		return utils.NewBadRequestError(fmt.Sprintf("you can't have more than %d profiles", maxProfilesPerUser), nil)
+	}
+	recent, err := h.profileService.CountRecentProfileAcquisitions(ctx, cmd.OwnerUserID, config.NewProfilesPeriodDays)
+	if err != nil {
+		return err
+	}
+	if cmd.ExceedsNewProfileLimit(recent, maxNewProfilesPerPeriod) {
+		return utils.NewTooManyRequestsError(ErrNewProfileLimitMessage, nil)
+	}
+	return nil
+}
 
 func (h *accessHandler) CheckUsernames(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -216,9 +240,11 @@ func (h *accessHandler) grantFreeAccess(
 			}
 		}
 
-		if !isAccessForExistingProfile && cmd.ExceedsProfileLimit(len(existingProfiles), maxProfilesPerUser) {
-			utils.HttpError(ctx, w, utils.NewBadRequestError(fmt.Sprintf("you can't have more than %d profiles", maxProfilesPerUser), nil))
-			return
+		if !isAccessForExistingProfile {
+			if err := h.checkNewProfileLimits(ctx, cmd, len(existingProfiles)); err != nil {
+				utils.HttpError(ctx, w, err)
+				return
+			}
 		}
 
 		profile, err := h.profileService.GetOrCreateProfileByUsername(ctx, h.storage.Queries(), cmd.OwnerUserID, username)
@@ -286,9 +312,11 @@ func (h *accessHandler) ObtainAccessForProfiles(w http.ResponseWriter, r *http.R
 			}
 		}
 
-		if !isAccessForExistingProfile && cmd.ExceedsProfileLimit(len(existingProfiles), maxProfilesPerUser) {
-			utils.HttpError(ctx, w, utils.NewBadRequestError(fmt.Sprintf("you can't have more than %d profiles", maxProfilesPerUser), nil))
-			return
+		if !isAccessForExistingProfile {
+			if err := h.checkNewProfileLimits(ctx, cmd, len(existingProfiles)); err != nil {
+				utils.HttpError(ctx, w, err)
+				return
+			}
 		}
 
 		products, err := h.productService.GetProductsByCategory(ctx, domain.ProductCategoryUpgrade)

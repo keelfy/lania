@@ -18,6 +18,8 @@ import (
 
 type ProfileService interface {
 	GetProfilesByOwnerUserID(ctx context.Context, ownerUserID uuid.UUID) ([]*domain.Profile, error)
+	// CountRecentProfileAcquisitions counts the profiles the user created or claimed within the last days.
+	CountRecentProfileAcquisitions(ctx context.Context, userID uuid.UUID, days int) (int, error)
 	// GetPublicProfiles returns a page of profiles and the total number of profiles matching the filter.
 	// Online players and the last seen sort are those of the season. Sorting by last seen over every season
 	// needs uuid.Nil, and then there is no online filter.
@@ -74,6 +76,14 @@ func (s *profileService) GetProfilesByOwnerUserID(ctx context.Context, ownerUser
 		return nil, utils.NewInternalServerError("failed to get profiles by owner user id", err)
 	}
 	return profiles, nil
+}
+
+func (s *profileService) CountRecentProfileAcquisitions(ctx context.Context, userID uuid.UUID, days int) (int, error) {
+	count, err := s.storage.Queries().CountRecentProfileAcquisitions(ctx, userID, days)
+	if err != nil {
+		return 0, utils.NewInternalServerError("failed to count recent profile acquisitions", err)
+	}
+	return count, nil
 }
 
 func (s *profileService) GetPublicProfiles(ctx context.Context, filter domain.ProfileFilter, pagination *domain.Pagination, sort *domain.Sort, seasonID uuid.UUID) ([]*domain.Profile, int64, error) {
@@ -262,6 +272,9 @@ func (s *profileService) claimProfile(ctx context.Context, queries sql.Queries, 
 		// lost the race, somebody else claimed it first
 		return s.GetProfileByMinecraftUUID(ctx, profile.MinecraftUUID)
 	}
+	if err := queries.InsertProfileAcquisition(ctx, ownerUserID, profile.ID); err != nil {
+		return nil, utils.NewInternalServerError("failed to record profile acquisition", err)
+	}
 
 	profile.OwnerUserID = &ownerUserID
 	return profile, nil
@@ -326,6 +339,9 @@ func (s *profileService) createProfile(ctx context.Context, queries sql.Queries,
 	})
 	if err != nil {
 		return uuid.Nil, utils.NewInternalServerError("failed to insert profile", err)
+	}
+	if err := queries.InsertProfileAcquisition(ctx, ownerUserID, profileID); err != nil {
+		return uuid.Nil, utils.NewInternalServerError("failed to record profile acquisition", err)
 	}
 
 	err = queries.UpsertProfileMojangUUID(ctx, mcUUID, mojangUUID)
