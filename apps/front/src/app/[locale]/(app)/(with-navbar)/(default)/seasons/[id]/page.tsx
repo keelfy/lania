@@ -1,5 +1,4 @@
 import TopPlayers from '@/components/top-players'
-import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Badge } from '@/components/ui/badge'
 import {
   Breadcrumb,
@@ -93,61 +92,76 @@ export default async function SeasonPage({ params }: Props) {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex flex-col gap-4">
-        <AspectRatio
-          ratio={16 / 9}
-          className="relative overflow-hidden rounded-md"
-        >
+      <section className="flex flex-col gap-6">
+        <div className="relative isolate flex min-h-60 items-end overflow-hidden rounded-lg bg-slate-950 sm:min-h-72 lg:min-h-80">
           <Image
             src={season.previewImage}
             alt={season.name}
             fill
+            sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 100vw, 1024px"
+            preload
             className="object-cover"
           />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-linear-to-t from-black/85 via-black/20 to-transparent"
+          />
           {season.isActive && (
-            <Badge className="absolute top-2 right-2 border-transparent bg-teal-500 text-white">
+            <Badge className="absolute top-4 right-4 border-transparent bg-teal-500 text-white sm:top-6 sm:right-6">
               <span className="size-1.5 rounded-full bg-white" />
               {t('active')}
             </Badge>
           )}
-        </AspectRatio>
-        <h1 className="text-center text-4xl font-bold">{season.name}</h1>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-center gap-4">
-        <div className="flex items-center gap-1.5 text-sm">
-          <CalendarIcon className="text-muted-foreground size-4" />
-          {season.isActive
-            ? `${t('since')} ${toLocalDate(season.startDate)}`
-            : `${toLocalDate(season.startDate)} — ${toLocalDate(season.endDate)}`}
+          <h1 className="font-minecraft relative w-full px-6 pt-20 pb-5 text-4xl leading-tight font-normal text-balance wrap-anywhere text-white drop-shadow-md sm:px-8 sm:pb-7 sm:text-5xl lg:text-6xl">
+            {season.name}
+          </h1>
         </div>
-        {durationLabel && (
-          <div className="flex items-center gap-1.5 text-sm">
-            <ClockIcon className="text-muted-foreground size-4" />
-            {durationLabel}
-          </div>
-        )}
-        {season.gameVersion && (
-          <div className="text-sm">
-            {t('gameVersion')}: {season.gameVersion}
-          </div>
-        )}
-        {season.publicAddress && (
-          <div className="text-sm">{season.publicAddress}</div>
-        )}
-        {season.worldUrl && (
-          <Button variant="outline" size="sm" asChild>
-            <a href={season.worldUrl} target="_blank" rel="noreferrer">
-              <DownloadIcon className="size-4" />
-              {t('worldDownload')}
-            </a>
-          </Button>
-        )}
-      </div>
 
-      <p className="text-muted-foreground mx-auto max-w-2xl text-center">
-        {t(`${season.id}.description`)}
-      </p>
+        <div className="grid gap-6 sm:grid-cols-[1fr_auto] sm:gap-10">
+          <p className="text-muted-foreground max-w-lg leading-relaxed">
+            {t(`${season.id}.description`)}
+          </p>
+          <div className="flex min-w-0 flex-col items-start gap-3 text-sm">
+            <div className="flex items-start gap-2">
+              <CalendarIcon
+                aria-hidden="true"
+                className="text-muted-foreground mt-0.5 size-4 shrink-0"
+              />
+              <span>
+                {season.isActive
+                  ? `${t('since')} ${toLocalDate(season.startDate)}`
+                  : `${toLocalDate(season.startDate)} — ${toLocalDate(season.endDate)}`}
+              </span>
+            </div>
+            {durationLabel && (
+              <div className="flex items-center gap-2">
+                <ClockIcon
+                  aria-hidden="true"
+                  className="text-muted-foreground size-4 shrink-0"
+                />
+                <span>{durationLabel}</span>
+              </div>
+            )}
+            {season.gameVersion && (
+              <div className="text-muted-foreground">
+                {t('gameVersion')}:{' '}
+                <span className="text-foreground">{season.gameVersion}</span>
+              </div>
+            )}
+            {season.publicAddress && (
+              <div className="wrap-anywhere">{season.publicAddress}</div>
+            )}
+            {season.worldUrl && (
+              <Button variant="outline" size="sm" className="mt-1" asChild>
+                <a href={season.worldUrl} target="_blank" rel="noreferrer">
+                  <DownloadIcon aria-hidden="true" className="size-4" />
+                  {t('worldDownload')}
+                </a>
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
 
       <TopPlayers
         locale={locale}
