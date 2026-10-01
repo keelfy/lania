@@ -6,10 +6,15 @@ import {
   NavigationMenuItem,
   NavigationMenuList,
 } from '@/components/ui/navigation-menu'
-import { navigationMenuTriggerStyle } from '@/components/ui/navigation-menu-trigger-style'
-import NavItemLink from './nav-item-link'
+import NavItemLink, { NavbarNavigation } from './nav-item-link'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetTrigger } from '@/components/ui/sheet'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { Currency, CURRENCY_COOKIE, DEFAULT_CURRENCY } from '@/lib/currency'
 import { isAdminSession } from '@/lib/admin'
 import { getCurrentSession } from '@/lib/get-current-session'
@@ -32,7 +37,6 @@ import Link from 'next/link'
 import React, { Suspense } from 'react'
 import SignInButton from '../(with-navbar)/components/sign-in-button'
 import LanguageDropdownMenu from './language-dropdown-menu'
-import NavbarHighlighter from './navbar-highlighter'
 import NotificationsMenu from './notifications-button'
 import ShoppingBasketButton from './shopping-basket-button'
 import UserDropdownMenu from './user-dropdown'
@@ -91,50 +95,42 @@ export default async function Navbar({
   return (
     <header
       className={cn(
-        'bg-background/70 container mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-3 px-4 py-4 backdrop-blur lg:px-0',
+        'lania-navbar relative mx-auto mt-3 flex min-h-16 w-[calc(100%-1.5rem)] max-w-6xl items-center justify-between gap-2 px-2 sm:gap-3 sm:px-3',
         className,
       )}
       {...props}
     >
-      <div className="flex h-full items-center gap-3">
-        <Link href="/" className="group flex flex-nowrap items-center gap-2">
-          <DeerIcon className="size-8 transition-opacity duration-300 group-hover:opacity-80" />
-          <h1 className="bg-gradient-to-r from-white to-teal-400/90 bg-clip-text text-lg font-bold tracking-widest text-transparent uppercase transition-opacity duration-300 group-hover:opacity-80">
-            Lania
-          </h1>
+      <div className="flex min-w-0 items-center gap-3">
+        <Link href={`/${currentLocale}`} className="navbar-brand">
+          <span className="navbar-brand-mark">
+            <DeerIcon className="size-8" aria-hidden />
+          </span>
+          <span className="navbar-brand-name">Lania</span>
         </Link>
-        <Separator orientation="vertical" className="ml-4 hidden lg:block" />
+        <Separator orientation="vertical" className="hidden !h-6 lg:block" />
         <div className="hidden lg:block">
-          <NavigationMenu>
-            <NavigationMenuList>
-              {navItems.map((item) => (
-                <NavigationMenuItem key={item.href}>
-                  <NavItemLink
-                    href={`/${currentLocale}${item.href}`}
-                    className={cn(
-                      navigationMenuTriggerStyle(),
-                      'hover:border-accent cursor-pointer border-1 border-transparent bg-transparent transition-all hover:bg-transparent',
-                      item.disabled && 'pointer-events-none opacity-70',
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        'relative z-10 flex items-center gap-2',
-                        // 'px-4 py-2 bg-gradient-to-r from-white to-teal-400/90 bg-[length:200%_100%] bg-clip-text bg-[position:0%_50%] text-transparent transition-all duration-300 hover:bg-[position:70%_50%]',
-                      )}
-                    >
-                      <item.icon className="size-4" />
-                      <p>{t(`navbar.items.${item.labelKey}`)}</p>
-                    </div>
-                  </NavItemLink>
-                  {/* The active page is only known at request time on routes with dynamic segments. */}
-                  <Suspense fallback={null}>
-                    <NavbarHighlighter href={item.href} />
-                  </Suspense>
-                </NavigationMenuItem>
-              ))}
-            </NavigationMenuList>
-          </NavigationMenu>
+          {/* Path-dependent state stays inside a streamed client boundary. */}
+          <Suspense fallback={<NavbarLinksFallback t={t} />}>
+            <NavbarNavigation>
+              <NavigationMenu viewport={false} aria-label={t('navbar.title')}>
+                <NavigationMenuList className="gap-0.5">
+                  {navItems.map((item) => (
+                    <NavigationMenuItem key={item.href}>
+                      <NavItemLink
+                        href={`/${currentLocale}${item.href}`}
+                        routeHref={item.href}
+                        className="navbar-link"
+                        disabled={item.disabled}
+                      >
+                        <item.icon aria-hidden className="size-4" />
+                        <span>{t(`navbar.items.${item.labelKey}`)}</span>
+                      </NavItemLink>
+                    </NavigationMenuItem>
+                  ))}
+                </NavigationMenuList>
+              </NavigationMenu>
+            </NavbarNavigation>
+          </Suspense>
         </div>
       </div>
       <Suspense fallback={<NavbarActionsFallback />}>
@@ -160,18 +156,37 @@ async function NavbarActions({ currentLocale }: Props) {
     DEFAULT_CURRENCY
 
   return (
-    <div className="absolute right-4 flex items-center gap-2 lg:right-0">
-      <NotificationsMenu sessionActive={isSessionActive}>
-        <Button variant="ghost" size="icon">
-          <span className="sr-only">{t('notifications.title')}</span>
-          <BellIcon className="size-4" />
-        </Button>
-      </NotificationsMenu>
-      <ShoppingBasketButton />
+    <div className="navbar-actions flex shrink-0 items-center gap-1.5">
+      <div className="navbar-utilities flex items-center gap-0.5">
+        <Tooltip delayDuration={500}>
+          <NotificationsMenu sessionActive={isSessionActive}>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <span className="sr-only">
+                  {t('navbar.notifications.title')}
+                </span>
+                <BellIcon aria-hidden />
+              </Button>
+            </TooltipTrigger>
+          </NotificationsMenu>
+          <TooltipContent side="bottom" sideOffset={8}>
+            {t('navbar.notifications.title')}
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip delayDuration={500}>
+          <TooltipTrigger asChild>
+            <ShoppingBasketButton variant="ghost" className="min-w-11" />
+          </TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={8}>
+            {t('basket.title')}
+          </TooltipContent>
+        </Tooltip>
+      </div>
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="relative lg:hidden">
-            <MenuIcon className="size-8" />
+            <span className="sr-only">{t('navbar.title')}</span>
+            <MenuIcon aria-hidden />
             {profilesNeedAction && <AttentionDot />}
           </Button>
         </SheetTrigger>
@@ -183,7 +198,8 @@ async function NavbarActions({ currentLocale }: Props) {
           currency={currency}
         />
       </Sheet>
-      <div className="relative hidden items-center gap-6 lg:flex">
+      <Separator orientation="vertical" className="hidden !h-6 lg:block" />
+      <div className="hidden items-center gap-1.5 lg:flex">
         {isSessionActive ? (
           <UserDropdownMenu
             isAdmin={isAdmin}
@@ -192,10 +208,7 @@ async function NavbarActions({ currentLocale }: Props) {
         ) : (
           <SignInButton />
         )}
-        <LanguageDropdownMenu
-          currentLocale={currentLocale}
-          className="absolute right-0 translate-x-[calc(100%+1rem)]"
-        />
+        <LanguageDropdownMenu currentLocale={currentLocale} />
       </div>
     </div>
   )
@@ -203,13 +216,30 @@ async function NavbarActions({ currentLocale }: Props) {
 
 // Keeps the room of the buttons, so the bar does not jump when they arrive.
 function NavbarActionsFallback() {
-  const placeholder = 'bg-muted animate-pulse rounded-md'
   return (
-    <div className="absolute right-4 flex items-center gap-2 lg:right-0">
-      <div className={cn('size-9', placeholder)} />
-      <div className={cn('size-9', placeholder)} />
-      <div className={cn('size-9 lg:hidden', placeholder)} />
-      <div className={cn('hidden h-9 w-24 lg:block', placeholder)} />
+    <div aria-hidden className="flex shrink-0 items-center gap-1.5">
+      <Skeleton className="size-11 rounded-xl" />
+      <Skeleton className="size-11 rounded-xl" />
+      <Skeleton className="size-11 rounded-xl lg:hidden" />
+      <Skeleton className="hidden h-11 w-20 rounded-xl lg:block" />
+      <Skeleton className="hidden h-11 w-24 rounded-xl lg:block" />
+    </div>
+  )
+}
+
+function NavbarLinksFallback({
+  t,
+}: {
+  t: Awaited<ReturnType<typeof getTranslations>>
+}) {
+  return (
+    <div aria-hidden className="flex items-center gap-0.5">
+      {navItems.map((item) => (
+        <span key={item.href} className="navbar-link navbar-link-content">
+          <item.icon aria-hidden className="size-4" />
+          <span>{t(`navbar.items.${item.labelKey}`)}</span>
+        </span>
+      ))}
     </div>
   )
 }

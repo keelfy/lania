@@ -69,6 +69,7 @@
 /* https://colorhunt.co/palette/243642387478629584e2f1e7 */
 
 :root {
+  --navbar-accent: #28735d;
   --radius: 0.65rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -104,6 +105,7 @@
 }
 
 .dark {
+  --navbar-accent: #99d8c5;
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
@@ -160,3 +162,207 @@
   }
 }
 
+/* Navbar motion responds to navigation, focus, and button presses. */
+.lania-navbar {
+  isolation: isolate;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--background) 82%, transparent);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+  backdrop-filter: blur(18px);
+}
+
+.navbar-brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  border-radius: 10px;
+  outline: none;
+}
+
+.navbar-brand-mark {
+  display: flex;
+  color: var(--navbar-accent);
+  transition: transform 200ms ease;
+}
+
+.navbar-brand-name {
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+
+.navbar-brand:is(:hover, :focus-visible) .navbar-brand-mark {
+  transform: translateY(-2px);
+}
+
+.lania-navbar .navbar-link {
+  position: relative;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  outline: none;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.lania-navbar .navbar-link:is([data-highlighted], [aria-current='page']) {
+  color: var(--foreground);
+}
+
+.lania-navbar .navbar-link[aria-disabled='true'] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.navbar-link-content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lania-navbar .navbar-link-content svg {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.navbar-highlight {
+  position: absolute;
+  inset: 2px 0;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--navbar-accent) 12%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--navbar-accent) 9%, transparent);
+}
+
+.navbar-active-line {
+  position: absolute;
+  right: 12px;
+  bottom: 2px;
+  left: 12px;
+  height: 2px;
+  pointer-events: none;
+  border-radius: 2px;
+  background: var(--navbar-accent);
+}
+
+.navbar-utilities {
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--muted) 25%, transparent);
+}
+
+.navbar-actions :is(button, a) {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 10px;
+  transition: background-color 180ms ease, color 180ms ease,
+    box-shadow 180ms ease, transform 180ms ease;
+}
+
+.navbar-actions :is(button, a)[data-state='open'] {
+  background: var(--accent);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px var(--navbar-accent);
+}
+
+.navbar-brand:focus-visible,
+.lania-navbar .navbar-link:focus-visible {
+  outline: 2px solid var(--navbar-accent);
+  outline-offset: 2px;
+}
+
+.navbar-actions :is(button, a):active,
+.lania-navbar .navbar-link:active {
+  transform: scale(0.96);
+}
+
+.navbar-mobile-link {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  font-weight: 500;
+  outline: none;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.navbar-mobile-link:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.navbar-mobile-link[aria-current='page'] {
+  border-color: color-mix(in srgb, var(--navbar-accent) 20%, transparent);
+  background: color-mix(in srgb, var(--navbar-accent) 9%, transparent);
+  color: var(--foreground);
+}
+
+.navbar-mobile-link[aria-current='page'] svg {
+  color: var(--navbar-accent);
+}
+
+.navbar-mobile-link:focus-visible {
+  outline: 2px solid var(--navbar-accent);
+  outline-offset: 2px;
+}
+
+.navbar-mobile-sheet > button {
+  top: 8px;
+  right: 8px;
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.navbar-mobile-sheet [data-slot='sheet-footer'] :is(button, a) {
+  min-height: 44px;
+}
+
+@media (max-width: 359px) {
+  .navbar-brand-name {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='sheet-overlay']:has(+ .navbar-mobile-sheet) {
+    animation: none;
+  }
+
+  .navbar-brand-mark,
+  .lania-navbar .navbar-link,
+  .navbar-actions :is(button, a),
+  .navbar-mobile-link {
+    transition: none;
+  }
+
+  .navbar-brand:is(:hover, :focus-visible) .navbar-brand-mark,
+  .navbar-actions :is(button, a):active,
+  .lania-navbar .navbar-link:active {
+    transform: none;
+  }
+}

@@ -1,26 +1,16 @@
 'use client'
 
-import { pathnameStartsWith, usePathname } from '@/i18n/navigation'
-import { motion } from 'framer-motion'
-import React from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 
-type Props = {
-  href: string
-}
-
-export default function NavbarHighlighter({ href }: Props) {
-  const pathname = usePathname()
-  const isActive = React.useMemo(() => {
-    return pathnameStartsWith(pathname, href)
-  }, [href, pathname])
-
+export default function NavbarHighlighter() {
+  const reducedMotion = useReducedMotion()
   return (
-    isActive && (
-      <motion.div
-        layoutId="navbar-highlight"
-        className="bg-accent absolute inset-0 z-5 rounded-md"
-        transition={{ type: 'spring', stiffness: 500, damping: 50, mass: 1 }}
-      />
-    )
+    <motion.span
+      aria-hidden
+      data-navbar-highlight
+      layoutId={reducedMotion ? undefined : 'navbar-highlight'}
+      className="navbar-highlight"
+      transition={{ duration: reducedMotion ? 0 : 0.2, ease: 'easeOut' }}
+    />
   )
 }

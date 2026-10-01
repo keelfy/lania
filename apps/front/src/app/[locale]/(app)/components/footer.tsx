@@ -93,7 +93,7 @@ export default async function Footer({ locale, className }: Props) {
             <div className="flex items-center gap-2 px-3">
               <DeerIcon className="size-6" />
               <p className="text-md font-mono font-semibold">
-                LANIA.GG © <CurrentYear />
+                LANIA.NETWORK © <CurrentYear />
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ export default async function Footer({ locale, className }: Props) {
             <p className="text-muted-foreground self-end text-sm">
               {t('madeBy.text')}&nbsp;
               <a
-                href="https://twitch.tv/keelfy"
+                href="https://github.com/keelfy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:underline"

@@ -77,7 +77,7 @@ const footer = (
               fontFamily: 'monospace',
             }}
           >
-            LANIA.GG © {new Date().getFullYear()}
+            LANIA.NETWORK © {new Date().getFullYear()}
           </p>
         </div>
         <div
@@ -160,7 +160,7 @@ const footer = (
         >
           made by&nbsp;
           <a
-            href="https://twitch.tv/keelfy"
+            href="https://github.com/keelfy"
             target="_blank"
             rel="noopener noreferrer"
             style={{

@@ -1,3 +1,5 @@
+'use client'
+
 import CurrencySelect from '@/components/ui/currency-select'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -11,6 +13,7 @@ import {
 import { Currency } from '@/lib/currency'
 import { Locale } from '@/lib/locale'
 import { cn } from '@/lib/utils'
+import { Link, usePathname } from '@/i18n/navigation'
 import {
   Book,
   CalendarIcon,
@@ -24,7 +27,6 @@ import {
   UsersIcon,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import Link from 'next/link'
 import MenuSheetLanguageSelect from './menu-sheet-language-select'
 import MenuSheetSignInButton from './menu-sheet-sign-in-btn'
 import MenuSheetSignOutButton from './menu-sheet-sign-out-btn'
@@ -99,22 +101,31 @@ export default function MenuSheetContent({
   currency,
 }: Props) {
   const t = useTranslations('navbar')
+  const pathname = usePathname()
   return (
-    <SheetContent className="flex flex-col gap-6">
-      <SheetHeader>
+    <SheetContent className="navbar-mobile-sheet flex flex-col gap-4 motion-reduce:animate-none">
+      <SheetHeader className="shrink-0">
         <SheetTitle>{t('title')}</SheetTitle>
         <SheetDescription className="sr-only">{t('title')}</SheetDescription>
       </SheetHeader>
-      <div className="flex h-full flex-col justify-between gap-6 px-4">
-        <div className="flex flex-1 flex-col gap-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-1">
+        <div className="flex flex-col gap-6">
           {menuItems.map((items, index) => (
-            <div className="flex flex-col gap-4" key={index}>
+            <div className="flex flex-col gap-1" key={index}>
               {items.map((item) => (
                 <SheetClose key={item.label} asChild>
                   <Link
                     href={item.href}
+                    aria-current={
+                      pathname === item.href ||
+                      pathname.startsWith(`${item.href}/`)
+                        ? 'page'
+                        : undefined
+                    }
+                    aria-disabled={item.disabled || undefined}
+                    tabIndex={item.disabled ? -1 : undefined}
                     className={cn(
-                      'flex items-center gap-2 text-lg font-medium',
+                      'navbar-mobile-link',
                       item.disabled &&
                         'text-muted-foreground pointer-events-none opacity-70',
                     )}
@@ -133,8 +144,11 @@ export default function MenuSheetContent({
               {index === 1 && isAdmin && (
                 <SheetClose asChild>
                   <Link
-                    href={`/${locale}/admin/users`}
-                    className="flex items-center gap-2 text-lg font-medium"
+                    href="/admin/users"
+                    aria-current={
+                      pathname.startsWith('/admin') ? 'page' : undefined
+                    }
+                    className="navbar-mobile-link"
                   >
                     <ShieldCheckIcon className="size-5" />
                     {t('userDropdown.admin')}
@@ -146,8 +160,8 @@ export default function MenuSheetContent({
           ))}
         </div>
       </div>
-      <SheetFooter>
-        <div className="my-4 flex flex-col gap-2">
+      <SheetFooter className="shrink-0">
+        <div className="my-2 flex flex-col gap-2">
           <MenuSheetLanguageSelect currentLocale={locale} className="w-full" />
           <CurrencySelect currency={currency} className="w-full" />
         </div>

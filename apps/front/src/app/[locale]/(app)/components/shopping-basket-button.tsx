@@ -2,14 +2,14 @@
 
 import { Button } from '@/components/ui/button'
 import { useBasket } from '@/context/basket'
+import { useRouter } from '@/i18n/navigation'
 import { ShoppingBasketIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useRouter } from 'next/navigation'
 import React from 'react'
 
 type Props = React.ComponentProps<typeof Button>
 
-export default function ShoppingBasketButton({ ...props }: Props) {
+export default function ShoppingBasketButton({ onClick, ...props }: Props) {
   const router = useRouter()
   const { items } = useBasket()
   const isEmpty = items.length === 0
@@ -40,7 +40,10 @@ export default function ShoppingBasketButton({ ...props }: Props) {
     <Button
       variant="secondary"
       size={isEmpty ? 'icon' : 'default'}
-      onClick={() => router.push('/basket')}
+      onClick={(event) => {
+        onClick?.(event)
+        if (!event.defaultPrevented) router.push('/basket')
+      }}
       {...props}
     >
       <span className="sr-only">{t('title')}</span>

@@ -58,8 +58,13 @@ export default function UserDropdownMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="icon" className="relative">
-          <UserIcon className="size-6" />
+        <Button
+          size="icon"
+          className="relative"
+          aria-label={t('profiles')}
+          title={t('profiles')}
+        >
+          <UserIcon aria-hidden />
           {profilesNeedAction && <AttentionDot />}
         </Button>
       </DropdownMenuTrigger>

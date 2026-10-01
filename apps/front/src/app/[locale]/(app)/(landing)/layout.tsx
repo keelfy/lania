@@ -20,7 +20,7 @@ export default async function LandingLayout({
     <div className="relative min-h-screen">
       <Navbar
         id="header"
-        className="pointer-events-auto fixed inset-x-0 top-0 z-50 w-full"
+        className="pointer-events-auto fixed inset-x-0 top-0 z-50"
         currentLocale={locale as Locale}
       />
       <SwirlBackground />
