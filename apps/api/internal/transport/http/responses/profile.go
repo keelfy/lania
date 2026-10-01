@@ -113,6 +113,30 @@ type ProfileStats struct {
 	Seasons       []*ProfileSeasonStats `json:"seasons"`
 }
 
+// ProfileViolations are the bans and mutes of a profile in one season. Available is false when the server of the
+// season is over or cannot be reached, so nothing is known.
+type ProfileViolations struct {
+	Available  bool                `json:"available"`
+	Violations []*ProfileViolation `json:"violations"`
+}
+
+// ProfileViolation times are in epoch milliseconds.
+type ProfileViolation struct {
+	// ID is unique within a kind.
+	ID     int64  `json:"id"`
+	Kind   string `json:"kind"`
+	Reason string `json:"reason"`
+	// IssuedBy is null when the server console gave it.
+	IssuedBy  *string `json:"issuedBy"`
+	IssuedAt  int64   `json:"issuedAt"`
+	ExpiresAt *int64  `json:"expiresAt"`
+	Status    string  `json:"status"`
+	// RemovedBy is null when the console lifted it or nobody did.
+	RemovedBy     *string `json:"removedBy"`
+	RemovedReason string  `json:"removedReason"`
+	RemovedAt     *int64  `json:"removedAt"`
+}
+
 type NameColor struct {
 	ID     uuid.UUID `json:"id"`
 	Name   string    `json:"name"`

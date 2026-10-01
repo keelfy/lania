@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -51,6 +52,8 @@ type ShellAPI interface {
 	// ClearPlayerSkin takes the SkinsRestorer skin off the player. It fails with codes.DeadlineExceeded when the
 	// server does not do it in time.
 	ClearPlayerSkin(ctx context.Context, mcUUID uuid.UUID) error
+	// GetPlayerPunishments returns the LiteBans bans and mutes of the players, newest first.
+	GetPlayerPunishments(ctx context.Context, mcUUIDs uuid.UUIDs) ([]*domain.Punishment, error)
 }
 
 // ShellPool gives the ShellAPI of a season by the address of its shell service.
@@ -70,6 +73,7 @@ type shellAPI struct {
 	whitelist  shellv1.WhitelistServiceClient
 	auth       shellv1.AuthServiceClient
 	skin       shellv1.SkinServiceClient
+	punishment shellv1.PunishmentServiceClient
 }
 
 // shellCallTimeout keeps pages responsive when the Minecraft host is slow.
@@ -124,6 +128,7 @@ func (p *shellPool) Get(address string) (ShellAPI, error) {
 		whitelist:  shellv1.NewWhitelistServiceClient(conn),
 		auth:       shellv1.NewAuthServiceClient(conn),
 		skin:       shellv1.NewSkinServiceClient(conn),
+		punishment: shellv1.NewPunishmentServiceClient(conn),
 	}
 	p.conns[address] = conn
 	p.apis[address] = api
@@ -339,4 +344,60 @@ func parsePlayerSkin(skin *shellv1.PlayerSkin) (*domain.PlayerSkin, error) {
 		res.MojangUUID = &mojangUUID
 	}
 	return res, nil
+}
+
+var shellPunishmentKinds = map[shellv1.PunishmentKind]domain.PunishmentKind{
+	shellv1.PunishmentKind_PUNISHMENT_KIND_BAN:  domain.PunishmentKindBan,
+	shellv1.PunishmentKind_PUNISHMENT_KIND_MUTE: domain.PunishmentKindMute,
+}
+
+var shellPunishmentStatuses = map[shellv1.PunishmentStatus]domain.PunishmentStatus{
+	shellv1.PunishmentStatus_PUNISHMENT_STATUS_ACTIVE:  domain.PunishmentStatusActive,
+	shellv1.PunishmentStatus_PUNISHMENT_STATUS_EXPIRED: domain.PunishmentStatusExpired,
+	shellv1.PunishmentStatus_PUNISHMENT_STATUS_REMOVED: domain.PunishmentStatusRemoved,
+}
+
+func (api *shellAPI) GetPlayerPunishments(ctx context.Context, mcUUIDs uuid.UUIDs) ([]*domain.Punishment, error) {
+	res, err := api.punishment.GetPlayerPunishments(ctx, &shellv1.GetPlayerPunishmentsRequest{MinecraftUuids: mcUUIDs.Strings()})
+	if err != nil {
+		return nil, err
+	}
+
+	punishments := make([]*domain.Punishment, 0, len(res.GetPunishments()))
+	for _, punishment := range res.GetPunishments() {
+		kind, ok := shellPunishmentKinds[punishment.GetKind()]
+		if !ok {
+			return nil, fmt.Errorf("unknown punishment kind %s", punishment.GetKind())
+		}
+		status, ok := shellPunishmentStatuses[punishment.GetStatus()]
+		if !ok {
+			return nil, fmt.Errorf("unknown punishment status %s", punishment.GetStatus())
+		}
+		mcUUID, err := uuid.Parse(punishment.GetMinecraftUuid())
+		if err != nil {
+			return nil, err
+		}
+		punishments = append(punishments, &domain.Punishment{
+			ID:            punishment.GetId(),
+			Kind:          kind,
+			MinecraftUUID: mcUUID,
+			Reason:        punishment.GetReason(),
+			IssuedBy:      punishment.IssuedBy,
+			IssuedAt:      time.UnixMilli(punishment.GetIssuedAtMs()),
+			ExpiresAt:     millisToTime(punishment.ExpiresAtMs),
+			Status:        status,
+			RemovedBy:     punishment.RemovedBy,
+			RemovedReason: punishment.GetRemovedReason(),
+			RemovedAt:     millisToTime(punishment.RemovedAtMs),
+		})
+	}
+	return punishments, nil
+}
+
+func millisToTime(ms *int64) *time.Time {
+	if ms == nil {
+		return nil
+	}
+	t := time.UnixMilli(*ms)
+	return &t
 }

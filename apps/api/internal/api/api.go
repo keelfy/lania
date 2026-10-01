@@ -201,6 +201,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 
 				r.Get("/", api.profileHandler.GetUserProfileDetails)
 				r.Get("/stats", api.profileHandler.GetProfileStats)
+				r.Get("/violations", api.profileHandler.GetProfileViolations)
 			})
 
 			r.Group(func(r chi.Router) {

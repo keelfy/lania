@@ -257,3 +257,12 @@ func TestMinecraftService_RegisterPlayerGoesToTheSeasonServer(t *testing.T) {
 		t.Fatal("want an error when the server rejects the player")
 	}
 }
+
+func TestMinecraftService_PunishmentsOfAnEndedSeasonAreUnavailable(t *testing.T) {
+	ended := season("a:1", false)
+	service := NewMinecraftService(&fakeSeasons{seasons: []*domain.Season{ended}}, fakeShellPool{"a:1": {}})
+
+	if _, err := service.GetPlayerPunishmentsInSeason(context.Background(), ended.ID, uuid.UUIDs{uuid.New()}); !errors.Is(err, ErrOnlineUnavailable) {
+		t.Fatalf("error %v, want ErrOnlineUnavailable", err)
+	}
+}

@@ -246,7 +246,10 @@
     },
     "violations": {
       "title": "Нарушения",
-      "noViolations": "Нарушений нет"
+      "noViolations": "Нарушений нет",
+      "noData": "Нет данных",
+      "active": "{count, plural, one {# действует} few {# действуют} many {# действуют} other {# действуют}}",
+      "count": "{count, plural, one {# нарушение} few {# нарушения} many {# нарушений} other {# нарушения}}"
     },
     "cosmetics": {
       "title": "Украшения",
@@ -415,6 +418,26 @@
       "success": "Профиль {username} освобождён",
       "error": "Не удалось освободить профиль"
     }
+  },
+  "violations": {
+    "title": "Нарушения",
+    "empty": "Игрок не получал банов и мутов в этом сезоне.",
+    "kinds": {
+      "ban": "Бан",
+      "mute": "Мут"
+    },
+    "statuses": {
+      "active": "Действует",
+      "expired": "Истёк",
+      "removed": "Снят"
+    },
+    "noReason": "Без причины",
+    "issuedBy": "Выдал {name}",
+    "issuedByServer": "Выдан сервером",
+    "permanent": "Навсегда",
+    "until": "До {date}",
+    "removedBy": "Снял {name}",
+    "removedByServer": "Снят сервером"
   },
   "profileResync": {
     "title": "Синхронизация",

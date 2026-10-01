@@ -56,6 +56,7 @@ import {
   ProfilesStats,
   ProfileStats,
   ProfileVerification,
+  ProfileViolations,
   SelectCosmeticOptionReq,
   SkinChange,
   SkinVariant,
@@ -285,6 +286,18 @@ export function getProfileStats(
   id: string,
 ): Promise<ProfileStats> {
   return fetcher<ProfileStats>(`/v1/profiles/${id}/stats`)
+}
+
+// The bans and mutes of the profile on the server of the season, the primary one without seasonId.
+export function getProfileViolations(
+  fetcher: ApiFetcher,
+  id: string,
+  seasonId?: string,
+): Promise<ProfileViolations> {
+  return fetcher<ProfileViolations>(
+    `/v1/profiles/${id}/violations`,
+    seasonParams(seasonId),
+  )
 }
 
 export function getProfileDetailsByUsername(

@@ -9,4 +9,5 @@ var ProviderSet = wire.NewSet(
 	NewLuckpermsStorage,
 	NewNavAuthStorage,
 	NewSkinsRestorerStorage,
+	NewLiteBansStorage,
 )

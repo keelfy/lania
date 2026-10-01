@@ -135,6 +135,7 @@ func newTestEnv(t *testing.T) *testEnv {
 		NewWhitelistHandler(services.NewWhitelistService(console)),
 		NewAuthHandler(services.NewAuthService(nil, console)),
 		NewSkinHandler(services.NewSkinService(nil, console)),
+		NewPunishmentHandler(services.NewPunishmentService(nil)),
 	)
 
 	listener := bufconn.Listen(1024 * 1024)

@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package lania.shell.v1;
+
+// PunishmentService reads the bans and mutes LiteBans gives players on the proxy.
+service PunishmentService {
+  // GetPlayerPunishments returns the bans and mutes of the players, newest first, at most 50 of each kind. A ban by
+  // IP alone has no player, so it is never returned.
+  rpc GetPlayerPunishments(GetPlayerPunishmentsRequest) returns (GetPlayerPunishmentsResponse);
+}
+
+enum PunishmentKind {
+  PUNISHMENT_KIND_UNSPECIFIED = 0;
+  PUNISHMENT_KIND_BAN = 1;
+  PUNISHMENT_KIND_MUTE = 2;
+}
+
+enum PunishmentStatus {
+  PUNISHMENT_STATUS_UNSPECIFIED = 0;
+  // The punishment is in force now.
+  PUNISHMENT_STATUS_ACTIVE = 1;
+  // The punishment ran out.
+  PUNISHMENT_STATUS_EXPIRED = 2;
+  // The punishment was lifted before it ran out.
+  PUNISHMENT_STATUS_REMOVED = 3;
+}
+
+message Punishment {
+  // Id in the LiteBans table of the kind. A ban and a mute can share an id.
+  int64 id = 1;
+  PunishmentKind kind = 2;
+  string minecraft_uuid = 3;
+  // Reason the moderator wrote, empty when none.
+  string reason = 4;
+  // Nickname of the moderator. Absent when the console gave it.
+  optional string issued_by = 5;
+  int64 issued_at_ms = 6;
+  // Absent for a permanent punishment.
+  optional int64 expires_at_ms = 7;
+  PunishmentStatus status = 8;
+  // Nickname of the moderator who lifted it. Absent when the console did or when it was not lifted.
+  optional string removed_by = 9;
+  // Reason of the lift, empty when none.
+  string removed_reason = 10;
+  optional int64 removed_at_ms = 11;
+}
+
+message GetPlayerPunishmentsRequest {
+  repeated string minecraft_uuids = 1;
+}
+
+message GetPlayerPunishmentsResponse {
+  repeated Punishment punishments = 1;
+}

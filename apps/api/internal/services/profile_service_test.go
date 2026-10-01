@@ -281,3 +281,58 @@ func TestGetProfileSeasonStats(t *testing.T) {
 		}
 	})
 }
+
+type stubLegacyQueries struct {
+	sql.Queries
+	legacy map[uuid.UUID]uuid.UUID
+}
+
+func (q *stubLegacyQueries) FindLegacyMinecraftUUIDs(context.Context, uuid.UUIDs) (map[uuid.UUID]uuid.UUID, error) {
+	return q.legacy, nil
+}
+
+type stubPunishmentMinecraftService struct {
+	MinecraftService
+	punishments []*domain.Punishment
+	err         error
+	asked       uuid.UUIDs
+}
+
+func (s *stubPunishmentMinecraftService) GetPlayerPunishmentsInSeason(_ context.Context, _ uuid.UUID, mcUUIDs uuid.UUIDs) ([]*domain.Punishment, error) {
+	s.asked = mcUUIDs
+	return s.punishments, s.err
+}
+
+func TestGetProfilePunishmentsInSeason(t *testing.T) {
+	ctx := context.Background()
+	profile := &domain.Profile{MinecraftUUID: uuid.New()}
+
+	t.Run("asks for the current and the old UUIDs", func(t *testing.T) {
+		legacy, former := uuid.New(), uuid.New()
+		queries := &stubLegacyQueries{legacy: map[uuid.UUID]uuid.UUID{legacy: profile.MinecraftUUID, former: profile.MinecraftUUID}}
+		minecraft := &stubPunishmentMinecraftService{punishments: []*domain.Punishment{{Kind: domain.PunishmentKindBan}}}
+		service := &profileService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
+
+		got, err := service.GetProfilePunishmentsInSeason(ctx, profile, uuid.New())
+		if err != nil || len(got) != 1 {
+			t.Fatalf("punishments = %v %v, want the one from the server", got, err)
+		}
+		asked := map[uuid.UUID]bool{}
+		for _, mcUUID := range minecraft.asked {
+			asked[mcUUID] = true
+		}
+		if len(minecraft.asked) != 3 || !asked[profile.MinecraftUUID] || !asked[legacy] || !asked[former] {
+			t.Errorf("asked %v, want the current, legacy and former UUIDs", minecraft.asked)
+		}
+	})
+
+	t.Run("an ended season is unavailable", func(t *testing.T) {
+		queries := &stubLegacyQueries{}
+		minecraft := &stubPunishmentMinecraftService{err: ErrOnlineUnavailable}
+		service := &profileService{storage: &stubMainStorage{queries: queries}, minecraftService: minecraft}
+
+		if _, err := service.GetProfilePunishmentsInSeason(ctx, profile, uuid.New()); !errors.Is(err, ErrOnlineUnavailable) {
+			t.Fatalf("error %v, want ErrOnlineUnavailable", err)
+		}
+	})
+}

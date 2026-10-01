@@ -100,6 +100,35 @@ export type ProfileStats = {
   seasons: ProfileSeasonStats[]
 }
 
+export type ViolationKind = 'ban' | 'mute'
+
+export type ViolationStatus = 'active' | 'expired' | 'removed'
+
+// Times are in epoch milliseconds.
+export type Violation = {
+  // Unique within a kind.
+  id: number
+  kind: ViolationKind
+  reason: string
+  // null when the server console gave it.
+  issuedBy: string | null
+  issuedAt: number
+  // null for a permanent punishment.
+  expiresAt: number | null
+  status: ViolationStatus
+  // null when the console lifted it or nobody did.
+  removedBy: string | null
+  removedReason: string
+  removedAt: number | null
+}
+
+// available is false when the server of the season is over or cannot be reached, so nothing is known.
+export type ProfileViolations = {
+  available: boolean
+  // Newest first.
+  violations: Violation[]
+}
+
 export type NameColor = {
   id: string
   name: string

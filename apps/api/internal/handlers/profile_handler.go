@@ -26,6 +26,7 @@ type ProfileHandler interface {
 	GetTopPlaytimeProfiles(w http.ResponseWriter, r *http.Request)
 	GetProfilesStats(w http.ResponseWriter, r *http.Request)
 	GetProfileStats(w http.ResponseWriter, r *http.Request)
+	GetProfileViolations(w http.ResponseWriter, r *http.Request)
 }
 
 type profileHandler struct {
@@ -176,6 +177,39 @@ func (h *profileHandler) GetProfileStats(w http.ResponseWriter, r *http.Request)
 	}
 
 	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileStats(stats))
+}
+
+// GetProfileViolations answers with available false instead of an error when the server of the season is over or
+// cannot be reached, so the profile page still shows.
+func (h *profileHandler) GetProfileViolations(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	profileID, err := binders.BindPathVariableAsUUID(r, "profileId")
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	seasonID, err := seasonIDFromRequest(r, h.seasonService)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	profile, err := h.profileService.GetProfileByID(ctx, profileID)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+
+	punishments, err := h.profileService.GetProfilePunishmentsInSeason(ctx, profile, seasonID)
+	if err != nil {
+		if !errors.Is(err, services.ErrOnlineUnavailable) {
+			logger.Errorf(ctx, "[SHELL] Failed to get profile punishments: %v", err)
+		}
+		utils.WriteHttpJsonResponse(ctx, w, &responses.ProfileViolations{Violations: []*responses.ProfileViolation{}})
+		return
+	}
+
+	utils.WriteHttpJsonResponse(ctx, w, presenter.PresentProfileViolations(punishments))
 }
 
 // onlineStatusInSeason tells who is online on the server of the season. Everybody is offline when the season

@@ -47,6 +47,10 @@ type ProfileService interface {
 	GetSeasonsPlaytimeByMinecraftUUIDs(ctx context.Context, mcUUIDs uuid.UUIDs) (map[uuid.UUID]int64, error)
 	// GetProfileSeasonStats returns the stats of the profile in every season it played in, the newest season first.
 	GetProfileSeasonStats(ctx context.Context, mcUUID uuid.UUID) ([]*domain.ProfileSeasonStats, error)
+	// GetProfilePunishmentsInSeason returns the bans and mutes of the profile on the server of the season, also
+	// those given under its old UUIDs, newest first. It fails with ErrOnlineUnavailable when the season is over
+	// or has no server.
+	GetProfilePunishmentsInSeason(ctx context.Context, profile *domain.Profile, seasonID uuid.UUID) ([]*domain.Punishment, error)
 }
 
 type profileService struct {
@@ -370,4 +374,17 @@ func (s *profileService) GetProfileSeasonStats(ctx context.Context, mcUUID uuid.
 		return nil, utils.NewInternalServerError("failed to get profile season stats", err)
 	}
 	return stats, nil
+}
+
+func (s *profileService) GetProfilePunishmentsInSeason(ctx context.Context, profile *domain.Profile, seasonID uuid.UUID) ([]*domain.Punishment, error) {
+	legacy, err := s.storage.Queries().FindLegacyMinecraftUUIDs(ctx, uuid.UUIDs{profile.MinecraftUUID})
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to find legacy minecraft uuids", err)
+	}
+	mcUUIDs := uuid.UUIDs{profile.MinecraftUUID}
+	for legacyUUID := range legacy {
+		mcUUIDs = append(mcUUIDs, legacyUUID)
+	}
+
+	return s.minecraftService.GetPlayerPunishmentsInSeason(ctx, seasonID, mcUUIDs)
 }

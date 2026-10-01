@@ -163,6 +163,25 @@ func PresentProfileStats(stats []*domain.ProfileSeasonStats) *responses.ProfileS
 	return res
 }
 
+func PresentProfileViolations(punishments []*domain.Punishment) *responses.ProfileViolations {
+	res := &responses.ProfileViolations{Available: true, Violations: make([]*responses.ProfileViolation, len(punishments))}
+	for i, punishment := range punishments {
+		res.Violations[i] = &responses.ProfileViolation{
+			ID:            punishment.ID,
+			Kind:          string(punishment.Kind),
+			Reason:        punishment.Reason,
+			IssuedBy:      punishment.IssuedBy,
+			IssuedAt:      punishment.IssuedAt.UnixMilli(),
+			ExpiresAt:     timeToMillis(punishment.ExpiresAt),
+			Status:        string(punishment.Status),
+			RemovedBy:     punishment.RemovedBy,
+			RemovedReason: punishment.RemovedReason,
+			RemovedAt:     timeToMillis(punishment.RemovedAt),
+		}
+	}
+	return res
+}
+
 func PresentProfileCosmeticOptions(nameColorOptions []*domain.ProfileNameColorOption, glythPrefixOptions []*domain.ProfileNamePrefixOption, specialPrefixOptions []*domain.ProfileNamePrefixOption, locale string) *responses.ProfileCosmeticOptions {
 	nameColors := make([]*responses.ProfileNameColorOption, len(nameColorOptions))
 	for i, profileNameColor := range nameColorOptions {

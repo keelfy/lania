@@ -15,7 +15,6 @@ import {
   CalendarIcon,
   CheckIcon,
   ClockIcon,
-  ShieldCheckIcon,
   ShieldIcon,
   ShoppingBagIcon,
   XIcon,
@@ -23,8 +22,10 @@ import {
 } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import AccessSeasonSelect from './access-season-select'
+import AccessViolations, { AccessViolationsFallback } from './access-violations'
 import { loadProfilePage } from './load-profile-page'
 
 const accessStatusColors = {
@@ -131,13 +132,16 @@ export default async function ProfilePage({ searchParams, params }: Props) {
                 {t('violations.title')}
               </p>
             </div>
-            {/* Violations are not tracked yet, so there is never a list to show. */}
-            <div className="flex min-h-9 flex-nowrap items-center justify-end gap-2">
-              <p className="text-primary text-right text-sm font-semibold sm:text-base">
-                {t('violations.noViolations')}
-              </p>
-              <ShieldCheckIcon className="size-4 text-green-500" />
-            </div>
+            <Suspense
+              key={accessSeason?.id}
+              fallback={<AccessViolationsFallback />}
+            >
+              <AccessViolations
+                profileId={selectedProfile.id}
+                seasonId={accessSeason?.id}
+                locale={locale}
+              />
+            </Suspense>
             {accessStatus !== 'active' && canObtainAccess && (
               <Button
                 variant="outline"

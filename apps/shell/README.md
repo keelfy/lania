@@ -11,6 +11,7 @@ domain-level requests and shell translates them to plugin storage.
 | `WhitelistService`  | Server whitelist, changed with RCON commands (`whitelist add/remove` by default, see `WHITELIST_ADD_COMMAND` and `WHITELIST_REMOVE_COMMAND` for whitelist plugins) |
 | `AuthService`       | NavAuth on the proxy (in-game passwords of unlicensed players). Its tables live in their own database on the same MySQL server (`NAVAUTH_DATABASE_NAME`). The API sends a bcrypt hash; NavAuth reads credentials on every login, so a new password applies on the next login |
 | `SkinService`       | SkinsRestorer on the proxy. Skins are read from its tables (`SKINSRESTORER_TABLE_PREFIX`, `sr_` by default) and changed with its console commands over RCON (`SKIN_SET_COMMAND`, `SKIN_CLEAR_COMMAND`). SkinsRestorer runs them in background, so shell polls `sr_players` until the change shows up, for 15 seconds at most |
+| `PunishmentService` | LiteBans on the proxy. Bans and mutes are read from its tables (`LITEBANS_TABLE_PREFIX`, `litebans_` by default). Bans by IP alone are left out: they have no player |
 
 Contracts live in `/proto/lania/shell/v1`. After editing them run
 `mise run proto-generate`, which regenerates Go code for both shell and API.

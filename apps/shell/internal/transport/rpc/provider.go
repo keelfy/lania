@@ -8,5 +8,6 @@ var ProviderSet = wire.NewSet(
 	NewWhitelistHandler,
 	NewAuthHandler,
 	NewSkinHandler,
+	NewPunishmentHandler,
 	NewServer,
 )

@@ -157,6 +157,11 @@ func GetSkinsRestorerTablePrefix() string {
 	return getEnvOrDefault("SKINSRESTORER_TABLE_PREFIX", "sr_")
 }
 
+// GetLiteBansTablePrefix returns the table prefix of LiteBans. Its tables share the database with LuckPerms.
+func GetLiteBansTablePrefix() string {
+	return getEnvOrDefault("LITEBANS_TABLE_PREFIX", "litebans_")
+}
+
 func getEnvOrDefault(key string, fallback string) string {
 	value := os.Getenv(key)
 	if value == "" {

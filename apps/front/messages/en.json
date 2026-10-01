@@ -247,7 +247,10 @@
     },
     "violations": {
       "title": "Violations",
-      "noViolations": "No violations"
+      "noViolations": "No violations",
+      "noData": "No data",
+      "active": "{count} in force",
+      "count": "{count, plural, one {# violation} other {# violations}}"
     },
     "cosmetics": {
       "title": "Cosmetics",
@@ -416,6 +419,26 @@
       "success": "Profile {username} is released",
       "error": "Failed to release the profile"
     }
+  },
+  "violations": {
+    "title": "Violations",
+    "empty": "The player got no bans or mutes this season.",
+    "kinds": {
+      "ban": "Ban",
+      "mute": "Mute"
+    },
+    "statuses": {
+      "active": "In force",
+      "expired": "Expired",
+      "removed": "Lifted"
+    },
+    "noReason": "No reason given",
+    "issuedBy": "Given by {name}",
+    "issuedByServer": "Given by the server",
+    "permanent": "Permanent",
+    "until": "Until {date}",
+    "removedBy": "Lifted by {name}",
+    "removedByServer": "Lifted by the server"
   },
   "profileResync": {
     "title": "Synchronization",

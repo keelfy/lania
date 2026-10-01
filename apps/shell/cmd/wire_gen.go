@@ -42,7 +42,10 @@ func InitializeServer(ctx context.Context) (*grpc.Server, func(), error) {
 	skinsRestorerStorage := storage.NewSkinsRestorerStorage(db)
 	skinService := services.NewSkinService(skinsRestorerStorage, console)
 	skinHandler := rpc.NewSkinHandler(skinService)
-	server := rpc.NewServer(playerHandler, permissionHandler, whitelistHandler, authHandler, skinHandler)
+	liteBansStorage := storage.NewLiteBansStorage(db)
+	punishmentService := services.NewPunishmentService(liteBansStorage)
+	punishmentHandler := rpc.NewPunishmentHandler(punishmentService)
+	server := rpc.NewServer(playerHandler, permissionHandler, whitelistHandler, authHandler, skinHandler, punishmentHandler)
 	return server, func() {
 		cleanup()
 	}, nil

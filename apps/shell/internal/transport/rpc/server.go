@@ -24,6 +24,7 @@ func NewServer(
 	whitelistHandler *WhitelistHandler,
 	authHandler *AuthHandler,
 	skinHandler *SkinHandler,
+	punishmentHandler *PunishmentHandler,
 ) *grpc.Server {
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -37,6 +38,7 @@ func NewServer(
 	shellv1.RegisterWhitelistServiceServer(server, whitelistHandler)
 	shellv1.RegisterAuthServiceServer(server, authHandler)
 	shellv1.RegisterSkinServiceServer(server, skinHandler)
+	shellv1.RegisterPunishmentServiceServer(server, punishmentHandler)
 	healthpb.RegisterHealthServer(server, health.NewServer())
 
 	return server

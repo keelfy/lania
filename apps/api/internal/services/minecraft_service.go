@@ -70,6 +70,9 @@ type MinecraftService interface {
 	// ClearPlayerSkinInSeason takes the chosen skin off the player on the server of the season. It fails like
 	// SetPlayerSkinInSeason.
 	ClearPlayerSkinInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
+	// GetPlayerPunishmentsInSeason returns the bans and mutes the players got on the server of the season, newest
+	// first. It fails with ErrOnlineUnavailable when the season is over or has no server.
+	GetPlayerPunishmentsInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) ([]*domain.Punishment, error)
 }
 
 type minecraftService struct {
@@ -358,4 +361,17 @@ func skinError(err error) error {
 	default:
 		return utils.NewInternalServerError("failed to change the skin", err)
 	}
+}
+
+func (s *minecraftService) GetPlayerPunishmentsInSeason(ctx context.Context, seasonID uuid.UUID, mcUUIDs uuid.UUIDs) ([]*domain.Punishment, error) {
+	// A server of a season that is over is usually down, so it is not asked at all.
+	api, err := s.onlineShell(ctx, seasonID)
+	if err != nil {
+		return nil, err
+	}
+	punishments, err := api.GetPlayerPunishments(ctx, mcUUIDs)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get player punishments", err)
+	}
+	return punishments, nil
 }

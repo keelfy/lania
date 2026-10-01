@@ -22,6 +22,8 @@ import CopyUsernameButton from './copy-username-button'
 import { hasOwnFace } from '@/lib/skin'
 import ProfileSkinStage from './profile-skin-stage'
 import SeenAt from './seen-at'
+import ViolationsSection from './violations-section'
+import { Suspense } from 'react'
 
 type Props = {
   params: Promise<{
@@ -158,6 +160,14 @@ export default async function CommunityProfilePage({
             colors={nameColors}
             locale={locale}
           />
+
+          <Suspense fallback={null}>
+            <ViolationsSection
+              profileId={profile.id}
+              seasonId={season}
+              locale={locale}
+            />
+          </Suspense>
         </div>
       </div>
     </div>
