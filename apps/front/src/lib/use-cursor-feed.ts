@@ -22,15 +22,19 @@ export function useCursorFeed<T>(
     startTransition(async () => {
       try {
         const page = await load(requested)
-        setPages((current) => [
-          ...current,
-          { key: requested, items: page.items },
-        ])
-        setCursor(page.nextCursor)
-        setFailed(false)
+        // Updates after an await leave the transition. If the new cards suspend in an urgent update,
+        // the nearest boundary hides the whole page until they resolve.
+        startTransition(() => {
+          setPages((current) => [
+            ...current,
+            { key: requested, items: page.items },
+          ])
+          setCursor(page.nextCursor)
+          setFailed(false)
+        })
       } catch (error) {
         console.error(error)
-        setFailed(true)
+        startTransition(() => setFailed(true))
       }
     })
   }
