@@ -299,7 +299,7 @@
         "title": "Name color",
         "select": "Select name color",
         "changed": "Name color for <username></username> successfully changed",
-        "changedDescription": "For the changes to take effect, please log in again to the server",
+        "changedDescription": "Changes will apply automatically on the server after a short while",
         "error": "Failed to change name color for <username></username>"
       },
       "glyth": {
@@ -307,7 +307,7 @@
         "select": "Select glyth",
         "none": "None",
         "changed": "Glyth for <username></username> successfully changed",
-        "changedDescription": "For the changes to take effect, please log in again to the server",
+        "changedDescription": "Changes will apply automatically on the server after a short while",
         "error": "Failed to change glyth for <username></username>"
       },
       "wantToStandOut": "Do you want your game profile to stand out?",
@@ -321,8 +321,9 @@
     },
     "verification": {
       "title": "License verification",
+      "verifiedTitle": "License verified",
       "description": "Optional. Prove that the licensed account is yours to get a checkmark next to the nickname",
-      "verified": "License verified, the nickname has a checkmark",
+      "verified": "Auto-login is enabled: join the server with your licensed account without entering a password. A checkmark appears next to your nickname",
       "notRekeyed": "The profile is not moved to the licensed UUID yet. Verification opens after the move",
       "start": "Verify",
       "startFailed": "Could not start the verification",

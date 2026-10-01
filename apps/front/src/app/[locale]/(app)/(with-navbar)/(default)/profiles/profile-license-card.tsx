@@ -162,7 +162,7 @@ function ProfileVerificationCard({
     >
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          {t('title')}
+          {t(profile.verified ? 'verifiedTitle' : 'title')}
           {profile.verified && <VerifiedBadge />}
         </CardTitle>
         <CardDescription>

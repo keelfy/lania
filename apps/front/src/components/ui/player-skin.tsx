@@ -32,7 +32,7 @@ export default function PlayerSkin({ profile, colors, interactive }: Props) {
       cape,
       skin?.slim ?? false,
       resolvedTheme === 'dark' ? 'dark' : 'light',
-      { canvas, transparent: interactive },
+      { canvas, height: interactive ? 300 : 200, transparent: interactive },
     )
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
     viewer.autoRotate = !interactive && !reducedMotion.matches
@@ -70,15 +70,11 @@ export default function PlayerSkin({ profile, colors, interactive }: Props) {
   const last = colors?.[colors.length - 1] ?? first
   return (
     <div
-      className={
-        interactive
-          ? 'relative overflow-hidden rounded-lg border'
-          : 'self-center'
-      }
+      className={interactive ? 'relative' : 'self-center'}
       style={
         interactive
           ? {
-              backgroundImage: `radial-gradient(ellipse at 50% 90%, color-mix(in srgb, ${first} 20%, transparent), transparent 65%), radial-gradient(ellipse at 50% 10%, color-mix(in srgb, ${last} 10%, transparent), transparent 70%)`,
+              backgroundImage: `radial-gradient(ellipse at 50% 60%, color-mix(in srgb, ${first} 16%, transparent), transparent 70%), radial-gradient(ellipse at 50% 40%, color-mix(in srgb, ${last} 8%, transparent), transparent 70%)`,
             }
           : undefined
       }
@@ -86,12 +82,12 @@ export default function PlayerSkin({ profile, colors, interactive }: Props) {
       <canvas
         ref={canvasRef}
         width={300}
-        height={200}
+        height={interactive ? 300 : 200}
         aria-label={t('label')}
         className="mx-auto block h-auto w-[300px] max-w-full cursor-grab active:cursor-grabbing"
       />
       {interactive && (
-        <div className="flex items-center justify-between gap-2 px-3 pb-2">
+        <div className="flex items-center justify-between gap-2 pb-2">
           <p className="text-muted-foreground text-xs">{t('drag')}</p>
           <div className="flex shrink-0 gap-1">
             <Button
