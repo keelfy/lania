@@ -25,3 +25,20 @@ func PresentProduct(product *domain.Product, price *domain.ProductPrice) *respon
 		CreatedAt:   product.CreatedAt,
 	}
 }
+
+func PresentProductCatalog(page *domain.ProductPage, counts map[domain.ProductCategory]int64) *responses.ProductCatalog {
+	res := &responses.ProductCatalog{
+		Content: make([]*responses.Product, len(page.Products)),
+		Counts:  make(map[string]int64, len(counts)),
+	}
+	for i, product := range page.Products {
+		res.Content[i] = PresentProduct(product, product.Prices[0])
+	}
+	for category, count := range counts {
+		res.Counts[string(category)] = count
+	}
+	if page.NextCursor != nil {
+		res.NextCursor = page.NextCursor.Encode()
+	}
+	return res
+}

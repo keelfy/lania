@@ -152,6 +152,8 @@
       "name-color": "Username colors",
       "name-prefix": "Glyths"
     },
+    "loadMore": "Show more",
+    "loadMoreFailed": "Could not load more products. Try again.",
     "currency": "Currency",
     "card": {
       "new": "New",

@@ -1,21 +1,21 @@
 import { getMetadataLocale } from '@/i18n/metadata-locale'
 import CurrencySelect from '@/components/ui/currency-select'
-import { getProducts } from '@/lib/api-endpoints'
+import { getProductCatalog } from '@/lib/api-endpoints'
 import { Currency, CURRENCY_COOKIE, DEFAULT_CURRENCY } from '@/lib/currency'
 import { serverApiFetcher } from '@/lib/server'
 import {
-  NameColorProductMetadata,
-  NamePrefixProductMetadata,
   Product,
+  ProductCatalog,
   ProductCategory,
+  ProductMetadata,
   UpgradeProductMetadata,
 } from '@/models/product'
 import { CoinsIcon } from 'lucide-react'
 import { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers'
-import UsernameColorProductCard from './components/name-color-product-card'
-import NamePrefixProductCard from './components/name-prefix-product-card'
+import ProductCards from './components/product-cards'
+import ProductsFeed from './components/products-feed'
 import UpgradeProductCard from './components/upgrade-color-product-card'
 import { getMockProducts } from './mock-products'
 import CatalogCategories from './components/catalog-categories'
@@ -61,40 +61,50 @@ export default async function ShopPage({ searchParams, params }: Props) {
     ((await cookies()).get(CURRENCY_COOKIE)?.value as Currency) ??
     DEFAULT_CURRENCY
 
-  const allProducts = previewOnly
+  const allMockProducts = previewOnly
     ? getMockProducts(undefined, locale, currency)
-    : await getProducts(serverApiFetcher, undefined, locale, currency).catch(
-        (err) => {
-          console.error(err)
-          return []
-        },
-      )
+    : []
+  const page: ProductCatalog = previewOnly
+    ? {
+        content: allMockProducts.filter(
+          (item) => category === 'all' || item.category === category,
+        ),
+        counts: countByCategory(allMockProducts),
+      }
+    : await getProductCatalog(
+        serverApiFetcher,
+        category === 'all' ? undefined : category,
+        undefined,
+        locale,
+        currency,
+      ).catch((err) => {
+        console.error(err)
+        return { content: [], counts: {} }
+      })
 
   const t = await getTranslations({ locale, namespace: 'products' })
 
-  const products =
-    category === 'all'
-      ? allProducts
-      : allProducts.filter((item) => item.category === category)
-  const counts: Record<string, number> = { all: allProducts.length }
-  for (const item of allProducts)
-    counts[item.category] = (counts[item.category] ?? 0) + 1
+  const counts: Record<string, number> = {
+    ...page.counts,
+    all: Object.values(page.counts).reduce((sum, count) => sum + count, 0),
+  }
   const labels = Object.fromEntries(
     ['all', ...Object.values(ProductCategory)].map((id) => [
       id,
       t(`categories.${id}`),
     ]),
   )
-  const hasCosmetics = products.some(
-    (item) => item.category !== ProductCategory.Upgrade,
-  )
+  const hasCosmetics = [ProductCategory.NameColor, ProductCategory.NamePrefix]
+    .filter((id) => category === 'all' || category === id)
+    .some((id) => (counts[id] ?? 0) > 0)
 
-  const featuredProducts = products.filter(
+  // The season access is pinned above the grid. Only the first page is searched, upgrades sort first.
+  const featuredProducts = page.content.filter(
     (item) =>
       item.category === ProductCategory.Upgrade &&
       (item.metadata as UpgradeProductMetadata).action === 'season_access',
   )
-  const catalogProducts = products.filter(
+  const catalogProducts = page.content.filter(
     (item) => !featuredProducts.includes(item),
   )
 
@@ -104,7 +114,7 @@ export default async function ShopPage({ searchParams, params }: Props) {
         <h1 className="text-4xl font-extrabold tracking-tight">{t('title')}</h1>
         <p className="text-muted-foreground text-lg">
           {labels[category]}{' '}
-          <span className="tabular-nums">({products.length})</span>
+          <span className="tabular-nums">({counts[category] ?? 0})</span>
         </p>
       </header>
       <div className="flex min-w-0 flex-col gap-6 sm:flex-row sm:gap-8">
@@ -140,50 +150,28 @@ export default async function ShopPage({ searchParams, params }: Props) {
               />
             ))}
           >
-            {renderProducts()}
+            <ProductsFeed
+              key={`${category}:${currency}`}
+              category={category}
+              initialCursor={page.nextCursor}
+              initialCards={
+                <ProductCards
+                  items={catalogProducts}
+                  currency={currency}
+                  previewOnly={previewOnly}
+                />
+              }
+            />
           </CatalogTryOn>
         </div>
       </div>
     </div>
   )
+}
 
-  function renderProducts() {
-    return (
-      <div className="grid w-full grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {catalogProducts.map((item) => {
-          switch (item.category) {
-            case ProductCategory.NameColor:
-              return (
-                <UsernameColorProductCard
-                  key={item.id}
-                  item={item as Product<NameColorProductMetadata>}
-                  currency={currency}
-                  previewOnly={previewOnly}
-                />
-              )
-            case ProductCategory.Upgrade:
-              return (
-                <UpgradeProductCard
-                  key={item.id}
-                  item={item as Product<UpgradeProductMetadata>}
-                  currency={currency}
-                  previewOnly={previewOnly}
-                />
-              )
-            case ProductCategory.NamePrefix:
-              return (
-                <NamePrefixProductCard
-                  key={item.id}
-                  item={item as Product<NamePrefixProductMetadata>}
-                  currency={currency}
-                  previewOnly={previewOnly}
-                />
-              )
-            default:
-              return null
-          }
-        })}
-      </div>
-    )
-  }
+function countByCategory(items: Product<ProductMetadata>[]) {
+  const counts: Record<string, number> = {}
+  for (const item of items)
+    counts[item.category] = (counts[item.category] ?? 0) + 1
+  return counts
 }

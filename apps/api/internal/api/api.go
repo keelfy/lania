@@ -272,6 +272,7 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 
 	r.Route("/products", func(r chi.Router) {
 		r.Get("/", api.productHandler.GetProducts)
+		r.Get("/catalog", api.productHandler.GetProductCatalog)
 		r.Get("/{productId}", api.productHandler.GetProductByID)
 	})
 

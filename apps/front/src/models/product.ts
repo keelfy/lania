@@ -9,6 +9,13 @@ export type Product<T extends ProductMetadata> = {
   createdAt: Date
 }
 
+// One page of the shop. The counts cover every category and ignore the page, they label the category tabs.
+export type ProductCatalog = {
+  content: Product<ProductMetadata>[]
+  nextCursor?: string
+  counts: Record<string, number>
+}
+
 export enum ProductCategory {
   Upgrade = 'upgrade',
   NameColor = 'name-color',

@@ -15,6 +15,8 @@ type ProductService interface {
 	GetProductByID(ctx context.Context, id uuid.UUID) (*domain.Product, error)
 	GetProductsByCategory(ctx context.Context, category domain.ProductCategory) ([]*domain.Product, error)
 	GetProducts(ctx context.Context) ([]*domain.Product, error)
+	GetProductsPage(ctx context.Context, category domain.ProductCategory, cursor *domain.ProductCursor, limit int) (*domain.ProductPage, error)
+	GetProductCounts(ctx context.Context) (map[domain.ProductCategory]int64, error)
 	GetProductsByIDs(ctx context.Context, ids uuid.UUIDs) ([]*domain.Product, error)
 	GetProductsByIDsIncludingInactive(ctx context.Context, ids uuid.UUIDs) ([]*domain.Product, error)
 	GetPricesByNames(ctx context.Context, names []domain.ProductPriceName) ([]*domain.ProductPrice, error)
@@ -82,6 +84,30 @@ func (s *productService) GetProducts(ctx context.Context) ([]*domain.Product, er
 		return nil, utils.NewInternalServerError("failed to get products", err)
 	}
 	return products, s.hydrateCosmeticMetadata(ctx, products)
+}
+
+func (s *productService) GetProductsPage(ctx context.Context, category domain.ProductCategory, cursor *domain.ProductCursor, limit int) (*domain.ProductPage, error) {
+	locale := utils.GetLocaleFromCtx(ctx)
+	currency := utils.GetCurrencyFromCtx(ctx)
+	// One extra row tells whether another page follows.
+	products, err := s.storage.Queries().FindProductsPage(ctx, category, cursor, limit+1, locale, currency)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to get products page", err)
+	}
+	page := &domain.ProductPage{Products: products}
+	if len(products) > limit {
+		page.Products = products[:limit]
+		page.NextCursor = domain.NewProductCursor(page.Products[limit-1])
+	}
+	return page, s.hydrateCosmeticMetadata(ctx, page.Products)
+}
+
+func (s *productService) GetProductCounts(ctx context.Context) (map[domain.ProductCategory]int64, error) {
+	counts, err := s.storage.Queries().CountProductsByCategory(ctx)
+	if err != nil {
+		return nil, utils.NewInternalServerError("failed to count products", err)
+	}
+	return counts, nil
 }
 
 func (s *productService) hydrateCosmeticMetadata(ctx context.Context, products []*domain.Product) error {

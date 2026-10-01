@@ -209,6 +209,8 @@ type Queries interface {
 	// Product
 	FindProductsByCategory(ctx context.Context, category domain.ProductCategory, currency domain.Currency, locale string) ([]*domain.Product, error)
 	FindProducts(ctx context.Context, locale string, currency domain.Currency) ([]*domain.Product, error)
+	FindProductsPage(ctx context.Context, category domain.ProductCategory, cursor *domain.ProductCursor, limit int, locale string, currency domain.Currency) ([]*domain.Product, error)
+	CountProductsByCategory(ctx context.Context) (map[domain.ProductCategory]int64, error)
 	FindProductByIDs(ctx context.Context, ids uuid.UUIDs, locale string, currency domain.Currency) ([]*domain.Product, error)
 	FindProductByIDsIncludingInactive(ctx context.Context, ids uuid.UUIDs, locale string, currency domain.Currency) ([]*domain.Product, error)
 	FindAdminProducts(ctx context.Context) ([]*domain.Product, error)

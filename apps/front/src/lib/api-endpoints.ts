@@ -35,7 +35,7 @@ import {
   OrderStatus,
   PurchasedProduct,
 } from '@/models/order'
-import { Product, ProductMetadata } from '@/models/product'
+import { Product, ProductCatalog, ProductMetadata } from '@/models/product'
 import {
   AdminSeason,
   SaveSeason,
@@ -192,6 +192,29 @@ export function getProducts(
     params.set('currency', currency)
   }
   return fetcher<Product<ProductMetadata>[]>(`/v1/products`, params)
+}
+
+export function getProductCatalog(
+  fetcher: ApiFetcher,
+  category: string | undefined,
+  cursor: string | undefined,
+  locale: string,
+  currency?: string,
+): Promise<ProductCatalog> {
+  const params = new URLSearchParams()
+  if (category) {
+    params.set('category', category)
+  }
+  if (cursor) {
+    params.set('cursor', cursor)
+  }
+  if (locale) {
+    params.set('locale', locale)
+  }
+  if (currency) {
+    params.set('currency', currency)
+  }
+  return fetcher<ProductCatalog>(`/v1/products/catalog`, params)
 }
 
 export function getProduct<T extends ProductMetadata>(
