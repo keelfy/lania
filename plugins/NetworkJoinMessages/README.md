@@ -2,6 +2,17 @@
 
 This is a continuation of Tirco's project [BungeeJoinMessages](https://github.com/Tirco/BungeeJoinMessages) as it appears it is no longer being maintained.
 
+## Build
+
+Use Java 21 and run `mvn --batch-mode verify`. The installable JAR is written
+to `target/NetworkJoinMessages-2.3.2.jar`.
+
+The Maven configuration is restored from the
+[upstream project](https://github.com/lania-smp/NetworkJoinMessages/blob/master/pom.xml),
+with Maven Central preferred, snapshots limited to Paper and Elytrium,
+MiniPlaceholders 3 matching the source API, and dependency-reduced POM generation
+disabled.
+
 ## License
 
 Zlib was chosen as the basis for this project (BukkitPlugin) as it is highly permissive and easy for people to understand. The license has only been modified for this project to reflect authorship and creation year.

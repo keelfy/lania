@@ -1,0 +1,51 @@
+name: Build VelocityWhitelist
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/VelocityWhitelist/**'
+      - '.github/workflows/build-velocity-whitelist.yml'
+  pull_request:
+    paths:
+      - 'plugins/VelocityWhitelist/**'
+      - '.github/workflows/build-velocity-whitelist.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: plugins/VelocityWhitelist
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build and test
+        run: bash ./gradlew --no-daemon build shadowJar
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v7
+        with:
+          name: VelocityWhitelist
+          path: |
+            plugins/VelocityWhitelist/build/libs/*-all.jar
+          if-no-files-found: error
+          retention-days: 14

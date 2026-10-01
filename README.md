@@ -14,6 +14,14 @@ This repository now tracks all services and apps in a single Git repository.
 - `season-extractor`
 - `infra/terraform` (Terraform infrastructure scripts)
 
+## Plugin and mod builds
+
+Each project under `plugins/` and `mods/` has a separate GitHub Actions build
+workflow. Builds run on pushes to `main` and pull requests that change that
+project or its workflow, and can also be started with **Run workflow**.
+The workflows run the project's checks and upload its installable JAR as an
+artifact, retained for 14 days. VelocityWhitelist uses the shaded `-all.jar`.
+
 ## Tooling
 
 - Use `mise` to manage tool versions and run tasks.

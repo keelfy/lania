@@ -1,0 +1,54 @@
+name: Build Scythe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/Scythe/**'
+      - '.github/workflows/build-scythe.yml'
+  pull_request:
+    paths:
+      - 'plugins/Scythe/**'
+      - '.github/workflows/build-scythe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: plugins/Scythe
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: plugins/Scythe/pom.xml
+
+      - name: Build and test
+        run: mvn --batch-mode --no-transfer-progress verify
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v7
+        with:
+          name: Scythe
+          path: |
+            plugins/Scythe/target/*.jar
+            !plugins/Scythe/**/*-sources.jar
+            !plugins/Scythe/**/*-javadoc.jar
+            !plugins/Scythe/**/*-dev.jar
+            !plugins/Scythe/**/original-*.jar
+          if-no-files-found: error
+          retention-days: 14

@@ -8,3 +8,5 @@
 #IntelliJ
 .idea
 *.iml
+# Keep the Maven build definition in the repository.
+!pom.xml
