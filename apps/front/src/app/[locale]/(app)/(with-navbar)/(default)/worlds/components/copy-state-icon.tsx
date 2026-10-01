@@ -15,13 +15,13 @@ export default function CopyStateIcon() {
     <span className="relative inline-block size-4">
       <CheckIcon
         className={cn(
-          'absolute inset-0 size-4 transition-all duration-200',
+          'absolute inset-0 size-4 transition-all duration-200 motion-reduce:transition-none',
           copied ? 'scale-100 text-teal-500 opacity-100' : 'scale-75 opacity-0',
         )}
       />
       <CopyIcon
         className={cn(
-          'absolute inset-0 size-3.5 transition-all duration-200',
+          'absolute inset-0 size-3.5 transition-all duration-200 motion-reduce:transition-none',
           copied
             ? 'scale-75 opacity-0'
             : 'scale-100 opacity-70 group-hover:opacity-100',

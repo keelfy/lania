@@ -99,6 +99,9 @@
   "worlds": {
     "title": "Servers",
     "copyAddress": "Copy server address",
+    "copyAction": "Copy address",
+    "addressCopied": "Address copied",
+    "copyError": "Could not copy. Select the address and copy it manually.",
     "otherServers": "Other servers",
     "metadata": {
       "title": "Servers - Lania Network",

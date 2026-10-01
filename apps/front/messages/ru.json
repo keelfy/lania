@@ -99,6 +99,9 @@
   "worlds": {
     "title": "Серверы",
     "copyAddress": "Скопировать адрес сервера",
+    "copyAction": "Скопировать",
+    "addressCopied": "Адрес скопирован",
+    "copyError": "Не удалось скопировать. Выделите адрес и скопируйте вручную.",
     "otherServers": "Другие серверы",
     "metadata": {
       "title": "Серверы - Lania Network",

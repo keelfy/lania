@@ -4,11 +4,13 @@ import { getTranslations } from 'next-intl/server'
 import { pingServer } from './ping-server'
 import ServerCard from './server-card'
 import { ActiveSeasonWorlds, getActiveSeasonWorlds } from '@/lib/worlds'
+import { mockServers } from './mock-servers'
 
 type Props = {
   params: Promise<{
     locale: string
   }>
+  searchParams: Promise<{ mock?: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -28,23 +30,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function WorldPage({ params }: Props) {
+export default async function WorldPage({ params, searchParams }: Props) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'worlds' })
 
-  const seasons = await getActiveSeasonWorlds().catch(
-    () => [] as ActiveSeasonWorlds[],
-  )
+  const mock =
+    process.env.NODE_ENV === 'development' && (await searchParams).mock === '1'
+  const seasons = mock
+    ? []
+    : await getActiveSeasonWorlds().catch(() => [] as ActiveSeasonWorlds[])
 
-  const statuses = await Promise.all(
-    seasons
-      .filter(({ season }) => !!season.publicAddress)
-      .map(async ({ season, worlds }) => ({
-        server: season,
-        worlds,
-        status: await pingServer(season.publicAddress!),
-      })),
-  )
+  const statuses = mock
+    ? mockServers
+    : await Promise.all(
+        seasons
+          .filter(({ season }) => !!season.publicAddress)
+          .map(async ({ season, worlds }) => ({
+            server: season,
+            worlds,
+            status: await pingServer(season.publicAddress!),
+          })),
+      )
 
   // The flagship season gets the hero treatment; everything else is
   // secondary and shown as compact status rows below it.
