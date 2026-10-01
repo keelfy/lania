@@ -108,7 +108,6 @@ export default async function CommunityPage({ params, searchParams }: Props) {
         <TopPlayers
           locale={locale}
           title={t('top.title')}
-          comparePlaytime
           season={season}
           href={(profile) =>
             communityProfileHref(locale, profile.username, season)
