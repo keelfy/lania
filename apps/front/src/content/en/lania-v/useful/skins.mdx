@@ -1,0 +1,65 @@
+import { Callout } from 'nextra/components/callout'
+
+# Skins
+
+The server runs the [SkinsRestorer](https://skinsrestorer.net/docs/features) plugin, so you can use your own skin without a licensed account.
+Licensed players don't need to do anything &mdash; their skin is picked up automatically.
+
+## Another player's skin
+
+If the skin you want belongs to a licensed account, its nickname is enough:
+
+```
+/skin set Notch
+```
+
+You can also open the `/skins` menu and pick a skin from the catalog.
+
+## Your own skin from a file
+
+1. Prepare the skin file: **PNG**, **64x64** (or the legacy 64x32), under 3 MB. HD skins are not supported;
+2. Open [skinsrestorer.org/upload](https://skinsrestorer.org/upload) and upload the file;
+3. Check the preview and press **Generate /skin url**;
+4. Copy the generated command and paste it into the game chat.
+
+If the file is already online and opens via a direct `.png` link, you can run:
+
+```
+/skin url "https://example.com/myskin.png"
+```
+
+For slim arms (Alex model) add `slim` at the end:
+
+```
+/skin url "https://example.com/myskin.png" slim
+```
+
+<Callout type='info'>
+  Always keep the link in quotes. If you change the skin file, upload it again: the old link keeps showing the previous skin.
+</Callout>
+
+## Editing your current skin
+
+1. Run `/skin edit` &mdash; you will get a link to the editor in chat;
+2. Change the skin and press **Save**;
+3. Right-click the 2D skin layout on the left and choose "Save image as";
+4. Upload the file as described in [Your own skin from a file](#your-own-skin-from-a-file).
+
+## Where to get or draw a skin
+
+- Ready-made skins: [NameMC](https://namemc.com/minecraft-skins), [The Skindex](https://www.minecraftskins.com);
+- Editor with 3D painting: [Novaskin](https://minecraft.novaskin.me);
+- Any image editor (GIMP, Photoshop, Paint.net) with a skin template.
+
+The inner skin layer must be opaque; the outer layer may use transparency (hats, glasses, etc.).
+
+## Reset and refresh
+
+- `/skin clear` &mdash; go back to the default skin (or your licensed one);
+- `/skin update` &mdash; refresh the skin if you changed it on your licensed account but the server still shows the old one.
+
+## Common problems
+
+- **Black stripes on the arms** &mdash; wrong model. Set the skin again with or without `slim`;
+- **Skin not applied** &mdash; make sure the link opens a `.png` file and the size is 64x64;
+- **Rate limit error** &mdash; wait a couple of minutes and try again.
