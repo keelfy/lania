@@ -1,9 +1,15 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import PlayerFace from '@/components/ui/player-face'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Profile } from '@/models/profile'
-import { CheckIcon, LoaderCircleIcon } from 'lucide-react'
+import { LoaderCircleIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTransition } from 'react'
@@ -21,40 +27,41 @@ export default function ProfileSelectWrapper({ profiles }: Props) {
   if (!profiles.length) return null
 
   return (
-    <div
-      role="group"
-      aria-label={t('chooseProfile')}
-      aria-busy={pending}
-      className="flex w-full flex-wrap gap-2 lg:w-auto"
+    <Select
+      value={selectedProfile?.id}
+      disabled={pending}
+      onValueChange={(id) => {
+        if (id === selectedProfile?.id) return
+        const query = new URLSearchParams(searchParams)
+        query.set('id', id)
+        startTransition(() => router.push(`${pathname}?${query}`))
+      }}
     >
-      {profiles.map((profile) => {
-        const selected = selectedProfile?.id === profile.id
-        return (
-          <Button
+      <SelectTrigger
+        className="w-full sm:w-56"
+        aria-label={t('chooseProfile')}
+        aria-busy={pending}
+      >
+        <SelectValue
+          placeholder={t('chooseProfile')}
+          className="min-w-0 flex-1 text-left"
+        />
+        {pending && (
+          <LoaderCircleIcon className="size-4 motion-safe:animate-spin" />
+        )}
+      </SelectTrigger>
+      <SelectContent>
+        {profiles.map((profile) => (
+          <SelectItem
             key={profile.id}
-            variant={selected ? 'secondary' : 'outline'}
-            aria-pressed={selected}
-            disabled={pending}
-            className="min-w-0 flex-1 gap-2 lg:flex-none"
-            onClick={() => {
-              if (selected) return
-              const query = new URLSearchParams(searchParams)
-              query.set('id', profile.id)
-              startTransition(() => router.push(`${pathname}?${query}`))
-            }}
+            value={profile.id}
+            textValue={profile.username}
           >
             <PlayerFace player={profile} className="size-5 shrink-0" />
             <span className="truncate">{profile.username}</span>
-            <span className="size-4 shrink-0">
-              {pending ? (
-                <LoaderCircleIcon className="size-4 motion-safe:animate-spin" />
-              ) : selected ? (
-                <CheckIcon className="size-4" />
-              ) : null}
-            </span>
-          </Button>
-        )
-      })}
-    </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
