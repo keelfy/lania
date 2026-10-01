@@ -1,66 +1,65 @@
 import { Cards } from 'nextra/components/cards'
-import { ALargeSmallIcon, CommandIcon, ShieldIcon, AppWindowMacIcon, FrameIcon, SmileIcon, TextIcon, GamepadIcon, BoxIcon } from 'lucide-react'
 import { Callout } from 'nextra/components/callout'
-import { PickaxeIcon } from 'lucide-react'
 
 # Introduction
 
-This is the knowledge base of the Lania server network. You will most likely find answers to most of your questions here.
+The Lania knowledge base: choose a topic based on what you want to do or learn.
 
-<br/><Cards.Card
-  icon={<ShieldIcon />}
-  title="Read the rules of the game servers"
-  href="/en/wiki/rules"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<CommandIcon />}
-  title="See which commands are available to players"
-  href="/en/wiki/lania-iv/commands"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<TextIcon />}
-  title="Learn how to format your chat messages"
-  href="/en/wiki/lania-iv/formatting"
-  arrow
-/>
+## Getting started
 
-### Game content
+<Cards>
+  <Cards.Card title="Rules" href="/en/wiki/rules" arrow />
+  <Cards.Card title="Commands" href="/en/wiki/lania-iv/commands" arrow />
+  <Cards.Card title="Message formatting" href="/en/wiki/lania-iv/formatting" arrow />
+</Cards>
 
-<br/><Cards.Card
-  icon={<PickaxeIcon />}
-  title="Quality-of-life features made for the server"
-  href="/en/wiki/lania-iv/gameplay/qol"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<FrameIcon />}
-  title="How to use invisible item frames"
-  href="/en/wiki/lania-iv/gameplay/frames"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<SmileIcon />}
-  title="How to see and send 7TV emotes in chat"
-  href="/en/wiki/lania-iv/gameplay/streamotes"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<AppWindowMacIcon />}
-  title="How to format text on signs"
-  href="/en/wiki/lania-iv/gameplay/signs"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<BoxIcon />}
-  title="How to get mini blocks for building"
-  href="/en/wiki/lania-iv/gameplay/miniblocks"
-  arrow
-/>
+## Survival
 
-<br/>
+Changes to Minecraft mechanics and extra advancements.
+
+<Cards>
+  <Cards.Card title="Quality of life" href="/en/wiki/lania-iv/gameplay/qol" arrow />
+  <Cards.Card title="New advancements" href="/en/wiki/lania-iv/gameplay/bacap" arrow />
+</Cards>
+
+## Building and decoration
+
+Blocks and tools for building, lighting and decoration.
+
+<Cards>
+  <Cards.Card title="Mini blocks" href="/en/wiki/lania-iv/gameplay/miniblocks" arrow />
+  <Cards.Card title="Invisible item frames" href="/en/wiki/lania-iv/gameplay/frames" arrow />
+  <Cards.Card title="Signs" href="/en/wiki/lania-iv/gameplay/signs" arrow />
+  <Cards.Card title="Debug stick" href="/en/wiki/lania-iv/gameplay/debug-stick" arrow />
+  <Cards.Card title="Light block" href="/en/wiki/lania-iv/gameplay/light-block" arrow />
+  <Cards.Card title="Barrier" href="/en/wiki/lania-iv/gameplay/void-block" arrow />
+</Cards>
+
+## Chat and emotes
+
+Using 7TV emotes in game chat.
+
+<Cards>
+  <Cards.Card title="7TV emotes" href="/en/wiki/lania-iv/gameplay/streamotes" arrow />
+</Cards>
+
+## Client setup
+
+Minecraft mods and settings on your computer.
+
+<Cards>
+  <Cards.Card title="keelfy&apos;s modpack" href="/en/wiki/lania-iv/useful/modpack" arrow />
+</Cards>
+
+## Server information
+
+Restart schedule and server staff.
+
+<Cards>
+  <Cards.Card title="Server restarts" href="/en/wiki/lania-iv/useful/restarts" arrow />
+  <Cards.Card title="Server staff" href="/en/wiki/lania-iv/useful/staff" arrow />
+</Cards>
 
 <Callout type="info">
-If you can't find the topic you're looking for, contact our [support](/en/support).
+If you cannot find the topic you need, contact [support](/en/support).
 </Callout>

@@ -1,10 +1,4 @@
-import {
-  ArrowRightIcon,
-  CommandIcon,
-  GamepadIcon,
-  TextIcon,
-  RocketIcon,
-} from 'lucide-react'
+import { ArrowRightIcon, CommandIcon, TextIcon } from 'lucide-react'
 import { MetaRecord } from 'nextra'
 
 const meta: MetaRecord = {
@@ -32,22 +26,8 @@ const meta: MetaRecord = {
       </div>
     ),
   },
-  gameplay: {
-    title: (
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        <GamepadIcon size={14} />
-        <p>Gameplay</p>
-      </div>
-    ),
-  },
-  useful: {
-    title: (
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        <RocketIcon size={14} />
-        <p>Useful</p>
-      </div>
-    ),
-  },
+  gameplay: { display: 'children' },
+  useful: { display: 'children' },
 }
 
 export default meta

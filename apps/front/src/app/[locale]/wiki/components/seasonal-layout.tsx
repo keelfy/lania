@@ -1,13 +1,14 @@
 'use client'
 
 import { WikiSeason } from '@/lib/wiki-seasons'
+import { getSeasonPageMap } from '@/lib/wiki-page-map'
 import { usePathname } from 'next/navigation'
-import type { PageMapItem } from 'nextra'
 import { Layout } from 'nextra-theme-docs'
 import { ComponentProps, useMemo } from 'react'
 
 type Props = ComponentProps<typeof Layout> & {
   seasons: WikiSeason[]
+  seasonFolders: string[]
 }
 
 // The season whose wiki the path belongs to: /<locale>/wiki/<slug>/... Shared pages (rules, legal) have no
@@ -20,32 +21,19 @@ export function useWikiSeason(seasons: WikiSeason[]) {
   )
 }
 
-// Nextra layout whose sidebar holds the pages of one season, flattened next to the shared pages. The other
-// seasons' folders are dropped, they are reached through the season select in the navbar.
-export function SeasonalLayout({ seasons, pageMap, ...props }: Props) {
+// The sidebar holds only the selected season, flattened next to shared pages.
+export function SeasonalLayout({
+  seasons,
+  seasonFolders,
+  pageMap,
+  ...props
+}: Props) {
   const current = useWikiSeason(seasons)
 
-  const seasonPageMap = useMemo(() => {
-    const first = pageMap[0]
-    const meta = first && 'data' in first ? first.data : {}
-    const items = first && 'data' in first ? pageMap.slice(1) : pageMap
-    const isSeason = (item: PageMapItem) =>
-      'name' in item && seasons.some((season) => season.slug === item.name)
-
-    const seasonFolder = items.find(
-      (item) => 'name' in item && item.name === current?.slug,
-    )
-    return [
-      {
-        data: {
-          ...meta,
-          ...(current && { [current.slug]: { display: 'children' } }),
-        },
-      },
-      ...(seasonFolder ? [seasonFolder] : []),
-      ...items.filter((item) => !isSeason(item)),
-    ]
-  }, [pageMap, seasons, current])
+  const seasonPageMap = useMemo(
+    () => getSeasonPageMap(pageMap, seasonFolders, current?.slug),
+    [pageMap, seasonFolders, current?.slug],
+  )
 
   return <Layout {...props} pageMap={seasonPageMap} />
 }

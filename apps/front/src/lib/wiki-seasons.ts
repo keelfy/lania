@@ -17,8 +17,7 @@ export function seasonSlug(name: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-// Seasons whose slug matches one of the wiki folders, newest first. The primary season of the API is the
-// current wiki; when the API is down, the newest folder stands in for it.
+// All seasons with wiki content can be selected. The API owns the primary season.
 export async function getWikiSeasons(folders: string[]): Promise<WikiSeason[]> {
   const seasons = await apiFetcher<Season[]>(
     '/v1/seasons',
@@ -34,8 +33,5 @@ export async function getWikiSeasons(folders: string[]): Promise<WikiSeason[]> {
     }))
     .filter((season) => folders.includes(season.slug))
 
-  if (wikiSeasons.length > 0 && !wikiSeasons.some((s) => s.isPrimary)) {
-    wikiSeasons[0].isPrimary = true
-  }
   return wikiSeasons
 }

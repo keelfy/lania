@@ -1,4 +1,5 @@
 import { getWikiSeasons } from '@/lib/wiki-seasons'
+import { getWikiSeasonFolders } from '@/lib/wiki-page-map'
 import { useMDXComponents as getMDXComponents } from '@/mdx-components'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
@@ -12,13 +13,6 @@ export const generateStaticParams = generateStaticParamsFor('mdxPath')
 const findPage = (mdxPath, locale) =>
   importPage(mdxPath, locale).catch(() => undefined)
 
-async function getSeasons(locale) {
-  const pageMap = await getPageMap(`/${locale}/wiki`)
-  return getWikiSeasons(
-    pageMap.flatMap((item) => ('children' in item ? [item.name] : [])),
-  )
-}
-
 export async function generateMetadata(props) {
   const params = await props.params
   const page = await findPage(params.mdxPath, params.locale)
@@ -30,13 +24,17 @@ const Wrapper = getMDXComponents().wrapper
 export default async function Page(props) {
   const params = await props.params
   const mdxPath = params.mdxPath ?? []
-  const seasons = await getSeasons(params.locale)
+  const seasonFolders = getWikiSeasonFolders(
+    await getPageMap(`/${params.locale}/wiki`),
+  )
+  const seasons = await getWikiSeasons(seasonFolders)
+  const primary = seasons.find((season) => season.isPrimary)
+  const inSeason = seasonFolders.includes(mdxPath[0])
+
   const page = await findPage(params.mdxPath, params.locale)
 
   if (!page) {
     // Links from before the wiki had seasons (/wiki/commands) lead to the current season's page.
-    const primary = seasons.find((season) => season.isPrimary)
-    const inSeason = seasons.some((season) => season.slug === mdxPath[0])
     if (
       primary &&
       !inSeason &&
@@ -48,8 +46,7 @@ export default async function Page(props) {
   }
 
   const { default: MDXContent, toc, metadata, sourceCode } = page
-  const season = seasons.find((s) => s.slug === mdxPath[0])
-  const primary = seasons.find((s) => s.isPrimary)
+  const season = seasons.find((season) => season.slug === mdxPath[0])
   const t = await getTranslations({ locale: params.locale, namespace: 'wiki' })
 
   return (

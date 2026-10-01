@@ -2,6 +2,7 @@ import DeerIcon from '@/components/icons/DeerIcon'
 import { getMetadataLocale } from '@/i18n/metadata-locale'
 import { LOCALE_NAMES, LOCALES } from '@/lib/locale'
 import { getWikiSeasons } from '@/lib/wiki-seasons'
+import { getWikiSeasonFolders } from '@/lib/wiki-page-map'
 import { HeartIcon } from 'lucide-react'
 import { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
@@ -188,9 +189,8 @@ export default async function WikiLayout({
   const pageMap = (await getPageMap(`/${locale}/wiki`)).filter(
     (ele) => !('name' in ele && ele.name === '[locale]'),
   )
-  const seasons = await getWikiSeasons(
-    pageMap.flatMap((item) => ('children' in item ? [item.name] : [])),
-  )
+  const seasonFolders = getWikiSeasonFolders(pageMap)
+  const seasons = await getWikiSeasons(seasonFolders)
 
   return (
     <html
@@ -208,6 +208,7 @@ export default async function WikiLayout({
       <body>
         <SeasonalLayout
           seasons={seasons}
+          seasonFolders={seasonFolders}
           darkMode={false}
           i18n={LOCALES.map((l) => ({
             locale: l.toString(),

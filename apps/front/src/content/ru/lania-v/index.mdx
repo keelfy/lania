@@ -1,89 +1,70 @@
 import { Cards } from 'nextra/components/cards'
-import { AppWindowMacIcon, BoxIcon, CommandIcon, CookingPotIcon, FlameIcon, FrameIcon, MicIcon, PawPrintIcon, PickaxeIcon, ShieldIcon, SmileIcon, TextIcon } from 'lucide-react'
 import { Callout } from 'nextra/components/callout'
 
 # Введение
 
-Это база знаний сети серверов Lania. Здесь вы, скорее всего, найдете ответы на большинство ваших вопросов. 
+База знаний Lania: выберите тему по тому, что хотите сделать или узнать.
 
-<br/><Cards.Card
-  icon={<ShieldIcon />}
-  title="Ознакомьтесь с правилами на игровых серверах"
-  href="/wiki/rules"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<CommandIcon />}
-  title="Узнайте какие команды доступны игрокам"
-  href="/wiki/lania-v/commands"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<TextIcon />}
-  title="Узнайте как можно форматировать ваши сообщения в чате"
-  href="/wiki/lania-v/formatting"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<MicIcon />}
-  title="Как общаться в голосовом чате и пользоваться его аддонами"
-  href="/wiki/lania-v/useful/voice"
-  arrow
-/>
+## Начало игры
 
-### Игровой контент
+<Cards>
+  <Cards.Card title="Правила" href="/wiki/rules" arrow />
+  <Cards.Card title="Команды" href="/wiki/lania-v/commands" arrow />
+  <Cards.Card title="Форматирование сообщений" href="/wiki/lania-v/formatting" arrow />
+</Cards>
 
-<br/><Cards.Card
-  icon={<PickaxeIcon />}
-  title="Удобства для игроков, созданные на сервере"
-  href="/wiki/lania-v/gameplay/qol"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<FrameIcon />}
-  title="Как использовать невидимые рамки в игре"
-  href="/wiki/lania-v/gameplay/frames"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<SmileIcon />}
-  title="Как видеть и писать смайлики 7TV в чате"
-  href="/wiki/lania-v/gameplay/streamotes"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<AppWindowMacIcon />}
-  title="Как можно форматировать текст на табличках в игре"
-  href="/wiki/lania-v/gameplay/signs"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<BoxIcon />}
-  title="Как получить миниблоки для строительства"
-  href="/wiki/lania-v/gameplay/miniblocks"
-  arrow
-/>
+## Выживание
 
-<br/><Cards.Card
-  icon={<CookingPotIcon />}
-  title="Что ещё можно делать с котлами"
-  href="/wiki/lania-v/gameplay/cauldrons"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<PawPrintIcon />}
-  title="Как изменено поведение мобов"
-  href="/wiki/lania-v/gameplay/mobs"
-  arrow
-/>
-<br/><Cards.Card
-  icon={<FlameIcon />}
-  title="Как строить порталы в Нижний мир любой формы"
-  href="/wiki/lania-v/gameplay/nether-portals"
-  arrow
-/>
-<br/>
+Изменения привычных механик Minecraft и дополнительные достижения.
+
+<Cards>
+  <Cards.Card title="Удобства" href="/wiki/lania-v/gameplay/qol" arrow />
+  <Cards.Card title="Котлы" href="/wiki/lania-v/gameplay/cauldrons" arrow />
+  <Cards.Card title="Мобы" href="/wiki/lania-v/gameplay/mobs" arrow />
+  <Cards.Card title="Порталы в Нижний мир" href="/wiki/lania-v/gameplay/nether-portals" arrow />
+  <Cards.Card title="Новые достижения" href="/wiki/lania-v/gameplay/bacap" arrow />
+</Cards>
+
+## Строительство и декор
+
+Блоки и инструменты для строительства, освещения и оформления.
+
+<Cards>
+  <Cards.Card title="Миниблоки" href="/wiki/lania-v/gameplay/miniblocks" arrow />
+  <Cards.Card title="Невидимые рамки" href="/wiki/lania-v/gameplay/frames" arrow />
+  <Cards.Card title="Таблички" href="/wiki/lania-v/gameplay/signs" arrow />
+  <Cards.Card title="Дебаг палочка" href="/wiki/lania-v/gameplay/debug-stick" arrow />
+  <Cards.Card title="Блок света" href="/wiki/lania-v/gameplay/light-block" arrow />
+  <Cards.Card title="Барьер" href="/wiki/lania-v/gameplay/void-block" arrow />
+</Cards>
+
+## Чат и смайлики
+
+Использование смайликов 7TV в игровом чате.
+
+<Cards>
+  <Cards.Card title="Смайлики 7TV" href="/wiki/lania-v/gameplay/streamotes" arrow />
+</Cards>
+
+## Настройка клиента
+
+Моды и настройки Minecraft на вашем компьютере.
+
+<Cards>
+  <Cards.Card title="Модпак от keelfy" href="/wiki/lania-v/useful/modpack" arrow />
+  <Cards.Card title="Голосовой чат" href="/wiki/lania-v/useful/voice" arrow />
+  <Cards.Card title="Скины" href="/wiki/lania-v/useful/skins" arrow />
+</Cards>
+
+## О сервере
+
+Расписание перезагрузок и команда сервера.
+
+<Cards>
+  <Cards.Card title="Перезагрузки сервера" href="/wiki/lania-v/useful/restarts" arrow />
+  <Cards.Card title="Команда сервера" href="/wiki/lania-v/useful/staff" arrow />
+</Cards>
 
 <Callout type="info">
-Если вы не нашли интересующую вас тему, то можете обратиться в нашу [поддержку](/support).
+Если вы не нашли нужную тему, обратитесь в [поддержку](/support).
 </Callout>

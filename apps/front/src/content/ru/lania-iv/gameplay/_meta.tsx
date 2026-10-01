@@ -11,6 +11,7 @@ import {
 import { MetaRecord } from 'nextra'
 
 const meta: MetaRecord = {
+  survival: { type: 'separator', title: 'Выживание' },
   qol: {
     title: (
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -19,19 +20,20 @@ const meta: MetaRecord = {
       </div>
     ),
   },
-  streamotes: {
-    title: (
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        <SmileIcon size={14} />
-        <p>Смайлики 7TV</p>
-      </div>
-    ),
-  },
   bacap: {
     title: (
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <MilestoneIcon size={14} />
         <p>Новые достижения</p>
+      </div>
+    ),
+  },
+  building: { type: 'separator', title: 'Строительство и декор' },
+  miniblocks: {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <BoxIcon size={14} />
+        <p>Миниблоки</p>
       </div>
     ),
   },
@@ -48,14 +50,6 @@ const meta: MetaRecord = {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <AppWindowMacIcon size={14} />
         <p>Таблички</p>
-      </div>
-    ),
-  },
-  miniblocks: {
-    title: (
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        <BoxIcon size={14} />
-        <p>Миниблоки</p>
       </div>
     ),
   },
@@ -80,6 +74,15 @@ const meta: MetaRecord = {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <BoxIcon size={14} />
         <p>Барьер</p>
+      </div>
+    ),
+  },
+  chat: { type: 'separator', title: 'Чат и смайлики' },
+  streamotes: {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <SmileIcon size={14} />
+        <p>Смайлики 7TV</p>
       </div>
     ),
   },
