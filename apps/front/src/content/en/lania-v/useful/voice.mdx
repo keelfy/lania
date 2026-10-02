@@ -170,6 +170,44 @@ Set the area with `/vbc`:
 
 [pv-addon-sculk](https://modrinth.com/plugin/pv-addon-sculk) &mdash; sculk sensors and wardens react to your voice. Talking loudly next to a sensor emits a redstone signal, and in an Ancient City it can attract the warden. Speak quietly or use groups.
 
+### Music discs
+
+[pv-addon-discs](https://modrinth.com/plugin/pv-addon-discs) &mdash; custom music discs: burn a link to a track onto a disc and play it in a jukebox, so everyone nearby hears it through voice chat. The audio is streamed from the internet.
+
+1. Hold a music disc in your hand;
+2. Burn a track onto it: `/disc burn {url} [name]`;
+3. Put the disc into a jukebox.
+
+Supported sources: YouTube, SoundCloud, Bandcamp, Vimeo, Twitch (including live streams) and direct links to audio files (MP3, FLAC, WAV, OGG, AAC, M4A, WebM) or playlists (M3U, PLS).
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Command</Table.Th>
+      <Table.Th>Description</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc burn {url} [name]`</Table.Td>
+      <Table.Td>Burn a track onto the disc in your hand, optionally with a custom name</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc erase`</Table.Td>
+      <Table.Td>Turn a custom disc back into a regular one</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc search {query}`</Table.Td>
+      <Table.Td>Search for a track on YouTube</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc cancel [player]`</Table.Td>
+      <Table.Td>Stop a goat horn sound that is playing</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
 ### Sound physics
 
 A client-side add-on: it goes into the `mods` folder and only works for you. The modpack already has it.

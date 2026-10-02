@@ -12,6 +12,7 @@ import {
   SmileIcon,
   UsersIcon,
   MapPinIcon,
+  PackageSearchIcon,
 } from 'lucide-react'
 import { MetaRecord } from 'nextra'
 
@@ -54,6 +55,14 @@ const meta: MetaRecord = {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <PawPrintIcon size={14} />
         <p>Mobs</p>
+      </div>
+    ),
+  },
+  'loot-markers': {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <PackageSearchIcon size={14} />
+        <p>Loot container markers</p>
       </div>
     ),
   },

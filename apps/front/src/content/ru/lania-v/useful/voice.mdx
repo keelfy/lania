@@ -170,6 +170,44 @@ import { Table } from 'nextra/components'
 
 [pv-addon-sculk](https://modrinth.com/plugin/pv-addon-sculk) &mdash; сенсоры скалка и вардены реагируют на голос. Громкий разговор рядом с сенсором выдаст сигнал красного камня, а в Древнем городе может привлечь вардена. Говорите тише или используйте группы.
 
+### Музыкальные диски
+
+[pv-addon-discs](https://modrinth.com/plugin/pv-addon-discs) &mdash; свои музыкальные пластинки: запишите на диск ссылку на трек и включите его в проигрывателе, чтобы все рядом слышали музыку через голосовой чат. Звук передаётся потоком из интернета.
+
+1. Возьмите музыкальный диск в руку;
+2. Запишите на него трек: `/disc burn {ссылка} [название]`;
+3. Вставьте диск в проигрыватель.
+
+Поддерживаются YouTube, SoundCloud, Bandcamp, Vimeo, Twitch (в том числе трансляции) и прямые ссылки на аудиофайлы (MP3, FLAC, WAV, OGG, AAC, M4A, WebM) и плейлисты (M3U, PLS).
+
+<br/>
+<Table>
+  <thead>
+    <Table.Tr>
+      <Table.Th>Команда</Table.Th>
+      <Table.Th>Описание</Table.Th>
+    </Table.Tr>
+  </thead>
+  <tbody>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc burn {ссылка} [название]`</Table.Td>
+      <Table.Td>Записать трек на диск в руке, можно с собственным названием</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc erase`</Table.Td>
+      <Table.Td>Превратить особый диск обратно в обычный</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc search {запрос}`</Table.Td>
+      <Table.Td>Найти трек на YouTube</Table.Td>
+    </Table.Tr>
+    <Table.Tr>
+      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc cancel [игрок]`</Table.Td>
+      <Table.Td>Остановить играющий звук козьего рога</Table.Td>
+    </Table.Tr>
+  </tbody>
+</Table>
+
 ### Звуковая физика
 
 Клиентский аддон: ставится в папку `mods` и работает только у вас. В модпаке он уже есть.
