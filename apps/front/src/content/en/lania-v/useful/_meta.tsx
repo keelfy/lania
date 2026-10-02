@@ -1,5 +1,6 @@
 import {
   ClockIcon,
+  MountainIcon,
   HistoryIcon,
   MicIcon,
   PackageIcon,
@@ -31,6 +32,14 @@ const meta: MetaRecord = {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <ShirtIcon size={14} />
         <p>Skins</p>
+      </div>
+    ),
+  },
+  'distant-horizons': {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <MountainIcon size={14} />
+        <p>Pre-generated LODs</p>
       </div>
     ),
   },
