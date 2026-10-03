@@ -130,6 +130,8 @@ async function WorldCard({
 }: WorldCardProps) {
   const t = await getTranslations({ locale, namespace: 'worlds' })
   const claims = !!world.mapUrl && world.claimDimensions.length > 0
+  const descriptionKey = `descriptions.${world.slug}`
+  const description = t.has(descriptionKey) ? t(descriptionKey) : undefined
 
   const content = (
     <>
@@ -149,15 +151,22 @@ async function WorldCard({
       )}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/20" />
       <div className="z-10 flex w-full items-start justify-between gap-2">
-        <h3
-          className={cn(
-            'flex items-center gap-2 font-bold',
-            compact ? 'text-lg' : 'text-2xl',
+        <div className="flex min-w-0 flex-col gap-1">
+          <h3
+            className={cn(
+              'flex items-center gap-2 font-bold',
+              compact ? 'text-lg' : 'text-2xl',
+            )}
+          >
+            <MapIcon className="size-5" />
+            <span>{world.name}</span>
+          </h3>
+          {description && (
+            <p className="text-foreground/80 text-sm leading-5">
+              {description}
+            </p>
           )}
-        >
-          <MapIcon className="size-5" />
-          <span>{world.name}</span>
-        </h3>
+        </div>
         {claims && (
           <Badge variant="secondary" className="gap-1">
             <FlagIcon className="size-3" />

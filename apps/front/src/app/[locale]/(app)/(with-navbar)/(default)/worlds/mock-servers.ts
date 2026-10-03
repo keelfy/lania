@@ -24,7 +24,7 @@ function world(
   return {
     id,
     seasonId: season.id,
-    slug: `preview-${id}`,
+    slug: id,
     name,
     previewImage: `s3://lania-web-134312503254-eu-central-1-an/${image}`,
     mapUrl: 'https://map.lania.example',

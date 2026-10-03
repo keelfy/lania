@@ -123,6 +123,11 @@
       },
       "unavailable": "The map of this world is unavailable right now, try again later."
     },
+    "descriptions": {
+      "survival": "The main world: build, explore and claim chunks for your base.",
+      "farms": "A separate world for farms, so they do not load the main one.",
+      "creative": "Creative mode for large builds and experiments."
+    },
     "claimsBadge": "Claims",
     "noMap": "No map"
   },
