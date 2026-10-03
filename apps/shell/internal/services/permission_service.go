@@ -90,8 +90,11 @@ func (s *permissionService) SetPlayerPrefix(ctx context.Context, mcUUID uuid.UUI
 		return fmt.Errorf("%w: %q", ErrInvalidPrefix, prefix)
 	}
 
-	// Chat renders the prefix through PlaceholderAPI, so glyth tokens become ItemsAdder image placeholders.
-	prefix = glythTokenPattern.ReplaceAllString(prefix, "%img_$1%")
+	// Chat renders the prefix through PlaceholderAPI, so glyth tokens become image placeholders.
+	template := config.GetGlythPlaceholderTemplate()
+	prefix = glythTokenPattern.ReplaceAllStringFunc(prefix, func(token string) string {
+		return strings.ReplaceAll(template, "{id}", strings.Trim(token, ":"))
+	})
 
 	commands := []string{fmt.Sprintf("lpv user %s meta clear prefix", mcUUID)}
 	if prefix != "" {

@@ -85,6 +85,12 @@ func GetSkinClearCommand() string {
 	return getEnvOrDefault("SKIN_CLEAR_COMMAND", "skin clear {uuid}")
 }
 
+// GetGlythPlaceholderTemplate returns the template of the placeholder a glyth token in a prefix becomes.
+// {id} is replaced with the glyth id, like glyth_popcat.
+func GetGlythPlaceholderTemplate() string {
+	return getEnvOrDefault("GLYTH_PLACEHOLDER_TEMPLATE", "%nexo_{id}%")
+}
+
 /** DATABASE */
 
 func GetDatabaseHost() string {

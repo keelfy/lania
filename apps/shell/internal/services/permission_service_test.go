@@ -79,7 +79,7 @@ func TestSetPlayerPrefix(t *testing.T) {
 			prefix: ":glyth_popcat: <red>:glyth_cat_2: :notglyth: ",
 			wantCommands: []string{
 				clear,
-				"lpv user " + mcUUID.String() + ` meta addprefix 100 "%img_glyth_popcat% <red>%img_glyth_cat_2% :notglyth: "`,
+				"lpv user " + mcUUID.String() + ` meta addprefix 100 "%nexo_glyth_popcat% <red>%nexo_glyth_cat_2% :notglyth: "`,
 			},
 		},
 		{name: "empty prefix only clears", wantCommands: []string{clear}},
@@ -110,6 +110,21 @@ func TestSetPlayerPrefix(t *testing.T) {
 				t.Errorf("commands = %q, want %q", console.commands, tt.wantCommands)
 			}
 		})
+	}
+}
+
+func TestSetPlayerPrefixGlythPlaceholderTemplate(t *testing.T) {
+	t.Setenv("GLYTH_PLACEHOLDER_TEMPLATE", "%img_{id}%")
+	mcUUID := uuid.New()
+	console := &stubConsole{}
+
+	if err := NewPermissionService(&stubLuckpermsStorage{}, console).SetPlayerPrefix(context.Background(), mcUUID, ":glyth_popcat: [A]"); err != nil {
+		t.Fatalf("SetPlayerPrefix() unexpected error = %v", err)
+	}
+
+	want := "lpv user " + mcUUID.String() + ` meta addprefix 100 "%img_glyth_popcat% [A]"`
+	if got := console.commands[len(console.commands)-1]; got != want {
+		t.Errorf("command = %q, want %q", got, want)
 	}
 }
 
