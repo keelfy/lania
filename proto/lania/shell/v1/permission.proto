@@ -12,6 +12,8 @@ service PermissionService {
   rpc SetPlayerPrefix(SetPlayerPrefixRequest) returns (SetPlayerPrefixResponse);
   // SetPlayerRoles makes every listed player belong to exactly the given role group. Idempotent.
   rpc SetPlayerRoles(SetPlayerRolesRequest) returns (SetPlayerRolesResponse);
+  // SetPlayerPermissions adds and removes individual permission nodes of one player. Idempotent.
+  rpc SetPlayerPermissions(SetPlayerPermissionsRequest) returns (SetPlayerPermissionsResponse);
   // RegisterPlayer makes LuckPerms know the player by username before the first join. Idempotent.
   rpc RegisterPlayer(RegisterPlayerRequest) returns (RegisterPlayerResponse);
 }
@@ -54,6 +56,16 @@ message SetPlayerRolesRequest {
 }
 
 message SetPlayerRolesResponse {}
+
+message SetPlayerPermissionsRequest {
+  string minecraft_uuid = 1;
+  // Nodes the player has after the call.
+  repeated string add = 2;
+  // Nodes the player loses. A node in both lists stays.
+  repeated string remove = 3;
+}
+
+message SetPlayerPermissionsResponse {}
 
 message RegisterPlayerRequest {
   string minecraft_uuid = 1;

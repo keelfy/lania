@@ -4,11 +4,15 @@ import {
   ProductCategory,
   NameColorProductMetadata,
   NamePrefixProductMetadata,
+  PrivilegeProductMetadata,
   UpgradeProductMetadata,
 } from '@/models/product'
 
 type MockProduct = Product<
-  NameColorProductMetadata | NamePrefixProductMetadata | UpgradeProductMetadata
+  | NameColorProductMetadata
+  | NamePrefixProductMetadata
+  | PrivilegeProductMetadata
+  | UpgradeProductMetadata
 >
 
 // Demonstration prices only; these are not live exchange rates.
@@ -97,6 +101,33 @@ export function getMockProducts(
         },
         soldCount: 18 + index * 5,
         createdAt: index === 2 ? recent : old,
+      }),
+    ),
+    ...[
+      {
+        name: ru ? 'Дома' : 'Homes',
+        description: ru
+          ? 'Команда /home: ставьте точки дома и возвращайтесь к ним в любой момент сезона.'
+          : 'The /home command: set homes and teleport back to them any time this season.',
+        price: 149,
+      },
+      {
+        name: ru ? 'Полёт' : 'Fly',
+        description: ru
+          ? 'Команда /fly: свободный полёт в мире сезона.'
+          : 'The /fly command: free flight in the season world.',
+        price: 299,
+      },
+    ].map(
+      ({ name, description, price }, index): MockProduct => ({
+        id: `preview-privilege-${index}`,
+        name,
+        description,
+        price,
+        category: ProductCategory.Privilege,
+        metadata: { privilegeId: `preview-privilege-id-${index}` },
+        soldCount: 12 + index * 4,
+        createdAt: old,
       }),
     ),
   ]

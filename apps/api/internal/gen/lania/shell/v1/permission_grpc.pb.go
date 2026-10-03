@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PermissionService_GetPlayerGroups_FullMethodName     = "/lania.shell.v1.PermissionService/GetPlayerGroups"
-	PermissionService_ListPlayersByGroups_FullMethodName = "/lania.shell.v1.PermissionService/ListPlayersByGroups"
-	PermissionService_SetPlayerPrefix_FullMethodName     = "/lania.shell.v1.PermissionService/SetPlayerPrefix"
-	PermissionService_SetPlayerRoles_FullMethodName      = "/lania.shell.v1.PermissionService/SetPlayerRoles"
-	PermissionService_RegisterPlayer_FullMethodName      = "/lania.shell.v1.PermissionService/RegisterPlayer"
+	PermissionService_GetPlayerGroups_FullMethodName      = "/lania.shell.v1.PermissionService/GetPlayerGroups"
+	PermissionService_ListPlayersByGroups_FullMethodName  = "/lania.shell.v1.PermissionService/ListPlayersByGroups"
+	PermissionService_SetPlayerPrefix_FullMethodName      = "/lania.shell.v1.PermissionService/SetPlayerPrefix"
+	PermissionService_SetPlayerRoles_FullMethodName       = "/lania.shell.v1.PermissionService/SetPlayerRoles"
+	PermissionService_SetPlayerPermissions_FullMethodName = "/lania.shell.v1.PermissionService/SetPlayerPermissions"
+	PermissionService_RegisterPlayer_FullMethodName       = "/lania.shell.v1.PermissionService/RegisterPlayer"
 )
 
 // PermissionServiceClient is the client API for PermissionService service.
@@ -40,6 +41,8 @@ type PermissionServiceClient interface {
 	SetPlayerPrefix(ctx context.Context, in *SetPlayerPrefixRequest, opts ...grpc.CallOption) (*SetPlayerPrefixResponse, error)
 	// SetPlayerRoles makes every listed player belong to exactly the given role group. Idempotent.
 	SetPlayerRoles(ctx context.Context, in *SetPlayerRolesRequest, opts ...grpc.CallOption) (*SetPlayerRolesResponse, error)
+	// SetPlayerPermissions adds and removes individual permission nodes of one player. Idempotent.
+	SetPlayerPermissions(ctx context.Context, in *SetPlayerPermissionsRequest, opts ...grpc.CallOption) (*SetPlayerPermissionsResponse, error)
 	// RegisterPlayer makes LuckPerms know the player by username before the first join. Idempotent.
 	RegisterPlayer(ctx context.Context, in *RegisterPlayerRequest, opts ...grpc.CallOption) (*RegisterPlayerResponse, error)
 }
@@ -92,6 +95,16 @@ func (c *permissionServiceClient) SetPlayerRoles(ctx context.Context, in *SetPla
 	return out, nil
 }
 
+func (c *permissionServiceClient) SetPlayerPermissions(ctx context.Context, in *SetPlayerPermissionsRequest, opts ...grpc.CallOption) (*SetPlayerPermissionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetPlayerPermissionsResponse)
+	err := c.cc.Invoke(ctx, PermissionService_SetPlayerPermissions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *permissionServiceClient) RegisterPlayer(ctx context.Context, in *RegisterPlayerRequest, opts ...grpc.CallOption) (*RegisterPlayerResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RegisterPlayerResponse)
@@ -116,6 +129,8 @@ type PermissionServiceServer interface {
 	SetPlayerPrefix(context.Context, *SetPlayerPrefixRequest) (*SetPlayerPrefixResponse, error)
 	// SetPlayerRoles makes every listed player belong to exactly the given role group. Idempotent.
 	SetPlayerRoles(context.Context, *SetPlayerRolesRequest) (*SetPlayerRolesResponse, error)
+	// SetPlayerPermissions adds and removes individual permission nodes of one player. Idempotent.
+	SetPlayerPermissions(context.Context, *SetPlayerPermissionsRequest) (*SetPlayerPermissionsResponse, error)
 	// RegisterPlayer makes LuckPerms know the player by username before the first join. Idempotent.
 	RegisterPlayer(context.Context, *RegisterPlayerRequest) (*RegisterPlayerResponse, error)
 	mustEmbedUnimplementedPermissionServiceServer()
@@ -139,6 +154,9 @@ func (UnimplementedPermissionServiceServer) SetPlayerPrefix(context.Context, *Se
 }
 func (UnimplementedPermissionServiceServer) SetPlayerRoles(context.Context, *SetPlayerRolesRequest) (*SetPlayerRolesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetPlayerRoles not implemented")
+}
+func (UnimplementedPermissionServiceServer) SetPlayerPermissions(context.Context, *SetPlayerPermissionsRequest) (*SetPlayerPermissionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetPlayerPermissions not implemented")
 }
 func (UnimplementedPermissionServiceServer) RegisterPlayer(context.Context, *RegisterPlayerRequest) (*RegisterPlayerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterPlayer not implemented")
@@ -236,6 +254,24 @@ func _PermissionService_SetPlayerRoles_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PermissionService_SetPlayerPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetPlayerPermissionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PermissionServiceServer).SetPlayerPermissions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PermissionService_SetPlayerPermissions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PermissionServiceServer).SetPlayerPermissions(ctx, req.(*SetPlayerPermissionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PermissionService_RegisterPlayer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegisterPlayerRequest)
 	if err := dec(in); err != nil {
@@ -276,6 +312,10 @@ var PermissionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetPlayerRoles",
 			Handler:    _PermissionService_SetPlayerRoles_Handler,
+		},
+		{
+			MethodName: "SetPlayerPermissions",
+			Handler:    _PermissionService_SetPlayerPermissions_Handler,
 		},
 		{
 			MethodName: "RegisterPlayer",

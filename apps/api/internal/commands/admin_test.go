@@ -149,6 +149,67 @@ func TestSaveProductCommand_Validate(t *testing.T) {
 	}
 }
 
+func TestSaveProductCommand_ValidatePrivilege(t *testing.T) {
+	t.Parallel()
+
+	privilegeID := uuid.New()
+	easyDonateID := int64(123)
+	localizations := []SaveProductLocalization{
+		{Locale: "ru", Name: "Дом", Description: "Команда /home"},
+		{Locale: "en", Name: "Home", Description: "The /home command"},
+	}
+	valid := SaveProductCommand{Category: domain.ProductCategoryPrivilege, PrivilegeID: &privilegeID, PriceName: domain.PrivilegePriceName(privilegeID), IsActive: true, EasyDonateProductID: &easyDonateID, Localizations: localizations}
+
+	tests := []struct {
+		name    string
+		mutate  func(*SaveProductCommand)
+		wantErr bool
+	}{
+		{"published privilege", func(*SaveProductCommand) {}, false},
+		{"missing privilege", func(command *SaveProductCommand) { command.PrivilegeID = nil }, true},
+		{"nil privilege", func(command *SaveProductCommand) { command.PrivilegeID = &uuid.Nil }, true},
+		{"shared tariff", func(command *SaveProductCommand) { command.PriceName = "privilege" }, true},
+		{"tariff of another privilege", func(command *SaveProductCommand) { command.PriceName = domain.PrivilegePriceName(uuid.New()) }, true},
+		{"cosmetic tariff", func(command *SaveProductCommand) { command.PriceName = domain.ProductPriceNameNameColor }, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			command := valid
+			tt.mutate(&command)
+			if err := command.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestCreateEDProductCommand_ValidatePrivilegeTariff(t *testing.T) {
+	t.Parallel()
+
+	command := CreateEDProductCommand{UserAuth: "user-auth", Name: "Дом", Description: "Команда /home", EnglishName: "Home"}
+	for name, tt := range map[string]struct {
+		priceName domain.ProductPriceName
+		wantErr   bool
+	}{
+		"tariff of a privilege":   {domain.PrivilegePriceName(uuid.New()), false},
+		"prefix without an id":    {"privilege:", true},
+		"prefix with a bad id":    {"privilege:' OR 1=1 --", true},
+		"id in braces":            {domain.ProductPriceName("privilege:{" + uuid.NewString() + "}"), true},
+		"shared privilege tariff": {"privilege", true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			command := command
+			command.PriceName = tt.priceName
+			if err := command.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestCreateEDProductCommand_Validate(t *testing.T) {
 	t.Parallel()
 

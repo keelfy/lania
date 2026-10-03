@@ -113,8 +113,9 @@ func TestProfileResyncService(t *testing.T) {
 		profile.MinecraftUUID: {{MinecraftUUID: profile.MinecraftUUID, SeasonID: withAccess.ID}},
 	}}
 
+	privileges := &recordingPrivileges{}
 	newService := func(minecraft *resyncMinecraft, cosmetics *resyncCosmetics) *profileResyncService {
-		return NewProfileResyncService(profiles, cosmetics, access, seasons, minecraft).(*profileResyncService)
+		return NewProfileResyncService(profiles, cosmetics, privileges, access, seasons, minecraft).(*profileResyncService)
 	}
 
 	t.Run("writes role, prefix and whitelist to every season and reports all of them", func(t *testing.T) {
@@ -170,6 +171,32 @@ func TestProfileResyncService(t *testing.T) {
 		}
 	})
 
+	t.Run("writes the privileges of every season with a server", func(t *testing.T) {
+		privileges.synced, privileges.syncErr = nil, nil
+		report, err := newService(newResyncMinecraft(), &resyncCosmetics{}).ResyncProfile(ctx, profile.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !report.OK() || len(privileges.synced) != 2 || !slices.Contains(privileges.synced, withAccess.ID) || !slices.Contains(privileges.synced, withoutAccess.ID) {
+			t.Errorf("privileges written in %v, want the two seasons with a server", privileges.synced)
+		}
+	})
+
+	t.Run("failing privileges are reported for the part only", func(t *testing.T) {
+		privileges.syncErr = errors.New("shell down")
+		defer func() { privileges.syncErr = nil }()
+
+		report, err := newService(newResyncMinecraft(), &resyncCosmetics{}).ResyncProfile(ctx, profile.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		errs := partErrors(t, report, withAccess.ID)
+		if errs[domain.ResyncPartPrivileges] == nil || errs[domain.ResyncPartRole] != nil || errs[domain.ResyncPartCosmetics] != nil || errs[domain.ResyncPartAccess] != nil {
+			t.Errorf("parts = %v, want only privileges failed", errs)
+		}
+	})
+
 	t.Run("a prefix that cannot be built fails the cosmetics of every season and keeps the other parts", func(t *testing.T) {
 		minecraft := newResyncMinecraft()
 		report, err := newService(minecraft, &resyncCosmetics{err: errors.New("no colors")}).ResyncProfile(ctx, profile.ID)
@@ -215,7 +242,7 @@ func TestProfileResyncService_OwnerCooldown(t *testing.T) {
 	profiles := &stubProfileService{profiles: map[uuid.UUID]*domain.Profile{profile.ID: profile}}
 	minecraft := newResyncMinecraft()
 	active := season("a:1", true)
-	service := NewProfileResyncService(profiles, &resyncCosmetics{}, &resyncAccess{}, &fakeSeasons{seasons: []*domain.Season{active}}, minecraft).(*profileResyncService)
+	service := NewProfileResyncService(profiles, &resyncCosmetics{}, &recordingPrivileges{}, &resyncAccess{}, &fakeSeasons{seasons: []*domain.Season{active}}, minecraft).(*profileResyncService)
 	now := time.Now()
 	service.now = func() time.Time { return now }
 
@@ -284,8 +311,9 @@ func TestMoveProfileOnServers(t *testing.T) {
 	access := &resyncAccess{accesses: map[uuid.UUID][]*domain.ProfileAccess{
 		profile.MinecraftUUID: {{MinecraftUUID: profile.MinecraftUUID, SeasonID: live.ID}},
 	}}
+	privileges := &recordingPrivileges{}
 	newService := func(minecraft *moveMinecraft) ProfileResyncService {
-		return NewProfileResyncService(profiles, &resyncCosmetics{}, access, &fakeSeasons{seasons: []*domain.Season{live, inactive}}, minecraft)
+		return NewProfileResyncService(profiles, &resyncCosmetics{}, privileges, access, &fakeSeasons{seasons: []*domain.Season{live, inactive}}, minecraft)
 	}
 
 	t.Run("clears the old uuid, registers the nickname and resyncs the profile", func(t *testing.T) {
@@ -301,6 +329,9 @@ func TestMoveProfileOnServers(t *testing.T) {
 		if !slices.Equal(minecraft.removed, want) || !slices.Equal(minecraft.reset, want) || !slices.Equal(minecraft.cleared, want) {
 			t.Errorf("removed %v, reset %v, cleared %v; want only the old uuid each time", minecraft.removed, minecraft.reset, minecraft.cleared)
 		}
+		if !slices.Equal(privileges.clearedUUIDs, want) || !slices.Equal(privileges.cleared, []uuid.UUID{live.ID}) {
+			t.Errorf("privileges cleared for %v in %v, want only the old uuid in the live season", privileges.clearedUUIDs, privileges.cleared)
+		}
 		if !slices.Equal(minecraft.registered, uuid.UUIDs{profile.MinecraftUUID}) {
 			t.Errorf("registered = %v, want the current uuid", minecraft.registered)
 		}
@@ -312,11 +343,12 @@ func TestMoveProfileOnServers(t *testing.T) {
 	t.Run("a licensed rename keeps the uuid and only registers the new name", func(t *testing.T) {
 		old := &domain.Profile{ID: profile.ID, MinecraftUUID: profile.MinecraftUUID, MinecraftUsername: "oldnick"}
 		minecraft := &moveMinecraft{resyncMinecraft: newResyncMinecraft()}
+		privileges.cleared, privileges.clearedUUIDs = nil, nil
 
 		newService(minecraft).MoveProfileOnServers(ctx, profile.ID, old)
 
-		if len(minecraft.removed) != 0 || len(minecraft.reset) != 0 || len(minecraft.cleared) != 0 {
-			t.Errorf("removed %v, reset %v, cleared %v; want nothing cleared", minecraft.removed, minecraft.reset, minecraft.cleared)
+		if len(minecraft.removed) != 0 || len(minecraft.reset) != 0 || len(minecraft.cleared) != 0 || len(privileges.clearedUUIDs) != 0 {
+			t.Errorf("removed %v, reset %v, cleared %v, privileges cleared %v; want nothing cleared", minecraft.removed, minecraft.reset, minecraft.cleared, privileges.clearedUUIDs)
 		}
 		if !slices.Equal(minecraft.registered, uuid.UUIDs{profile.MinecraftUUID}) {
 			t.Errorf("registered = %v, want the uuid under the new name", minecraft.registered)

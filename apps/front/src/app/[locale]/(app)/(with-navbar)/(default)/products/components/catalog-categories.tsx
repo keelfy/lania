@@ -1,5 +1,11 @@
 import type { CSSProperties } from 'react'
-import { LayoutGridIcon, PaletteIcon, ShieldIcon, TagIcon } from 'lucide-react'
+import {
+  KeyRoundIcon,
+  LayoutGridIcon,
+  PaletteIcon,
+  ShieldIcon,
+  TagIcon,
+} from 'lucide-react'
 import { Link } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 import styles from './catalog-categories.module.css'
@@ -9,6 +15,7 @@ const CATEGORIES = [
   { id: 'upgrade', icon: ShieldIcon },
   { id: 'name-color', icon: PaletteIcon },
   { id: 'name-prefix', icon: TagIcon },
+  { id: 'privilege', icon: KeyRoundIcon },
 ]
 
 export default function CatalogCategories({

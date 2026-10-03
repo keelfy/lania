@@ -14,6 +14,7 @@ var ProviderSet = wire.NewSet(
 	NewAccessService,
 	NewProfileService,
 	NewProfileCosmeticsService,
+	NewProfilePrivilegeService,
 	NewSeasonService,
 	NewSeasonWorldService,
 	NewChunkClaimService,

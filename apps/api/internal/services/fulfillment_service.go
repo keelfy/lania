@@ -21,6 +21,7 @@ type FulfillmentService interface {
 type fulfillmentService struct {
 	accessService           AccessService
 	profileCosmeticsService ProfileCosmeticsService
+	profilePrivilegeService ProfilePrivilegeService
 	profileService          ProfileService
 	notificationService     NotificationService
 }
@@ -28,12 +29,14 @@ type fulfillmentService struct {
 func NewFulfillmentService(
 	accessService AccessService,
 	profileCosmeticsService ProfileCosmeticsService,
+	profilePrivilegeService ProfilePrivilegeService,
 	profileService ProfileService,
 	notificationService NotificationService,
 ) FulfillmentService {
 	return &fulfillmentService{
 		accessService:           accessService,
 		profileCosmeticsService: profileCosmeticsService,
+		profilePrivilegeService: profilePrivilegeService,
 		profileService:          profileService,
 		notificationService:     notificationService,
 	}
@@ -81,6 +84,12 @@ func (s *fulfillmentService) GrantProduct(ctx context.Context, queries sql.Queri
 		}
 		s.notificationService.NotifyCosmeticGranted(ctx, queries, profile, domain.GrantTypeNamePrefix, metadata.NamePrefixID, domain.ProfilePrefixTypeGlyth, &seasonID)
 		return nil
+	case domain.ProductCategoryPrivilege:
+		var metadata domain.PrivilegeProductMetadata
+		if err := json.Unmarshal(product.Metadata, &metadata); err != nil {
+			return err
+		}
+		return s.profilePrivilegeService.AddProfilePrivilege(ctx, queries, profile, metadata.PrivilegeID, seasonID, orderItemID)
 	default:
 		return fmt.Errorf("unknown product category: %s", product.Category)
 	}

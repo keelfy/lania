@@ -26,6 +26,8 @@ type fakeGrantQueries struct {
 	nameColors          []*domain.NameColor
 	namePrefixes        []*domain.NamePrefix
 	prefixOptionsByType map[domain.ProfilePrefixType][]*domain.ProfileNamePrefixOption
+	privileges          []*domain.Privilege
+	privilegeGrants     []*domain.ProfilePrivilege
 	insertedColors      []sql.InsertProfileNameColorOptionParams
 	insertedPrefixes    []sql.InsertProfileNamePrefixOptionParams
 }
@@ -45,6 +47,19 @@ func (q *fakeGrantQueries) InsertProfileNameColorOption(_ context.Context, arg s
 
 func (q *fakeGrantQueries) InsertProfileNamePrefixOption(_ context.Context, arg sql.InsertProfileNamePrefixOptionParams) error {
 	q.insertedPrefixes = append(q.insertedPrefixes, arg)
+	return nil
+}
+
+func (q *fakeGrantQueries) FindPrivileges(context.Context) ([]*domain.Privilege, error) {
+	return q.privileges, nil
+}
+
+func (q *fakeGrantQueries) FindProfilePrivileges(context.Context, uuid.UUID, uuid.UUID) ([]*domain.ProfilePrivilege, error) {
+	return q.privilegeGrants, nil
+}
+
+func (q *fakeGrantQueries) RevokeProfilePrivilege(_ context.Context, _, id uuid.UUID, _ *uuid.UUID) error {
+	q.revoke(id)
 	return nil
 }
 
@@ -179,7 +194,14 @@ type recordingMinecraftService struct {
 	// prefixSeasons holds the season of every prefix write, in the order of the writes.
 	prefixSeasons []uuid.UUID
 	prefixes      []string
-	err           error
+	// privilegeCalls holds every write of permission nodes.
+	privilegeCalls []privilegeCall
+	err            error
+}
+
+func (s *recordingMinecraftService) SetPrivilegesInSeason(_ context.Context, seasonID, mcUUID uuid.UUID, add, remove []string) error {
+	s.privilegeCalls = append(s.privilegeCalls, privilegeCall{seasonID, mcUUID, add, remove})
+	return s.err
 }
 
 func (s *recordingMinecraftService) RemoveFromWhitelist(context.Context, uuid.UUID, *domain.Profile) error {
@@ -240,6 +262,7 @@ func newGrantFixture(t *testing.T) *grantFixture {
 		f.fulfillment,
 		f.access,
 		NewProfileCosmeticsService(f.storage),
+		NewProfilePrivilegeService(f.storage, f.minecraft),
 		f.minecraft,
 		f.notify,
 	)
@@ -314,6 +337,30 @@ func TestGrantProduct(t *testing.T) {
 		f := newGrantFixture(t)
 		f.queries.prefixOptions = []*domain.ProfileNamePrefixOption{{NamePrefixID: uuid.New()}}
 		product := f.addProduct(t, domain.ProductCategoryNamePrefix, domain.NamePrefixProductMetadata{NamePrefixID: uuid.New()})
+
+		if err := f.svc.GrantProduct(ctx, f.profile.ID, product.ID, f.season); err != nil || len(f.fulfillment.calls) != 1 {
+			t.Fatalf("got error %v and %d grants, want one grant", err, len(f.fulfillment.calls))
+		}
+	})
+
+	t.Run("refuses a privilege the profile already has for the season", func(t *testing.T) {
+		f := newGrantFixture(t)
+		privilegeID := uuid.New()
+		f.queries.privilegeGrants = []*domain.ProfilePrivilege{{PrivilegeID: privilegeID, SeasonID: f.season}}
+		product := f.addProduct(t, domain.ProductCategoryPrivilege, domain.PrivilegeProductMetadata{PrivilegeID: privilegeID})
+
+		if err := f.svc.GrantProduct(ctx, f.profile.ID, product.ID, f.season); statusOf(err) != http.StatusConflict {
+			t.Fatalf("got status %d, want conflict", statusOf(err))
+		}
+		if len(f.fulfillment.calls) != 0 {
+			t.Errorf("got %d grants, want none", len(f.fulfillment.calls))
+		}
+	})
+
+	t.Run("grants a privilege the profile lacks", func(t *testing.T) {
+		f := newGrantFixture(t)
+		f.queries.privilegeGrants = []*domain.ProfilePrivilege{{PrivilegeID: uuid.New(), SeasonID: f.season}}
+		product := f.addProduct(t, domain.ProductCategoryPrivilege, domain.PrivilegeProductMetadata{PrivilegeID: uuid.New()})
 
 		if err := f.svc.GrantProduct(ctx, f.profile.ID, product.ID, f.season); err != nil || len(f.fulfillment.calls) != 1 {
 			t.Fatalf("got error %v and %d grants, want one grant", err, len(f.fulfillment.calls))
@@ -588,4 +635,72 @@ func TestRevokeCosmetic(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRevokePrivilege(t *testing.T) {
+	ctx := context.Background()
+	homes := &domain.Privilege{ID: uuid.New(), Permission: "homes.commands.*"}
+
+	newFixture := func(t *testing.T, seasonID func(*grantFixture) uuid.UUID) (*grantFixture, *domain.Grant) {
+		f := newGrantFixture(t)
+		f.queries.privileges = []*domain.Privilege{homes}
+		season := seasonID(f)
+		grant := &domain.Grant{ID: uuid.New(), Type: domain.GrantTypePrivilege, ItemID: homes.ID, SeasonID: &season}
+		f.queries.grants = []*domain.Grant{grant}
+		return f, grant
+	}
+
+	t.Run("takes the node away from the server of the season only", func(t *testing.T) {
+		f, grant := newFixture(t, func(f *grantFixture) uuid.UUID { return f.season })
+
+		if err := f.svc.RevokeGrant(ctx, f.profile.ID, domain.GrantTypePrivilege, grant.ID); err != nil {
+			t.Fatal(err)
+		}
+		if !grant.IsRevoked() || f.queries.pruneCalls != 0 {
+			t.Errorf("revoked %v, selection resets %d; want a revoked grant and no selection reset", grant.IsRevoked(), f.queries.pruneCalls)
+		}
+		if len(f.minecraft.privilegeCalls) != 1 {
+			t.Fatalf("got %d server writes, want 1", len(f.minecraft.privilegeCalls))
+		}
+		call := f.minecraft.privilegeCalls[0]
+		if call.seasonID != f.season || call.mcUUID != f.profile.MinecraftUUID || len(call.add) != 0 || !slices.Equal(call.remove, []string{"homes.commands.*"}) {
+			t.Errorf("server write = %+v, want homes.commands.* removed in the season", call)
+		}
+	})
+
+	t.Run("writes the nodes of the privileges the profile keeps", func(t *testing.T) {
+		f, grant := newFixture(t, func(f *grantFixture) uuid.UUID { return f.season })
+		fly := &domain.Privilege{ID: uuid.New(), Permission: "essentials.fly"}
+		f.queries.privileges = []*domain.Privilege{homes, fly}
+		f.queries.privilegeGrants = []*domain.ProfilePrivilege{{PrivilegeID: fly.ID, SeasonID: f.season, Permission: fly.Permission}}
+
+		if err := f.svc.RevokeGrant(ctx, f.profile.ID, domain.GrantTypePrivilege, grant.ID); err != nil {
+			t.Fatal(err)
+		}
+		call := f.minecraft.privilegeCalls[0]
+		if !slices.Equal(call.add, []string{"essentials.fly"}) || !slices.Equal(call.remove, []string{"homes.commands.*"}) {
+			t.Errorf("server write = %+v, want fly kept and homes removed", call)
+		}
+	})
+
+	t.Run("a season that is over leaves its server alone", func(t *testing.T) {
+		f, grant := newFixture(t, func(f *grantFixture) uuid.UUID { return f.endedSeason })
+
+		if err := f.svc.RevokeGrant(ctx, f.profile.ID, domain.GrantTypePrivilege, grant.ID); err != nil {
+			t.Fatal(err)
+		}
+		if !grant.IsRevoked() || len(f.minecraft.privilegeCalls) != 0 {
+			t.Errorf("revoked %v, server writes %d; want a revoked grant and no writes", grant.IsRevoked(), len(f.minecraft.privilegeCalls))
+		}
+	})
+
+	t.Run("keeps the grant revoked when the server fails, so the request can be repeated", func(t *testing.T) {
+		f, grant := newFixture(t, func(f *grantFixture) uuid.UUID { return f.season })
+		f.minecraft.err = context.DeadlineExceeded
+
+		err := f.svc.RevokeGrant(ctx, f.profile.ID, domain.GrantTypePrivilege, grant.ID)
+		if statusOf(err) != http.StatusInternalServerError || !grant.IsRevoked() {
+			t.Fatalf("got status %d and revoked %v, want an error and a revoked grant", statusOf(err), grant.IsRevoked())
+		}
+	})
 }

@@ -17,7 +17,7 @@ const ownerResyncCooldown = time.Minute
 
 // ProfileResyncService writes everything the Minecraft servers keep about a profile again, outside the timers.
 type ProfileResyncService interface {
-	// ResyncProfile writes the role, the chat prefix and the whitelist of the profile to the server of every
+	// ResyncProfile writes the role, the chat prefix, the whitelist and the privileges of the profile to the server of every
 	// active season. Every part is tried on every server even when another one fails, and the report tells
 	// per season which parts were written and which failed. It returns an error only when nothing could be tried.
 	ResyncProfile(ctx context.Context, profileID uuid.UUID) (*domain.ProfileResync, error)
@@ -25,7 +25,7 @@ type ProfileResyncService interface {
 	// anybody else, and with a too many requests error while the cooldown of the profile runs.
 	ResyncOwnedProfile(ctx context.Context, profileID, userID uuid.UUID) (*domain.ProfileResync, error)
 	// MoveProfileOnServers makes the season servers follow a profile that got another UUID or nickname. old is the
-	// profile before the move. A UUID the profile left loses its whitelist entry, role and prefix, LuckPerms learns
+	// profile before the move. A UUID the profile left loses its whitelist entry, role, prefix and privileges, LuckPerms learns
 	// the current nickname, then the profile is resynced. It runs after the move is stored, so failures are only
 	// logged: the profile is already moved, and a resync writes it again. The report is nil when nothing was tried.
 	MoveProfileOnServers(ctx context.Context, profileID uuid.UUID, old *domain.Profile) *domain.ProfileResync
@@ -34,6 +34,7 @@ type ProfileResyncService interface {
 type profileResyncService struct {
 	profileService          ProfileService
 	profileCosmeticsService ProfileCosmeticsService
+	profilePrivilegeService ProfilePrivilegeService
 	accessService           AccessService
 	seasonService           SeasonService
 	minecraftService        MinecraftService
@@ -48,6 +49,7 @@ type profileResyncService struct {
 func NewProfileResyncService(
 	profileService ProfileService,
 	profileCosmeticsService ProfileCosmeticsService,
+	profilePrivilegeService ProfilePrivilegeService,
 	accessService AccessService,
 	seasonService SeasonService,
 	minecraftService MinecraftService,
@@ -55,6 +57,7 @@ func NewProfileResyncService(
 	return &profileResyncService{
 		profileService:          profileService,
 		profileCosmeticsService: profileCosmeticsService,
+		profilePrivilegeService: profilePrivilegeService,
 		accessService:           accessService,
 		seasonService:           seasonService,
 		minecraftService:        minecraftService,
@@ -138,6 +141,7 @@ func (s *profileResyncService) ResyncProfile(ctx context.Context, profileID uuid
 				{Part: domain.ResyncPartRole, Err: roleErr},
 				{Part: domain.ResyncPartCosmetics, Err: cosmeticsErr},
 				{Part: domain.ResyncPartAccess, Err: whitelistErr},
+				{Part: domain.ResyncPartPrivileges, Err: s.profilePrivilegeService.SyncProfileInSeason(ctx, profile, season.ID)},
 			},
 		}
 		for _, part := range result.Parts {
@@ -173,6 +177,9 @@ func (s *profileResyncService) MoveProfileOnServers(ctx context.Context, profile
 			if err := s.minecraftService.SetPlayerRolesInSeason(ctx, season.ID, map[uuid.UUID]domain.Role{old.MinecraftUUID: domain.RolePlayer}); err != nil {
 				logger.Errorf(ctx, "[PROFILE RESYNC] Failed to reset the role of old uuid %s of profile %s in season %s: %v", old.MinecraftUUID, profileID, season.ID, err)
 			}
+			if err := s.profilePrivilegeService.ClearPlayerInSeason(ctx, old.MinecraftUUID, season.ID); err != nil {
+				logger.Errorf(ctx, "[PROFILE RESYNC] Failed to clear the privileges of old uuid %s of profile %s in season %s: %v", old.MinecraftUUID, profileID, season.ID, err)
+			}
 			if err := s.minecraftService.SetPrefixInSeason(ctx, season.ID, old.MinecraftUUID, ""); err != nil {
 				logger.Errorf(ctx, "[PROFILE RESYNC] Failed to clear the prefix of old uuid %s of profile %s in season %s: %v", old.MinecraftUUID, profileID, season.ID, err)
 			}
@@ -183,7 +190,7 @@ func (s *profileResyncService) MoveProfileOnServers(ctx context.Context, profile
 		}
 	}
 
-	// Role, prefix and the whitelist entry of the current UUID; the report is logged by the resync itself.
+	// Role, prefix, privileges and the whitelist entry of the current UUID; the report is logged by the resync itself.
 	resync, err := s.ResyncProfile(ctx, profileID)
 	if err != nil {
 		logger.Errorf(ctx, "[PROFILE RESYNC] Failed to resync moved profile %s: %v", profileID, err)

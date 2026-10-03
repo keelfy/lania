@@ -17,6 +17,7 @@ func TestActiveGrantReadsSkipRevoked(t *testing.T) {
 		"findProfileNamePrefixOptionByIDAndProfileIDAndType":      findProfileNamePrefixOptionByIDAndProfileIDAndType,
 		"findProfileNameColorOptionsByProfileOwnerUserID":         findProfileNameColorOptionsByProfileOwnerUserID,
 		"findProfileNamePrefixOptionsByProfileOwnerUserIDAndType": findProfileNamePrefixOptionsByProfileOwnerUserIDAndType,
+		"findProfilePrivileges":                                   findProfilePrivileges,
 	}
 
 	for name, query := range queries {
@@ -31,6 +32,7 @@ func TestGrantInsertsReinstateRevoked(t *testing.T) {
 		"insertProfileAccess":           insertProfileAccess,
 		"insertProfileNameColorOption":  insertProfileNameColorOption,
 		"insertProfileNamePrefixOption": insertProfileNamePrefixOption,
+		"insertProfilePrivilege":        insertProfilePrivilege,
 	} {
 		if !strings.Contains(query, "ON DUPLICATE KEY UPDATE") || !strings.Contains(query, "revoked_at = NULL, revoked_by = NULL") {
 			t.Errorf("%s does not reinstate a revoked grant", name)
@@ -48,8 +50,18 @@ func TestPrefixInsertKeepsTypeOfActiveOption(t *testing.T) {
 }
 
 func TestFindProfileGrantsUnionColumns(t *testing.T) {
-	// Each branch of the union binds one placeholder: mc_uuid, profile_id, profile_id.
-	if got := strings.Count(findProfileGrants, "?"); got != 3 {
-		t.Errorf("got %d placeholders, want 3", got)
+	// Each branch of the union binds one placeholder: mc_uuid, then profile_id for the other four.
+	if got := strings.Count(findProfileGrants, "?"); got != 4 {
+		t.Errorf("got %d placeholders, want 4", got)
+	}
+}
+
+// A privilege reads its price from the tariff named after it, apart from the privilege rows.
+func TestPrivilegePricesAreReadByTariffPrefix(t *testing.T) {
+	if !strings.Contains(findPrivilegePrices, "WHERE name LIKE ?") {
+		t.Errorf("findPrivilegePrices must filter the tariffs by name")
+	}
+	if got := strings.Count(strings.Replace(findPrivileges, "%s", "WHERE id = ?", 1), "?"); got != 1 {
+		t.Errorf("got %d placeholders in findPrivileges, want 1", got)
 	}
 }

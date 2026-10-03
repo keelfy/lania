@@ -12,17 +12,18 @@ const (
 	GrantTypeAccess     GrantType = "access"
 	GrantTypeNameColor  GrantType = "name-color"
 	GrantTypeNamePrefix GrantType = "name-prefix"
+	GrantTypePrivilege  GrantType = "privilege"
 )
 
 func (t GrantType) IsValid() bool {
 	switch t {
-	case GrantTypeAccess, GrantTypeNameColor, GrantTypeNamePrefix:
+	case GrantTypeAccess, GrantTypeNameColor, GrantTypeNamePrefix, GrantTypePrivilege:
 		return true
 	}
 	return false
 }
 
-// Grant is something a profile was given: access to a season, a name color or a name prefix.
+// Grant is something a profile was given: access to a season, a name color, a name prefix or a privilege.
 // A revoked grant stays as history.
 type Grant struct {
 	ID        uuid.UUID
@@ -30,15 +31,15 @@ type Grant struct {
 	ProfileID uuid.UUID
 	// SeasonID is empty for a grant that is not tied to a season.
 	SeasonID *uuid.UUID
-	// ItemID is the ID of the name color or name prefix, empty for access.
+	// ItemID is the ID of the name color, name prefix or privilege, empty for access.
 	ItemID uuid.UUID
 	// PrefixType is set for a name prefix only.
 	PrefixType ProfilePrefixType
-	// Name is the name of the name color or name prefix, empty for access.
+	// Name is the name of the name color, name prefix or privilege, empty for access.
 	Name string
 	// Source tells how access was obtained, empty for a name color and a name prefix.
 	Source AccessSource
-	// OrderItemID is set when a name color or a name prefix came from an order.
+	// OrderItemID is set when a name color, a name prefix or a privilege came from an order.
 	OrderItemID *uuid.UUID
 	// GrantedBy is the user who caused the grant, empty for grants made by a payment callback.
 	GrantedBy *uuid.UUID

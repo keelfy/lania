@@ -4,11 +4,13 @@ import {
   NamePrefixProductMetadata,
   Product,
   ProductCategory,
+  PrivilegeProductMetadata,
   ProductMetadata,
   UpgradeProductMetadata,
 } from '@/models/product'
 import UsernameColorProductCard from './name-color-product-card'
 import NamePrefixProductCard from './name-prefix-product-card'
+import PrivilegeProductCard from './privilege-product-card'
 import UpgradeProductCard from './upgrade-color-product-card'
 
 export default function ProductCards({
@@ -45,6 +47,15 @@ export default function ProductCards({
           <NamePrefixProductCard
             key={item.id}
             item={item as Product<NamePrefixProductMetadata>}
+            currency={currency}
+            previewOnly={previewOnly}
+          />
+        )
+      case ProductCategory.Privilege:
+        return (
+          <PrivilegeProductCard
+            key={item.id}
+            item={item as Product<PrivilegeProductMetadata>}
             currency={currency}
             previewOnly={previewOnly}
           />

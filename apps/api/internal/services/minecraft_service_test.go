@@ -19,6 +19,15 @@ type fakeShell struct {
 	players   map[uuid.UUID]string
 	roles     map[uuid.UUID]string
 	roleGroup []string
+	// permissions holds the nodes of the last SetPlayerPermissions call.
+	permissionsOf      uuid.UUID
+	permissionsAdded   []string
+	permissionsRemoved []string
+}
+
+func (s *fakeShell) SetPlayerPermissions(_ context.Context, mcUUID uuid.UUID, add, remove []string) error {
+	s.permissionsOf, s.permissionsAdded, s.permissionsRemoved = mcUUID, add, remove
+	return s.err
 }
 
 func (s *fakeShell) ListOnlinePlayers(context.Context) (uuid.UUIDs, error) {
@@ -264,5 +273,31 @@ func TestMinecraftService_PunishmentsOfAnEndedSeasonAreUnavailable(t *testing.T)
 
 	if _, err := service.GetPlayerPunishmentsInSeason(context.Background(), ended.ID, uuid.UUIDs{uuid.New()}); !errors.Is(err, ErrOnlineUnavailable) {
 		t.Fatalf("error %v, want ErrOnlineUnavailable", err)
+	}
+}
+
+func TestMinecraftService_SetPrivilegesInSeasonWritesToTheServerOfTheSeason(t *testing.T) {
+	mcUUID := uuid.New()
+	shellA, shellB := &fakeShell{}, &fakeShell{}
+	seasonA, seasonB, noShell := season("a:1", true), season("b:1", true), season("", true)
+	service := NewMinecraftService(&fakeSeasons{seasons: []*domain.Season{seasonA, seasonB, noShell}}, fakeShellPool{"a:1": shellA, "b:1": shellB})
+	ctx := context.Background()
+
+	if err := service.SetPrivilegesInSeason(ctx, seasonA.ID, mcUUID, []string{"homes.commands.*"}, []string{"essentials.fly"}); err != nil {
+		t.Fatal(err)
+	}
+	if shellA.permissionsOf != mcUUID || len(shellA.permissionsAdded) != 1 || shellA.permissionsAdded[0] != "homes.commands.*" || len(shellA.permissionsRemoved) != 1 || shellA.permissionsRemoved[0] != "essentials.fly" {
+		t.Errorf("shell A got %v for %v, want homes.commands.* added and essentials.fly removed for the player", shellA, mcUUID)
+	}
+	if shellB.permissionsAdded != nil || shellB.permissionsRemoved != nil {
+		t.Error("the shell of another season must not be touched")
+	}
+	if err := service.SetPrivilegesInSeason(ctx, noShell.ID, mcUUID, []string{"homes.commands.*"}, nil); err != nil {
+		t.Errorf("a season without a server must be skipped, got %v", err)
+	}
+
+	shellA.err = errors.New("shell down")
+	if err := service.SetPrivilegesInSeason(ctx, seasonA.ID, mcUUID, []string{"homes.commands.*"}, nil); err == nil {
+		t.Error("a failing shell must fail the write")
 	}
 }

@@ -41,6 +41,7 @@ type adminGrantService struct {
 	fulfillmentService      FulfillmentService
 	accessService           AccessService
 	profileCosmeticsService ProfileCosmeticsService
+	profilePrivilegeService ProfilePrivilegeService
 	minecraftService        MinecraftService
 	notificationService     NotificationService
 }
@@ -53,6 +54,7 @@ func NewAdminGrantService(
 	fulfillmentService FulfillmentService,
 	accessService AccessService,
 	profileCosmeticsService ProfileCosmeticsService,
+	profilePrivilegeService ProfilePrivilegeService,
 	minecraftService MinecraftService,
 	notificationService NotificationService,
 ) AdminGrantService {
@@ -64,6 +66,7 @@ func NewAdminGrantService(
 		fulfillmentService:      fulfillmentService,
 		accessService:           accessService,
 		profileCosmeticsService: profileCosmeticsService,
+		profilePrivilegeService: profilePrivilegeService,
 		minecraftService:        minecraftService,
 		notificationService:     notificationService,
 	}
@@ -275,6 +278,18 @@ func (s *adminGrantService) profileHasProduct(ctx context.Context, profile *doma
 		return slices.ContainsFunc(options, func(option *domain.ProfileNamePrefixOption) bool {
 			return option.NamePrefixID == metadata.NamePrefixID
 		}), nil
+	case domain.ProductCategoryPrivilege:
+		var metadata domain.PrivilegeProductMetadata
+		if err := json.Unmarshal(product.Metadata, &metadata); err != nil {
+			return false, utils.NewInternalServerError("failed to unmarshal privilege product metadata", err)
+		}
+		privileges, err := s.profilePrivilegeService.GetProfilePrivileges(ctx, profile.ID, seasonID)
+		if err != nil {
+			return false, err
+		}
+		return slices.ContainsFunc(privileges, func(privilege *domain.ProfilePrivilege) bool {
+			return privilege.PrivilegeID == metadata.PrivilegeID
+		}), nil
 	}
 	return false, utils.NewBadRequestError("product has an unknown category", nil)
 }
@@ -297,6 +312,8 @@ func (s *adminGrantService) revoke(ctx context.Context, queries sql.Queries, pro
 			return wrapRevokeError(err)
 		}
 		return s.profileCosmeticsService.PruneProfileSelections(ctx, queries, profile.ID)
+	case domain.GrantTypePrivilege:
+		return wrapRevokeError(queries.RevokeProfilePrivilege(ctx, profile.ID, grant.ID, revokedBy))
 	}
 	return utils.NewBadRequestError("unknown grant type", nil)
 }
@@ -310,6 +327,21 @@ func wrapRevokeError(err error) error {
 
 // updateGame makes the Minecraft server match the database after a revoke.
 func (s *adminGrantService) updateGame(ctx context.Context, profile *domain.Profile, grant *domain.Grant) error {
+	if grant.Type == domain.GrantTypePrivilege {
+		// A privilege is for one season, so only the server of that season holds its node.
+		// The server of a season that is over is usually down, so it is left alone, like the prefixes.
+		seasons, err := s.seasonService.GetSeasons(ctx)
+		if err != nil {
+			return err
+		}
+		live := slices.ContainsFunc(seasons, func(season *domain.Season) bool {
+			return grant.SeasonID != nil && season.ID == *grant.SeasonID && season.IsActive && season.ShellAddress != nil
+		})
+		if !live {
+			return nil
+		}
+		return s.profilePrivilegeService.SyncProfileInSeason(ctx, profile, *grant.SeasonID)
+	}
 	if grant.Type != domain.GrantTypeAccess {
 		return s.updatePrefixes(ctx, profile, grant.SeasonID)
 	}

@@ -23,6 +23,10 @@ type AdminCatalogHandler interface {
 	UpdateNamePrefix(http.ResponseWriter, *http.Request)
 	DeleteNameColor(http.ResponseWriter, *http.Request)
 	DeleteNamePrefix(http.ResponseWriter, *http.Request)
+	GetPrivileges(http.ResponseWriter, *http.Request)
+	CreatePrivilege(http.ResponseWriter, *http.Request)
+	UpdatePrivilege(http.ResponseWriter, *http.Request)
+	DeletePrivilege(http.ResponseWriter, *http.Request)
 	GetProducts(http.ResponseWriter, *http.Request)
 	CreateProduct(http.ResponseWriter, *http.Request)
 	UpdateProduct(http.ResponseWriter, *http.Request)
@@ -142,6 +146,65 @@ func (h *adminCatalogHandler) DeleteNameColor(w http.ResponseWriter, r *http.Req
 }
 func (h *adminCatalogHandler) DeleteNamePrefix(w http.ResponseWriter, r *http.Request) {
 	h.deleteCosmetic(w, r, h.service.DeleteNamePrefix)
+}
+
+func (h *adminCatalogHandler) GetPrivileges(w http.ResponseWriter, r *http.Request) {
+	privileges, err := h.service.GetPrivileges(r.Context())
+	if err != nil {
+		utils.HttpError(r.Context(), w, err)
+		return
+	}
+	utils.WriteHttpJsonResponse(r.Context(), w, presenter.PresentAdminPrivileges(privileges))
+}
+
+func (h *adminCatalogHandler) savePrivilege(w http.ResponseWriter, r *http.Request, update bool) {
+	var cmd *commands.SavePrivilegeCommand
+	var err error
+	if update {
+		cmd, err = binders.BindUpdatePrivilege(r)
+	} else {
+		cmd, err = binders.BindSavePrivilege(r)
+	}
+	if err != nil {
+		utils.HttpError(r.Context(), w, err)
+		return
+	}
+	if err := cmd.Validate(); err != nil {
+		utils.HttpError(r.Context(), w, utils.NewBadRequestError("", err))
+		return
+	}
+	var privilege *domain.Privilege
+	if update {
+		privilege, err = h.service.UpdatePrivilege(r.Context(), cmd)
+	} else {
+		privilege, err = h.service.CreatePrivilege(r.Context(), cmd)
+	}
+	if err != nil {
+		utils.HttpError(r.Context(), w, err)
+		return
+	}
+	utils.WriteHttpJsonResponse(r.Context(), w, presenter.PresentAdminPrivilege(privilege))
+}
+
+func (h *adminCatalogHandler) CreatePrivilege(w http.ResponseWriter, r *http.Request) {
+	h.savePrivilege(w, r, false)
+}
+func (h *adminCatalogHandler) UpdatePrivilege(w http.ResponseWriter, r *http.Request) {
+	h.savePrivilege(w, r, true)
+}
+
+func (h *adminCatalogHandler) DeletePrivilege(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id, err := binders.BindPathVariableAsUUID(r, binders.PrivilegeIDVariable)
+	if err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	if err := h.service.DeletePrivilege(ctx, id); err != nil {
+		utils.HttpError(ctx, w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *adminCatalogHandler) GetProducts(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,7 @@
 import {
   CalendarRangeIcon,
   IdCardIcon,
+  KeyRoundIcon,
   LucideIcon,
   MegaphoneIcon,
   PackageIcon,
@@ -28,6 +29,7 @@ export const ADMIN_NAV_ITEMS: readonly {
       { href: '/admin/cosmetics/prefixes', labelKey: 'namePrefixes' },
     ],
   },
+  { href: '/admin/privileges', labelKey: 'privileges', icon: KeyRoundIcon },
   { href: '/admin/products', labelKey: 'products', icon: PackageIcon },
   { href: '/admin/orders', labelKey: 'orders', icon: ReceiptIcon },
   {

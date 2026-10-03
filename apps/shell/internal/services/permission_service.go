@@ -27,6 +27,9 @@ type PermissionService interface {
 	// SetPlayerRoles makes every player of roles belong to exactly the role group it maps to, among roleGroups.
 	// An empty group leaves the player in no role group. A group that is not in roleGroups is an error.
 	SetPlayerRoles(ctx context.Context, roleGroups []string, roles map[uuid.UUID]string) error
+	// SetPlayerPermissions removes and adds individual permission nodes of the player. A node in both lists stays.
+	// Group, weight and chat decoration nodes are refused: the website manages them through other calls.
+	SetPlayerPermissions(ctx context.Context, mcUUID uuid.UUID, add, remove []string) error
 	// RegisterPlayer makes LuckPerms resolve the username to the player before the first join, so
 	// console commands that take a username, like the ones EasyDonate runs, do not fail. Idempotent.
 	RegisterPlayer(ctx context.Context, mcUUID uuid.UUID, username string) error
@@ -37,6 +40,9 @@ var ErrInvalidPrefix = errors.New("invalid prefix")
 
 // ErrUnknownRoleGroup means a role maps to a group that is not one of the role groups.
 var ErrUnknownRoleGroup = errors.New("group is not a role group")
+
+// ErrInvalidPermission means a permission node is malformed or one the website must not write through this call.
+var ErrInvalidPermission = errors.New("invalid permission")
 
 type permissionService struct {
 	luckpermsStorage storage.LuckpermsStorage
@@ -52,6 +58,13 @@ func NewPermissionService(luckpermsStorage storage.LuckpermsStorage, console cli
 
 // glythTokenPattern matches an ItemsAdder glyth token in a prefix (":glyth_popcat:").
 var glythTokenPattern = regexp.MustCompile(`:(glyth_[a-z0-9_]+):`)
+
+// permissionNodePattern is the shape of a purchasable permission node: lowercase words joined by dots, with * allowed.
+var permissionNodePattern = regexp.MustCompile(`^[a-z0-9_.*-]{1,200}$`)
+
+// reservedNodePrefixes start nodes that change groups, weights or chat decorations, so a catalog entry
+// cannot hand out a role or every permission by mistake.
+var reservedNodePrefixes = []string{groupNodePrefix, "weight.", "prefix.", "suffix.", "meta.", "displayname."}
 
 const (
 	groupNodePrefix = "group."
@@ -135,6 +148,37 @@ func (s *permissionService) SetPlayerRoles(ctx context.Context, roleGroups []str
 	}
 
 	s.syncServer(ctx)
+	return nil
+}
+
+func (s *permissionService) SetPlayerPermissions(ctx context.Context, mcUUID uuid.UUID, add, remove []string) error {
+	for _, node := range slices.Concat(add, remove) {
+		if err := validatePermissionNode(node); err != nil {
+			return err
+		}
+	}
+	if len(add) == 0 && len(remove) == 0 {
+		return nil
+	}
+
+	replacement := storage.PermissionReplacement{MinecraftUUID: mcUUID, Remove: remove, Add: add}
+	if err := s.luckpermsStorage.ReplacePermissions(ctx, []storage.PermissionReplacement{replacement}); err != nil {
+		return err
+	}
+
+	s.syncServer(ctx)
+	return nil
+}
+
+func validatePermissionNode(node string) error {
+	if !permissionNodePattern.MatchString(node) || node == "*" {
+		return fmt.Errorf("%w: %q", ErrInvalidPermission, node)
+	}
+	for _, prefix := range reservedNodePrefixes {
+		if strings.HasPrefix(node, prefix) {
+			return fmt.Errorf("%w: %q", ErrInvalidPermission, node)
+		}
+	}
 	return nil
 }
 

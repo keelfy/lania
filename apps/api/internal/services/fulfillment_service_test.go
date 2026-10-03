@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -70,12 +71,14 @@ func TestFulfillmentGrantProduct(t *testing.T) {
 	seasonID := uuid.New()
 	orderItemID := uuid.New()
 
+	var privileges *recordingPrivileges
 	newService := func() (FulfillmentService, *recordingAccessService, *recordingCosmeticsService, *recordingNotificationService) {
 		access := &recordingAccessService{}
 		cosmetics := &recordingCosmeticsService{}
 		notifications := &recordingNotificationService{}
+		privileges = &recordingPrivileges{}
 		profiles := &stubProfileService{profiles: map[uuid.UUID]*domain.Profile{profile.ID: profile}}
-		return NewFulfillmentService(access, cosmetics, profiles, notifications), access, cosmetics, notifications
+		return NewFulfillmentService(access, cosmetics, privileges, profiles, notifications), access, cosmetics, notifications
 	}
 	product := func(category domain.ProductCategory, metadata any) *domain.Product {
 		raw, _ := json.Marshal(metadata)
@@ -127,6 +130,33 @@ func TestFulfillmentGrantProduct(t *testing.T) {
 		sent := notifications.granted
 		if sent == nil || sent.grantType != domain.GrantTypeNamePrefix || sent.itemID != prefixID || sent.prefixType != domain.ProfilePrefixTypeGlyth {
 			t.Errorf("notification: got %+v", sent)
+		}
+	})
+
+	t.Run("privilege is written for the season with its order item", func(t *testing.T) {
+		svc, _, _, _ := newService()
+		privilegeID := uuid.New()
+		privilege := product(domain.ProductCategoryPrivilege, domain.PrivilegeProductMetadata{PrivilegeID: privilegeID})
+
+		if err := svc.GrantProduct(ctx, nil, profile.ID, seasonID, privilege, domain.AccessSourceOrder, &orderItemID); err != nil {
+			t.Fatal(err)
+		}
+		if len(privileges.added) != 1 {
+			t.Fatalf("got %d privileges, want 1", len(privileges.added))
+		}
+		got := privileges.added[0]
+		if got.profile.ID != profile.ID || got.privilegeID != privilegeID || got.seasonID != seasonID || *got.orderItemID != orderItemID {
+			t.Errorf("got %+v", got)
+		}
+	})
+
+	t.Run("a privilege that cannot be stored fails the grant", func(t *testing.T) {
+		svc, _, _, _ := newService()
+		privileges.addErr = errors.New("db down")
+
+		err := svc.GrantProduct(ctx, nil, profile.ID, seasonID, product(domain.ProductCategoryPrivilege, domain.PrivilegeProductMetadata{PrivilegeID: uuid.New()}), domain.AccessSourceOrder, &orderItemID)
+		if err == nil {
+			t.Error("got no error")
 		}
 	})
 

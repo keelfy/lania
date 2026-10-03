@@ -118,13 +118,13 @@ export type ProfileUsernameChange = {
   createdAt: number
 }
 
-export type GrantType = 'access' | 'name-color' | 'name-prefix'
+export type GrantType = 'access' | 'name-color' | 'name-prefix' | 'privilege'
 
 export type AdminGrant = {
   id: string
   type: GrantType
   seasonId?: string
-  // Name of the name color or name prefix, missing for access.
+  // Name of the name color, name prefix or privilege, missing for access.
   name?: string
   prefixType?: 'glyth' | 'special'
   // How access was obtained, missing for a name color and a name prefix.
@@ -195,11 +195,19 @@ export type AdminProductPrice = {
   amount: number
 }
 
+// The tariff of a privilege is named after it: "privilege:<id>". Every privilege has its own price.
+export type PrivilegePriceName = `privilege:${string}`
+
 export type AdminProduct = {
   id: string
-  category: 'upgrade' | 'name-color' | 'name-prefix'
-  priceName: 'season_access' | 'name_color' | 'name_prefix'
-  metadata: { action?: string; nameColorId?: string; namePrefixId?: string }
+  category: 'upgrade' | 'name-color' | 'name-prefix' | 'privilege'
+  priceName: 'season_access' | 'name_color' | 'name_prefix' | PrivilegePriceName
+  metadata: {
+    action?: string
+    nameColorId?: string
+    namePrefixId?: string
+    privilegeId?: string
+  }
   isActive: boolean
   easyDonateProductId?: number
   soldCount: number
@@ -214,9 +222,26 @@ export type UploadedImage = {
   height: number
 }
 
+// A LuckPerms permission node the player buys for a season, e.g. homes.commands.*.
+export type AdminPrivilege = {
+  id: string
+  // Unique main name, shown in English and wherever a translation is missing.
+  name: string
+  names: CosmeticNames
+  permission: string
+  // One price for every currency.
+  prices: AdminProductPrice[]
+}
+
+export type SavePrivilege = Pick<
+  AdminPrivilege,
+  'name' | 'names' | 'permission' | 'prices'
+>
+
 export type SaveProduct = {
   category: AdminProduct['category']
   cosmeticId?: string
+  privilegeId?: string
   priceName: AdminProduct['priceName']
   isActive: boolean
   easyDonateProductId?: number

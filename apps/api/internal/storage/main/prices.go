@@ -53,3 +53,25 @@ func (q *queries) FindPricesByNames(ctx context.Context, names []domain.ProductP
 	}
 	return prices, nil
 }
+
+const upsertProductPrice = `
+INSERT INTO product_prices (name, currency, amount)
+VALUES (?, ?, ?)
+ON DUPLICATE KEY UPDATE amount = VALUES(amount)
+`
+
+// UpsertProductPrices writes the prices of the tariff, one row per currency. Other currencies of the tariff stay.
+func (q *queries) UpsertProductPrices(ctx context.Context, name domain.ProductPriceName, prices []*domain.ProductPrice) error {
+	for _, price := range prices {
+		if _, err := q.x.ExecContext(ctx, upsertProductPrice, name, price.Currency, price.Amount); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// DeleteProductPrices removes the tariff with every currency.
+func (q *queries) DeleteProductPrices(ctx context.Context, name domain.ProductPriceName) error {
+	_, err := q.x.ExecContext(ctx, "DELETE FROM product_prices WHERE name = ?", name)
+	return err
+}

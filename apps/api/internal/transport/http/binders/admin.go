@@ -33,6 +33,7 @@ var SeasonIDVariable = "seasonId"
 var ScreenshotIDVariable = "screenshotId"
 
 var CosmeticIDVariable = "cosmeticId"
+var PrivilegeIDVariable = "privilegeId"
 var ProductIDVariable = "productId"
 
 func trimmedAll(values []string) []string {
@@ -243,6 +244,27 @@ func BindUpdateNamePrefix(r *http.Request) (*commands.SaveNamePrefixCommand, err
 	return cmd, err
 }
 
+func BindSavePrivilege(r *http.Request) (*commands.SavePrivilegeCommand, error) {
+	var req requests.SavePrivilege
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, utils.NewBadRequestError("request body is invalid", err)
+	}
+	prices := make([]commands.PrivilegePrice, len(req.Prices))
+	for i, price := range req.Prices {
+		prices[i] = commands.PrivilegePrice{Currency: domain.Currency(strings.ToUpper(strings.TrimSpace(price.Currency))), Amount: price.Amount}
+	}
+	return &commands.SavePrivilegeCommand{Name: strings.TrimSpace(req.Name), Names: bindCosmeticNames(req.Names), Permission: strings.TrimSpace(req.Permission), Prices: prices}, nil
+}
+
+func BindUpdatePrivilege(r *http.Request) (*commands.SavePrivilegeCommand, error) {
+	cmd, err := BindSavePrivilege(r)
+	if err != nil {
+		return nil, err
+	}
+	cmd.ID, err = BindPathVariableAsUUID(r, PrivilegeIDVariable)
+	return cmd, err
+}
+
 func BindSaveProduct(r *http.Request) (*commands.SaveProductCommand, error) {
 	var req requests.SaveProduct
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -252,7 +274,7 @@ func BindSaveProduct(r *http.Request) (*commands.SaveProductCommand, error) {
 	for i, localization := range req.Localizations {
 		localizations[i] = commands.SaveProductLocalization{Locale: strings.ToLower(strings.TrimSpace(localization.Locale)), Name: strings.TrimSpace(localization.Name), Description: strings.TrimSpace(localization.Description)}
 	}
-	return &commands.SaveProductCommand{Category: domain.ProductCategory(strings.TrimSpace(req.Category)), CosmeticID: req.CosmeticID, PriceName: domain.ProductPriceName(strings.TrimSpace(req.PriceName)), IsActive: req.IsActive, EasyDonateProductID: req.EasyDonateProductID, Localizations: localizations}, nil
+	return &commands.SaveProductCommand{Category: domain.ProductCategory(strings.TrimSpace(req.Category)), CosmeticID: req.CosmeticID, PrivilegeID: req.PrivilegeID, PriceName: domain.ProductPriceName(strings.TrimSpace(req.PriceName)), IsActive: req.IsActive, EasyDonateProductID: req.EasyDonateProductID, Localizations: localizations}, nil
 }
 
 func BindUpdateProduct(r *http.Request) (*commands.SaveProductCommand, error) {

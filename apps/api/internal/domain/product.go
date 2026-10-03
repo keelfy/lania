@@ -13,6 +13,7 @@ const (
 	ProductCategoryUpgrade    ProductCategory = "upgrade"
 	ProductCategoryNameColor  ProductCategory = "name-color"
 	ProductCategoryNamePrefix ProductCategory = "name-prefix"
+	ProductCategoryPrivilege  ProductCategory = "privilege"
 )
 
 type Currency string
@@ -44,6 +45,14 @@ const (
 	ProductPriceNameNameColor    ProductPriceName = "name_color"
 	ProductPriceNameNamePrefix   ProductPriceName = "name_prefix"
 )
+
+// PrivilegePriceNamePrefix starts the tariff name of a privilege. Every privilege has its own price.
+const PrivilegePriceNamePrefix = "privilege:"
+
+// PrivilegePriceName is the tariff that holds the price of the privilege.
+func PrivilegePriceName(privilegeID uuid.UUID) ProductPriceName {
+	return ProductPriceName(PrivilegePriceNamePrefix + privilegeID.String())
+}
 
 type ProductPrice struct {
 	Name     ProductPriceName
@@ -93,4 +102,8 @@ type NamePrefixProductMetadata struct {
 	Prefix       string    `json:"prefix"`
 	NoSpace      bool      `json:"noSpace"`
 	NamePrefixID uuid.UUID `json:"namePrefixId"`
+}
+
+type PrivilegeProductMetadata struct {
+	PrivilegeID uuid.UUID `json:"privilegeId"`
 }

@@ -18,6 +18,7 @@ import {
   NamePrefixProductMetadata,
   Product,
   ProductCategory,
+  PrivilegeProductMetadata,
   ProductMetadata,
   UpgradeProductMetadata,
 } from '@/models/product'
@@ -34,11 +35,13 @@ import { Button } from '@/components/ui/button'
 import { Link } from '@/i18n/navigation'
 import UsernameColorProductCard from '../../components/name-color-product-card'
 import NamePrefixProductCard from '../../components/name-prefix-product-card'
+import PrivilegeProductCard from '../../components/privilege-product-card'
 import UpgradeProductCard from '../../components/upgrade-color-product-card'
 import AddToBasketForm from './add-to-basket-form'
 import ProductProfileProvider from './product-profile-context'
 import NameColorProductDetails from './name-color-details'
 import NamePrefixProductDetails from './name-prefix-details'
+import PrivilegeProductDetails from './privilege-details'
 import UpgradeProductDetails from './upgrade-product-details'
 
 type Props = {
@@ -123,6 +126,12 @@ export default async function ProductPage({ params }: Props) {
             item={item as Product<UpgradeProductMetadata>}
           />
         )
+      case ProductCategory.Privilege:
+        return (
+          <PrivilegeProductDetails
+            item={item as Product<PrivilegeProductMetadata>}
+          />
+        )
       default:
         return null
     }
@@ -151,6 +160,14 @@ export default async function ProductPage({ params }: Props) {
           <UpgradeProductCard
             key={product.id}
             item={product as Product<UpgradeProductMetadata>}
+            currency={currency}
+          />
+        )
+      case ProductCategory.Privilege:
+        return (
+          <PrivilegeProductCard
+            key={product.id}
+            item={product as Product<PrivilegeProductMetadata>}
             currency={currency}
           />
         )

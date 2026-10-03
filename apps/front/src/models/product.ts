@@ -20,6 +20,7 @@ export enum ProductCategory {
   Upgrade = 'upgrade',
   NameColor = 'name-color',
   NamePrefix = 'name-prefix',
+  Privilege = 'privilege',
 }
 
 export type ProductMetadata = object
@@ -31,6 +32,10 @@ export type UpgradeProductMetadata = ProductMetadata & {
 export type NameColorProductMetadata = ProductMetadata & {
   colors: string[]
   nameColorId: string
+}
+
+export type PrivilegeProductMetadata = ProductMetadata & {
+  privilegeId: string
 }
 
 export type NamePrefixProductMetadata = ProductMetadata & {

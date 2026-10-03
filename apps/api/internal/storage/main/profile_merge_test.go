@@ -18,6 +18,7 @@ var mergeHandledTables = map[string]bool{
 	"profile_mojang_uuids":        true,
 	"profile_name_color_options":  true,
 	"profile_name_prefix_options": true,
+	"profile_privileges":          true,
 	"profile_season_cosmetics":    true,
 	"profile_prefixes":            true,
 	"order_items":                 true,

@@ -155,7 +155,8 @@
       "all": "All products",
       "upgrade": "Upgrades",
       "name-color": "Username colors",
-      "name-prefix": "Glyths"
+      "name-prefix": "Glyths",
+      "privilege": "Privileges"
     },
     "loadMore": "Show more",
     "loadMoreFailed": "Could not load more products. Try again.",
@@ -499,7 +500,8 @@
     "parts": {
       "role": "Role",
       "cosmetics": "Cosmetics",
-      "access": "Access"
+      "access": "Access",
+      "privileges": "Privileges"
     },
     "error": "Failed to synchronize the game profile"
   },
@@ -881,6 +883,7 @@
       "cosmetics": "Cosmetics",
       "nameColors": "Name colors",
       "namePrefixes": "Prefixes",
+      "privileges": "Privileges",
       "products": "Products",
       "orders": "Orders",
       "announcements": "Announcements"
@@ -1010,7 +1013,8 @@
         "types": {
           "access": "Access",
           "name-color": "Name color",
-          "name-prefix": "Prefix"
+          "name-prefix": "Prefix",
+          "privilege": "Privilege"
         },
         "sources": {
           "free": "Free",
@@ -1332,6 +1336,40 @@
       "nameHint": "Unique. Players see it in English and wherever there is no translation.",
       "nameRuHint": "Leave blank to show the main name."
     },
+    "privileges": {
+      "loadFailed": "Failed to load privileges",
+      "search": "Search privileges",
+      "create": "New privilege",
+      "createTitle": "New privilege",
+      "edit": "Edit privilege",
+      "hint": "A privilege is one permission the player buys for one season. Sell it through a product.",
+      "empty": "Nothing found",
+      "save": "Save changes",
+      "created": "Privilege created",
+      "updated": "Privilege updated",
+      "saveFailed": "Failed to save privilege",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "deleted": "Privilege deleted",
+      "deleteFailed": "Failed to delete privilege",
+      "deleteConfirmTitle": "Delete privilege?",
+      "deleteConfirmDescription": "Only a privilege no player has and no product sells can be deleted. Its price and revoked grants are deleted with it.",
+      "deleteBlockedByProduct": "Delete the linked product first.",
+      "fields": {
+        "name": "Main name",
+        "nameRu": "Name in Russian",
+        "permission": "Permission",
+        "prices": "Price"
+      },
+      "nameHint": "Unique. Players see it in English and wherever there is no translation.",
+      "nameRuHint": "Leave blank to show the main name.",
+      "permissionHint": "A LuckPerms permission, e.g. homes.commands.*. Unique. It cannot be changed while players own the privilege. Groups, weights, prefixes and * are refused.",
+      "pricesHint": "Every privilege has its own price in every currency. A changed price applies to new orders. The EasyDonate position keeps the price it was created with.",
+      "linkedProduct": "Linked product",
+      "linkedProductNone": "This privilege isn't linked to any product and can't be purchased.",
+      "productActive": "Active",
+      "productDraft": "Draft"
+    },
     "uploads": {
       "choose": "Choose file",
       "orPaste": "Or paste an image from the clipboard (Ctrl+V)",
@@ -1343,7 +1381,7 @@
       "search": "Search products",
       "create": "Create product",
       "edit": "Edit product",
-      "description": "A product connects a cosmetic, shared tariff, and EasyDonate item.",
+      "description": "A product connects a cosmetic or privilege, a tariff, and an EasyDonate item.",
       "save": "Save changes",
       "created": "Product created",
       "updated": "Product updated",
@@ -1357,7 +1395,9 @@
       "active": "For sale",
       "draft": "Draft",
       "selectCosmetic": "Select cosmetic",
+      "selectPrivilege": "Select privilege",
       "tariffHint": "Tariff <code>{tariff}</code> — price is shared by the whole category.",
+      "tariffHintPrivilege": "Tariff <code>{tariff}</code> — the privilege has its own price, set on the Privileges page.",
       "easyDonateHint": "Positive unique ID. Required for publication. Creating the EasyDonate position does not save the product — remember to press \"Save changes\".",
       "activeHint": "Published products appear in the storefront and new orders.",
       "seasonAccess": "Season access",
@@ -1365,11 +1405,13 @@
       "categories": {
         "upgrade": "Access",
         "name-color": "Name color",
-        "name-prefix": "Prefix"
+        "name-prefix": "Prefix",
+        "privilege": "Privilege"
       },
       "fields": {
         "category": "Category",
         "cosmetic": "Cosmetic",
+        "privilege": "Privilege",
         "name": "Name",
         "description": "Description",
         "easyDonate": "EasyDonate ID",
@@ -1378,7 +1420,7 @@
       "easydonate": {
         "button": "Create in EasyDonate",
         "title": "Create an EasyDonate position",
-        "description": "The position is created in the EasyDonate panel from the Russian name and description. The price comes from the shared tariff.",
+        "description": "The position is created in the EasyDonate panel from the Russian name and description. The price comes from the tariff of the product.",
         "userAuth": "user_auth",
         "userAuthHint": "The value of the user_auth cookie from the EasyDonate panel. The server gets the session and CSRF token itself.",
         "credentialsKept": "user_auth is kept until the page reloads.",

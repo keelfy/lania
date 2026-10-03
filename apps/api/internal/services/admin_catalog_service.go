@@ -25,6 +25,10 @@ type AdminCatalogService interface {
 	UpdateNamePrefix(ctx context.Context, cmd *commands.SaveNamePrefixCommand) (*domain.CosmeticsCatalog, error)
 	DeleteNameColor(ctx context.Context, id uuid.UUID) (*domain.CosmeticsCatalog, error)
 	DeleteNamePrefix(ctx context.Context, id uuid.UUID) (*domain.CosmeticsCatalog, error)
+	GetPrivileges(ctx context.Context) ([]*domain.Privilege, error)
+	CreatePrivilege(ctx context.Context, cmd *commands.SavePrivilegeCommand) (*domain.Privilege, error)
+	UpdatePrivilege(ctx context.Context, cmd *commands.SavePrivilegeCommand) (*domain.Privilege, error)
+	DeletePrivilege(ctx context.Context, id uuid.UUID) error
 	GetProducts(ctx context.Context) ([]*domain.Product, error)
 	CreateProduct(ctx context.Context, cmd *commands.SaveProductCommand) (*domain.Product, error)
 	UpdateProduct(ctx context.Context, cmd *commands.SaveProductCommand) (*domain.Product, error)
@@ -209,11 +213,19 @@ func productMetadata(ctx context.Context, queries sql.Queries, cmd *commands.Sav
 			return nil, err
 		}
 		value = domain.NamePrefixProductMetadata{NamePrefixID: *cmd.CosmeticID}
+	case domain.ProductCategoryPrivilege:
+		if _, err := queries.FindPrivilegeByID(ctx, *cmd.PrivilegeID); errors.Is(err, stdsql.ErrNoRows) {
+			return nil, utils.NewBadRequestError("privilege not found", err)
+		} else if err != nil {
+			return nil, err
+		}
+		value = domain.PrivilegeProductMetadata{PrivilegeID: *cmd.PrivilegeID}
 	}
 	payload, err := json.Marshal(value)
 	return payload, err
 }
 
+// linkedCosmeticID returns the name color, name prefix or privilege the product sells, nil for an upgrade.
 func linkedCosmeticID(product *domain.Product) *uuid.UUID {
 	var id uuid.UUID
 	switch product.Category {
@@ -226,6 +238,11 @@ func linkedCosmeticID(product *domain.Product) *uuid.UUID {
 		var metadata domain.NamePrefixProductMetadata
 		if json.Unmarshal(product.Metadata, &metadata) == nil {
 			id = metadata.NamePrefixID
+		}
+	case domain.ProductCategoryPrivilege:
+		var metadata domain.PrivilegeProductMetadata
+		if json.Unmarshal(product.Metadata, &metadata) == nil {
+			id = metadata.PrivilegeID
 		}
 	}
 	if id == uuid.Nil {
@@ -310,15 +327,23 @@ func (s *adminCatalogService) productByID(ctx context.Context, id uuid.UUID) (*d
 	return nil, utils.NewNotFoundError("product not found", nil)
 }
 
+// soldItemID is the name color, name prefix or privilege the command sells, nil for an upgrade.
+func soldItemID(cmd *commands.SaveProductCommand) *uuid.UUID {
+	if cmd.Category == domain.ProductCategoryPrivilege {
+		return cmd.PrivilegeID
+	}
+	return cmd.CosmeticID
+}
+
 func (s *adminCatalogService) CreateProduct(ctx context.Context, cmd *commands.SaveProductCommand) (*domain.Product, error) {
-	if cmd.CosmeticID != nil {
+	if itemID := soldItemID(cmd); itemID != nil {
 		products, err := s.GetProducts(ctx)
 		if err != nil {
 			return nil, err
 		}
 		for _, product := range products {
-			if product.Category == cmd.Category && sameUUID(linkedCosmeticID(product), cmd.CosmeticID) {
-				return nil, utils.NewConflictError("product for this cosmetic already exists", nil)
+			if product.Category == cmd.Category && sameUUID(linkedCosmeticID(product), itemID) {
+				return nil, utils.NewConflictError("product for this item already exists", nil)
 			}
 		}
 	}
@@ -334,8 +359,8 @@ func (s *adminCatalogService) UpdateProduct(ctx context.Context, cmd *commands.S
 	if err != nil {
 		return nil, err
 	}
-	if current.Category != cmd.Category || !sameUUID(linkedCosmeticID(current), cmd.CosmeticID) {
-		return nil, utils.NewConflictError("product category and cosmetic cannot be changed", nil)
+	if current.Category != cmd.Category || !sameUUID(linkedCosmeticID(current), soldItemID(cmd)) {
+		return nil, utils.NewConflictError("product category and item cannot be changed", nil)
 	}
 	if err := s.saveProduct(ctx, cmd, false); err != nil {
 		return nil, err

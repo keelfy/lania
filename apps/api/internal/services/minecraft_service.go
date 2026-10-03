@@ -44,6 +44,9 @@ type MinecraftService interface {
 	// SetPlayerRolesInSeason writes the roles to the server of one season. It does nothing when the season has
 	// no shell address, because it has no server yet.
 	SetPlayerRolesInSeason(ctx context.Context, seasonID uuid.UUID, roles map[uuid.UUID]domain.Role) error
+	// SetPrivilegesInSeason gives the player the permission nodes in add and takes the nodes in remove away on the
+	// server of one season. It does nothing when the season has no shell address, because it has no server yet.
+	SetPrivilegesInSeason(ctx context.Context, seasonID, mcUUID uuid.UUID, add, remove []string) error
 	// RegisterPlayerInSeason makes LuckPerms of the season resolve the username of the profile before the
 	// player ever joins. It fails when the season has no shell address, because nothing could resolve it.
 	RegisterPlayerInSeason(ctx context.Context, seasonID uuid.UUID, profile *domain.Profile) error
@@ -231,6 +234,19 @@ func (s *minecraftService) SetPlayerRolesInSeason(ctx context.Context, seasonID 
 	roleGroups, groups := roleGroupsFor(roles)
 	if err := api.SetPlayerRoles(ctx, roleGroups, groups); err != nil {
 		return utils.NewInternalServerError("failed to set player roles", err)
+	}
+	return nil
+}
+
+func (s *minecraftService) SetPrivilegesInSeason(ctx context.Context, seasonID, mcUUID uuid.UUID, add, remove []string) error {
+	api, err := s.seasonShell(ctx, seasonID)
+	if errors.Is(err, errSeasonHasNoShell) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	if err := api.SetPlayerPermissions(ctx, mcUUID, add, remove); err != nil {
+		return utils.NewInternalServerError("failed to set player permissions", err)
 	}
 	return nil
 }

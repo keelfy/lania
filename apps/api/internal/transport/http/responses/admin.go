@@ -137,6 +137,15 @@ type AdminCosmeticsCatalog struct {
 	NamePrefixes []*AdminNamePrefix `json:"namePrefixes"`
 }
 
+type AdminPrivilege struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	// Names translates Name, by locale; only ru for now. Always an object, empty when none is set.
+	Names      map[string]string    `json:"names"`
+	Permission string               `json:"permission"`
+	Prices     []*AdminProductPrice `json:"prices"`
+}
+
 type AdminProductLocalization struct {
 	Locale      string `json:"locale"`
 	Name        string `json:"name"`

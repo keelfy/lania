@@ -99,7 +99,7 @@ func (c *RevokeGrantCommand) Validate() error {
 		validation.Field(&c.ProfileID, notNilUUID),
 		validation.Field(&c.GrantType, validation.Required, validation.By(func(value any) error {
 			if !value.(domain.GrantType).IsValid() {
-				return errors.New("must be access, name-color or name-prefix")
+				return errors.New("must be access, name-color, name-prefix or privilege")
 			}
 			return nil
 		})),
@@ -177,9 +177,11 @@ type SaveProductLocalization struct {
 }
 
 type SaveProductCommand struct {
-	ID                  uuid.UUID
-	Category            domain.ProductCategory
-	CosmeticID          *uuid.UUID
+	ID         uuid.UUID
+	Category   domain.ProductCategory
+	CosmeticID *uuid.UUID
+	// PrivilegeID is the privilege of a privilege product. Every privilege has its own tariff.
+	PrivilegeID         *uuid.UUID
 	PriceName           domain.ProductPriceName
 	IsActive            bool
 	EasyDonateProductID *int64
@@ -187,20 +189,28 @@ type SaveProductCommand struct {
 }
 
 func (c *SaveProductCommand) Validate() error {
-	validCategory := c.Category == domain.ProductCategoryUpgrade || c.Category == domain.ProductCategoryNameColor || c.Category == domain.ProductCategoryNamePrefix
-	if !validCategory {
-		return errors.New("category must be upgrade, name-color or name-prefix")
-	}
-	expectedPrice := map[domain.ProductCategory]domain.ProductPriceName{
-		domain.ProductCategoryUpgrade:    domain.ProductPriceNameSeasonAccess,
-		domain.ProductCategoryNameColor:  domain.ProductPriceNameNameColor,
-		domain.ProductCategoryNamePrefix: domain.ProductPriceNameNamePrefix,
-	}[c.Category]
-	if c.PriceName != expectedPrice {
-		return errors.New("priceName does not match category")
-	}
-	if c.Category != domain.ProductCategoryUpgrade && (c.CosmeticID == nil || *c.CosmeticID == uuid.Nil) {
-		return errors.New("cosmeticId is required")
+	switch c.Category {
+	case domain.ProductCategoryUpgrade, domain.ProductCategoryNameColor, domain.ProductCategoryNamePrefix:
+		expectedPrice := map[domain.ProductCategory]domain.ProductPriceName{
+			domain.ProductCategoryUpgrade:    domain.ProductPriceNameSeasonAccess,
+			domain.ProductCategoryNameColor:  domain.ProductPriceNameNameColor,
+			domain.ProductCategoryNamePrefix: domain.ProductPriceNameNamePrefix,
+		}[c.Category]
+		if c.PriceName != expectedPrice {
+			return errors.New("priceName does not match category")
+		}
+		if c.Category != domain.ProductCategoryUpgrade && (c.CosmeticID == nil || *c.CosmeticID == uuid.Nil) {
+			return errors.New("cosmeticId is required")
+		}
+	case domain.ProductCategoryPrivilege:
+		if c.PrivilegeID == nil || *c.PrivilegeID == uuid.Nil {
+			return errors.New("privilegeId is required")
+		}
+		if c.PriceName != domain.PrivilegePriceName(*c.PrivilegeID) {
+			return errors.New("priceName does not match the privilege")
+		}
+	default:
+		return errors.New("category must be upgrade, name-color, name-prefix or privilege")
 	}
 	if c.IsActive && (c.EasyDonateProductID == nil || *c.EasyDonateProductID <= 0) {
 		return errors.New("easyDonateProductId is required for an active product")
@@ -298,10 +308,17 @@ func (c *CreateEDProductCommand) Validate() error {
 		})),
 		validation.Field(&c.PriceName, validation.Required, validation.By(func(value any) error {
 			priceName := value.(domain.ProductPriceName)
-			if priceName != domain.ProductPriceNameSeasonAccess && priceName != domain.ProductPriceNameNameColor && priceName != domain.ProductPriceNameNamePrefix {
-				return errors.New("must be season_access, name_color or name_prefix")
+			if priceName == domain.ProductPriceNameSeasonAccess || priceName == domain.ProductPriceNameNameColor || priceName == domain.ProductPriceNameNamePrefix {
+				return nil
 			}
-			return nil
+			// The price of a privilege sits under its own tariff, named after the privilege.
+			if id, ok := strings.CutPrefix(string(priceName), domain.PrivilegePriceNamePrefix); ok {
+				// The name goes into a query by name, so only the canonical form of a UUID passes.
+				if parsed, err := uuid.Parse(id); err == nil && parsed.String() == id {
+					return nil
+				}
+			}
+			return errors.New("must be season_access, name_color, name_prefix or privilege:<id>")
 		})),
 		validation.Field(&c.Image, validation.By(func(value any) error {
 			if image, ok := value.([]byte); ok && int64(len(image)) > MaxEDProductImageBytes {

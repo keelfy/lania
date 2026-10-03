@@ -193,6 +193,9 @@ type Queries interface {
 	RevokeProfileAccess(ctx context.Context, mcUUID, accessID uuid.UUID, revokedBy *uuid.UUID) error
 	RevokeProfileNameColorOption(ctx context.Context, profileID, optionID uuid.UUID, revokedBy *uuid.UUID) error
 	RevokeProfileNamePrefixOption(ctx context.Context, profileID, optionID uuid.UUID, revokedBy *uuid.UUID) error
+	RevokeProfilePrivilege(ctx context.Context, profileID, privilegeGrantID uuid.UUID, revokedBy *uuid.UUID) error
+	// RevokeProfilePrivileges revokes every privilege the profile still has, in every season.
+	RevokeProfilePrivileges(ctx context.Context, profileID uuid.UUID, revokedBy *uuid.UUID) error
 	// RevokeProfileCosmetics revokes every name color and name prefix the profile still has, except the name color keepNameColorID.
 	RevokeProfileCosmetics(ctx context.Context, profileID, keepNameColorID uuid.UUID, revokedBy *uuid.UUID) error
 
@@ -226,6 +229,29 @@ type Queries interface {
 
 	// Prices
 	FindPricesByNames(ctx context.Context, names []domain.ProductPriceName) ([]*domain.ProductPrice, error)
+	// UpsertProductPrices writes one row per price of the tariff. Other currencies of the tariff stay.
+	UpsertProductPrices(ctx context.Context, name domain.ProductPriceName, prices []*domain.ProductPrice) error
+	// DeleteProductPrices removes the tariff with every currency.
+	DeleteProductPrices(ctx context.Context, name domain.ProductPriceName) error
+
+	// Privileges
+	// FindPrivileges returns every privilege ordered by name, each with its prices.
+	FindPrivileges(ctx context.Context) ([]*domain.Privilege, error)
+	// FindPrivilegeByID returns stdsql.ErrNoRows when the privilege does not exist.
+	FindPrivilegeByID(ctx context.Context, id uuid.UUID) (*domain.Privilege, error)
+	InsertPrivilege(ctx context.Context, id uuid.UUID, name string, names domain.CosmeticNames, permission string) error
+	UpdatePrivilege(ctx context.Context, id uuid.UUID, name string, names domain.CosmeticNames, permission string) error
+	// CountPrivilegeOwners returns how many profiles have the privilege and it is not revoked.
+	CountPrivilegeOwners(ctx context.Context, id uuid.UUID) (int, error)
+	// DeletePrivilege removes the privilege with its revoked grants and its tariff.
+	// A grant that is not revoked keeps the foreign key, so the delete fails with 1451.
+	DeletePrivilege(ctx context.Context, id uuid.UUID) error
+	// InsertProfilePrivilege gives the privilege to the profile for the season. A revoked grant comes back.
+	InsertProfilePrivilege(ctx context.Context, arg InsertProfilePrivilegeParams) error
+	// FindProfilePrivileges returns the privileges the profile has in the season, revoked ones left out.
+	FindProfilePrivileges(ctx context.Context, profileID, seasonID uuid.UUID) ([]*domain.ProfilePrivilege, error)
+	// FindProfilePrivilegesByOwnerUserID is FindProfilePrivileges over every profile of the user.
+	FindProfilePrivilegesByOwnerUserID(ctx context.Context, ownerUserID, seasonID uuid.UUID) ([]*domain.ProfilePrivilege, error)
 
 	// Order
 	InsertOrder(ctx context.Context, arg InsertOrderParams) (uuid.UUID, error)

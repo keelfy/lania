@@ -198,7 +198,7 @@ export type SelectCosmeticOptionReq = {
   optionId: string | undefined
 }
 
-export type ProfileResyncPart = 'role' | 'cosmetics' | 'access'
+export type ProfileResyncPart = 'role' | 'cosmetics' | 'access' | 'privileges'
 
 export type PartResync = {
   part: ProfileResyncPart

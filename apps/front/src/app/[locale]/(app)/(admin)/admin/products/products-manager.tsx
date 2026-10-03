@@ -26,10 +26,11 @@ import { clientApiFetcher } from '@/lib/client'
 import { errorToast } from '@/lib/toasts'
 import {
   AdminCosmeticsCatalog,
+  AdminPrivilege,
   AdminProduct,
   SaveProduct,
 } from '@/models/admin'
-import { PlusIcon, WandSparklesIcon } from 'lucide-react'
+import { KeyRoundIcon, PlusIcon, WandSparklesIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -52,15 +53,36 @@ const priceByCategory = {
   'name-prefix': 'name_prefix',
 } as const
 
+// A privilege has its own tariff, so its price is not shared with the other privileges.
+function priceNameOf(
+  category: AdminProduct['category'],
+  itemId: string,
+): AdminProduct['priceName'] {
+  return category === 'privilege'
+    ? `privilege:${itemId}`
+    : priceByCategory[category]
+}
+
+function linkedItemId(product?: AdminProduct) {
+  return (
+    product?.metadata.nameColorId ??
+    product?.metadata.namePrefixId ??
+    product?.metadata.privilegeId ??
+    ''
+  )
+}
+
 export default function ProductsManager({
   title,
   products,
   catalog,
+  privileges,
   defaultDescriptions,
 }: {
   title: string
   products: AdminProduct[]
   catalog: AdminCosmeticsCatalog
+  privileges: AdminPrivilege[]
   defaultDescriptions: DefaultDescriptions
 }) {
   const t = useTranslations('admin.products')
@@ -79,9 +101,7 @@ export default function ProductsManager({
   function chooseProduct(product?: AdminProduct) {
     setSelected(product)
     setCategory(product?.category ?? 'name-color')
-    setCosmeticId(
-      product?.metadata.nameColorId ?? product?.metadata.namePrefixId ?? '',
-    )
+    setCosmeticId(linkedItemId(product))
     setActive(product?.isActive ?? false)
     setEasyDonateProductId(
       product?.easyDonateProductId ? String(product.easyDonateProductId) : '',
@@ -102,20 +122,27 @@ export default function ProductsManager({
       ? catalog.nameColors.find((item) => item.id === cosmeticId)
       : category === 'name-prefix'
         ? catalog.namePrefixes.find((item) => item.id === cosmeticId)
-        : undefined
+        : category === 'privilege'
+          ? privileges.find((item) => item.id === cosmeticId)
+          : undefined
 
-  // Fills the texts from the cosmetic's names and the category's default description.
+  // Fills the texts from the item's names and the category's default description.
   // English uses the main name, other locales its translation when there is one.
-  // Access has no defaults, so the button is offered for cosmetics only.
+  // Access has no defaults, so the button is offered for cosmetics and privileges only.
+  // A privilege has no default description: it is different for every command.
   function autofill() {
     const form = formRef.current
     if (!form || !cosmetic || category === 'upgrade') return
     for (const locale of ['ru', 'en'] as const) {
-      const texts: ProductTexts = {
+      const texts: Partial<ProductTexts> = {
         name: (locale === 'ru' && cosmetic.names.ru) || cosmetic.name,
-        description: defaultDescriptions[category][locale],
+        description:
+          category === 'privilege'
+            ? undefined
+            : defaultDescriptions[category][locale],
       }
       for (const field of ['name', 'description'] as const) {
+        if (texts[field] === undefined) continue
         const element = form.elements.namedItem(`${field}-${locale}`)
         if (
           element instanceof HTMLInputElement ||
@@ -133,7 +160,7 @@ export default function ProductsManager({
       name: String(data?.get('name-ru') ?? '').trim(),
       description: String(data?.get('description-ru') ?? '').trim(),
       englishName: String(data?.get('name-en') ?? '').trim(),
-      priceName: priceByCategory[category],
+      priceName: priceNameOf(category, cosmeticId),
     }
   }
 
@@ -148,17 +175,16 @@ export default function ProductsManager({
   const takenCosmetics = new Set(
     products
       .filter((product) => product.category === category)
-      .map(
-        (product) =>
-          product.metadata.nameColorId ?? product.metadata.namePrefixId,
-      ),
+      .map(linkedItemId),
   )
   const cosmetics = (
     category === 'name-color'
       ? catalog.nameColors
       : category === 'name-prefix'
         ? catalog.namePrefixes
-        : []
+        : category === 'privilege'
+          ? privileges
+          : []
   ).filter((item) => selected || !takenCosmetics.has(item.id))
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -168,8 +194,12 @@ export default function ProductsManager({
     const edValue = easyDonateProductId.trim()
     const payload: SaveProduct = {
       category,
-      cosmeticId: category === 'upgrade' ? undefined : cosmeticId,
-      priceName: priceByCategory[category],
+      cosmeticId:
+        category === 'name-color' || category === 'name-prefix'
+          ? cosmeticId
+          : undefined,
+      privilegeId: category === 'privilege' ? cosmeticId : undefined,
+      priceName: priceNameOf(category, cosmeticId),
       isActive: active,
       easyDonateProductId: edValue ? Number(edValue) : undefined,
       localizations: [
@@ -281,6 +311,7 @@ export default function ProductsManager({
               category={category}
               cosmeticId={cosmeticId}
               catalog={catalog}
+              privileges={privileges}
               prices={selected?.prices ?? []}
               t={t}
             />
@@ -316,20 +347,32 @@ export default function ProductsManager({
                     <option value="name-prefix">
                       {t('categories.name-prefix')}
                     </option>
+                    <option value="privilege">
+                      {t('categories.privilege')}
+                    </option>
                   </select>
                   <FieldDescription>
-                    {t.rich('tariffHint', {
-                      tariff: priceByCategory[category],
-                      code: (chunks) => (
-                        <code className="font-mono">{chunks}</code>
-                      ),
-                    })}
+                    {t.rich(
+                      category === 'privilege'
+                        ? 'tariffHintPrivilege'
+                        : 'tariffHint',
+                      {
+                        tariff: priceNameOf(category, cosmeticId || '<id>'),
+                        code: (chunks) => (
+                          <code className="font-mono">{chunks}</code>
+                        ),
+                      },
+                    )}
                   </FieldDescription>
                 </Field>
                 {category !== 'upgrade' && (
                   <Field>
                     <FieldLabel htmlFor="product-cosmetic">
-                      {t('fields.cosmetic')}
+                      {t(
+                        category === 'privilege'
+                          ? 'fields.privilege'
+                          : 'fields.cosmetic',
+                      )}
                     </FieldLabel>
                     <select
                       id="product-cosmetic"
@@ -339,7 +382,13 @@ export default function ProductsManager({
                       onChange={(event) => setCosmeticId(event.target.value)}
                       className="border-input bg-background h-9 rounded-md border px-3 text-sm"
                     >
-                      <option value="">{t('selectCosmetic')}</option>
+                      <option value="">
+                        {t(
+                          category === 'privilege'
+                            ? 'selectPrivilege'
+                            : 'selectCosmetic',
+                        )}
+                      </option>
                       {cosmetics.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.name}
@@ -521,17 +570,25 @@ function ProductPreview({
   category,
   cosmeticId,
   catalog,
+  privileges,
   prices,
   t,
 }: {
   category: AdminProduct['category']
   cosmeticId: string
   catalog: AdminCosmeticsCatalog
+  privileges: AdminPrivilege[]
   prices: AdminProduct['prices']
   t: ReturnType<typeof useTranslations>
 }) {
   const color = catalog.nameColors.find((item) => item.id === cosmeticId)
   const prefix = catalog.namePrefixes.find((item) => item.id === cosmeticId)
+  const privilege = privileges.find((item) => item.id === cosmeticId)
+  // The price of a privilege is known before its product is saved.
+  const shownPrices =
+    prices.length > 0 || category !== 'privilege'
+      ? prices
+      : (privilege?.prices ?? [])
   return (
     <aside className="bg-muted/40 flex min-w-56 shrink-0 flex-col items-center gap-1 rounded-lg border px-4 py-3">
       {category === 'name-color' && (
@@ -550,9 +607,15 @@ function ProductPreview({
         </div>
       )}
       {category === 'upgrade' && <strong>{t('seasonAccess')}</strong>}
+      {category === 'privilege' && (
+        <div className="flex items-center gap-2">
+          <KeyRoundIcon className="size-5" />
+          <strong>{privilege?.name ?? t('categories.privilege')}</strong>
+        </div>
+      )}
       <div className="text-muted-foreground text-center text-xs">
-        {prices.length
-          ? prices
+        {shownPrices.length
+          ? shownPrices
               .map((price) => `${price.amount} ${price.currency}`)
               .join(' · ')
           : t('pricesAfterSave')}

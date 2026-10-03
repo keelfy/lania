@@ -191,6 +191,63 @@ func TestSetPlayerRoles(t *testing.T) {
 	})
 }
 
+func TestSetPlayerPermissions(t *testing.T) {
+	mcUUID := uuid.New()
+	ctx := context.Background()
+
+	t.Run("adds and removes nodes and syncs the server once", func(t *testing.T) {
+		store := &stubLuckpermsStorage{}
+		console := &stubConsole{}
+
+		err := NewPermissionService(store, console).SetPlayerPermissions(ctx, mcUUID, []string{"homes.commands.*"}, []string{"fly.use"})
+		if err != nil {
+			t.Fatalf("SetPlayerPermissions() error = %v", err)
+		}
+
+		if len(store.replacements) != 1 || len(console.commands) != 1 {
+			t.Fatalf("replacements = %v, sync commands = %v, want 1 replacement and 1 sync", store.replacements, console.commands)
+		}
+		got := store.replacements[0]
+		if got.MinecraftUUID != mcUUID || !slices.Equal(got.Add, []string{"homes.commands.*"}) || !slices.Equal(got.Remove, []string{"fly.use"}) {
+			t.Errorf("replacement = %+v, want add homes.commands.* and remove fly.use", got)
+		}
+	})
+
+	t.Run("no nodes touch nothing", func(t *testing.T) {
+		store := &stubLuckpermsStorage{}
+		console := &stubConsole{}
+		if err := NewPermissionService(store, console).SetPlayerPermissions(ctx, mcUUID, nil, nil); err != nil {
+			t.Fatalf("SetPlayerPermissions() error = %v", err)
+		}
+		if store.replacements != nil || len(console.commands) != 0 {
+			t.Errorf("replacements = %v, sync commands = %v, want nothing", store.replacements, console.commands)
+		}
+	})
+
+	for _, node := range []string{"", "*", "group.admin", "weight.100", "prefix.100.x", "suffix.1.x", "meta.k.v", "displayname.x", "Homes.Use", "home use", "a;b"} {
+		t.Run("refuses "+node, func(t *testing.T) {
+			store := &stubLuckpermsStorage{}
+			service := NewPermissionService(store, &stubConsole{})
+			for _, call := range []func() error{
+				func() error { return service.SetPlayerPermissions(ctx, mcUUID, []string{node}, nil) },
+				func() error { return service.SetPlayerPermissions(ctx, mcUUID, nil, []string{node}) },
+			} {
+				if err := call(); !errors.Is(err, ErrInvalidPermission) || store.replacements != nil {
+					t.Errorf("error = %v, replacements = %v, want ErrInvalidPermission and no write", err, store.replacements)
+				}
+			}
+		})
+	}
+
+	t.Run("failed write skips sync", func(t *testing.T) {
+		console := &stubConsole{}
+		err := NewPermissionService(&stubLuckpermsStorage{err: errors.New("db down")}, console).SetPlayerPermissions(ctx, mcUUID, []string{"homes.commands.*"}, nil)
+		if err == nil || len(console.commands) != 0 {
+			t.Errorf("error = %v, sync commands = %v, want an error and no sync", err, console.commands)
+		}
+	})
+}
+
 func TestRegisterPlayer(t *testing.T) {
 	ctx := context.Background()
 	mcUUID := uuid.MustParse("0f0c2a3e-5a4b-4d4c-9f6e-3b1a2c3d4e5f")

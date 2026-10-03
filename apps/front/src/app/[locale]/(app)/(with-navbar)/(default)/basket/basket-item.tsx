@@ -11,6 +11,7 @@ import { BasketItem } from '@/models/basket'
 import {
   NameColorProductMetadata,
   NamePrefixProductMetadata,
+  PrivilegeProductMetadata,
   Product,
   ProductMetadata,
   UpgradeProductMetadata,
@@ -23,6 +24,7 @@ import { useRouter } from 'next/navigation'
 import React from 'react'
 import NameColorBasketItem from './name-color-basket-item'
 import NamePrefixBasketItem from './name-prefix-basket-item'
+import PrivilegeBasketItem from './privilege-basket-item'
 import UpgradeBasketItem from './upgrade-basket-item'
 
 type Props = {
@@ -74,6 +76,13 @@ export default function BasketItemElement({
       itemComponent = (
         <NamePrefixBasketItem
           product={product as Product<NamePrefixProductMetadata>}
+        />
+      )
+      break
+    case 'privilege':
+      itemComponent = (
+        <PrivilegeBasketItem
+          product={product as Product<PrivilegeProductMetadata>}
         />
       )
       break

@@ -9,6 +9,8 @@ const (
 	ResyncPartRole      ResyncPart = "role"
 	ResyncPartCosmetics ResyncPart = "cosmetics"
 	ResyncPartAccess    ResyncPart = "access"
+	// ResyncPartPrivileges is the set of permission nodes the profile bought.
+	ResyncPartPrivileges ResyncPart = "privileges"
 )
 
 // PartResync is the outcome of writing one part of a profile to one season server.

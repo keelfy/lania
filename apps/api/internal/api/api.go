@@ -313,6 +313,13 @@ func (api *laniaAPI) v1RouteHandler() http.Handler {
 			r.Get("/glyth-pack", api.adminCatalogHandler.GetGlythPack)
 		})
 
+		r.Route("/privileges", func(r chi.Router) {
+			r.Get("/", api.adminCatalogHandler.GetPrivileges)
+			r.Post("/", api.adminCatalogHandler.CreatePrivilege)
+			r.Put("/{privilegeId}", api.adminCatalogHandler.UpdatePrivilege)
+			r.Delete("/{privilegeId}", api.adminCatalogHandler.DeletePrivilege)
+		})
+
 		r.Route("/worlds/{worldId}", func(r chi.Router) {
 			r.Put("/", api.seasonWorldHandler.UpdateSeasonWorld)
 			r.Delete("/", api.seasonWorldHandler.DeleteSeasonWorld)

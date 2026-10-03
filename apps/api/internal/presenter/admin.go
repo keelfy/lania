@@ -179,6 +179,22 @@ func PresentAdminCosmeticsCatalog(catalog *domain.CosmeticsCatalog) *responses.A
 	return res
 }
 
+func PresentAdminPrivilege(privilege *domain.Privilege) *responses.AdminPrivilege {
+	prices := make([]*responses.AdminProductPrice, len(privilege.Prices))
+	for i, price := range privilege.Prices {
+		prices[i] = &responses.AdminProductPrice{Currency: string(price.Currency), Amount: price.Amount}
+	}
+	return &responses.AdminPrivilege{ID: privilege.ID, Name: privilege.Name, Names: presentCosmeticNames(privilege.Names), Permission: privilege.Permission, Prices: prices}
+}
+
+func PresentAdminPrivileges(privileges []*domain.Privilege) []*responses.AdminPrivilege {
+	res := make([]*responses.AdminPrivilege, len(privileges))
+	for i, privilege := range privileges {
+		res[i] = PresentAdminPrivilege(privilege)
+	}
+	return res
+}
+
 func PresentAdminProducts(products []*domain.Product) []*responses.AdminProduct {
 	res := make([]*responses.AdminProduct, len(products))
 	for i, product := range products {

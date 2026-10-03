@@ -65,13 +65,32 @@ FROM (
 	FROM profile_name_prefix_options pnp
 	LEFT JOIN name_prefixes np ON np.id = pnp.name_prefix_id
 	WHERE pnp.profile_id = ?
+
+	UNION ALL
+
+	SELECT
+		pp.id,
+		'privilege',
+		pp.for_season_id,
+		pp.privilege_id,
+		NULL,
+		p.name,
+		NULL,
+		pp.order_item_id,
+		pp.created_by,
+		pp.created_at,
+		pp.revoked_at,
+		pp.revoked_by
+	FROM profile_privileges pp
+	LEFT JOIN privileges p ON p.id = pp.privilege_id
+	WHERE pp.profile_id = ?
 ) grants
 ORDER BY created_at DESC, id
 `
 
 // FindProfileGrants returns everything the profile was given, revoked grants included, newest first.
 func (q *queries) FindProfileGrants(ctx context.Context, profileID, mcUUID uuid.UUID) ([]*domain.Grant, error) {
-	rows, err := q.x.QueryContext(ctx, findProfileGrants, mcUUID, profileID, profileID)
+	rows, err := q.x.QueryContext(ctx, findProfileGrants, mcUUID, profileID, profileID, profileID)
 	if err != nil {
 		return nil, err
 	}

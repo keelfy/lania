@@ -16,17 +16,23 @@ import (
 
 type accountQueries struct {
 	sql.Queries
-	revokedCosmetics []uuid.UUID
-	keptColors       []uuid.UUID
-	roles            map[uuid.UUID]domain.Role
-	released         []uuid.UUID
-	basketCleared    bool
-	notesDeleted     bool
+	revokedCosmetics  []uuid.UUID
+	revokedPrivileges []uuid.UUID
+	keptColors        []uuid.UUID
+	roles             map[uuid.UUID]domain.Role
+	released          []uuid.UUID
+	basketCleared     bool
+	notesDeleted      bool
 }
 
 func (q *accountQueries) RevokeProfileCosmetics(_ context.Context, profileID, keepNameColorID uuid.UUID, _ *uuid.UUID) error {
 	q.revokedCosmetics = append(q.revokedCosmetics, profileID)
 	q.keptColors = append(q.keptColors, keepNameColorID)
+	return nil
+}
+
+func (q *accountQueries) RevokeProfilePrivileges(_ context.Context, profileID uuid.UUID, _ *uuid.UUID) error {
+	q.revokedPrivileges = append(q.revokedPrivileges, profileID)
 	return nil
 }
 
@@ -154,8 +160,8 @@ func TestDeleteAccountReleasesProfilesAndDeletesIdentity(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(f.queries.released) != 2 || len(f.queries.revokedCosmetics) != 2 {
-		t.Errorf("released %d and revoked cosmetics of %d profiles, want 2 and 2", len(f.queries.released), len(f.queries.revokedCosmetics))
+	if len(f.queries.released) != 2 || len(f.queries.revokedCosmetics) != 2 || len(f.queries.revokedPrivileges) != 2 {
+		t.Errorf("released %d profiles, revoked cosmetics of %d and privileges of %d, want 2, 2 and 2", len(f.queries.released), len(f.queries.revokedCosmetics), len(f.queries.revokedPrivileges))
 	}
 	for _, kept := range f.queries.keptColors {
 		if kept != defaultColorID {

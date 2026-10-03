@@ -84,6 +84,20 @@ type SaveNamePrefix struct {
 	NoSpace bool              `json:"noSpace"`
 }
 
+type SavePrivilegePrice struct {
+	Currency string  `json:"currency"`
+	Amount   float64 `json:"amount"`
+}
+
+type SavePrivilege struct {
+	Name string `json:"name"`
+	// Names translates Name, by locale; only ru for now.
+	Names      map[string]string `json:"names"`
+	Permission string            `json:"permission"`
+	// Prices holds one price for every allowed currency.
+	Prices []SavePrivilegePrice `json:"prices"`
+}
+
 type SaveProductLocalization struct {
 	Locale      string `json:"locale"`
 	Name        string `json:"name"`
@@ -93,6 +107,7 @@ type SaveProductLocalization struct {
 type SaveProduct struct {
 	Category            string                    `json:"category"`
 	CosmeticID          *uuid.UUID                `json:"cosmeticId"`
+	PrivilegeID         *uuid.UUID                `json:"privilegeId"`
 	PriceName           string                    `json:"priceName"`
 	IsActive            bool                      `json:"isActive"`
 	EasyDonateProductID *int64                    `json:"easyDonateProductId"`

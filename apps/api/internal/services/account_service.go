@@ -151,6 +151,10 @@ func (s *accountService) releaseProfile(ctx context.Context, queries sql.Queries
 	if err := s.profileCosmeticsService.PruneProfileSelections(ctx, queries, profile.ID); err != nil {
 		return err
 	}
+	// The resync that follows removes the nodes from the season servers.
+	if err := queries.RevokeProfilePrivileges(ctx, profile.ID, &userID); err != nil {
+		return utils.NewInternalServerError("failed to revoke profile privileges", err)
+	}
 
 	if profile.Role != domain.RolePlayer {
 		if err := queries.SetProfileRole(ctx, profile.ID, domain.RolePlayer, &userID); err != nil {

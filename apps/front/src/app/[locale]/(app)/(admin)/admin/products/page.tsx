@@ -1,5 +1,9 @@
 import { requireAdmin } from '@/lib/admin'
-import { getAdminCosmetics, getAdminProducts } from '@/lib/api-endpoints'
+import {
+  getAdminCosmetics,
+  getAdminPrivileges,
+  getAdminProducts,
+} from '@/lib/api-endpoints'
 import { serverApiFetcher } from '@/lib/server'
 import { getTranslations } from 'next-intl/server'
 import AdminPageHeader from '../admin-page-header'
@@ -25,16 +29,18 @@ export default async function AdminProductsPage({ params }: Props) {
     'name-color': { ru: ru('name-color'), en: en('name-color') },
     'name-prefix': { ru: ru('name-prefix'), en: en('name-prefix') },
   }
-  const [products, catalog] = await Promise.all([
+  const [products, catalog, privileges] = await Promise.all([
     getAdminProducts(serverApiFetcher),
     getAdminCosmetics(serverApiFetcher),
-  ]).catch(() => [undefined, undefined] as const)
-  return products && catalog ? (
+    getAdminPrivileges(serverApiFetcher),
+  ]).catch(() => [undefined, undefined, undefined] as const)
+  return products && catalog && privileges ? (
     <EdCredentialsProvider>
       <ProductsManager
         title={t('nav.products')}
         products={products}
         catalog={catalog}
+        privileges={privileges}
         defaultDescriptions={defaultDescriptions}
       />
     </EdCredentialsProvider>

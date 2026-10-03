@@ -18,17 +18,20 @@ type purchaseService struct {
 	storage                 storage.MainStorage
 	accessService           AccessService
 	profileCosmeticsService ProfileCosmeticsService
+	profilePrivilegeService ProfilePrivilegeService
 }
 
 func NewPurchaseService(
 	storage storage.MainStorage,
 	accessService AccessService,
 	profileCosmeticsService ProfileCosmeticsService,
+	profilePrivilegeService ProfilePrivilegeService,
 ) PurchaseService {
 	return &purchaseService{
 		storage:                 storage,
 		accessService:           accessService,
 		profileCosmeticsService: profileCosmeticsService,
+		profilePrivilegeService: profilePrivilegeService,
 	}
 }
 
@@ -36,6 +39,7 @@ func (s *purchaseService) GetPurchasesByProducts(ctx context.Context, userID uui
 	hasUpgradeProduct := false
 	hasNameColorProduct := false
 	hasNamePrefixProduct := false
+	hasPrivilegeProduct := false
 
 	resList := make([]*domain.PurchasedProduct, 0)
 	for _, product := range products {
@@ -46,6 +50,8 @@ func (s *purchaseService) GetPurchasesByProducts(ctx context.Context, userID uui
 			hasNameColorProduct = true
 		case domain.ProductCategoryNamePrefix:
 			hasNamePrefixProduct = true
+		case domain.ProductCategoryPrivilege:
+			hasPrivilegeProduct = true
 		}
 	}
 
@@ -128,6 +134,33 @@ func (s *purchaseService) GetPurchasesByProducts(ctx context.Context, userID uui
 							SeasonID:  seasonID,
 						})
 					}
+				}
+			}
+		}
+	}
+
+	if hasPrivilegeProduct {
+		privileges, err := s.profilePrivilegeService.GetProfilePrivilegesByOwnerUserID(ctx, userID, seasonID)
+		if err != nil {
+			return nil, utils.NewInternalServerError("failed to get profile privileges by profile owner user id", err)
+		}
+
+		for _, privilege := range privileges {
+			for _, product := range products {
+				if product.Category != domain.ProductCategoryPrivilege {
+					continue
+				}
+				var metadata domain.PrivilegeProductMetadata
+				if err := json.Unmarshal(product.Metadata, &metadata); err != nil {
+					return nil, utils.NewInternalServerError("failed to unmarshal privilege product metadata", err)
+				}
+
+				if metadata.PrivilegeID == privilege.PrivilegeID {
+					resList = append(resList, &domain.PurchasedProduct{
+						ProductID: product.ID,
+						ProfileID: privilege.ProfileID,
+						SeasonID:  seasonID,
+					})
 				}
 			}
 		}

@@ -155,6 +155,26 @@ const moveNamePrefixOptions = `
 UPDATE profile_name_prefix_options SET profile_id = ? WHERE profile_id = ?
 `
 
+// Privileges are unique on (profile_id, privilege_id, for_season_id) regardless of revoked_at, like the options above.
+const unrevokeTargetPrivileges = `
+UPDATE profile_privileges tgt
+JOIN profile_privileges src
+	ON src.profile_id = ? AND src.privilege_id = tgt.privilege_id AND src.for_season_id = tgt.for_season_id
+SET tgt.revoked_at = NULL, tgt.revoked_by = NULL
+WHERE tgt.profile_id = ? AND tgt.revoked_at IS NOT NULL AND src.revoked_at IS NULL
+`
+
+const dropDuplicatePrivileges = `
+DELETE src FROM profile_privileges src
+JOIN profile_privileges tgt
+	ON tgt.profile_id = ? AND tgt.privilege_id = src.privilege_id AND tgt.for_season_id = src.for_season_id
+WHERE src.profile_id = ?
+`
+
+const movePrivileges = `
+UPDATE profile_privileges SET profile_id = ? WHERE profile_id = ?
+`
+
 // Season cosmetics and legacy prefixes key on (profile_id, season_id) / (profile_id, type): the target's own
 // selection wins on a clash, the source's row is dropped, and a season/type the target lacks moves over.
 const dropDuplicateSeasonCosmetics = `
@@ -294,6 +314,16 @@ func (q *queries) MergeProfileData(ctx context.Context, sourceProfileID, sourceM
 		return nil, err
 	}
 	if counts.NamePrefixOptionsMoved, err = execAffected(ctx, x, moveNamePrefixOptions, targetProfileID, sourceProfileID); err != nil {
+		return nil, err
+	}
+
+	if _, err = execAffected(ctx, x, unrevokeTargetPrivileges, targetProfileID, targetProfileID); err != nil {
+		return nil, err
+	}
+	if _, err = execAffected(ctx, x, dropDuplicatePrivileges, targetProfileID, sourceProfileID); err != nil {
+		return nil, err
+	}
+	if _, err = execAffected(ctx, x, movePrivileges, targetProfileID, sourceProfileID); err != nil {
 		return nil, err
 	}
 

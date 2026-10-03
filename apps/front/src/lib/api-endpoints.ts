@@ -1,5 +1,6 @@
 import {
   AdminCosmeticsCatalog,
+  AdminPrivilege,
   AdminProduct,
   AdminGrant,
   AdminOrders,
@@ -13,6 +14,7 @@ import {
   GrantProductReq,
   GrantType,
   SaveNameColor,
+  SavePrivilege,
   SaveNamePrefix,
   SaveProduct,
   PremiumRekeyReport,
@@ -955,6 +957,43 @@ export function uploadGlythPreview(
 // A zip with the ItemsAdder contents folder for every glyth prefix.
 export function getGlythPack(fetcher: ApiFetcher): Promise<Blob> {
   return fetcher<Blob>('/v1/admin/cosmetics/glyth-pack')
+}
+
+export function getAdminPrivileges(
+  fetcher: ApiFetcher,
+): Promise<AdminPrivilege[]> {
+  return fetcher('/v1/admin/privileges')
+}
+
+export function createPrivilege(
+  fetcher: ApiFetcher,
+  item: SavePrivilege,
+): Promise<AdminPrivilege> {
+  return fetcher('/v1/admin/privileges', undefined, {
+    method: 'POST',
+    body: JSON.stringify(item),
+  })
+}
+
+export function updatePrivilege(
+  fetcher: ApiFetcher,
+  id: string,
+  item: SavePrivilege,
+): Promise<AdminPrivilege> {
+  return fetcher(`/v1/admin/privileges/${id}`, undefined, {
+    method: 'PUT',
+    body: JSON.stringify(item),
+  })
+}
+
+// The API refuses a privilege that a product sells or a player owns.
+export function deletePrivilege(
+  fetcher: ApiFetcher,
+  id: string,
+): Promise<void> {
+  return fetcher<void>(`/v1/admin/privileges/${id}`, undefined, {
+    method: 'DELETE',
+  })
 }
 
 export function getAdminProducts(fetcher: ApiFetcher): Promise<AdminProduct[]> {
