@@ -13,6 +13,7 @@ import {
   UsersIcon,
   MapPinIcon,
   PackageSearchIcon,
+  HouseIcon,
 } from 'lucide-react'
 import { MetaRecord } from 'nextra'
 
@@ -63,6 +64,14 @@ const meta: MetaRecord = {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <PackageSearchIcon size={14} />
         <p>Loot container markers</p>
+      </div>
+    ),
+  },
+  homes: {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <HouseIcon size={14} />
+        <p>Home</p>
       </div>
     ),
   },
