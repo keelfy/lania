@@ -11,6 +11,7 @@ import {
   PickaxeIcon,
   SmileIcon,
   UsersIcon,
+  ShieldIcon,
   MapPinIcon,
   PackageSearchIcon,
   HouseIcon,
@@ -40,6 +41,14 @@ const meta: MetaRecord = {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <UsersIcon size={14} />
         <p>Размер персонажа</p>
+      </div>
+    ),
+  },
+  'armor-hider': {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <ShieldIcon size={14} />
+        <p>Скрытие брони</p>
       </div>
     ),
   },
