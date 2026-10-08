@@ -5,6 +5,7 @@ import {
   CookingPotIcon,
   FlameIcon,
   FrameIcon,
+  HammerIcon,
   LightbulbIcon,
   MilestoneIcon,
   PawPrintIcon,
@@ -57,6 +58,14 @@ const meta: MetaRecord = {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <CookingPotIcon size={14} />
         <p>Cauldrons</p>
+      </div>
+    ),
+  },
+  crafts: {
+    title: (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <HammerIcon size={14} />
+        <p>Custom crafts</p>
       </div>
     ),
   },

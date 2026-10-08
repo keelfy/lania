@@ -1,0 +1,82 @@
+@font-face {
+  font-family: 'MinecraftRus';
+  src: url('/fonts/MinecraftRus.otf');
+}
+
+.table {
+  --slot: 2.75rem;
+  display: inline-block;
+  margin: 1rem 0;
+  padding: 0.5rem 0.75rem 0.75rem;
+  background: #c6c6c6;
+  border: 2px solid;
+  border-color: #fff #555 #555 #fff;
+  box-shadow: 0 0 0 2px #000;
+  font-family: 'MinecraftRus', monospace;
+  image-rendering: pixelated;
+}
+
+.title {
+  margin-bottom: 0.375rem;
+  color: #404040;
+  font-size: 0.875rem;
+}
+
+.body {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, var(--slot));
+}
+
+.slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--slot);
+  height: var(--slot);
+  background: #8b8b8b;
+  border: 2px solid;
+  border-color: #373737 #fff #fff #373737;
+  box-sizing: border-box;
+}
+
+.icon {
+  width: calc(var(--slot) - 0.75rem);
+  height: calc(var(--slot) - 0.75rem);
+  image-rendering: pixelated;
+}
+
+.amount {
+  position: absolute;
+  right: 1px;
+  bottom: -2px;
+  color: #fff;
+  font-size: 0.875rem;
+  text-shadow: 2px 2px 0 #3f3f3f;
+}
+
+/* Pixel-art arrow built from a block and a triangle. */
+.arrow {
+  position: relative;
+  width: 1.75rem;
+  height: 0.75rem;
+  background: #8b8b8b;
+}
+
+.arrow::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0.875rem solid transparent;
+  border-left: 0.875rem solid #8b8b8b;
+  border-right: 0;
+}
+
