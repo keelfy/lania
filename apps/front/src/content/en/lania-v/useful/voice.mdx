@@ -174,11 +174,15 @@ Set the area with `/vbc`:
 
 [pv-addon-discs](https://modrinth.com/plugin/pv-addon-discs) &mdash; custom music discs: burn a link to a track onto a disc and play it in a jukebox, so everyone nearby hears it through voice chat. The audio is streamed from the internet.
 
-1. Hold a music disc in your hand;
-2. Burn a track onto it: `/disc burn {url} [name]`;
-3. Put the disc into a jukebox.
+<Callout type='warning'>
+  The server only plays tracks uploaded to [Dropbox](https://www.dropbox.com).
+</Callout>
 
-Supported sources: YouTube, SoundCloud, Bandcamp, Vimeo, Twitch (including live streams) and direct links to audio files (MP3, FLAC, WAV, OGG, AAC, M4A, WebM) or playlists (M3U, PLS).
+1. Upload the track to Dropbox and copy the file's public link;
+2. At the end of the link, replace `dl=0` with `dl=1`;
+3. Hold a music disc in your hand;
+4. Burn the track onto it: `/disc burn {url} [name]`;
+5. Put the disc into a jukebox.
 
 <br/>
 <Table>
@@ -191,15 +195,11 @@ Supported sources: YouTube, SoundCloud, Bandcamp, Vimeo, Twitch (including live 
   <tbody>
     <Table.Tr>
       <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc burn {url} [name]`</Table.Td>
-      <Table.Td>Burn a track onto the disc in your hand, optionally with a custom name</Table.Td>
+      <Table.Td>Burn a Dropbox track onto the disc in your hand, optionally with a custom name</Table.Td>
     </Table.Tr>
     <Table.Tr>
       <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc erase`</Table.Td>
       <Table.Td>Turn a custom disc back into a regular one</Table.Td>
-    </Table.Tr>
-    <Table.Tr>
-      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc search {query}`</Table.Td>
-      <Table.Td>Search for a track on YouTube</Table.Td>
     </Table.Tr>
     <Table.Tr>
       <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc cancel [player]`</Table.Td>

@@ -174,11 +174,15 @@ import { Table } from 'nextra/components'
 
 [pv-addon-discs](https://modrinth.com/plugin/pv-addon-discs) &mdash; свои музыкальные пластинки: запишите на диск ссылку на трек и включите его в проигрывателе, чтобы все рядом слышали музыку через голосовой чат. Звук передаётся потоком из интернета.
 
-1. Возьмите музыкальный диск в руку;
-2. Запишите на него трек: `/disc burn {ссылка} [название]`;
-3. Вставьте диск в проигрыватель.
+<Callout type='warning'>
+  На сервере проигрываются только треки, залитые на [Dropbox](https://www.dropbox.com).
+</Callout>
 
-Поддерживаются YouTube, SoundCloud, Bandcamp, Vimeo, Twitch (в том числе трансляции) и прямые ссылки на аудиофайлы (MP3, FLAC, WAV, OGG, AAC, M4A, WebM) и плейлисты (M3U, PLS).
+1. Загрузите трек на Dropbox и скопируйте публичную ссылку на файл;
+2. В конце ссылки замените `dl=0` на `dl=1`;
+3. Возьмите музыкальный диск в руку;
+4. Запишите на него трек: `/disc burn {ссылка} [название]`;
+5. Вставьте диск в проигрыватель.
 
 <br/>
 <Table>
@@ -191,15 +195,11 @@ import { Table } from 'nextra/components'
   <tbody>
     <Table.Tr>
       <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc burn {ссылка} [название]`</Table.Td>
-      <Table.Td>Записать трек на диск в руке, можно с собственным названием</Table.Td>
+      <Table.Td>Записать трек с Dropbox на диск в руке, можно с собственным названием</Table.Td>
     </Table.Tr>
     <Table.Tr>
       <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc erase`</Table.Td>
       <Table.Td>Превратить особый диск обратно в обычный</Table.Td>
-    </Table.Tr>
-    <Table.Tr>
-      <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc search {запрос}`</Table.Td>
-      <Table.Td>Найти трек на YouTube</Table.Td>
     </Table.Tr>
     <Table.Tr>
       <Table.Td style={{ whiteSpace: 'nowrap' }}>`/disc cancel [игрок]`</Table.Td>
